@@ -1,0 +1,249 @@
+/****************************************************************************
+
+                     (C) Copyright Fraunhofer IIS (2004)
+                               All Rights Reserved
+
+    Please be advised that this software and/or program delivery is
+    Confidential Information of Fraunhofer and subject to and covered by the
+
+    Fraunhofer IIS Software Evaluation Agreement
+    between Google Inc. and  Fraunhofer
+    effective and in full force since March 1, 2012.
+
+    You may use this software and/or program only under the terms and
+    conditions described in the above mentioned Fraunhofer IIS Software
+    Evaluation Agreement. Any other and/or further use requires a separate agreement.
+
+
+   This software and/or program is protected by copyright law and international
+   treaties. Any reproduction or distribution of this software and/or program,
+   or any portion of it, may result in severe civil and criminal penalties, and
+   will be prosecuted to the maximum extent possible under law.
+
+ $Id$
+
+*******************************************************************************/
+/*!
+  \file
+  \brief  Framing generator prototypes and structs $Revision: 36847 $
+*/
+#ifndef _FRAM_GEN_H
+#define _FRAM_GEN_H
+
+#include "sbr_def.h" /* for MAX_ENVELOPES and MAX_NOISE_ENVELOPES in struct FRAME_INFO and CODEC_TYPE */
+
+#define MAX_ENVELOPES_VARVAR MAX_ENVELOPES /*!< worst case number of envelopes in a VARVAR frame */
+#define MAX_ENVELOPES_FIXVAR_VARFIX 4 /*!< worst case number of envelopes in VARFIX and FIXVAR frames */
+#define MAX_NUM_REL 3 /*!< maximum number of relative borders in any VAR frame */
+
+/* SBR frame class definitions */
+typedef enum {
+  FIXFIX = 0, /*!< bs_frame_class: leading and trailing frame borders are fixed */
+  FIXVAR,     /*!< bs_frame_class: leading frame border is fixed, trailing frame border is variable */
+  VARFIX,     /*!< bs_frame_class: leading frame border is variable, trailing frame border is fixed */
+  VARVAR      /*!< bs_frame_class: leading and trailing frame borders are variable */
+  ,FIXFIXonly  /*!< bs_frame_class: leading border fixed (0), trailing border fixed (nrTimeSlots) and encased borders are dynamically derived from the tranPos */
+}FRAME_CLASS;
+
+
+/* helper constants */
+#define DC      4711        /*!< helper constant: don't care */
+#define EMPTY   (-99)       /*!< helper constant: empty */
+
+
+/* system constants: AAC+SBR, DRM Frame-Length */
+#define FRAME_MIDDLE_SLOT_1920  4
+#define NUMBER_TIME_SLOTS_1920  15
+
+#define LD_PRETRAN_OFF           3
+#define FRAME_MIDDLE_SLOT_512LD  0
+#define NUMBER_TIME_SLOTS_512LD  8
+#define TRANSIENT_OFFSET_LD      0
+
+
+
+/*
+system constants: AAC+SBR or aacPRO (hybrid format), Standard Frame-Length, Multi-Rate
+---------------------------------------------------------------------------
+Number of slots (numberTimeSlots): 16  (NUMBER_TIME_SLOTS_2048)
+Detector-offset (frameMiddleSlot):  4
+Overlap                          :  3
+Buffer-offset                    :  8  (BUFFER_FRAME_START_2048 = 0)
+
+
+                        |<------------tranPos---------->|
+                |c|d|e|f|0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|
+        FixFix  |                               |
+        FixVar  |                               :<- ->:
+        VarFix  :<- ->:                         |
+        VarVar  :<- ->:                         :<- ->:
+                0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3
+................................................................................
+
+|-|-|-|-|-|-|-|-B-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-B-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+
+frame-generator:0                               16              24              32
+analysis-buffer:8                               24              32              40
+*/
+#define FRAME_MIDDLE_SLOT_2048  4
+#define NUMBER_TIME_SLOTS_2048  16
+
+
+/*
+system constants: mp3PRO, Multi-Rate & Single-Rate
+--------------------------------------------------
+Number of slots (numberTimeSlots):  9    (NUMBER_TIME_SLOTS_1152)
+Detector-offset (frameMiddleSlot):  4    (FRAME_MIDDLE_SLOT_1152)
+Overlap                          :  3
+Buffer-offset                    :  4.5  (BUFFER_FRAME_START_1152 = 0)
+
+
+                         |<----tranPos---->|
+                 |5|6|7|8|0|1|2|3|4|5|6|7|8|
+         FixFix  |                 |
+         FixVar  |                 :<- ->:
+         VarFix  :<- ->:           |
+         VarVar  :<- ->:           :<- ->:
+                 0 1 2 3 4 5 6 7 8 0 1 2 3
+        .............................................
+
+        -|-|-|-|-B-|-|-|-|-|-|-|-|-B-|-|-|-|-|-|-|-|-|
+
+frame-generator: 0                 9       13        18
+analysis-buffer: 4.5               13.5              22.5
+*/
+#define FRAME_MIDDLE_SLOT_1152  4
+#define NUMBER_TIME_SLOTS_1152  9
+
+
+/* system constants: Layer2+SBR */
+#define FRAME_MIDDLE_SLOT_2304  8
+#define NUMBER_TIME_SLOTS_2304  18
+
+
+/*!
+  \struct SBR_GRID
+  \brief  sbr_grid() signals to be converted to bitstream elements
+
+  The variables hold the signals (e.g. lengths and numbers) in "clear text"
+*/
+
+typedef struct
+{
+  /* system constants */
+  INT bufferFrameStart;     /*!< frame generator vs analysis buffer time alignment (currently set to 0, offset added elsewhere) */
+  INT numberTimeSlots;      /*!< number of SBR timeslots per frame */
+
+  /* will be adjusted for every frame */
+  FRAME_CLASS frameClass;   /*!< SBR frame class  */
+  INT bs_num_env;           /*!< bs_num_env, number of envelopes for FIXFIX */
+  INT bs_abs_bord;          /*!< bs_abs_bord, absolute border for VARFIX and FIXVAR */
+  INT n;                    /*!< number of relative borders for VARFIX and FIXVAR   */
+  INT p;                    /*!< pointer-to-transient-border  */
+  INT bs_rel_bord[MAX_NUM_REL];         /*!< bs_rel_bord, relative borders for all VAR */
+  INT v_f[MAX_ENVELOPES_FIXVAR_VARFIX]; /*!< envelope frequency resolutions for FIXVAR and VARFIX  */
+
+  INT bs_abs_bord_0;        /*!< bs_abs_bord_0, leading absolute border for VARVAR */
+  INT bs_abs_bord_1;        /*!< bs_abs_bord_1, trailing absolute border for VARVAR */
+  INT bs_num_rel_0;         /*!< bs_num_rel_0, number of relative borders associated with leading absolute border for VARVAR */
+  INT bs_num_rel_1;         /*!< bs_num_rel_1, number of relative borders associated with trailing absolute border for VARVAR */
+  INT bs_rel_bord_0[MAX_NUM_REL];       /*!< bs_rel_bord_0, relative borders associated with leading absolute border for VARVAR */
+  INT bs_rel_bord_1[MAX_NUM_REL];       /*!< bs_rel_bord_1, relative borders associated with trailing absolute border for VARVAR */
+  INT v_fLR[MAX_ENVELOPES_VARVAR];      /*!< envelope frequency resolutions for VARVAR  */
+
+}
+SBR_GRID;
+typedef SBR_GRID *HANDLE_SBR_GRID;
+
+
+
+/*!
+  \struct SBR_FRAME_INFO
+  \brief  time/frequency grid description for one frame
+*/
+typedef struct
+{
+  INT nEnvelopes;                         /*!< number of envelopes */
+  INT borders[MAX_ENVELOPES+1];           /*!< envelope borders in SBR timeslots */
+  FREQ_RES freqRes[MAX_ENVELOPES];        /*!< frequency resolution of each envelope */
+  INT shortEnv;                           /*!< number of an envelope to be shortened (starting at 1) or 0 for no shortened envelope */
+  INT nNoiseEnvelopes;                    /*!< number of noise floors */
+  INT bordersNoise[MAX_NOISE_ENVELOPES+1];/*!< noise floor borders in SBR timeslots */
+}
+SBR_FRAME_INFO;
+/* WARNING: When rearranging the elements of this struct keep in mind that the static
+ * initializations in the corresponding C-file have to be rearranged as well!
+ * snd 2002/01/23
+ */
+typedef SBR_FRAME_INFO *HANDLE_SBR_FRAME_INFO;
+
+
+/*!
+  \struct SBR_ENVELOPE_FRAME
+  \brief  frame generator main struct
+
+  Contains tuning parameters, time/frequency grid description, sbr_grid() bitstream elements, and generator internal signals
+*/
+typedef struct
+{
+  /* system constants */
+  INT frameMiddleSlot;      /*!< transient detector offset in SBR timeslots */
+
+  /* basic tuning parameters */
+  INT staticFraming;        /*!< 1: run static framing in time, i.e. exclusive use of bs_frame_class = FIXFIX */
+  INT numEnvStatic;         /*!< number of envelopes per frame for static framing */
+  INT freq_res_fixfix;      /*!< envelope frequency resolution to use for bs_frame_class = FIXFIX */
+
+  /* expert tuning parameters */
+  const int *v_tuningSegm;  /*!< segment lengths to use around transient */
+  const int *v_tuningFreq;  /*!< frequency resolutions to use around transient */
+  INT dmin;                 /*!< minimum length of dependent segments */
+  INT dmax;                 /*!< maximum length of dependent segments */
+  INT allowSpread;          /*!< 1: allow isolated transient to influence grid of 3 consecutive frames */
+
+  /* internally used signals */
+  FRAME_CLASS frameClassOld;                /*!< frame class used for previous frame */
+  INT spreadFlag;                           /*!< 1: use VARVAR instead of VARFIX to follow up old transient */
+
+  INT v_bord[2 * MAX_ENVELOPES_VARVAR + 1]; /*!< borders for current frame and preliminary borders for next frame (fixed borders excluded) */
+  INT length_v_bord;                        /*!< helper variable: length of v_bord */
+  INT v_freq[2 * MAX_ENVELOPES_VARVAR + 1]; /*!< frequency resolutions for current frame and preliminary resolutions for next frame */
+  INT length_v_freq;                        /*!< helper variable: length of v_freq */
+
+  INT v_bordFollow[MAX_ENVELOPES_VARVAR];   /*!< preliminary borders for current frame (calculated during previous frame) */
+  INT length_v_bordFollow;                  /*!< helper variable: length of v_bordFollow */
+  INT i_tranFollow;                         /*!< points to transient border in v_bordFollow (may be negative, see keepForFollowUp()) */
+  INT i_fillFollow;                         /*!< points to first fill border in v_bordFollow */
+  INT v_freqFollow[MAX_ENVELOPES_VARVAR];   /*!< preliminary frequency resolutions for current frame (calculated during previous frame) */
+  INT length_v_freqFollow;                  /*!< helper variable: length of v_freqFollow */
+
+
+  /* externally needed signals */
+  SBR_GRID         SbrGrid;         /*!< sbr_grid() signals to be converted to bitstream elements */
+  SBR_FRAME_INFO   SbrFrameInfo;    /*!< time/frequency grid description for one frame */
+}
+SBR_ENVELOPE_FRAME;
+typedef SBR_ENVELOPE_FRAME *HANDLE_SBR_ENVELOPE_FRAME;
+
+
+
+void
+FDKsbrEnc_initFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME  hSbrEnvFrame,
+                          INT allowSpread,
+                          INT numEnvStatic,
+                          INT staticFraming,
+                          INT timeSlots,
+                          INT freq_res_fixfix
+                          ,int ldGrid
+                          );
+
+/* void deleteFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame); */
+
+HANDLE_SBR_FRAME_INFO
+FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
+                    UCHAR *v_transient_info,
+                    UCHAR *v_transient_info_pre,
+                    int ldGrid,
+                    const int *v_tuning);
+
+#endif

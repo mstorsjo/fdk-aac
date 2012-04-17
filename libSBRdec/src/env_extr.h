@@ -1,0 +1,261 @@
+/****************************************************************************
+
+                     (C) Copyright Fraunhofer IIS (2005)
+                               All Rights Reserved
+
+    Please be advised that this software and/or program delivery is
+    Confidential Information of Fraunhofer and subject to and covered by the
+
+    Fraunhofer IIS Software Evaluation Agreement
+    between Google Inc. and  Fraunhofer
+    effective and in full force since March 1, 2012.
+
+    You may use this software and/or program only under the terms and
+    conditions described in the above mentioned Fraunhofer IIS Software
+    Evaluation Agreement. Any other and/or further use requires a separate agreement.
+
+
+   This software and/or program is protected by copyright law and international
+   treaties. Any reproduction or distribution of this software and/or program,
+   or any portion of it, may result in severe civil and criminal penalties, and
+   will be prosecuted to the maximum extent possible under law.
+
+ $Id$
+
+*******************************************************************************/
+/*!
+  \file
+  \brief  Envelope extraction prototypes $Revision: 36841 $
+*/
+
+#ifndef __ENVELOPE_EXTRACTION_H
+#define __ENVELOPE_EXTRACTION_H
+
+#include "sbrdecoder.h"
+
+#include "FDK_bitstream.h"
+#include "lpp_tran.h"
+
+#include "psdec.h"
+
+#define ENV_EXP_FRACT 0
+/*!< Shift raw envelope data to support fractional numbers.
+  Can be set to 8 instead of 0 to enhance accuracy during concealment.
+  This is not required for conformance and #requantizeEnvelopeData() will
+  become more expensive.
+*/
+
+#define EXP_BITS 6
+/*!< Size of exponent-part of a pseudo float envelope value (should be at least 6).
+  The remaining bits in each word are used for the mantissa (should be at least 10).
+  This format is used in the arrays iEnvelope[] and sbrNoiseFloorLevel[]
+  in the FRAME_DATA struct which must fit in a certain part of the output buffer
+  (See buffer management in sbr_dec.cpp).
+  Exponents and mantissas could also be stored in separate arrays.
+  Accessing the exponent or the mantissa would be simplified and the masks #MASK_E
+  resp. #MASK_M would   no longer be required.
+*/
+
+#define MASK_M (((1 << (FRACT_BITS - EXP_BITS)) - 1) << EXP_BITS)  /*!< Mask for extracting the mantissa of a pseudo float envelope value */
+#define MASK_E ((1 << EXP_BITS) - 1)           /*!< Mask for extracting the exponent of a pseudo float envelope value */
+
+#define SIGN_EXT ( ((SCHAR)-1) ^ MASK_E)        /*!< a CHAR-constant with all bits above our sign-bit set */
+#define ROUNDING ( (FIXP_SGL)(1<<(EXP_BITS-1)) ) /*!< 0.5-offset for rounding the mantissa of a pseudo-float envelope value */
+#define NRG_EXP_OFFSET  16                     /*!< Will be added to the reference energy's exponent to prevent negative numbers */
+#define NOISE_EXP_OFFSET  38                   /*!< Will be added to the noise level exponent to prevent negative numbers */
+
+typedef enum
+{
+  HEADER_NOT_PRESENT,
+  HEADER_OK,
+  HEADER_RESET
+}
+SBR_HEADER_STATUS;
+
+typedef enum
+{
+  SBR_NOT_INITIALIZED,
+  UPSAMPLING,
+  SBR_HEADER,
+  SBR_ACTIVE
+}
+SBR_SYNC_STATE;
+
+
+typedef enum
+{
+  COUPLING_OFF = 0,
+  COUPLING_LEVEL,
+  COUPLING_BAL
+}
+COUPLING_MODE;
+
+typedef struct
+{
+  UCHAR nSfb[2];           /*!< Number of SBR-bands for low and high freq-resolution */
+  UCHAR nNfb;              /*!< Actual number of noise bands to read from the bitstream*/
+  UCHAR numMaster;         /*!< Number of SBR-bands in v_k_master */
+  UCHAR lowSubband;        /*!< QMF-band where SBR frequency range starts */
+  UCHAR highSubband;       /*!< QMF-band where SBR frequency range ends */
+  UCHAR limiterBandTable[MAX_NUM_LIMITERS+1]; /*!< Limiter band table. */
+  UCHAR noLimiterBands;    /*!< Number of limiter bands. */
+  UCHAR nInvfBands;        /*!< Number of bands for inverse filtering */
+  UCHAR *freqBandTable[2]; /*!< Pointers to freqBandTableLo and freqBandTableHi */
+  UCHAR freqBandTableLo[MAX_FREQ_COEFFS/2+1];
+                                   /*!< Mapping of SBR bands to QMF bands for low frequency resolution */
+  UCHAR freqBandTableHi[MAX_FREQ_COEFFS+1];
+                                   /*!< Mapping of SBR bands to QMF bands for high frequency resolution */
+  UCHAR freqBandTableNoise[MAX_NOISE_COEFFS+1];
+                                   /*!< Mapping of SBR noise bands to QMF bands */
+  UCHAR v_k_master[MAX_FREQ_COEFFS+1];
+                                   /*!< Master BandTable which freqBandTable is derived from */
+}
+FREQ_BAND_DATA;
+
+typedef FREQ_BAND_DATA *HANDLE_FREQ_BAND_DATA;
+
+#define SBRDEC_ELD_GRID        1
+#define SBRDEC_SYNTAX_SCAL     2
+#define SBRDEC_SYNTAX_USAC     4
+#define SBRDEC_SYNTAX_RSVD50   8
+#define SBRDEC_LOW_POWER      16  /* Flag indicating that Low Power QMF mode shall be used. */
+#define SBRDEC_PS_DECODED     32  /* Flag indicating that PS was decoded and rendered. */
+#define SBRDEC_LD_MPS_QMF    512  /* Flag indicating that the LD-MPS QMF shall be used. */
+
+#define SBRDEC_HDR_STAT_RESET  1
+#define SBRDEC_HDR_STAT_UPDATE 2
+
+typedef struct {
+  UCHAR ampResolution;       /*!< Amplitude resolution of envelope values (0: 1.5dB, 1: 3dB) */
+  UCHAR xover_band;          /*!< Start index in #v_k_master[] used for dynamic crossover frequency */
+  UCHAR sbr_preprocessing;   /*!< SBR prewhitening flag. */
+} SBR_HEADER_DATA_BS_INFO;
+
+typedef struct {
+  /* Changes in these variables causes a reset of the decoder */
+  UCHAR startFreq;           /*!< Index for SBR start frequency */
+  UCHAR stopFreq;            /*!< Index for SBR highest frequency */
+  UCHAR freqScale;           /*!< 0: linear scale,  1-3 logarithmic scales */
+  UCHAR alterScale;          /*!< Flag for coarser frequency resolution */
+  UCHAR noise_bands;         /*!< Noise bands per octave, read from bitstream*/
+
+  /* don't require reset */
+  UCHAR limiterBands;        /*!< Index for number of limiter bands per octave */
+  UCHAR limiterGains;        /*!< Index to select gain limit */
+  UCHAR interpolFreq;        /*!< Select gain calculation method (1: per QMF channel, 0: per SBR band) */
+  UCHAR smoothingLength;     /*!< Smoothing of gains over time (0: on  1: off) */
+
+} SBR_HEADER_DATA_BS;
+
+typedef struct
+{
+  SBR_SYNC_STATE syncState;    /*!< The current initialization status of the header */
+
+  UCHAR status;                /*!< Flags field used for signaling a reset right before the processing starts and an update from config (e.g. ASC). */
+  UCHAR frameErrorFlag;        /*!< Frame data valid flag. CAUTION: This variable will be overwritten by the flag stored in the element structure.
+                                    This is necessary because of the frame delay. There it might happen that different slots use the same header. */
+  UCHAR numberTimeSlots;       /*!< AAC: 16,15 */
+  UCHAR numberOfAnalysisBands; /*!< Number of QMF analysis bands */
+  UCHAR timeStep;              /*!< Time resolution of SBR in QMF-slots */
+  UINT  sbrProcSmplRate;       /*!< SBR processing sampling frequency (!= OutputSamplingRate)
+                                     (always: CoreSamplingRate * UpSamplingFactor; even in single rate mode) */
+
+  SBR_HEADER_DATA_BS      bs_data;  /*!< current SBR header. */
+  SBR_HEADER_DATA_BS_INFO bs_info;  /*!< SBR info. */
+
+  FREQ_BAND_DATA freqBandData;  /*!< Pointer to struct #FREQ_BAND_DATA */
+}
+SBR_HEADER_DATA;
+
+typedef SBR_HEADER_DATA *HANDLE_SBR_HEADER_DATA;
+
+
+typedef struct
+{
+  UCHAR frameClass;               /*!< Select grid type */
+  UCHAR nEnvelopes;               /*!< Number of envelopes */
+  UCHAR borders[MAX_ENVELOPES+1]; /*!< Envelope borders (in SBR-timeslots, e.g. mp3PRO: 0..11) */
+  UCHAR freqRes[MAX_ENVELOPES];   /*!< Frequency resolution for each envelope (0=low, 1=high) */
+  SCHAR  tranEnv;                 /*!< Transient envelope, -1 if none */
+  UCHAR nNoiseEnvelopes;          /*!< Number of noise envelopes */
+  UCHAR bordersNoise[MAX_NOISE_ENVELOPES+1];/*!< borders of noise envelopes */
+}
+FRAME_INFO;
+
+
+typedef struct
+{
+  FIXP_SGL sfb_nrg_prev[MAX_FREQ_COEFFS];    /*!< Previous envelope (required for differential-coded values) */
+  FIXP_SGL prevNoiseLevel[MAX_NOISE_COEFFS]; /*!< Previous noise envelope (required for differential-coded values) */
+  COUPLING_MODE coupling;                    /*!< Stereo-mode of previous frame */
+  INVF_MODE sbr_invf_mode[MAX_INVF_BANDS];   /*!< Previous strength of filtering in transposer */
+  UCHAR ampRes;                              /*!< Previous amplitude resolution (0: 1.5dB, 1: 3dB) */
+  UCHAR stopPos;                             /*!< Position in time where last envelope ended */
+  UCHAR frameErrorFlag;                      /*!< Previous frame status */
+}
+SBR_PREV_FRAME_DATA;
+
+typedef SBR_PREV_FRAME_DATA *HANDLE_SBR_PREV_FRAME_DATA;
+
+
+typedef struct
+{
+  int nScaleFactors;                    /*!< total number of scalefactors in frame */
+
+  FRAME_INFO frameInfo;                 /*!< time grid for current frame */
+  UCHAR domain_vec[MAX_ENVELOPES];      /*!< Bitfield containing direction of delta-coding for each envelope (0:frequency, 1:time) */
+  UCHAR domain_vec_noise[MAX_NOISE_ENVELOPES]; /*!< Same as above, but for noise envelopes */
+
+  INVF_MODE sbr_invf_mode[MAX_INVF_BANDS]; /*!< Strength of filtering in transposer */
+  COUPLING_MODE coupling;                  /*!< Stereo-mode */
+  int ampResolutionCurrentFrame;           /*!< Amplitude resolution of envelope values (0: 1.5dB, 1: 3dB) */
+
+  UCHAR addHarmonics[MAX_FREQ_COEFFS];     /*!< Flags for synthetic sine addition */
+
+  FIXP_SGL iEnvelope[MAX_NUM_ENVELOPE_VALUES];       /*!< Envelope data */
+  FIXP_SGL sbrNoiseFloorLevel[MAX_NUM_NOISE_VALUES]; /*!< Noise envelope data */
+}
+SBR_FRAME_DATA;
+
+typedef SBR_FRAME_DATA *HANDLE_SBR_FRAME_DATA;
+
+void initSbrPrevFrameData (HANDLE_SBR_PREV_FRAME_DATA h_prev_data,
+                           int timeSlots);
+
+
+int sbrGetSingleChannelElement (HANDLE_SBR_HEADER_DATA hHeaderData,
+                                HANDLE_SBR_FRAME_DATA  hFrameData,
+                                HANDLE_FDK_BITSTREAM   hBitBuf,
+                                HANDLE_PS_DEC hParametricStereoDec,
+                                const UINT             flags,
+                                const int              overlap
+                               );
+
+int sbrGetChannelPairElement (HANDLE_SBR_HEADER_DATA hHeaderData,
+                              HANDLE_SBR_FRAME_DATA  hFrameDataLeft,
+                              HANDLE_SBR_FRAME_DATA  hFrameDataRight,
+                              HANDLE_FDK_BITSTREAM   hBitBuf,
+                              const UINT             flags,
+                              const int              overlap);
+
+SBR_HEADER_STATUS
+sbrGetHeaderData (HANDLE_SBR_HEADER_DATA headerData,
+                  HANDLE_FDK_BITSTREAM   hBitBuf,
+                  const UINT             flags,
+                  const int              fIsSbrData);
+
+/*!
+  \brief     Initialize SBR header data
+
+  Copy default values to the header data struct and patch some entries
+  depending on the core codec.
+*/
+SBR_ERROR
+initHeaderData (
+        HANDLE_SBR_HEADER_DATA  hHeaderData,
+        const int               sampleRateIn,
+        const int               sampleRateOut,
+        const int               samplesPerFrame,
+        const UINT              flags
+        );
+#endif
