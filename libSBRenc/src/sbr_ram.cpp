@@ -26,7 +26,7 @@
 /*!
   \file
   \brief Memory layout
-  $Revision: 36847 $
+  $Revision: 37142 $
 
   This module declares all static and dynamic memory spaces
 */
@@ -114,38 +114,9 @@ C_ALLOC_MEM2 (Ram_Sbr_guideVectorOrig, FIXP_DBL, (MAX_NO_OF_ESTIMATES*MAX_FREQ_C
 */
 C_AALLOC_MEM_L(Ram_PsQmfStatesSynthesis, FIXP_DBL, QMF_FILTER_LENGTH/2, SECT_DATA_L1)
 
-C_ALLOC_MEM   (Ram_PsEnvRBuffer, FIXP_DBL, QMF_MAX_TIME_SLOTS*QMF_CHANNELS/2)
-C_ALLOC_MEM   (Ram_PsEnvIBuffer, FIXP_DBL, QMF_MAX_TIME_SLOTS*QMF_CHANNELS/2)
-C_ALLOC_MEM2  (Ram_PsChData,    PS_CHANNEL_DATA, 1, MAX_PS_CHANNELS)
-C_ALLOC_MEM   (Ram_PsEncConf,   PSENC_CONFIG, 1)
 C_ALLOC_MEM_L (Ram_PsEncode,    PS_ENCODE, 1, SECT_DATA_L1)
-C_ALLOC_MEM   (Ram_PsData,      PS_DATA, 1)
 C_ALLOC_MEM   (Ram_ParamStereo, PARAMETRIC_STEREO, 1)
-C_ALLOC_MEM2  (Ram_PsOut,       PS_OUT, 1, 2)
 
-
-/* QMF data
- */
-C_ALLOC_MEM   (Ram_PsQmfNewSamples,      FIXP_DBL, QMF_CHANNELS)
-
-C_ALLOC_MEM2  (Ram_PsQmfData, PS_QMF_DATA, 1, MAX_PS_CHANNELS)
-
-/*  HYBRID data
- */
-C_AALLOC_MEM (Ram_PsHybFFT, FIXP_DBL, 16)
-
-C_ALLOC_MEM2(Ram_HybData,     PS_HYBRID_DATA, 1, MAX_PS_CHANNELS)
-C_ALLOC_MEM2(Ram_PsHybrid,    PS_HYBRID,      1, MAX_PS_CHANNELS)
-C_ALLOC_MEM (Ram_PsHybConfig, PS_HYBRID_CONFIG, 1)
-
-C_ALLOC_MEM2(Ram_PsRhyb, FIXP_QMF, ((HYBRID_FRAMESIZE+HYBRID_WRITEOFFSET)*HYBRID_NUM_BANDS), MAX_PS_CHANNELS)
-C_ALLOC_MEM2(Ram_PsIhyb, FIXP_QMF, ((HYBRID_FRAMESIZE+HYBRID_WRITEOFFSET)*HYBRID_NUM_BANDS), MAX_PS_CHANNELS)
-
-C_ALLOC_MEM (Ram_PsHybWkReal, FIXP_QMF, (HYBRID_FRAMESIZE + QMF_BUFFER_MOVE))
-C_ALLOC_MEM (Ram_PsHybWkImag, FIXP_QMF, (HYBRID_FRAMESIZE + QMF_BUFFER_MOVE))
-
-C_ALLOC_MEM2(Ram_PsMtmpReal, FIXP_QMF, (MAX_HYBRID_RES), HYBRID_FRAMESIZE)
-C_ALLOC_MEM2(Ram_PsMtmpImag, FIXP_QMF, (MAX_HYBRID_RES), HYBRID_FRAMESIZE)
 
 
 /* @} */
@@ -175,38 +146,11 @@ C_ALLOC_MEM2(Ram_PsMtmpImag, FIXP_QMF, (MAX_HYBRID_RES), HYBRID_FRAMESIZE)
   /* The SBR encoder uses a single channel overlapping buffer set (always n=0), but PS does not. */
   FIXP_DBL* GetRam_Sbr_envRBuffer (int n, UCHAR* dynamic_RAM) {
     FDK_ASSERT(dynamic_RAM!=0);
-    return ((FIXP_DBL*) (dynamic_RAM + OFFSET_QMF + (n*ENV_R_BUFF_BYTE*2) ));
+    return ((FIXP_DBL*) (dynamic_RAM + OFFSET_QMF + (n*(ENV_R_BUFF_BYTE+ENV_I_BUFF_BYTE)) ));
   }
   FIXP_DBL* GetRam_Sbr_envIBuffer (int n, UCHAR* dynamic_RAM) {
     FDK_ASSERT(dynamic_RAM!=0);
-    //return ((FIXP_DBL*) (dynamic_RAM + OFFSET_QMF + (MAX_NUM_CHANNELS*ENV_R_BUFF_BYTE) + n*ENV_I_BUFF_BYTE));
-    return ((FIXP_DBL*) (dynamic_RAM + OFFSET_QMF + (ENV_R_BUFF_BYTE) + (n*ENV_I_BUFF_BYTE*2)));
-  }
-
-  /* reuse QMF buffer in PS module. We Require space to hold 2 channels. */
-  C_ALLOC_MEM2(Ram_PsRqmf, FIXP_QMF, ((PSENC_QMF_BUFFER_LENGTH-QMF_MAX_TIME_SLOTS)*(QMF_CHANNELS)), MAX_PS_CHANNELS)
-  C_ALLOC_MEM2(Ram_PsIqmf, FIXP_QMF, ((PSENC_QMF_BUFFER_LENGTH-QMF_MAX_TIME_SLOTS)*(QMF_CHANNELS)), MAX_PS_CHANNELS)
-
-  FIXP_QMF* FDKsbrEnc_SliceRam_PsRqmf(FIXP_DBL* rQmfData, UCHAR* dynamic_RAM, int ch, int i, int qmfSlots)
-  {
-       FDK_ASSERT(dynamic_RAM!=0);
-       if (i<HYBRID_READ_OFFSET)
-         return rQmfData + (i*(QMF_CHANNELS));
-       else if ((i<(HYBRID_READ_OFFSET+qmfSlots)))
-         return  GetRam_Sbr_envRBuffer(ch, dynamic_RAM) + ( (i-(HYBRID_READ_OFFSET))*(QMF_CHANNELS) );
-       else
-         return rQmfData + ((i-qmfSlots)*(QMF_CHANNELS));
-  }
-
-  FIXP_QMF* FDKsbrEnc_SliceRam_PsIqmf(FIXP_DBL* iQmfData, UCHAR* dynamic_RAM, int ch, int i, int qmfSlots)
-  {
-       FDK_ASSERT(dynamic_RAM!=0);
-       if (i<HYBRID_READ_OFFSET)
-         return iQmfData + (i*(QMF_CHANNELS));
-       else if ((i<(HYBRID_READ_OFFSET+qmfSlots)))
-         return  GetRam_Sbr_envIBuffer(ch, dynamic_RAM) + ( (i-(HYBRID_READ_OFFSET))*(QMF_CHANNELS) );
-       else
-         return iQmfData + ((i-qmfSlots)*(QMF_CHANNELS));
+    return ((FIXP_DBL*) (dynamic_RAM + OFFSET_QMF + (ENV_R_BUFF_BYTE) + (n*(ENV_R_BUFF_BYTE+ENV_I_BUFF_BYTE))));
   }
 
 

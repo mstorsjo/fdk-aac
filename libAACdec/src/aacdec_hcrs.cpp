@@ -736,6 +736,9 @@ UINT Hcr_State_BODY_SIGN__SIGN(HANDLE_FDK_BITSTREAM bs, void *ptr)
     /* search for a line (which was decoded in previous state) which is not zero. [This value will get a sign] */
     while ( pResultBase[iQSC] == (FIXP_DBL)0 ) {
       iQSC++;                                                                               /* points to current value different from zero */
+      if (iQSC >= 1024) {
+        return BODY_SIGN__SIGN;
+      }
     }
 
     /* put sign together with line; if carryBit is zero, the sign is ok already; no write operation necessary in this case */

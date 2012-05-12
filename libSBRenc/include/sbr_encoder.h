@@ -213,6 +213,16 @@ INT sbrEncoder_Open(
         );
 
 /**
+ * \brief get closest working bit rate to specified desired bit rate for a single SBR element
+ * \param bitRate the desired target bit rate
+ * \param numChannels the amount of audio channels
+ * \param coreSampleRate the sample rate of the core coder
+ * \param the current Audio Object Type
+ * \return closest working bit rate to bitRate value
+ */
+UINT sbrEncoder_LimitBitRate(UINT bitRate, UINT numChannels, UINT coreSampleRate, AUDIO_OBJECT_TYPE aot);
+
+/**
  * \brief                  Initialize SBR Encoder instance.
  * \param phSbrEncoder     Pointer to a SBR Encoder instance.
  * \param elInfo           Structure that describes the element/channel arrangement.

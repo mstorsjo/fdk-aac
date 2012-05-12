@@ -7,6 +7,7 @@ LOCAL_SRC_FILES := \
         FDK_bitbuffer.cpp \
         FDK_core.cpp \
         FDK_crc.cpp \
+        FDK_hybrid.cpp \
         FDK_tools_rom.cpp \
         FDK_trigFcts.cpp \
         fft.cpp \

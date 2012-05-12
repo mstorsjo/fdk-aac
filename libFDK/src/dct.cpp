@@ -21,7 +21,7 @@
 *******************************************************************************/
 /*!
   \file   dct.cpp
-  \brief  DCT Implementations  $Revision: 36871 $
+  \brief  DCT Implementations  $Revision: 37444 $
   Library functions to calculate standard DCTs. This will most likely be replaced by hand-optimized
   functions for the specific target processor.
 

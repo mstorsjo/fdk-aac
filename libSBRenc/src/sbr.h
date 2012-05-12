@@ -25,7 +25,7 @@
 *******************************************************************************/
 /*!
   \file
-  \brief  Main SBR structs definitions $Revision: 36847 $
+  \brief  Main SBR structs definitions $Revision: 37142 $
 */
 
 #ifndef __SBR_H
@@ -92,7 +92,6 @@ struct SBR_ENCODER
   UCHAR* dynamicRam;
   UCHAR* pSBRdynamic_RAM;
 
-  HANDLE_PSENC_CONFIG       hPsEncConfig;
   HANDLE_PARAMETRIC_STEREO  hParametricStereo;
   QMF_FILTER_BANK           qmfSynthesisPS;
 

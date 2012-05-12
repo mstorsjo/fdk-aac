@@ -40,7 +40,7 @@
 
 /* Always increase verbosity of memory allocation in case of a debug built. DEBUG is defined globally in that case. */
 #if defined(DEBUG) || defined(FDK_DEBUG)
-#define MEMORY_MEASUREMENT
+//#define MEMORY_MEASUREMENT
 #endif
 
 #ifndef M_PI

@@ -799,27 +799,6 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
   } /* i*/
 }
 
-/*
- * Update QMF buffers
- */
-static void FDKsbrEnc_updateRIBuffers(HANDLE_ENV_CHANNEL h_envChan)
-{
-    int i;
-
-    /* rBufferWriteOffset ist always 0, do we need this ? */
-    for (i = 0; i < h_envChan->sbrExtractEnvelope.rBufferWriteOffset; i++) {
-      FIXP_DBL *temp;
-
-      temp = h_envChan->sbrExtractEnvelope.rBuffer[i];
-      h_envChan->sbrExtractEnvelope.rBuffer[i] = h_envChan->sbrExtractEnvelope.rBuffer[i + h_envChan->sbrExtractEnvelope.no_cols];
-      h_envChan->sbrExtractEnvelope.rBuffer[i + h_envChan->sbrExtractEnvelope.no_cols] = temp;
-
-      temp = h_envChan->sbrExtractEnvelope.iBuffer[i];
-      h_envChan->sbrExtractEnvelope.iBuffer[i] = h_envChan->sbrExtractEnvelope.iBuffer[i + h_envChan->sbrExtractEnvelope.no_cols];
-      h_envChan->sbrExtractEnvelope.iBuffer[i + h_envChan->sbrExtractEnvelope.no_cols] = temp;
-    }
-}
-
 /***************************************************************************/
 /*!
 
@@ -873,8 +852,8 @@ FDKsbrEnc_extractSbrEnvelope1 (
     Precalculation of Tonality Quotas  COEFF Transform OK
   */
   FDKsbrEnc_CalculateTonalityQuotas(&hEnvChan->TonCorr,
-                                     sbrExtrEnv->rBuffer+ sbrExtrEnv->rBufferWriteOffset,
-                                     sbrExtrEnv->iBuffer+ sbrExtrEnv->rBufferWriteOffset,
+                                     sbrExtrEnv->rBuffer,
+                                     sbrExtrEnv->iBuffer,
                                      h_con->freqBandTable[HI][h_con->nSfb[HI]],
                                      hEnvChan->qmfScale);
 
@@ -914,8 +893,6 @@ FDKsbrEnc_extractSbrEnvelope1 (
                           sbrExtrEnv->no_cols);
 
 
-
-  FDKsbrEnc_updateRIBuffers(hEnvChan);
 }
 
 /***************************************************************************/
@@ -1741,12 +1718,11 @@ FDKsbrEnc_InitExtractSbrEnvelope (HANDLE_SBR_EXTRACT_ENVELOPE  hSbrCut,
   {
     hSbrCut->YBufferWriteOffset = tran_off*time_step;
   }
-  hSbrCut->rBufferWriteOffset = 0;
   hSbrCut->rBufferReadOffset  = 0;
 
 
   YBufferLength = hSbrCut->YBufferWriteOffset + no_cols;
-  rBufferLength = hSbrCut->rBufferWriteOffset + no_cols;
+  rBufferLength = no_cols;
 
   hSbrCut->pre_transient_info[0] = 0;
   hSbrCut->pre_transient_info[1] = 0;
@@ -1824,8 +1800,8 @@ FDKsbrEnc_deleteExtractSbrEnvelope (HANDLE_SBR_EXTRACT_ENVELOPE hSbrCut)
 INT
 FDKsbrEnc_GetEnvEstDelay(HANDLE_SBR_EXTRACT_ENVELOPE hSbr)
 {
-  return hSbr->no_rows*((hSbr->YBufferWriteOffset)*2 +    /* mult 2 because nrg's are grouped half */
-                        hSbr->rBufferWriteOffset - hSbr->rBufferReadOffset );       /* in reference hold half spec and calc nrg's on overlapped spec */
+  return hSbr->no_rows*((hSbr->YBufferWriteOffset)*2     /* mult 2 because nrg's are grouped half */
+                        - hSbr->rBufferReadOffset );       /* in reference hold half spec and calc nrg's on overlapped spec */
 
 }
 

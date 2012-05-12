@@ -26,7 +26,7 @@
 /*!
 \file
 \brief Declaration of constant tables
-$Revision: 36847 $
+$Revision: 37577 $
 */
 #ifndef __SBR_ROM_H
 #define __SBR_ROM_H
@@ -60,7 +60,11 @@ extern const UCHAR         v_Huff_NoiseLevelL11T[63];
 extern const INT           bookSbrNoiseBalanceC11T[25];
 extern const UCHAR         bookSbrNoiseBalanceL11T[25];
 
-#define SBRENC_TUNING_SIZE (126 + 37)
+#define SBRENC_AACLC_TUNING_SIZE   124
+#define SBRENC_AACELD_TUNING_SIZE   35
+#define SBRENC_AACELD2_TUNING_SIZE  31
+
+#define SBRENC_TUNING_SIZE (SBRENC_AACLC_TUNING_SIZE + SBRENC_AACELD_TUNING_SIZE)
 
 extern const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE];
 

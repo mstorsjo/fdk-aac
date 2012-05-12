@@ -236,6 +236,7 @@ typedef enum {
 #define CC_IS_BASELAYER    0x00200000
 #define CC_PROTECTION      0x00400000
 #define CC_SBR             0x00800000
+#define CC_SBRCRC          0x00010000
 #define CC_RVLC            0x01000000
 #define CC_VCB11           0x02000000
 #define CC_HCR             0x04000000
@@ -283,6 +284,11 @@ typedef enum
   ID_SCAL = 9,    /**< AAC scalable element (ER only).        */
   ID_LAST
 } MP4_ELEMENT_ID;
+
+#define IS_CHANNEL_ELEMENT(elementId) \
+  ((elementId) == ID_SCE \
+|| (elementId) == ID_CPE \
+|| (elementId) == ID_LFE)
 
 #define EXT_ID_BITS 4  /**< Size in bits of extension payload type tags. */
 

@@ -48,7 +48,7 @@
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 4
-#define AACDECODER_LIB_VL2 0
+#define AACDECODER_LIB_VL2 1
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -499,6 +499,8 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt, UINT
   if (pIn == NULL) {
     return NULL;
   }
+
+  transportDec_SetParam(pIn, TPDEC_PARAM_IGNORE_BUFFERFULLNESS, 1);
 
   /* Allocate AAC decoder core struct. */
   aacDec = CAacDecoder_Open(transportFmt);

@@ -25,7 +25,7 @@
 *******************************************************************************/
 /*!
   \file
-  \brief  Sbr decoder $Revision: 36841 $
+  \brief  Sbr decoder $Revision: 37646 $
   This module provides the actual decoder implementation. The SBR data (side information) is already
   decoded. Only three functions are provided:
 
@@ -537,6 +537,9 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
         maxShift = hSbrDec->sbrDrcChannel.nextFact_exp;
       }
 
+      /* copy DRC data to right channel (with PS both channels use the same DRC gains) */
+      FDKmemcpy(&hSbrDecRight->sbrDrcChannel, &hSbrDec->sbrDrcChannel, sizeof(SBRDEC_DRC_CHANNEL));
+
       for (i = 0; i < synQmf->no_col; i++) {  /* ----- no_col loop ----- */
 
         INT outScalefactorR, outScalefactorL;
@@ -565,7 +568,7 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
 
 
         sbrDecoder_drcApplySlot ( /* right channel */
-                                 &hSbrDec->sbrDrcChannel,
+                                 &hSbrDecRight->sbrDrcChannel,
                                   rQmfReal,
                                   rQmfImag,
                                   i,

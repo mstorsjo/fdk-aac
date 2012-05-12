@@ -34,7 +34,7 @@
 enum
 {
   TNS_MAX_WINDOWS = 8,    /* 8 */
-  TNS_MAXIMUM_ORDER   = 12,  /* 12 for AAC-LC and AAC-SSR. Set to 20 for AAC-Main (AOT 1). Some broken encoders also do order 20 for AAC-LC :( */
+  TNS_MAXIMUM_ORDER   = 20,  /* 12 for AAC-LC and AAC-SSR. Set to 20 for AAC-Main (AOT 1). Some broken encoders also do order 20 for AAC-LC :( */
   TNS_MAXIMUM_FILTERS = 3
 };
 

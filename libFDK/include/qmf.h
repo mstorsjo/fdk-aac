@@ -25,7 +25,7 @@
 *******************************************************************************/
 /*!
   \file   qmf.h
-  \brief  Complex qmf analysis/synthesis  $Revision: 36871 $
+  \brief  Complex qmf analysis/synthesis  $Revision: 37444 $
   \author Markus Werner
 
 */

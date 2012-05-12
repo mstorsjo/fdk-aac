@@ -1314,23 +1314,30 @@ AAC_ENCODER_ERROR FDKaacEnc_FinalizeBitConsumption(CHANNEL_MAPPING *cm,
     /* Now we can get the exact transport bit amount, and hopefully it is equal to the estimated value */
     exactTpBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
 
-    while (exactTpBits != qcKernel->globHdrBits && (max_iter-- > 0))
-    {
-      INT diffBits = qcKernel->globHdrBits-exactTpBits;
-      if (diffBits >= 0) {
-        /* move bits from header to payload */
-        qcOut->totFillBits     += diffBits;
-        qcOut->totalBits       += diffBits;
-        qcOut->grantedDynBits  += diffBits;
+    if (exactTpBits != qcKernel->globHdrBits) {
+      INT diffFillBits = 0;
+
+      /* Number of bits which can be moved to bitreservoir. */
+      INT bitsToBitres = qcKernel->globHdrBits - exactTpBits;
+
+      if (bitsToBitres>0) {
+        /* if bitreservoir can not take all bits, move ramaining bits to fillbits */
+        diffFillBits = FDKmax(0, bitsToBitres - (qcKernel->bitResTotMax-qcKernel->bitResTot));
       }
-      else {
-        /* get missing bits from bitreservoir */
-        qcKernel->bitResTot    += diffBits;
+      else if (bitsToBitres<0) {
+        /* if bits mus be taken from bitreservoir, reduce fillbits first. */
+        diffFillBits = (FDKmax(FDKmax(bitsToBitres, -qcKernel->bitResTot), -qcOut->totFillBits));
       }
-      qcKernel->globHdrBits = exactTpBits;
-      exactTpBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
+
+      diffFillBits = (diffFillBits+7)&~7; /* assure previous alignment */
+
+      qcOut->totFillBits     += diffFillBits;
+      qcOut->totalBits       += diffFillBits;
+      qcOut->grantedDynBits  += diffFillBits;
+
+      /* new header bits */
+      qcKernel->globHdrBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
     }
-    FDK_ASSERT(exactTpBits == qcKernel->globHdrBits);
   }
 
   /* Save total fill bits and distribut to alignment and fill bits */

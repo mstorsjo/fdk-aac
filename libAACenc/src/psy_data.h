@@ -60,7 +60,7 @@ typedef shouldBeUnion{
 
 typedef struct{
   INT_PCM*                  psyInputBuffer;
-  FIXP_DBL  RESTRICT        overlapAddBuffer[1024];
+  FIXP_DBL                  overlapAddBuffer[1024];
 
   BLOCK_SWITCHING_CONTROL   blockSwitchingControl;              /* block switching */
   FIXP_DBL                  sfbThresholdnm1[MAX_SFB];           /* FDKaacEnc_PreEchoControl */

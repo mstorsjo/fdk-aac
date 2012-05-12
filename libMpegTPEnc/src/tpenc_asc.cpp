@@ -33,15 +33,6 @@
 #include "FDK_bitstream.h"
 #include "genericStds.h"
 
-#define ASC_FLAG_EXT    0x0001
-#define ASC_FLAG_SBR    0x0002
-#define ASC_FLAG_SBRCRC 0x0004
-#define ASC_FLAG_VCB11  0x0010
-#define ASC_FLAG_RVLC   0x0020
-#define ASC_FLAG_HCR    0x0040
-#define ASC_FLAG_HCR    0x0040
-
-
 #define PCE_MAX_ELEMENTS 8
 
 /**
@@ -353,7 +344,6 @@ int transportEnc_writeELDSpecificConfig(
                                          HANDLE_FDK_BITSTREAM hBs,
                                          CODER_CONFIG *config,
                                          int        epConfig,
-                                         int        flags,
                                          CSTpCallBacks *cb
                                         )
 {
@@ -363,14 +353,14 @@ int transportEnc_writeELDSpecificConfig(
   }
   FDKwriteBits(hBs, (config->samplesPerFrame == 480) ? 1 : 0, 1);
 
-  FDKwriteBits(hBs, (flags & ASC_FLAG_VCB11) ? 1:0, 1);
-  FDKwriteBits(hBs, (flags & ASC_FLAG_RVLC ) ? 1:0, 1);
-  FDKwriteBits(hBs, (flags & ASC_FLAG_HCR  ) ? 1:0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_VCB11 ) ? 1:0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_RVLC ) ? 1:0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_HCR  ) ? 1:0, 1);
 
-  FDKwriteBits(hBs, (flags & ASC_FLAG_SBR) ? 1:0, 1); /* SBR header flag */
-  if ( (flags & ASC_FLAG_SBR) ) {
+  FDKwriteBits(hBs, (config->flags & CC_SBR) ? 1:0, 1); /* SBR header flag */
+  if ( (config->flags & CC_SBR) ) {
     FDKwriteBits(hBs, (config->samplingRate == config->extSamplingRate) ? 0:1, 1); /* Samplerate Flag */
-    FDKwriteBits(hBs, (flags &ASC_FLAG_SBRCRC) ? 1:0, 1); /* SBR CRC flag*/
+    FDKwriteBits(hBs, (config->flags & CC_SBRCRC) ? 1:0, 1); /* SBR CRC flag*/
 
     if (cb->cbSbr != NULL) {
       const PCE_CONFIGURATION *pPce;
@@ -399,7 +389,7 @@ int transportEnc_writeASC (
                             CSTpCallBacks *cb
                            )
 {
-  UINT flags = 0;
+  UINT extFlag = 0;
   int err;
   int epConfig = 0;
 
@@ -416,13 +406,10 @@ int transportEnc_writeASC (
     case AOT_ER_AAC_LD:
     case AOT_ER_AAC_ELD:
     case AOT_USAC:
-        flags |= ASC_FLAG_EXT;
+        extFlag = 1;
         break;
     default:
         break;
-  }
-  if (config->flags & CC_SBR) {
-    flags |= ASC_FLAG_SBR;
   }
 
   if (config->extAOT == AOT_SBR || config->extAOT == AOT_PS)
@@ -462,14 +449,14 @@ int transportEnc_writeASC (
     case AOT_ER_TWIN_VQ:
     case AOT_ER_BSAC:
     case AOT_ER_AAC_LD:
-      err = transportEnc_writeGASpecificConfig(asc, config, (flags & ASC_FLAG_EXT) ? 1:0, alignAnchor);
+      err = transportEnc_writeGASpecificConfig(asc, config, extFlag, alignAnchor);
       if (err)
         return err;
       break;
 #endif /* TP_GA_ENABLE */
 #ifdef TP_ELD_ENABLE
     case AOT_ER_AAC_ELD:
-      err = transportEnc_writeELDSpecificConfig(asc, config, epConfig, flags, cb);
+      err = transportEnc_writeELDSpecificConfig(asc, config, epConfig, cb);
       if (err)
         return err;
       break;

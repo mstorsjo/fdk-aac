@@ -37,7 +37,6 @@
 #include "qmf.h"
 
 #include "ps_main.h"
-#include "psenc_hybrid.h"
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 2
@@ -101,30 +100,76 @@
   \return Index to the appropriate table
 
 ****************************************************************************/
+#define DISTANCE_CEIL_VALUE 5000000
 static INT
 getSbrTuningTableIndex(UINT bitrate,    /*! the total bitrate in bits/sec */
                        UINT numChannels,/*! the number of channels for the core coder */
                        UINT sampleRate,  /*! the sampling rate of the core coder */
-                       AUDIO_OBJECT_TYPE core
+                       AUDIO_OBJECT_TYPE core,
+                       UINT *pBitRateClosest
                        )
 {
-  int i, paramSetTop;
+  int i, paramSetTop, bitRateClosestLowerIndex=-1, bitRateClosestUpperIndex=-1, found = 0;
+  UINT bitRateClosestUpper = 0, bitRateClosestLower=DISTANCE_CEIL_VALUE;
+
+  FDK_ASSERT(SBRENC_TUNING_SIZE == sizeof(sbrTuningTable)/sizeof(sbrTuningTable[0]));
 
   if (core == AOT_ER_AAC_ELD) {
     paramSetTop = SBRENC_TUNING_SIZE;
-    i = 126;
+    i = SBRENC_AACLC_TUNING_SIZE;
   } else {
-    paramSetTop = 126;
+    paramSetTop = SBRENC_AACLC_TUNING_SIZE;
     i = 0;
   }
 
   for (; i < paramSetTop ; i++) {
-    if (numChannels == sbrTuningTable [i].numChannels) {
-      if ((sampleRate == sbrTuningTable [i].sampleRate) &&
-          (bitrate >= sbrTuningTable [i].bitrateFrom) &&
+    if ( numChannels == sbrTuningTable [i].numChannels 
+      && sampleRate == sbrTuningTable [i].sampleRate )
+    {
+      found = 1;
+      if ((bitrate >= sbrTuningTable [i].bitrateFrom) &&
           (bitrate < sbrTuningTable [i].bitrateTo)) {
+            bitRateClosestLower = bitrate;
+            bitRateClosestUpper = bitrate;
+            //FDKprintf("entry %d\n", i);
         return i ;
+      } else {
+        if ( sbrTuningTable [i].bitrateFrom > bitrate ) {
+          if (sbrTuningTable [i].bitrateFrom < bitRateClosestLower) {
+            bitRateClosestLower = sbrTuningTable [i].bitrateFrom;
+            bitRateClosestLowerIndex = i;
+          }
+        }
+        if ( sbrTuningTable [i].bitrateTo <= bitrate ) {
+          if (sbrTuningTable [i].bitrateTo > bitRateClosestUpper) {
+            bitRateClosestUpper = sbrTuningTable [i].bitrateTo-1;
+            bitRateClosestUpperIndex = i;
+          }
+        }
       }
+    }
+  }
+
+  if (pBitRateClosest != NULL)
+  {
+    /* Is there was at least one matching tuning entry found then pick the least distance bit rate */
+    if (found)
+    {
+      int distanceUpper=DISTANCE_CEIL_VALUE, distanceLower=DISTANCE_CEIL_VALUE;
+      if (bitRateClosestLowerIndex >= 0) {
+        distanceLower = sbrTuningTable [bitRateClosestLowerIndex].bitrateFrom - bitrate;
+      }
+      if (bitRateClosestUpperIndex >= 0) {
+        distanceUpper = bitrate - sbrTuningTable [bitRateClosestUpperIndex].bitrateTo;
+      }
+      if ( distanceUpper < distanceLower )
+      {
+        *pBitRateClosest = bitRateClosestUpper;
+      } else {
+        *pBitRateClosest = bitRateClosestLower;
+      }    
+    } else {
+      *pBitRateClosest = 0;
     }
   }
 
@@ -141,14 +186,46 @@ getSbrTuningTableIndex(UINT bitrate,    /*! the total bitrate in bits/sec */
 
 ****************************************************************************/
 static INT
-getPsTuningTableIndex(UINT bitrate){
+getPsTuningTableIndex(UINT bitrate, UINT *pBitRateClosest){
 
   INT i, paramSets = sizeof (psTuningTable) / sizeof (psTuningTable [0]);
+  int bitRateClosestLowerIndex=-1, bitRateClosestUpperIndex=-1;
+  UINT bitRateClosestUpper = 0, bitRateClosestLower=DISTANCE_CEIL_VALUE;
 
   for (i = 0 ; i < paramSets ; i++)  {
     if ((bitrate >= psTuningTable [i].bitrateFrom) &&
         (bitrate < psTuningTable [i].bitrateTo)) {
       return i ;
+    } else {
+      if ( psTuningTable [i].bitrateFrom > bitrate ) {
+        if (psTuningTable [i].bitrateFrom < bitRateClosestLower) {
+          bitRateClosestLower = psTuningTable [i].bitrateFrom;
+          bitRateClosestLowerIndex = i;
+        }
+      }
+      if ( psTuningTable [i].bitrateTo <= bitrate ) {
+        if (psTuningTable [i].bitrateTo > bitRateClosestUpper) {
+          bitRateClosestUpper = psTuningTable [i].bitrateTo-1;
+          bitRateClosestUpperIndex = i;
+        }
+      }
+    }
+  }
+
+  if (pBitRateClosest != NULL)
+  {
+    int distanceUpper=DISTANCE_CEIL_VALUE, distanceLower=DISTANCE_CEIL_VALUE;
+    if (bitRateClosestLowerIndex >= 0) {
+      distanceLower = sbrTuningTable [bitRateClosestLowerIndex].bitrateFrom - bitrate;
+    }
+    if (bitRateClosestUpperIndex >= 0) {
+      distanceUpper = bitrate - sbrTuningTable [bitRateClosestUpperIndex].bitrateTo;
+    }
+    if ( distanceUpper < distanceLower )
+    {
+      *pBitRateClosest = bitRateClosestUpper;
+    } else {
+      *pBitRateClosest = bitRateClosestLower;
     }
   }
 
@@ -197,7 +274,7 @@ FDKsbrEnc_IsSbrSettingAvail (UINT bitrate,          /*! the total bitrate in bit
 
   /* try DOWN_SMPL_FAC of the input sampling rate */
   sampleRateCore = sampleRateInput/DOWN_SMPL_FAC;
-  idx = getSbrTuningTableIndex(bitrate, numOutputChannels, sampleRateCore, core);
+  idx = getSbrTuningTableIndex(bitrate, numOutputChannels, sampleRateCore, core, NULL);
 
   return (idx == INVALID_TABLE_IDX ? 0 : 1);
 }
@@ -257,7 +334,7 @@ FDKsbrEnc_AdjustSbrSettings (const sbrConfigurationPtr config, /*! output, modif
     }
   }
 
-  idx = getSbrTuningTableIndex(bitRate,numChannels,fsCore, core);
+  idx = getSbrTuningTableIndex(bitRate,numChannels,fsCore, core, NULL);
 
   if (idx != INVALID_TABLE_IDX) {
     config->startFreq       = sbrTuningTable[idx].startFreq ;
@@ -492,8 +569,6 @@ void sbrEncoder_Close (HANDLE_SBR_ENCODER *phSbrEncoder)
 
     }
 
-    if (hSbrEncoder->hPsEncConfig)
-      FreeRam_PsEncConf(&hSbrEncoder->hPsEncConfig);
     if (hSbrEncoder->hParametricStereo)
       PSEnc_Destroy(&hSbrEncoder->hParametricStereo);
     if (hSbrEncoder->qmfSynthesisPS.FilterStates)
@@ -801,8 +876,8 @@ FDKsbrEnc_EnvEncodeFrame(HANDLE_SBR_ENCODER   hEnvEncoder,
 
 
         /* Obtain pointers to QMF buffers. */
-        pQmfReal = sbrExtrEnv->rBuffer+sbrExtrEnv->rBufferWriteOffset;
-        pQmfImag = sbrExtrEnv->iBuffer+sbrExtrEnv->rBufferWriteOffset;
+        pQmfReal = sbrExtrEnv->rBuffer;
+        pQmfImag = sbrExtrEnv->iBuffer;
 
         qmfAnalysisFiltering( hSbrElement->hQmfAnalysis[ch],
                                pQmfReal,
@@ -822,33 +897,8 @@ FDKsbrEnc_EnvEncodeFrame(HANDLE_SBR_ENCODER   hEnvEncoder,
       /*
         Parametric Stereo processing
       */
-      if(hSbrElement->elInfo.fParametricStereo)
+      if (hSbrElement->elInfo.fParametricStereo)
       {
-        int psCh;
-
-        /* Parametric Stereo QMF buffer preprocessing: copy previous qmf data down */
-        UpdatePSQmfData_second(hEnvEncoder->hParametricStereo);
-
-        for (psCh = 0; psCh<2; psCh ++)
-        {
-          C_ALLOC_SCRATCH_START(qmfWorkBuffer, FIXP_DBL, QMF_CHANNELS*2);
-          HANDLE_PS_QMF_DATA hPsQmfData =  hEnvEncoder->hParametricStereo->hPsChannelData[psCh]->hPsQmfData;
-          QMF_SCALE_FACTOR tmpScale;
-
-
-          qmfAnalysisFiltering(  hSbrElement->hQmfAnalysis[psCh],
-                                 hPsQmfData->rQmfData + hPsQmfData->bufferWriteOffset,
-                                 hPsQmfData->iQmfData + hPsQmfData->bufferWriteOffset,
-                                &tmpScale,
-                                 samples + hSbrElement->elInfo.ChannelIndex[psCh],
-                                 timeInStride,
-                                qmfWorkBuffer );
-
-          C_ALLOC_SCRATCH_END(qmfWorkBuffer, FIXP_DBL, QMF_CHANNELS*2);
-
-          hEnvEncoder->hParametricStereo->hPsChannelData[psCh]->psQmfScale = -tmpScale.lb_scale;
-        }
-
 
         /* Limit Parametric Stereo to one instance */
         FDK_ASSERT(ch == 0);
@@ -867,10 +917,13 @@ FDKsbrEnc_EnvEncodeFrame(HANDLE_SBR_ENCODER   hEnvEncoder,
                o downmixed qmf data is written to sbrExtrEnv->rBuffer and sbrExtrEnv->iBuffer
           */
           SCHAR qmfScale;
+          INT_PCM* pSamples[2] = {samples + hSbrElement->elInfo.ChannelIndex[0],samples + hSbrElement->elInfo.ChannelIndex[1]};
           error = FDKsbrEnc_PSEnc_ParametricStereoProcessing( hEnvEncoder->hParametricStereo,
+                                                              pSamples,
+                                                              timeInStride,
+                                                              hSbrElement->hQmfAnalysis,
                                                               sbrExtrEnv->rBuffer,
                                                               sbrExtrEnv->iBuffer,
-                                                              sbrExtrEnv->rBufferWriteOffset,
                                                               samples + hSbrElement->elInfo.ChannelIndex[ch],
                                                              &hEnvEncoder->qmfSynthesisPS,
                                                              &qmfScale,
@@ -1266,11 +1319,6 @@ INT sbrEncoder_Open(
   }
 
   if (supportPS) {
-    hSbrEncoder->hPsEncConfig = GetRam_PsEncConf();
-    if (hSbrEncoder->hPsEncConfig==NULL) {
-      goto bail;
-    }
-
     if (PSEnc_Create(&hSbrEncoder->hParametricStereo))
     {
       goto bail;
@@ -1580,6 +1628,32 @@ INT FDKsbrEnc_DelayCompensation (
       }
     }
 	  return 0;
+}
+
+UINT sbrEncoder_LimitBitRate(UINT bitRate, UINT numChannels, UINT coreSampleRate, AUDIO_OBJECT_TYPE aot)
+{
+  UINT newBitRate;
+  INT index;
+
+  FDK_ASSERT(numChannels > 0 && numChannels <= 2);
+  if (aot == AOT_PS) {
+    if (numChannels == 2) {
+      index = getPsTuningTableIndex(bitRate, &newBitRate);
+      if (index == INVALID_TABLE_IDX) {
+        bitRate = newBitRate;
+      }
+      /* Set numChannels to 1 because for PS we need a SBR SCE (mono) element. */
+      numChannels = 1;
+    } else {
+      return 0;
+    }
+  }
+  index = getSbrTuningTableIndex(bitRate, numChannels, coreSampleRate, aot, &newBitRate);
+  if (index != INVALID_TABLE_IDX) {
+    newBitRate = bitRate;
+  }
+
+  return newBitRate;
 }
 
 
@@ -1894,22 +1968,23 @@ INT sbrEncoder_Init(
       /* initialize parametric stereo */
       if (usePs)
       {
+        PSENC_CONFIG psEncConfig;
         FDK_ASSERT(hSbrEncoder->noElements == 1);
-        INT psTuningTableIdx = getPsTuningTableIndex(elInfo[0].bitRate); //sbrConfig.codecSettings.bitRate);
+        INT psTuningTableIdx = getPsTuningTableIndex(elInfo[0].bitRate, NULL);
 
-        hSbrEncoder->hPsEncConfig->frameSize           = *frameLength; //sbrConfig.sbrFrameSize;
-        hSbrEncoder->hPsEncConfig->qmfFilterMode       = 0;
-        hSbrEncoder->hPsEncConfig->sbrPsDelay          = 0;
+        psEncConfig.frameSize           = *frameLength; //sbrConfig.sbrFrameSize;
+        psEncConfig.qmfFilterMode       = 0;
+        psEncConfig.sbrPsDelay          = 0;
 
         /* tuning parameters */
         if (psTuningTableIdx  != INVALID_TABLE_IDX) {
-          hSbrEncoder->hPsEncConfig->nStereoBands           = psTuningTable[psTuningTableIdx].nStereoBands;
-          hSbrEncoder->hPsEncConfig->maxEnvelopes           = psTuningTable[psTuningTableIdx].nEnvelopes;
-          hSbrEncoder->hPsEncConfig->iidQuantErrorThreshold = (FIXP_DBL)psTuningTable[psTuningTableIdx].iidQuantErrorThreshold;
+          psEncConfig.nStereoBands           = psTuningTable[psTuningTableIdx].nStereoBands;
+          psEncConfig.maxEnvelopes           = psTuningTable[psTuningTableIdx].nEnvelopes;
+          psEncConfig.iidQuantErrorThreshold = (FIXP_DBL)psTuningTable[psTuningTableIdx].iidQuantErrorThreshold;
 
           /* calculation is not quite linear, increased number of envelopes causes more bits */
           /* assume avg. 50 bits per frame for 10 stereo bands / 1 envelope configuration */
-          hSbrEncoder->estimateBitrate += ( (((*sampleRate) * 5 * hSbrEncoder->hPsEncConfig->nStereoBands * hSbrEncoder->hPsEncConfig->maxEnvelopes) / hSbrEncoder->frameSize));
+          hSbrEncoder->estimateBitrate += ( (((*sampleRate) * 5 * psEncConfig.nStereoBands * psEncConfig.maxEnvelopes) / hSbrEncoder->frameSize));
 
         } else {
           error = ERROR(CDI, "Invalid ps tuning table index.");
@@ -1926,10 +2001,10 @@ INT sbrEncoder_Init(
 
         if(errorInfo == noError){
           /* update delay */
-          hSbrEncoder->hPsEncConfig->sbrPsDelay = FDKsbrEnc_GetEnvEstDelay(&hSbrEncoder->sbrElement[0]->sbrChannel[0]->hEnvChannel.sbrExtractEnvelope);
+          psEncConfig.sbrPsDelay = FDKsbrEnc_GetEnvEstDelay(&hSbrEncoder->sbrElement[0]->sbrChannel[0]->hEnvChannel.sbrExtractEnvelope);
 
           if(noError != (errorInfo = PSEnc_Init( hSbrEncoder->hParametricStereo,
-                                                 hSbrEncoder->hPsEncConfig,
+                                                &psEncConfig,
                                                  hSbrEncoder->sbrElement[0]->sbrConfigData.noQmfSlots,
                                                  hSbrEncoder->sbrElement[0]->sbrConfigData.noQmfBands
                                                 ,hSbrEncoder->dynamicRam

@@ -315,9 +315,6 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs, CLa
   else {
     ErrorStatus = TRANSPORTDEC_PARSE_ERROR; //AAC_DEC_LATM_TIMEFRAMING;
   }
-  if ((INT)FDKgetValidBits(bs) < totalPayloadBits) {
-    return TRANSPORTDEC_NOT_ENOUGH_BITS;
-  }
   if (pLatmDemux->m_audioMuxLengthBytes > 0 && totalPayloadBits > pLatmDemux->m_audioMuxLengthBytes*8) {
     return TRANSPORTDEC_PARSE_ERROR;
   }

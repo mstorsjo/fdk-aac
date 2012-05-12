@@ -162,7 +162,8 @@ int CProgramConfig_LookupElement(
  * \return       Total element count including all SCE, CPE and LFE.
  */
 int CProgramConfig_GetElementTable( const CProgramConfig *pPce,
-                                    MP4_ELEMENT_ID  table[] );
+                                    MP4_ELEMENT_ID  table[],
+                                    const INT elListSize );
 
 /**
  * \brief       Initialize a given AudioSpecificConfig structure.

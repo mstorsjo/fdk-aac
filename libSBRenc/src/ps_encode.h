@@ -27,7 +27,7 @@
 ******************************************************************************/
 /*!
   \file
-  \brief  PS parameter extraction, encoding functions $Revision: 36847 $
+  \brief  PS parameter extraction, encoding functions $Revision: 37142 $
 */
 
 #ifndef __INCLUDED_PS_ENCODE_H
@@ -35,7 +35,7 @@
 
 #include "ps_const.h"
 #include "ps_bitenc.h"
-#include "psenc_hybrid.h"
+
 
 #define IID_SCALE_FT      (64.f)    /* maxVal in Quant tab is +/- 50 */
 #define IID_SCALE         6         /* maxVal in Quant tab is +/- 50 */
@@ -81,7 +81,7 @@ typedef struct T_PS_DATA {
 
 typedef struct T_PS_ENCODE{
 
-  HANDLE_PS_DATA  hPsData;
+  PS_DATA         psData;
 
   PS_BANDS        psEncMode;
   INT             nQmfIidGroups;
@@ -97,21 +97,29 @@ typedef struct T_PS_ENCODE{
 
 
 typedef struct T_PS_ENCODE *HANDLE_PS_ENCODE;
-typedef struct T_PS_CHANNEL_DATA *HANDLE_PS_CHANNEL_DATA;
 
-HANDLE_ERROR_INFO FDKsbrEnc_CreatePSEncode(HANDLE_PS_ENCODE *phPsEncode);
+FDK_PSENC_ERROR FDKsbrEnc_CreatePSEncode(
+        HANDLE_PS_ENCODE         *phPsEncode
+        );
 
-HANDLE_ERROR_INFO FDKsbrEnc_InitPSEncode(HANDLE_PS_ENCODE hPsEncode, const PS_BANDS psEncMode, const FIXP_DBL iidQuantErrorThreshold);
+FDK_PSENC_ERROR FDKsbrEnc_InitPSEncode(
+        HANDLE_PS_ENCODE          hPsEncode,
+        const PS_BANDS            psEncMode,
+        const FIXP_DBL            iidQuantErrorThreshold
+        );
 
-HANDLE_ERROR_INFO FDKsbrEnc_DestroyPSEncode(HANDLE_PS_ENCODE *phPsEncode);
+FDK_PSENC_ERROR FDKsbrEnc_DestroyPSEncode(
+        HANDLE_PS_ENCODE         *phPsEncode
+        );
 
-
-HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE hPsEncode,
-                           HANDLE_PS_OUT hPsOut,
-                           HANDLE_PS_CHANNEL_DATA  hChanDatal,
-                           HANDLE_PS_CHANNEL_DATA  hChanDatar,
-                           UCHAR *dynBandScale,
-                           UINT maxEnvelopes,
-                           const int sendHeader);
+FDK_PSENC_ERROR FDKsbrEnc_PSEncode(
+        HANDLE_PS_ENCODE          hPsEncode,
+        HANDLE_PS_OUT             hPsOut,
+        UCHAR                    *dynBandScale,
+        UINT                      maxEnvelopes,
+        FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2],
+        const INT                 frameSize,
+        const INT                 sendHeader
+        );
 
 #endif

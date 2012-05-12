@@ -206,6 +206,18 @@ FIXP_DBL fMultNorm(
         INT *result_e
         );
 
+inline FIXP_DBL fMultNorm(FIXP_DBL f1, FIXP_DBL f2)
+{
+  FIXP_DBL m;
+  INT e;
+
+  m = fMultNorm(f1, f2, &e);
+
+  m = scaleValueSaturate(m, e);
+
+  return m;
+}
+
 /**
  * \brief Divide 2 FIXP_DBL values with normalization of input values.
  * \param num numerator

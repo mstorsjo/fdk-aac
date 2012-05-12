@@ -41,9 +41,9 @@
  */
 typedef enum
 {
-  UNKNOWN_PAYLOAD   = 0,
-  MPEG_DRC_EXT_DATA,
-  DVB_DRC_ANC_DATA
+  UNKNOWN_PAYLOAD   =  0,
+  MPEG_DRC_EXT_DATA =  1,
+  DVB_DRC_ANC_DATA  =  2
 
 } AACDEC_DRC_PAYLOAD_TYPE;
 
@@ -54,12 +54,12 @@ typedef struct
   USHORT  bandTop[MAX_DRC_BANDS];
   SHORT   drcInterpolationScheme;
   UCHAR   drcValue[MAX_DRC_BANDS];
+  SCHAR   drcDataType;
 
 } CDrcChannelData;
 
 typedef struct
 {
-  AACDEC_DRC_PAYLOAD_TYPE  type;
   UINT   excludedChnsMask;
   SCHAR  progRefLevel;
   SCHAR  pceInstanceTag;

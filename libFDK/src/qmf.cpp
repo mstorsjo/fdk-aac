@@ -27,7 +27,7 @@
 ******************************************************************************/
 /*!
   \file
-  \brief  Complex qmf analysis/synthesis, $Revision: 36871 $
+  \brief  Complex qmf analysis/synthesis, $Revision: 37444 $
   This module contains the qmf filterbank for analysis [ cplxAnalysisQmfFiltering() ] and
   synthesis [ cplxSynthesisQmfFiltering() ]. It is a polyphase implementation of a complex
   exponential modulated filter bank. The analysis part usually runs at half the sample rate

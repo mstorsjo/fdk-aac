@@ -25,7 +25,7 @@
 *******************************************************************************/
 /*!
   \file
-  \brief  SBR decoder frontend $Revision: 36841 $
+  \brief  SBR decoder frontend $Revision: 38029 $
   This module provides a frontend to the SBR decoder. The function openSBR() is called for
   initialization. The function sbrDecoder_Apply() is called for each frame. sbr_Apply() will call the
   required functions to decode the raw SBR data (provided by env_extr.cpp), to decode the envelope data and noise floor levels [decodeSbrData()],
@@ -79,7 +79,7 @@
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 1
-#define SBRDECODER_LIB_VL2 0
+#define SBRDECODER_LIB_VL2 1
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -367,6 +367,7 @@ SBR_ERROR sbrDecoder_InitElement (
 {
   SBR_ERROR sbrError = SBRDEC_OK;
   int chCnt=0;
+  int nSbrElementsStart = self->numSbrElements;
 
   /* Check core codec AOT */
   if (! sbrDecoder_isCoreCodecValid(coreCodec) || elementIndex >= (4)) {
@@ -488,8 +489,13 @@ SBR_ERROR sbrDecoder_InitElement (
 
 bail:
   if (sbrError != SBRDEC_OK) {
-    /* Free the memory allocated for this element */
-    sbrDecoder_DestroyElement( self, elementIndex );
+    if (nSbrElementsStart < self->numSbrElements) {
+      /* Free the memory allocated for this element */
+      sbrDecoder_DestroyElement( self, elementIndex );
+    } else if (self->pSbrElement[elementIndex] != NULL) {
+      /* Set error flag to trigger concealment */
+      self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;;
+    }
   }
 
   return sbrError;
@@ -933,7 +939,8 @@ SBR_ERROR sbrDecoder_Parse(
                                        1);
     }
 
-    if (headerStatus == HEADER_RESET) {
+    if (headerStatus == HEADER_RESET)
+    {
       errorStatus = sbrDecoder_HeaderUpdate(
             self,
             hSbrHeader,
@@ -1130,6 +1137,10 @@ sbrDecoder_DecodeElement (
             self->flags
             );
 
+    if (errorStatus != SBRDEC_OK) {
+      return errorStatus;
+    }
+
     hSbrHeader->syncState = UPSAMPLING;
 
     errorStatus = sbrDecoder_HeaderUpdate(
@@ -1139,6 +1150,11 @@ sbrDecoder_DecodeElement (
             pSbrChannel,
             hSbrElement->nChannels
             );
+
+    if (errorStatus != SBRDEC_OK) {
+      hSbrHeader->syncState = SBR_NOT_INITIALIZED;
+      return errorStatus;
+    }
   }
 
   /* reset */
@@ -1295,6 +1311,11 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER   self,
   int   numSbrChannels  = 0;
 
   psPossible = *psDecoded;
+
+  if (self->numSbrElements < 1) {
+    /* exit immediately to avoid access violations */
+    return SBRDEC_CREATE_ERROR;
+  }
 
   /* Sanity check of allocated SBR elements. */
   for (sbrElementNum=0; sbrElementNum<self->numSbrElements; sbrElementNum++) {

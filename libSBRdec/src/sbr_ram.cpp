@@ -26,7 +26,7 @@
 /*!
   \file
   \brief Memory layout
-  $Revision: 36841 $
+  $Revision: 38012 $
 
   This module declares all static and dynamic memory spaces
 */

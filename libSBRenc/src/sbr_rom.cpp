@@ -25,7 +25,7 @@
 /*!
   \file
   \brief  Definition of constant tables
-  $Revision: 36914 $
+  $Revision: 37577 $
 
   This module contains most of the constant data that can be stored in ROM.
 */
@@ -623,8 +623,8 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   /* 22.05/44.1 kHz dual rate */
   {  8000, 11369,  22050, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */ /**changed (not changed !!)*/
   { 11369, 16000,  22050, 1,  1, 0, 3, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  22050, 1,  1, 0, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  22050, 1,  1, 2, 5, 4,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { 16000, 18000,  22050, 1,  2, 4, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
+  { 18000, 22000,  22050, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
   { 22000, 28000,  22050, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
   { 28000, 36000,  22050, 1,  7, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  22050, 1,  9, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
@@ -634,8 +634,8 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   /* 24/48 kHz dual rate */
   {  8000, 12000,  24000, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */ /**changed (not changed !!)*/
   { 12000, 16000,  24000, 1,  1, 0, 3, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  24000, 1,  1, 0, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  24000, 1,  1, 1, 4, 4,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { 16000, 18000,  24000, 1,  2, 4, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
+  { 18000, 22000,  24000, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
   { 22000, 28000,  24000, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
   { 28000, 36000,  24000, 1,  6, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  24000, 1,  8, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
@@ -643,7 +643,6 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 52000, 64001,  24000, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 22.05/44.1 kHz dual rate */
-  { 16000, 24000,  22050, 2,  0, 0, 0, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
   { 24000, 28000,  22050, 2,  3, 2, 5, 4,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
   { 28000, 32000,  22050, 2,  3, 2, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 28 kbit/s */
   { 32000, 36000,  22050, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
@@ -655,7 +654,6 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 82000,128001,  22050, 2, 13,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 24/48 kHz dual rate */
-  { 16000, 24000,  24000, 2,  0, 0, 0, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
   { 24000, 28000,  24000, 2,  3, 3, 5, 5,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
   { 28000, 36000,  24000, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  24000, 2,  4, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
@@ -664,6 +662,8 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 60000, 76000,  24000, 2, 11,12,10,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
   { 76000, 88000,  24000, 2, 12,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
   { 88000,128001,  24000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 92 kbit/s */
+
+
 };
 
 const psTuningTable_t psTuningTable[4] =

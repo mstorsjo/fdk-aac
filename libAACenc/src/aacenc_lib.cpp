@@ -388,6 +388,138 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HANDLE_AACENC_CONFIG hAacConfig,
     return AAC_ENC_OK;
 }
 
+static
+void aacEncDistributeSbrBits(CHANNEL_MAPPING *channelMapping, SBR_ELEMENT_INFO *sbrElInfo, INT bitRate)
+{
+  INT codebits = bitRate;
+  int el;
+
+  /* Copy Element info */
+  for (el=0; el<channelMapping->nElements; el++) {
+      sbrElInfo[el].ChannelIndex[0] = channelMapping->elInfo[el].ChannelIndex[0];
+      sbrElInfo[el].ChannelIndex[1] = channelMapping->elInfo[el].ChannelIndex[1];
+      sbrElInfo[el].elType          = channelMapping->elInfo[el].elType;
+      sbrElInfo[el].bitRate         = (INT)(fMultNorm(channelMapping->elInfo[el].relativeBits, (FIXP_DBL)bitRate));
+      sbrElInfo[el].instanceTag     = channelMapping->elInfo[el].instanceTag;
+      sbrElInfo[el].nChannelsInEl   = channelMapping->elInfo[el].nChannelsInEl;
+
+      codebits -= sbrElInfo[el].bitRate;
+  }
+  sbrElInfo[0].bitRate += codebits;
+}
+
+
+static
+INT aacEncoder_LimitBitrate(
+        const HANDLE_TRANSPORTENC hTpEnc,
+        const INT samplingRate,
+        const INT frameLength,
+        const INT nChannels,
+        const CHANNEL_MODE channelMode,
+        INT bitRate,
+        const INT nSubFrames,
+        const INT sbrActive,
+        const AUDIO_OBJECT_TYPE aot
+        )
+{
+  INT coreSamplingRate;
+  CHANNEL_MAPPING cm;
+
+  FDKaacEnc_InitChannelMapping(channelMode, CH_ORDER_MPEG, &cm);
+
+  if (sbrActive) {
+    /* Assume SBR rate ratio of 2:1 */
+    coreSamplingRate = samplingRate / 2;
+  } else {
+    coreSamplingRate = samplingRate;
+  }
+
+  /* Consider bandwidth channel bit rate limit (see bandwidth.cpp: GetBandwidthEntry()) */
+  if (aot == AOT_ER_AAC_LD || aot == AOT_ER_AAC_ELD) {
+    bitRate = FDKmin(360000*nChannels, bitRate);
+    bitRate = FDKmax(8000*nChannels, bitRate);
+  }
+
+  if (aot == AOT_AAC_LC || aot == AOT_SBR || aot == AOT_PS)  {
+    bitRate = FDKmin(576000*nChannels, bitRate);
+    /*bitRate = FDKmax(0*nChannels, bitRate);*/
+  }
+  
+
+  /* Limit bit rate in respect to the core coder */
+  bitRate = FDKaacEnc_LimitBitrate(
+          hTpEnc,
+          coreSamplingRate,
+          frameLength,
+          nChannels,
+          cm.nChannelsEff,
+          bitRate,
+          -1,
+          NULL,
+          -1,
+          nSubFrames
+          );
+
+  /* Limit bit rate in respect to available SBR modes if active */
+  if (sbrActive)
+  {
+    SBR_ELEMENT_INFO sbrElInfo[6];
+    INT sbrBitRate = 0;
+    int e, tooBig=-1;
+
+    FDK_ASSERT(cm.nElements <= (6));
+
+    /* Get bit rate for each SBR element */
+    aacEncDistributeSbrBits(&cm, sbrElInfo, bitRate);
+
+    for (e=0; e<cm.nElements; e++)
+    { 
+      INT sbrElementBitRateIn, sbrBitRateOut;
+
+      if (cm.elInfo[e].elType != ID_SCE && cm.elInfo[e].elType != ID_CPE) {
+        continue;
+      }
+      sbrElementBitRateIn = sbrElInfo[e].bitRate;
+      sbrBitRateOut = sbrEncoder_LimitBitRate(sbrElementBitRateIn , cm.elInfo[e].nChannelsInEl, coreSamplingRate, aot);
+      if (sbrBitRateOut == 0) {
+        return 0;
+      }
+      if (sbrElementBitRateIn < sbrBitRateOut) {
+        FDK_ASSERT(tooBig != 1);
+        tooBig = 0;
+        if (e == 0) {
+          sbrBitRate = 0;
+        }
+      }
+      if (sbrElementBitRateIn > sbrBitRateOut) {
+        FDK_ASSERT(tooBig != 0);
+        tooBig = 1;
+        if (e == 0) {
+          sbrBitRate = 5000000;
+        }
+      }
+      if (tooBig != -1)
+      {
+        INT sbrBitRateLimit = (INT)fDivNorm((FIXP_DBL)sbrBitRateOut, cm.elInfo[e].relativeBits);
+        if (tooBig) {
+          sbrBitRate = fMin(sbrBitRate, sbrBitRateLimit-16);
+          FDK_ASSERT( (INT)fMultNorm(cm.elInfo[e].relativeBits, (FIXP_DBL)sbrBitRate) < sbrBitRateOut);
+        } else {
+          sbrBitRate = fMax(sbrBitRate, sbrBitRateLimit+16);
+          FDK_ASSERT( (INT)fMultNorm(cm.elInfo[e].relativeBits, (FIXP_DBL)sbrBitRate) >= sbrBitRateOut);
+        }
+      }
+    }
+    if (tooBig != -1) {
+      bitRate = sbrBitRate;
+    }
+  }
+
+  FDK_ASSERT(bitRate > 0);
+
+  return bitRate;
+}
+
 /*
  * \brief Consistency check of given USER_PARAM struct and
  *   copy back configuration from public struct into internal
@@ -481,6 +613,19 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       default:
           break;
     }
+
+    /* We need the frame length to call aacEncoder_LimitBitrate() */
+    hAacConfig->bitRate = aacEncoder_LimitBitrate(
+              NULL,
+              hAacConfig->sampleRate,
+              hAacConfig->framelength,
+              hAacConfig->nChannels,
+              hAacConfig->channelMode,
+              config->userBitrate,
+              hAacConfig->nSubFrames,
+              isSbrActive(hAacConfig),
+              hAacConfig->audioObjectType
+              );
 
     switch ( hAacConfig->audioObjectType ) {
       case AOT_ER_AAC_LD:
@@ -605,7 +750,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
 
     INT frameLength = hAacConfig->framelength;
 
-
     if ( (InitFlags & AACENC_INIT_CONFIG) )
     {
         CHANNEL_MODE prevChMode = hAacConfig->channelMode;
@@ -645,9 +789,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
         INT sbrError;
         SBR_ELEMENT_INFO sbrElInfo[(6)];
         CHANNEL_MAPPING channelMapping;
-        int el;
-        INT codebits  = hAacConfig->bitRate;
-        INT bitrateSc = CountLeadingBits(codebits);
+        
         AUDIO_OBJECT_TYPE aot = hAacConfig->audioObjectType;
 
         if ( FDKaacEnc_InitChannelMapping(hAacConfig->channelMode,
@@ -662,19 +804,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
             return AACENC_INIT_ERROR;
         }
 
-        /* Copy Element info */
-        for (el=0; el<channelMapping.nElements; el++) {
-            sbrElInfo[el].ChannelIndex[0] = channelMapping.elInfo[el].ChannelIndex[0];
-            sbrElInfo[el].ChannelIndex[1] = channelMapping.elInfo[el].ChannelIndex[1];
-            sbrElInfo[el].elType          = channelMapping.elInfo[el].elType;
-            sbrElInfo[el].bitRate         = (INT)(fMult(channelMapping.elInfo[el].relativeBits, (FIXP_DBL)(hAacConfig->bitRate<<bitrateSc))>>(bitrateSc));
-            sbrElInfo[el].instanceTag     = channelMapping.elInfo[el].instanceTag;
-            sbrElInfo[el].nChannelsInEl   = channelMapping.elInfo[el].nChannelsInEl;
-
-            sbrElInfo[el].bitRate         = fMult(channelMapping.elInfo[el].relativeBits, (FIXP_DBL)hAacConfig->bitRate);
-            codebits -= sbrElInfo[el].bitRate;
-        }
-        sbrElInfo[0].bitRate += codebits;
+        aacEncDistributeSbrBits(&channelMapping, sbrElInfo, hAacConfig->bitRate);
 
         UINT initFlag = 0;
         initFlag += (InitFlags & AACENC_INIT_STATES) ? 1 : 0;

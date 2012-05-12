@@ -25,7 +25,7 @@
 *******************************************************************************/
 /*!
   \file
-  \brief  Envelope extraction $Revision: 36841 $
+  \brief  Envelope extraction $Revision: 38006 $
   The functions provided by this module are mostly called by applySBR(). After it is
   determined that there is valid SBR data, sbrGetHeaderData() might be called if the current
   SBR data contains an \ref SBR_HEADER_ELEMENT as opposed to a \ref SBR_STANDARD_ELEMENT. This function
@@ -167,6 +167,10 @@ initHeaderData (
 
   /* One SBR timeslot corresponds to the amount of samples equal to the amount of analysis bands, divided by the timestep. */
   hHeaderData->numberTimeSlots = (samplesPerFrame/numAnalysisBands) >> (hHeaderData->timeStep - 1);
+  if (hHeaderData->numberTimeSlots > (16)) {
+    sbrError = SBRDEC_UNSUPPORTED_CONFIG;
+  }
+
   hHeaderData->numberOfAnalysisBands = numAnalysisBands;
 
 bail:

@@ -36,673 +36,247 @@
 
 #include "sbr_ram.h"
 
+/*--------------- function declarations --------------------*/
+static void psFindBestScaling(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2],
+        UCHAR                    *dynBandScale,
+        FIXP_QMF                 *maxBandValue,
+        SCHAR                    *dmxScale
+        );
 
-
-/* Function declarations ****************************************************/
-static void psFindBestScaling(HANDLE_PARAMETRIC_STEREO hParametricStereo,
-                              UCHAR  *dynBandScale,
-                              FIXP_QMF *maxBandValue,
-                              SCHAR  *dmxScale);
-
-/*
-  name:        static HANDLE_ERROR_INFO CreatePSQmf()
-  description: Creates struct (buffer) to store qmf data
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - INT nCols: number of qmf samples stored in regular qmf buffer
-               - INT nRows: number qmf channels
-               - INT hybridFilterDelay: delay in qmf samples of hybrid filter
-  output:      - HANDLE_PS_QMF_DATA *hPsQmfData: according handle
-*/
-static HANDLE_ERROR_INFO CreatePSQmf(HANDLE_PS_QMF_DATA *phPsQmfData, INT ch)
+/*------------- function definitions ----------------*/
+FDK_PSENC_ERROR PSEnc_Create(
+        HANDLE_PARAMETRIC_STEREO *phParametricStereo
+        )
 {
-  HANDLE_ERROR_INFO error = noError;
-  HANDLE_PS_QMF_DATA hPsQmfData = GetRam_PsQmfData(ch);
-  if (hPsQmfData==NULL) {
-    error = 1;
-    goto bail;
+  FDK_PSENC_ERROR error = PSENC_OK;
+
+  if (phParametricStereo==NULL) {
+    error = PSENC_INVALID_HANDLE;
   }
-  FDKmemclear(hPsQmfData, sizeof(PS_QMF_DATA));
+  else {
+    int i;
+    HANDLE_PARAMETRIC_STEREO hParametricStereo = NULL;
 
-  hPsQmfData->rQmfData[0] = GetRam_PsRqmf(ch);
-  hPsQmfData->iQmfData[0] = GetRam_PsIqmf(ch);
-
-  if ( (hPsQmfData->rQmfData[0]==NULL) || (hPsQmfData->iQmfData[0]==NULL) ) {
-    error = 1;
-    goto bail;
-  }
-
-
-bail:
-  *phPsQmfData = hPsQmfData;
-  return error;
-}
-
-static HANDLE_ERROR_INFO InitPSQmf(HANDLE_PS_QMF_DATA hPsQmfData, INT nCols, INT nRows, INT hybridFilterDelay, INT ch, UCHAR *dynamic_RAM)
-{
-  INT i, bufferLength = 0;
-
-  hPsQmfData->nCols = nCols;
-  hPsQmfData->nRows = nRows;
-  hPsQmfData->bufferReadOffset       = QMF_READ_OFFSET;
-  hPsQmfData->bufferReadOffsetHybrid = HYBRID_READ_OFFSET;  /* calc read offset for hybrid analysis in qmf samples */
-  hPsQmfData->bufferWriteOffset = hPsQmfData->bufferReadOffsetHybrid + hybridFilterDelay;
-  hPsQmfData->bufferLength = bufferLength = hPsQmfData->bufferWriteOffset + nCols;
-
-  FDK_ASSERT(PSENC_QMF_BUFFER_LENGTH>=bufferLength);
-
-  for(i=0; i<bufferLength; i++) {
-    hPsQmfData->rQmfData[i] = FDKsbrEnc_SliceRam_PsRqmf(hPsQmfData->rQmfData[0], dynamic_RAM, ch, i, nCols);
-    hPsQmfData->iQmfData[i] = FDKsbrEnc_SliceRam_PsIqmf(hPsQmfData->iQmfData[0], dynamic_RAM, ch, i, nCols);
-  }
-
-  for(i=0; i<bufferLength; i++){
-    FDKmemclear(hPsQmfData->rQmfData[i], (sizeof(FIXP_QMF)*QMF_CHANNELS));
-    FDKmemclear(hPsQmfData->iQmfData[i], (sizeof(FIXP_QMF)*QMF_CHANNELS));
-  }
-
-  return noError;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO CreatePSChannel()
-  description: Creates PS channel struct
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PS_HYBRID_CONFIG hHybConfig: config structure for hybrid filter bank
-  output:      - HANDLE_PS_CHANNEL_DATA *hPsChannelData
-*/
-static HANDLE_ERROR_INFO CreatePSChannel(HANDLE_PS_CHANNEL_DATA *hPsChannelData,
-                                         INT                     ch
-                                        )
-{
-  HANDLE_ERROR_INFO error = noError;
-
-  (*hPsChannelData) = GetRam_PsChData(ch);
-
-  if (*hPsChannelData==NULL) {
-    error = 1;
-    goto bail;
-  }
-  FDKmemclear(*hPsChannelData, sizeof(PS_CHANNEL_DATA));
-
-
-  if (error == noError) {
-    if (noError != (error = FDKsbrEnc_CreateHybridFilterBank(&(*hPsChannelData)->hHybAna,
-                                                              ch )))
-    {
+    if (NULL==(hParametricStereo = GetRam_ParamStereo())) {
+      error = PSENC_MEMORY_ERROR;
       goto bail;
     }
-  }
-  if (error == noError) {
-    if (noError != (error = FDKsbrEnc_CreateHybridData( &((*hPsChannelData)->hHybData),
-                                              ch))) {
+    FDKmemclear(hParametricStereo, sizeof(PARAMETRIC_STEREO));
+
+    if (PSENC_OK != (error = FDKsbrEnc_CreatePSEncode(&hParametricStereo->hPsEncode))) {
       goto bail;
     }
-  }
-  if(error == noError){
-    if(noError != (error = CreatePSQmf(&((*hPsChannelData)->hPsQmfData), ch)))
-    {
-      goto bail;
-    }
-  }
-bail:
-  return error;
-}
 
-static HANDLE_ERROR_INFO InitPSChannel(HANDLE_PS_CHANNEL_DATA    hPsChannelData,
-                                         HANDLE_PS_HYBRID_CONFIG hHybConfig,
-                                         INT                     noQmfSlots,
-                                         INT                     noQmfBands
-                                        ,INT                     ch,
-                                         UCHAR                  *dynamic_RAM
-                                         )
-{
-  HANDLE_ERROR_INFO error = noError;
-  INT hybridFilterDelay = 0;
-
-  if (error == noError) {
-    if (noError != (error = FDKsbrEnc_InitHybridFilterBank(hPsChannelData->hHybAna,
-                                                              hHybConfig,
-                                                              noQmfSlots )))
-    {
-      error = handBack(error);
-    }
-  }
-
-  if(error == noError){
-    hybridFilterDelay = FDKsbrEnc_GetHybridFilterDelay(hPsChannelData->hHybAna);
-    hPsChannelData->psChannelDelay = hybridFilterDelay * noQmfBands;
-  }
-
-  if (error == noError) {
-    if (noError != (error = FDKsbrEnc_InitHybridData( hPsChannelData->hHybData,
-                                              hHybConfig,
-                                              noQmfSlots)))
-    {
-      error = handBack(error);
-    }
-  }
-
-  if(error == noError){
-    if(noError != (error = InitPSQmf(hPsChannelData->hPsQmfData,
-                                        noQmfSlots,
-                                        noQmfBands,
-                                        hybridFilterDelay
-                                       ,ch,
-                                        dynamic_RAM
-                                        )))
-    {
-      error = handBack(error);
-    }
-  }
-
-  return error;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO PSEnc_Create()
-  description: Creates PS struct
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       HANDLE_PSENC_CONFIG hPsEncConfig: configuration
-  output:      HANDLE_PARAMETRIC_STEREO *hParametricStereo
-
-*/
-HANDLE_ERROR_INFO
-PSEnc_Create(HANDLE_PARAMETRIC_STEREO *phParametricStereo)
-{
-  HANDLE_ERROR_INFO error = noError;
-  INT i;
-  HANDLE_PARAMETRIC_STEREO hParametricStereo = GetRam_ParamStereo();
-
-  if (hParametricStereo==NULL) {
-    error = 1;
-    goto bail;
-  }
-
-  FDKmemclear(hParametricStereo,sizeof(PARAMETRIC_STEREO));
-
-  hParametricStereo->qmfDelayRealRef = GetRam_PsEnvRBuffer(0);
-  hParametricStereo->qmfDelayImagRef = GetRam_PsEnvIBuffer(0);
-
-  if ( (hParametricStereo->qmfDelayRealRef==NULL) || (hParametricStereo->qmfDelayImagRef==NULL) ) {
-    error = 1;
-    goto bail;
-  }
-
-  for (i = 0; i < (QMF_MAX_TIME_SLOTS>>1); i++) {
-    hParametricStereo->qmfDelayReal[i] = hParametricStereo->qmfDelayRealRef + (i*QMF_CHANNELS);
-    hParametricStereo->qmfDelayImag[i] = hParametricStereo->qmfDelayImagRef + (i*QMF_CHANNELS);
-  }
-
-  for(i=0; i<MAX_PS_CHANNELS; i++){
-    if(noError != (error = CreatePSChannel(&hParametricStereo->hPsChannelData[i],
-                                         i
-                                        )))
-    {
-      goto bail;
-    }
-  }
-
-
-  if(noError != (error = FDKsbrEnc_CreatePSEncode(&hParametricStereo->hPsEncode))) {
-    error = 1;
-    goto bail;
-  }
-
-  hParametricStereo->hHybridConfig = GetRam_PsHybConfig(); /* allocate memory */
-
-  /* calc PS_OUT values and delay one frame ! */
-  hParametricStereo->hPsOut[0] = GetRam_PsOut(0);
-  hParametricStereo->hPsOut[1] = GetRam_PsOut(1);
-  if ( (hParametricStereo->hHybridConfig==NULL) || (hParametricStereo->hPsOut[0]==NULL) || (hParametricStereo->hPsOut[1]==NULL) ) {
-    error = 1;
-    goto bail;
-  }
-
-bail:
-  *phParametricStereo = hParametricStereo;
-  return error;
-}
-
-HANDLE_ERROR_INFO
-PSEnc_Init(HANDLE_PARAMETRIC_STEREO    hParametricStereo,
-             HANDLE_PSENC_CONFIG       hPsEncConfig,
-             INT                       noQmfSlots,
-             INT                       noQmfBands
-            ,UCHAR                    *dynamic_RAM
-            )
-{
-  HANDLE_ERROR_INFO error = noError;
-  INT i;
-  INT tmpDelay = 0;
-
-  if(error == noError){
-    if(hPsEncConfig == NULL){
-      error = ERROR(CDI, "Invalid configuration handle.");
-    }
-  }
-
-  hParametricStereo->initPS = 1;
-  hParametricStereo->noQmfSlots = noQmfSlots;
-  hParametricStereo->noQmfBands = noQmfBands;
-
-  for (i = 0; i < hParametricStereo->noQmfSlots>>1; i++) {
-    FDKmemclear( hParametricStereo->qmfDelayReal[i],QMF_CHANNELS*sizeof(FIXP_DBL));
-    FDKmemclear( hParametricStereo->qmfDelayImag[i],QMF_CHANNELS*sizeof(FIXP_DBL));
-  }
-  hParametricStereo->qmfDelayScale = FRACT_BITS-1;
-
-  if(error == noError) {
-    PS_BANDS nHybridSubbands = (PS_BANDS)0;
-
-    switch(hPsEncConfig->nStereoBands){
-    case PSENC_STEREO_BANDS_10:
-      nHybridSubbands = PS_BANDS_COARSE;
-      break;
-    case PSENC_STEREO_BANDS_20:
-      nHybridSubbands = PS_BANDS_MID;
-      break;
-    case PSENC_STEREO_BANDS_34:
-      /* nHybridSubbands = PS_BANDS_FINE; */
-      FDK_ASSERT(0); /* we don't support this mode! */
-      break;
-    default:
-      nHybridSubbands = (PS_BANDS)0;
-      break;
-    }
-    /* create configuration for hybrid filter bank */
-    FDKmemclear(hParametricStereo->hHybridConfig,sizeof(PS_HYBRID_CONFIG));
-    if(noError != (error = FDKsbrEnc_CreateHybridConfig(&hParametricStereo->hHybridConfig, nHybridSubbands))) {
-      error = handBack(error);
-    }
-  }
-
-
-  tmpDelay = 0;
-  for(i=0; i<MAX_PS_CHANNELS; i++) {
-
-    if(error == noError){
-      if(noError != (error = InitPSChannel( hParametricStereo->hPsChannelData[i],
-                                            hParametricStereo->hHybridConfig,
-                                            hParametricStereo->noQmfSlots,
-                                            hParametricStereo->noQmfBands
-                                           ,i,
-                                            dynamic_RAM
-                                             )))
+    for (i=0; i<MAX_PS_CHANNELS; i++) {
+      if (FDKhybridAnalysisOpen(
+            &hParametricStereo->fdkHybAnaFilter[i],
+             hParametricStereo->__staticHybAnaStatesLF[i],
+             sizeof(hParametricStereo->__staticHybAnaStatesLF[i]),
+             hParametricStereo->__staticHybAnaStatesHF[i],
+             sizeof(hParametricStereo->__staticHybAnaStatesHF[i])
+             ) !=0 )
       {
-        error = handBack(error);
+        error = PSENC_MEMORY_ERROR;
+        goto bail;
       }
     }
 
-    if(error == noError){
-      /* sum up delay in samples for all channels (should be the same for all channels) */
-      tmpDelay += hParametricStereo->hPsChannelData[i]->psChannelDelay;
-    }
+    *phParametricStereo = hParametricStereo; /* return allocated handle */
   }
+bail:
+  return error;
+}
 
-  if(error == noError){
+FDK_PSENC_ERROR PSEnc_Init(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        const HANDLE_PSENC_CONFIG hPsEncConfig,
+        INT                       noQmfSlots,
+        INT                       noQmfBands
+       ,UCHAR                    *dynamic_RAM
+        )
+{
+  FDK_PSENC_ERROR error = PSENC_OK;
+
+  if ( (NULL==hParametricStereo) || (NULL==hPsEncConfig) ) {
+    error = PSENC_INVALID_HANDLE;
+  }
+  else {
+    int ch, i;
+
+    hParametricStereo->initPS = 1;
+    hParametricStereo->noQmfSlots = noQmfSlots;
+    hParametricStereo->noQmfBands = noQmfBands;
+
+    /* clear delay lines */
+    FDKmemclear(hParametricStereo->qmfDelayLines, sizeof(hParametricStereo->qmfDelayLines));
+
+    hParametricStereo->qmfDelayScale = FRACT_BITS-1;
+
+    /* create configuration for hybrid filter bank */
+    for (ch=0; ch<MAX_PS_CHANNELS; ch++) {
+      FDKhybridAnalysisInit(
+            &hParametricStereo->fdkHybAnaFilter[ch],
+             THREE_TO_TEN,
+             QMF_CHANNELS,
+             QMF_CHANNELS,
+             1
+             );
+    } /* ch */
+
+    FDKhybridSynthesisInit(
+          &hParametricStereo->fdkHybSynFilter,
+           THREE_TO_TEN,
+           QMF_CHANNELS,
+           QMF_CHANNELS
+           );
+
     /* determine average delay */
-    hParametricStereo->psDelay = tmpDelay/MAX_PS_CHANNELS;
-  }
+    hParametricStereo->psDelay = (HYBRID_FILTER_DELAY*hParametricStereo->noQmfBands);
 
-  if(error == noError){
-    if ( (hPsEncConfig->maxEnvelopes < PSENC_NENV_1)
-         || (hPsEncConfig->maxEnvelopes > PSENC_NENV_MAX) ) {
+    if ( (hPsEncConfig->maxEnvelopes < PSENC_NENV_1) || (hPsEncConfig->maxEnvelopes > PSENC_NENV_MAX) ) {
       hPsEncConfig->maxEnvelopes = PSENC_NENV_DEFAULT;
     }
     hParametricStereo->maxEnvelopes = hPsEncConfig->maxEnvelopes;
-  }
 
-  if(error == noError){
-    if(noError != (error = FDKsbrEnc_InitPSEncode(hParametricStereo->hPsEncode, (PS_BANDS) hPsEncConfig->nStereoBands, hPsEncConfig->iidQuantErrorThreshold))){
-      error = handBack(error);
+    if (PSENC_OK != (error = FDKsbrEnc_InitPSEncode(hParametricStereo->hPsEncode, (PS_BANDS) hPsEncConfig->nStereoBands, hPsEncConfig->iidQuantErrorThreshold))){
+      goto bail;
     }
-  }
 
-  /* clear buffer */
-  FDKmemclear(hParametricStereo->hPsOut[0], sizeof(PS_OUT));
-  FDKmemclear(hParametricStereo->hPsOut[1], sizeof(PS_OUT));
+    for (ch = 0; ch<MAX_PS_CHANNELS; ch ++) {
+      FIXP_DBL *pDynReal = GetRam_Sbr_envRBuffer (ch, dynamic_RAM);
+      FIXP_DBL *pDynImag = GetRam_Sbr_envIBuffer (ch, dynamic_RAM);
 
-  /* clear scaling buffer */
-  FDKmemclear(hParametricStereo->dynBandScale, sizeof(UCHAR)*PS_MAX_BANDS);
-  FDKmemclear(hParametricStereo->maxBandValue, sizeof(FIXP_QMF)*PS_MAX_BANDS);
+      for (i=0; i<HYBRID_FRAMESIZE; i++) {
+        hParametricStereo->pHybridData[i+HYBRID_READ_OFFSET][ch][0] = &pDynReal[i*MAX_HYBRID_BANDS];
+        hParametricStereo->pHybridData[i+HYBRID_READ_OFFSET][ch][1] = &pDynImag[i*MAX_HYBRID_BANDS];;
+      }
 
+      for (i=0; i<HYBRID_READ_OFFSET; i++) {
+        hParametricStereo->pHybridData[i][ch][0] = hParametricStereo->__staticHybridData[i][ch][0];
+        hParametricStereo->pHybridData[i][ch][1] = hParametricStereo->__staticHybridData[i][ch][1];
+      }
+    } /* ch */
+
+    /* clear static hybrid buffer */
+    FDKmemclear(hParametricStereo->__staticHybridData, sizeof(hParametricStereo->__staticHybridData));
+
+    /* clear bs buffer */
+    FDKmemclear(hParametricStereo->psOut, sizeof(hParametricStereo->psOut));
+
+    /* clear scaling buffer */
+    FDKmemclear(hParametricStereo->dynBandScale, sizeof(UCHAR)*PS_MAX_BANDS);
+    FDKmemclear(hParametricStereo->maxBandValue, sizeof(FIXP_QMF)*PS_MAX_BANDS);
+
+  } /* valid handle */
+bail:
   return error;
 }
 
 
-
-/*
-  name:        static HANDLE_ERROR_INFO DestroyPSQmf
-  description: destroy PS qmf buffers
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PS_QMF_DATA *hPsQmfData
-  output:      none
-*/
-
-static HANDLE_ERROR_INFO DestroyPSQmf(HANDLE_PS_QMF_DATA* phPsQmfData)
+FDK_PSENC_ERROR PSEnc_Destroy(
+        HANDLE_PARAMETRIC_STEREO *phParametricStereo
+        )
 {
-  HANDLE_PS_QMF_DATA hPsQmfData = *phPsQmfData;
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-  if(hPsQmfData) {
-    FreeRam_PsRqmf(hPsQmfData->rQmfData);
-    FreeRam_PsIqmf(hPsQmfData->iQmfData);
-    FreeRam_PsQmfData(phPsQmfData);
-  }
-
-  return noError;
-}
-
-
-
-/*
-  name:        static HANDLE_ERROR_INFO DestroyPSChannel
-  description: destroy PS channel data
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PS_CHANNEL_DATA *hPsChannelDAta
-  output:      none
-*/
-
-
-static HANDLE_ERROR_INFO DestroyPSChannel(HANDLE_PS_CHANNEL_DATA *phPsChannelData){
-
-  HANDLE_ERROR_INFO error = noError;
-  HANDLE_PS_CHANNEL_DATA hPsChannelData = *phPsChannelData;
-
-  if(hPsChannelData != NULL){
-
-    DestroyPSQmf(&hPsChannelData->hPsQmfData);
-
-    FDKsbrEnc_DeleteHybridFilterBank(&hPsChannelData->hHybAna);
-
-    FDKsbrEnc_DestroyHybridData(&hPsChannelData->hHybData);
-
-    FreeRam_PsChData(phPsChannelData);
-  }
-
-  return error;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO PSEnc_Destroy
-  description: destroy PS encoder handle
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO *hParametricStereo
-  output:      none
-*/
-
-HANDLE_ERROR_INFO
-PSEnc_Destroy(HANDLE_PARAMETRIC_STEREO *phParametricStereo){
-
-  HANDLE_ERROR_INFO error = noError;
-  HANDLE_PARAMETRIC_STEREO hParametricStereo = *phParametricStereo;
-  INT i;
-
-  if(hParametricStereo != NULL){
-    for(i=0; i<MAX_PS_CHANNELS; i++){
-      DestroyPSChannel(&(hParametricStereo->hPsChannelData[i]));
+  if (NULL!=phParametricStereo) {
+    HANDLE_PARAMETRIC_STEREO hParametricStereo = *phParametricStereo;
+    if(hParametricStereo != NULL){
+      FDKsbrEnc_DestroyPSEncode(&hParametricStereo->hPsEncode);
+      FreeRam_ParamStereo(phParametricStereo);
     }
-    FreeRam_PsEnvRBuffer(&hParametricStereo->qmfDelayRealRef);
-    FreeRam_PsEnvIBuffer(&hParametricStereo->qmfDelayImagRef);
-
-    FDKsbrEnc_DestroyPSEncode(&hParametricStereo->hPsEncode);
-
-    FreeRam_PsOut(&hParametricStereo->hPsOut[0]);
-    FreeRam_PsOut(&hParametricStereo->hPsOut[1]);
-
-    FreeRam_PsHybConfig(&hParametricStereo->hHybridConfig);
-    FreeRam_ParamStereo(phParametricStereo);
   }
 
   return error;
 }
 
-/*
-  name:        static HANDLE_ERROR_INFO UpdatePSQmfData
-  description: updates buffer containing qmf data first/second halve
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo
-  output:      - HANDLE_PARAMETRIC_STEREO hParametricStereo with updated qmf data
-*/
-
-static HANDLE_ERROR_INFO
-UpdatePSQmfData_first(HANDLE_PARAMETRIC_STEREO hParametricStereo)
+static FDK_PSENC_ERROR ExtractPSParameters(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        const int                 sendHeader,
+        FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2]
+        )
 {
-  HANDLE_ERROR_INFO error = noError;
-  int i, ch;
-  for (ch=0; ch<MAX_PS_CHANNELS; ch++) {
-    /* get qmf buffers       */
-    FIXP_QMF **RESTRICT realQmfData   = hParametricStereo->hPsChannelData[ch]->hPsQmfData->rQmfData + QMF_READ_OFFSET;
-    FIXP_QMF **RESTRICT imagQmfData   = hParametricStereo->hPsChannelData[ch]->hPsQmfData->iQmfData + QMF_READ_OFFSET;
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-    /* get needed parameters */
-    INT nCols = hParametricStereo->hPsChannelData[ch]->hPsQmfData->nCols;
-    INT nRows = hParametricStereo->hPsChannelData[ch]->hPsQmfData->nRows;
+  if (hParametricStereo == NULL) {
+    error = PSENC_INVALID_HANDLE;
+  }
+  else {
+    /* call ps encode function */
+    if (hParametricStereo->initPS){
+      hParametricStereo->psOut[1] = hParametricStereo->psOut[0];
+    }
+    hParametricStereo->psOut[0] = hParametricStereo->psOut[1];
 
-    /* move processed buffer data nCols qmf samples forward */
-    for(i=0; i<HYBRID_READ_OFFSET; i++){
-      FDKmemcpy (realQmfData[i], realQmfData[i + nCols], sizeof(FIXP_QMF)*nRows );
-      FDKmemcpy (imagQmfData[i], imagQmfData[i + nCols], sizeof(FIXP_QMF)*nRows );
+    if (PSENC_OK != (error = FDKsbrEnc_PSEncode(
+            hParametricStereo->hPsEncode,
+           &hParametricStereo->psOut[1],
+            hParametricStereo->dynBandScale,
+            hParametricStereo->maxEnvelopes,
+            hybridData,
+            hParametricStereo->noQmfSlots,
+            sendHeader)))
+    {
+      goto bail;
+    }
+
+    if (hParametricStereo->initPS) {
+      hParametricStereo->psOut[0] = hParametricStereo->psOut[1];
+      hParametricStereo->initPS = 0;
     }
   }
-
-  return error;
-}
-
-HANDLE_ERROR_INFO
-UpdatePSQmfData_second(HANDLE_PARAMETRIC_STEREO hParametricStereo)
-{
-  HANDLE_ERROR_INFO error = noError;
-  int i, ch;
-  for (ch=0; ch<MAX_PS_CHANNELS; ch++) {
-    /* get qmf buffers       */
-    FIXP_QMF **RESTRICT realQmfData = hParametricStereo->hPsChannelData[ch]->hPsQmfData->rQmfData + QMF_READ_OFFSET;
-    FIXP_QMF **RESTRICT imagQmfData = hParametricStereo->hPsChannelData[ch]->hPsQmfData->iQmfData + QMF_READ_OFFSET;
-
-    /* get needed parameters */
-    INT writeOffset = hParametricStereo->hPsChannelData[ch]->hPsQmfData->bufferWriteOffset;
-    INT nCols       = hParametricStereo->hPsChannelData[ch]->hPsQmfData->nCols;
-    INT nRows       = hParametricStereo->hPsChannelData[ch]->hPsQmfData->nRows;
-
-    /* move processed buffer data nCols qmf samples forward */
-    for(i=HYBRID_READ_OFFSET; i<writeOffset; i++){
-      FDKmemcpy (realQmfData[i], realQmfData[i + nCols], sizeof(FIXP_QMF)*nRows );
-      FDKmemcpy (imagQmfData[i], imagQmfData[i + nCols], sizeof(FIXP_QMF)*nRows );
-    }
-  }
-
+bail:
   return error;
 }
 
 
-
-/*
-  name:        static HANDLE_ERROR_INFO UpdatePSHybridData
-  description: updates buffer containg PS hybrid data
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo
-  output:      - HANDLE_PARAMETRIC_STEREO hParametricStereo with updated hybrid data
-*/
-
-static HANDLE_ERROR_INFO UpdatePSHybridData(HANDLE_PARAMETRIC_STEREO hParametricStereo)
+static FDK_PSENC_ERROR DownmixPSQmfData(
+       HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+       HANDLE_QMF_FILTER_BANK    sbrSynthQmf,
+       FIXP_QMF       **RESTRICT mixRealQmfData,
+       FIXP_QMF       **RESTRICT mixImagQmfData,
+       INT_PCM                  *downsampledOutSignal,
+       FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2],
+       const INT                 noQmfSlots,
+       const INT                 psQmfScale[MAX_PS_CHANNELS],
+       SCHAR                    *qmfScale
+       )
 {
-  INT i, ch;
-
-  for (ch=0; ch<MAX_PS_CHANNELS; ch++) {
-    HANDLE_PS_HYBRID_DATA  hHybData = hParametricStereo->hPsChannelData[ch]->hHybData;
-    FIXP_QMF       **realHybridData = hHybData->rHybData + HYBRID_DATA_READ_OFFSET;
-    FIXP_QMF       **imagHybridData = hHybData->iHybData + HYBRID_DATA_READ_OFFSET;
-    INT              writeOffset    = hHybData->hybDataWriteOffset;
-    INT              frameSize      = hHybData->frameSize;
-
-    for(i=0; i<writeOffset; i++){
-      FDKmemcpy (realHybridData[i], realHybridData[i + frameSize], sizeof(FIXP_QMF)*HYBRID_NUM_BANDS );
-      FDKmemcpy (imagHybridData[i], imagHybridData[i + frameSize], sizeof(FIXP_QMF)*HYBRID_NUM_BANDS );
-    }
-  }
-
-  return noError;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO ExtractPSParameters
-  description: PS parameter extraction
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo
-  output:      - HANDLE_PARAMETRIC_STEREO hParametricStereo PS parameter
-*/
-
-static HANDLE_ERROR_INFO
-ExtractPSParameters(HANDLE_PARAMETRIC_STEREO hParametricStereo, const int sendHeader){
-
-  HANDLE_ERROR_INFO error = noError;
-
-  if(error == noError){
-    if(hParametricStereo == NULL){
-      error = ERROR(CDI, "Invalid handle hParametricStereo.");
-    }
-  }
-
-  /* call ps encode function */
-  if(error == noError){
-     if (hParametricStereo->initPS){
-      *hParametricStereo->hPsOut[1] = *hParametricStereo->hPsOut[0];
-     }
-    *hParametricStereo->hPsOut[0] = *hParametricStereo->hPsOut[1];
-
-    if(noError != (error = FDKsbrEnc_PSEncode(hParametricStereo->hPsEncode,
-                                              hParametricStereo->hPsOut[1],
-                                              hParametricStereo->hPsChannelData[0],
-                                              hParametricStereo->hPsChannelData[1],
-                                              hParametricStereo->dynBandScale,
-                                              hParametricStereo->maxEnvelopes,
-                                              sendHeader))){
-      error = handBack(error);
-    }
-   if (hParametricStereo->initPS){
-    *hParametricStereo->hPsOut[0] = *hParametricStereo->hPsOut[1];
-    hParametricStereo->initPS = 0;
-   }
-  }
-
-  return error;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO DownmixPSQmfData
-  description: energy weighted downmix and hybrid synthesis
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo containing left and right channel qmf data
-  output:      - HANDLE_PARAMETRIC_STEREO with updated qmf data buffer, hybrid data buffer
-               - FIXP_QMF **mixRealQmfData: pointer to buffer containing downmixed (real) qmf data
-               - FIXP_QMF **mixImagQmfData: pointer to buffer containing downmixed (imag) qmf data
-*/
-
-static HANDLE_ERROR_INFO
-DownmixPSQmfData(HANDLE_PARAMETRIC_STEREO hParametricStereo, FIXP_QMF **RESTRICT mixRealQmfData,
-                 FIXP_QMF **RESTRICT mixImagQmfData, SCHAR *downmixScale)
-{
-  HANDLE_ERROR_INFO error = noError;
-  int n, k;
-  int dynQmfScale, adjQmfScale;
-  int nQmfSamples=0, nQmfBands=0, nHybridQmfBands=0;
-  FIXP_QMF **RESTRICT leftRealQmfData        = NULL;
-  FIXP_QMF **RESTRICT leftImagQmfData        = NULL;
-  FIXP_QMF **RESTRICT rightRealQmfData       = NULL;
-  FIXP_QMF **RESTRICT rightImagQmfData       = NULL;
-  FIXP_QMF **RESTRICT leftRealHybridQmfData  = NULL;
-  FIXP_QMF **RESTRICT leftImagHybridQmfData  = NULL;
-  FIXP_QMF **RESTRICT rightRealHybridQmfData = NULL;
-  FIXP_QMF **RESTRICT rightImagHybridQmfData = NULL;
+  FDK_PSENC_ERROR error = PSENC_OK;
 
   if(hParametricStereo == NULL){
-    error = ERROR(CDI, "Invalid handle hParametricStereo.");
+    error = PSENC_INVALID_HANDLE;
   }
-
-  if(error == noError){
-    /* Update first part of qmf buffers...
-       no whole buffer update possible; downmix is inplace */
-    if(noError != (error = UpdatePSQmfData_first(hParametricStereo))){
-      error = handBack(error);
-    }
-  }
-
-  if(error == noError){
-    /* get buffers: synchronize QMF buffers and hybrid buffers to compensate hybrid filter delay */
-    /* hybrid filter bank looks nHybridFilterDelay qmf samples forward                           */
-    leftRealQmfData        = hParametricStereo->hPsChannelData[0]->hPsQmfData->rQmfData + HYBRID_READ_OFFSET;
-    leftImagQmfData        = hParametricStereo->hPsChannelData[0]->hPsQmfData->iQmfData + HYBRID_READ_OFFSET;
-    rightRealQmfData       = hParametricStereo->hPsChannelData[1]->hPsQmfData->rQmfData + HYBRID_READ_OFFSET;
-    rightImagQmfData       = hParametricStereo->hPsChannelData[1]->hPsQmfData->iQmfData + HYBRID_READ_OFFSET;
-
-    leftRealHybridQmfData  = hParametricStereo->hPsChannelData[0]->hHybData->rHybData + HYBRID_WRITE_OFFSET;
-    leftImagHybridQmfData  = hParametricStereo->hPsChannelData[0]->hHybData->iHybData + HYBRID_WRITE_OFFSET;
-    rightRealHybridQmfData = hParametricStereo->hPsChannelData[1]->hHybData->rHybData + HYBRID_WRITE_OFFSET;
-    rightImagHybridQmfData = hParametricStereo->hPsChannelData[1]->hHybData->iHybData + HYBRID_WRITE_OFFSET;
-
-    /* get number of needed parameters */
-    nQmfSamples            = hParametricStereo->hPsChannelData[0]->hPsQmfData->nCols;
-    nQmfBands              = hParametricStereo->hPsChannelData[0]->hPsQmfData->nRows;
-    nHybridQmfBands        = FDKsbrEnc_GetNumberHybridQmfBands(hParametricStereo->hPsChannelData[0]->hHybData);
+  else {
+    int n, k;
+    C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_QMF, QMF_CHANNELS*2);    
 
     /* define scalings */
-    adjQmfScale = hParametricStereo->hPsChannelData[0]->hHybData->sf_fixpHybrid
-                - hParametricStereo->hPsChannelData[0]->psQmfScale;
+    int dynQmfScale = fixMax(0, hParametricStereo->dmxScale-1); /* scale one bit more for addition of left and right */
+    int downmixScale = psQmfScale[0] - dynQmfScale;
+    const FIXP_DBL maxStereoScaleFactor = MAXVAL_DBL; /* 2.f/2.f */
 
-    dynQmfScale = fixMax(0, hParametricStereo->dmxScale-1); /* scale one bit more for addition of left and right */
+    for (n = 0; n<noQmfSlots; n++) {
 
-    *downmixScale = hParametricStereo->hPsChannelData[0]->hHybData->sf_fixpHybrid - dynQmfScale + 1;
+      FIXP_DBL tmpHybrid[2][MAX_HYBRID_BANDS];
 
-    const FIXP_DBL maxStereoScaleFactor = FL2FXCONST_DBL(2.0f/2.f);
-
-    for(n = 0; n<nQmfSamples; n++){
-      INT hybridDataOffset = 0;
-
-      for(k = 0; k<nQmfBands; k++){
-        INT l, nHybridSubBands;
-        FIXP_DBL tmpMixReal, tmpMixImag;
-
-        if(k < nHybridQmfBands){
-          /* process sub-subbands from hybrid qmf */
-          nHybridSubBands = FDKsbrEnc_GetHybridResolution(hParametricStereo->hPsChannelData[0]->hHybData, k);
-        } else {
-          /* process qmf data */
-          nHybridSubBands = 1;
-        }
-
-        tmpMixReal = FL2FXCONST_DBL(0.f);
-        tmpMixImag = FL2FXCONST_DBL(0.f);
-
-        for(l=0; l<nHybridSubBands; l++) {
+      for(k = 0; k<71; k++){
           int dynScale, sc; /* scaling */
           FIXP_QMF tmpLeftReal, tmpRightReal, tmpLeftImag, tmpRightImag;
           FIXP_DBL tmpScaleFactor, stereoScaleFactor;
 
-          if(k < nHybridQmfBands){
-            /* process sub-subbands from hybrid qmf */
-            tmpLeftReal  = (leftRealHybridQmfData[n][hybridDataOffset + l]);
-            tmpLeftImag  = (leftImagHybridQmfData[n][hybridDataOffset + l]);
-            tmpRightReal = (rightRealHybridQmfData[n][hybridDataOffset + l]);
-            tmpRightImag = (rightImagHybridQmfData[n][hybridDataOffset + l]);
-            dynScale     = dynQmfScale;
-          } else {
-            /* process qmf data */
-            tmpLeftReal  = leftRealQmfData[n][k];
-            tmpLeftImag  = leftImagQmfData[n][k];
-            tmpRightReal = rightRealQmfData[n][k];
-            tmpRightImag = rightImagQmfData[n][k];
-            dynScale     = dynQmfScale-adjQmfScale;
-          }
+          tmpLeftReal  = hybridData[n][0][0][k];
+          tmpLeftImag  = hybridData[n][0][1][k];
+          tmpRightReal = hybridData[n][1][0][k];
+          tmpRightImag = hybridData[n][1][1][k];
 
           sc = fixMax(0,CntLeadingZeros( fixMax(fixMax(fixp_abs(tmpLeftReal),fixp_abs(tmpLeftImag)),fixMax(fixp_abs(tmpRightReal),fixp_abs(tmpRightImag))) )-2);
 
           tmpLeftReal  <<= sc; tmpLeftImag  <<= sc;
           tmpRightReal <<= sc; tmpRightImag <<= sc;
-          dynScale = fixMin(sc-dynScale,DFRACT_BITS-1);
+          dynScale = fixMin(sc-dynQmfScale,DFRACT_BITS-1);
 
           /* calc stereo scale factor to avoid loss of energy in bands                                                 */
           /* stereo scale factor = min(2.0f, sqrt( (abs(l(k, n)^2 + abs(r(k, n)^2 )))/(0.5f*abs(l(k, n) + r(k, n))) )) */
@@ -735,267 +309,191 @@ DownmixPSQmfData(HANDLE_PARAMETRIC_STEREO hParametricStereo, FIXP_QMF **RESTRICT
               stereoScaleFactor = maxStereoScaleFactor;
           }
 
-          /* write data to output */
-          tmpMixReal += fMultDiv2(stereoScaleFactor, (FIXP_QMF)(tmpLeftReal + tmpRightReal))>>dynScale;
-          tmpMixImag += fMultDiv2(stereoScaleFactor, (FIXP_QMF)(tmpLeftImag + tmpRightImag))>>dynScale;
-        }
+          /* write data to hybrid output */
+          tmpHybrid[0][k] = fMultDiv2(stereoScaleFactor, (FIXP_QMF)(tmpLeftReal + tmpRightReal))>>dynScale;
+          tmpHybrid[1][k] = fMultDiv2(stereoScaleFactor, (FIXP_QMF)(tmpLeftImag + tmpRightImag))>>dynScale;
 
-        mixRealQmfData[n][k] = tmpMixReal;
-        mixImagQmfData[n][k] = tmpMixImag;
+      } /* hybrid bands - k */
 
-        hybridDataOffset += nHybridSubBands;
+      FDKhybridSynthesisApply(
+            &hParametricStereo->fdkHybSynFilter,
+             tmpHybrid[0],
+             tmpHybrid[1],
+             mixRealQmfData[n],
+             mixImagQmfData[n]);
+
+      qmfSynthesisFilteringSlot(
+            sbrSynthQmf,
+            mixRealQmfData[n],
+            mixImagQmfData[n],
+            downmixScale-7,
+            downmixScale-7,
+            downsampledOutSignal+(n*sbrSynthQmf->no_channels),
+            1,
+            pWorkBuffer);
+
+    } /* slots */
+
+    *qmfScale = -downmixScale + 7;
+
+    C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_QMF, QMF_CHANNELS*2);
+
+
+  {
+    const INT noQmfSlots2 = hParametricStereo->noQmfSlots>>1;
+    const int noQmfBands  = hParametricStereo->noQmfBands;
+
+    INT scale, i, j, slotOffset;
+
+    FIXP_QMF tmp[2][QMF_CHANNELS];
+
+    for (i=0; i<noQmfSlots2; i++) {
+      FDKmemcpy(tmp[0], hParametricStereo->qmfDelayLines[0][i], noQmfBands*sizeof(FIXP_QMF));
+      FDKmemcpy(tmp[1], hParametricStereo->qmfDelayLines[1][i], noQmfBands*sizeof(FIXP_QMF));
+
+      FDKmemcpy(hParametricStereo->qmfDelayLines[0][i], mixRealQmfData[i+noQmfSlots2], noQmfBands*sizeof(FIXP_QMF));
+      FDKmemcpy(hParametricStereo->qmfDelayLines[1][i], mixImagQmfData[i+noQmfSlots2], noQmfBands*sizeof(FIXP_QMF));
+
+      FDKmemcpy(mixRealQmfData[i+noQmfSlots2], mixRealQmfData[i], noQmfBands*sizeof(FIXP_QMF));
+      FDKmemcpy(mixImagQmfData[i+noQmfSlots2], mixImagQmfData[i], noQmfBands*sizeof(FIXP_QMF));
+
+      FDKmemcpy(mixRealQmfData[i], tmp[0], noQmfBands*sizeof(FIXP_QMF));
+      FDKmemcpy(mixImagQmfData[i], tmp[1], noQmfBands*sizeof(FIXP_QMF));
+    }
+
+    if (hParametricStereo->qmfDelayScale > *qmfScale) {
+      scale = hParametricStereo->qmfDelayScale - *qmfScale;
+      slotOffset = 0;
+    }
+    else {
+      scale = *qmfScale - hParametricStereo->qmfDelayScale;
+      slotOffset = noQmfSlots2;
+    }
+
+    for (i=0; i<noQmfSlots2; i++) {
+      for (j=0; j<noQmfBands; j++) {
+        mixRealQmfData[i+slotOffset][j] >>= scale;
+        mixImagQmfData[i+slotOffset][j] >>= scale;
       }
     }
-  } /* if(error == noError) */
 
-
-  if(error == noError){
-    /* ... and update the hybrid data */
-    if(noError != (error = UpdatePSHybridData(hParametricStereo))){
-      error = handBack(error);
-    }
+    scale = *qmfScale;
+    *qmfScale = FDKmin(*qmfScale, hParametricStereo->qmfDelayScale);
+    hParametricStereo->qmfDelayScale = scale;
   }
+
+  } /* valid handle */
 
   return error;
 }
 
 
-/*
-  name:        INT FDKsbrEnc_PSEnc_WritePSData()
-  description: writes ps_data() element to bitstream (hBitstream), returns number of written bits;
-               returns number of written bits only, if hBitstream == NULL
-  returns:     number of bits in ps_data()
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo containing extracted ps parameters
-  output:      - HANDLE_FDK_BITSTREAM containing ps_data() element
-*/
-
-INT
-FDKsbrEnc_PSEnc_WritePSData(HANDLE_PARAMETRIC_STEREO hParametricStereo, HANDLE_FDK_BITSTREAM hBitstream)
+INT FDKsbrEnc_PSEnc_WritePSData(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        HANDLE_FDK_BITSTREAM      hBitstream
+        )
 {
-
-  INT nBitsWritten = 0;
-
-  if(hParametricStereo != NULL){
-    nBitsWritten = FDKsbrEnc_WritePSBitstream(hParametricStereo->hPsOut[0], hBitstream);
-  }
-
-  return nBitsWritten;
+  return ( (hParametricStereo!=NULL) ? FDKsbrEnc_WritePSBitstream(&hParametricStereo->psOut[0], hBitstream) : 0 );
 }
 
 
-/*
-  name:        static HANDLE_ERROR_INFO PSHybridAnalysis()
-  description: hybrid analysis filter bank of lowest qmf banks
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo containing qmf samples
-  output:      - HANDLE_PARAMETRIC STEREO hParametricStereo also containing hybrid data
-*/
-
-static HANDLE_ERROR_INFO
-PSHybridAnalysis(HANDLE_PARAMETRIC_STEREO hParametricStereo){
-
-  HANDLE_ERROR_INFO error = noError;
-  int ch;
-
-  if(hParametricStereo == NULL){
-    error = ERROR(CDI, "Invalid handle hParametricStereo.");
-  }
-
-  for (ch=0; ch<MAX_PS_CHANNELS; ch++) {
-    if(error == noError){
-      if(noError != (error  = HybridAnalysis(hParametricStereo->hPsChannelData[ch]->hHybAna,
-                                             hParametricStereo->hPsChannelData[ch]->hPsQmfData->rQmfData + HYBRID_READ_OFFSET,
-                                             hParametricStereo->hPsChannelData[ch]->hPsQmfData->iQmfData + HYBRID_READ_OFFSET,
-                                             hParametricStereo->hPsChannelData[ch]->psQmfScale,
-                                             hParametricStereo->hPsChannelData[ch]->hHybData->rHybData + HYBRID_WRITE_OFFSET,
-                                             hParametricStereo->hPsChannelData[ch]->hHybData->iHybData + HYBRID_WRITE_OFFSET,
-                                             &hParametricStereo->hPsChannelData[ch]->hHybData->sf_fixpHybrid))){
-        error = handBack(error);
-      }
-    }
-  }
-
-  return error;
-}
-
-/*
-  name:        HANDLE_ERROR_INFO FDKsbrEnc_PSEnc_ParametricStereoProcessing
-  description: Complete PS Processing:
-               qmf + hybrid analysis of time domain data (left and right channel),
-               PS parameter extraction
-               downmix of qmf data
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PARAMETRIC_STEREO hParametricStereo
-  output:      - HANDLE_PARAMETRIC STEREO hParametricStereo containing extracted PS parameters
-               - FIXP_DBL **qmfDataReal: Pointer to buffer containing downmixed, real qmf data
-               - FIXP_DBL **qmfDataImag: Pointer to buffer containing downmixed, imag qmf data
-               - INT_PCM  **downsampledOutSignal: Pointer to buffer containing downmixed time signal
-               - SCHAR     *qmfScale: Updated scale value for the QMF downmix data
-
-*/
-
-HANDLE_ERROR_INFO
-FDKsbrEnc_PSEnc_ParametricStereoProcessing(HANDLE_PARAMETRIC_STEREO hParametricStereo,
-                                           FIXP_QMF **RESTRICT      qmfDataReal,
-                                           FIXP_QMF **RESTRICT      qmfDataImag,
-                                           INT                      qmfOffset,
-                                           INT_PCM                 *downsampledOutSignal,
-                                           HANDLE_QMF_FILTER_BANK   sbrSynthQmf,
-                                           SCHAR                   *qmfScale,
-                                           const int                sendHeader)
+FDK_PSENC_ERROR FDKsbrEnc_PSEnc_ParametricStereoProcessing(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        INT_PCM                  *samples[2],
+        UINT                      timeInStride,
+        QMF_FILTER_BANK         **hQmfAnalysis,
+        FIXP_QMF **RESTRICT       downmixedRealQmfData,
+        FIXP_QMF **RESTRICT       downmixedImagQmfData,
+        INT_PCM                  *downsampledOutSignal,
+        HANDLE_QMF_FILTER_BANK    sbrSynthQmf,
+        SCHAR                    *qmfScale,
+        const int                 sendHeader
+        )
 {
-  HANDLE_ERROR_INFO error = noError;
-  FIXP_QMF **downmixedRealQmfData = qmfDataReal+qmfOffset;
-  FIXP_QMF **downmixedImagQmfData = qmfDataImag+qmfOffset;
-  SCHAR dmScale   = 0;
+  FDK_PSENC_ERROR error = PSENC_OK;
   INT noQmfBands  = hParametricStereo->noQmfBands;
+  INT psQmfScale[MAX_PS_CHANNELS] = {0};
+  int psCh, i;
+  C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, QMF_CHANNELS*4);    
 
+  for (psCh = 0; psCh<MAX_PS_CHANNELS; psCh ++) {
 
-  if (error == noError) {
-    /* do ps hybrid analysis */
-        if(noError != (error = PSHybridAnalysis(hParametricStereo))){
-      error = handBack(error);
-    }
-  }
+    for (i = 0; i < hQmfAnalysis[psCh]->no_col; i++) {
+
+      qmfAnalysisFilteringSlot(
+          hQmfAnalysis[psCh],
+         &pWorkBuffer[2*QMF_CHANNELS], /* qmfReal[QMF_CHANNELS] */
+         &pWorkBuffer[3*QMF_CHANNELS], /* qmfImag[QMF_CHANNELS] */
+          samples[psCh]+i*(hQmfAnalysis[psCh]->no_channels*timeInStride),
+          timeInStride,
+         &pWorkBuffer[0*QMF_CHANNELS]  /* qmf workbuffer 2*QMF_CHANNELS */
+          );
+
+      FDKhybridAnalysisApply(
+         &hParametricStereo->fdkHybAnaFilter[psCh],
+         &pWorkBuffer[2*QMF_CHANNELS],  /* qmfReal[QMF_CHANNELS] */
+         &pWorkBuffer[3*QMF_CHANNELS],  /* qmfImag[QMF_CHANNELS] */
+          hParametricStereo->pHybridData[i+HYBRID_READ_OFFSET][psCh][0],
+          hParametricStereo->pHybridData[i+HYBRID_READ_OFFSET][psCh][1]
+          );
+
+    } /* no_col loop  i  */
+
+    psQmfScale[psCh] = hQmfAnalysis[psCh]->outScalefactor;
+
+  } /* for psCh */
+
+  C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, QMF_CHANNELS*4);
 
   /* find best scaling in new QMF and Hybrid data */
   psFindBestScaling( hParametricStereo,
+                    &hParametricStereo->pHybridData[HYBRID_READ_OFFSET],
                      hParametricStereo->dynBandScale,
                      hParametricStereo->maxBandValue,
                     &hParametricStereo->dmxScale ) ;
 
 
-  if(error == noError){
-    /* extract the ps parameters */
-    if(noError != (error = ExtractPSParameters(hParametricStereo, sendHeader))){
-      error = handBack(error);
-    }
+  /* extract the ps parameters */
+  if(PSENC_OK != (error = ExtractPSParameters(hParametricStereo, sendHeader, &hParametricStereo->pHybridData[0]))){
+    goto bail;
   }
 
-  if(error == noError){
-    /* downmix and hybrid synthesis */
-    if(noError != (error = DownmixPSQmfData(hParametricStereo, downmixedRealQmfData, downmixedImagQmfData, &dmScale))){
-      error = handBack(error);
-    }
+  /* save hybrid date for next frame */
+  for (i=0; i<HYBRID_READ_OFFSET; i++) {
+    FDKmemcpy(hParametricStereo->pHybridData[i][0][0], hParametricStereo->pHybridData[HYBRID_FRAMESIZE+i][0][0], MAX_HYBRID_BANDS*sizeof(FIXP_DBL)); /* left, real */
+    FDKmemcpy(hParametricStereo->pHybridData[i][0][1], hParametricStereo->pHybridData[HYBRID_FRAMESIZE+i][0][1], MAX_HYBRID_BANDS*sizeof(FIXP_DBL)); /* left, imag */
+    FDKmemcpy(hParametricStereo->pHybridData[i][1][0], hParametricStereo->pHybridData[HYBRID_FRAMESIZE+i][1][0], MAX_HYBRID_BANDS*sizeof(FIXP_DBL)); /* right, real */
+    FDKmemcpy(hParametricStereo->pHybridData[i][1][1], hParametricStereo->pHybridData[HYBRID_FRAMESIZE+i][1][1], MAX_HYBRID_BANDS*sizeof(FIXP_DBL)); /* right, imag */
   }
 
-
-  if (error == noError)
-  {
-     C_ALLOC_SCRATCH_START(qmfWorkBuffer, FIXP_DBL, QMF_CHANNELS*2);
-    /*
-
-     QMF synthesis including downsampling
-
-    */
-    QMF_SCALE_FACTOR tmpScale;
-    int scale = -dmScale;
-    tmpScale.lb_scale = scale;
-    tmpScale.ov_lb_scale = scale;
-    tmpScale.hb_scale = scale;
-    tmpScale.ov_hb_scale = 0;
-
-    qmfSynthesisFiltering( sbrSynthQmf,
-                           downmixedRealQmfData,
-                           downmixedImagQmfData,
-                          &tmpScale,
-                           0,
-                           downsampledOutSignal,
-                           1,
-                           qmfWorkBuffer );
-
-    C_ALLOC_SCRATCH_END(qmfWorkBuffer, FIXP_DBL, QMF_CHANNELS*2);
-
-
+  /* downmix and hybrid synthesis */
+  if (PSENC_OK != (error = DownmixPSQmfData(hParametricStereo, sbrSynthQmf, downmixedRealQmfData, downmixedImagQmfData, downsampledOutSignal, &hParametricStereo->pHybridData[HYBRID_READ_OFFSET], hParametricStereo->noQmfSlots, psQmfScale, qmfScale))) {
+    goto bail;
   }
 
-  /* scaling in sbr module differs -> scaling update */
-  *qmfScale = -dmScale  + 7;
-
-
-  /*
-   * Do PS to SBR QMF data transfer/scaling buffer shifting, delay lines etc.
-   */
-  {
-    INT noQmfSlots2 = hParametricStereo->noQmfSlots>>1;
-
-    FIXP_QMF r_tmp1;
-    FIXP_QMF i_tmp1;
-    FIXP_QMF **delayQmfReal = hParametricStereo->qmfDelayReal;
-    FIXP_QMF **delayQmfImag = hParametricStereo->qmfDelayImag;
-    INT scale, i, j;
-
-    if (hParametricStereo->qmfDelayScale > *qmfScale) {
-      scale = hParametricStereo->qmfDelayScale - *qmfScale;
-
-      for (i=0; i<noQmfSlots2; i++) {
-        for (j=0; j<noQmfBands; j++) {
-          r_tmp1 = qmfDataReal[i][j];
-          i_tmp1 = qmfDataImag[i][j];
-
-          qmfDataReal[i][j] = delayQmfReal[i][j] >> scale;
-          qmfDataImag[i][j] = delayQmfImag[i][j] >> scale;
-          delayQmfReal[i][j] = qmfDataReal[i+noQmfSlots2][j];
-          delayQmfImag[i][j] = qmfDataImag[i+noQmfSlots2][j];
-          qmfDataReal[i+noQmfSlots2][j] = r_tmp1;
-          qmfDataImag[i+noQmfSlots2][j] = i_tmp1;
-        }
-      }
-      hParametricStereo->qmfDelayScale = *qmfScale;
-    }
-    else {
-      scale = *qmfScale - hParametricStereo->qmfDelayScale;
-      for (i=0; i<noQmfSlots2; i++) {
-        for (j=0; j<noQmfBands; j++) {
-          r_tmp1 = qmfDataReal[i][j];
-          i_tmp1 = qmfDataImag[i][j];
-
-          qmfDataReal[i][j] = delayQmfReal[i][j];
-          qmfDataImag[i][j] = delayQmfImag[i][j];
-          delayQmfReal[i][j] = qmfDataReal[i+noQmfSlots2][j];
-          delayQmfImag[i][j] = qmfDataImag[i+noQmfSlots2][j];
-          qmfDataReal[i+noQmfSlots2][j] = r_tmp1 >> scale;
-          qmfDataImag[i+noQmfSlots2][j] = i_tmp1 >> scale;
-        }
-      }
-      scale = *qmfScale;
-      *qmfScale = hParametricStereo->qmfDelayScale;
-      hParametricStereo->qmfDelayScale = scale;
-    }
-  }
+bail:
 
   return error;
 }
 
-static void psFindBestScaling(HANDLE_PARAMETRIC_STEREO hParametricStereo,
-                              UCHAR  *RESTRICT dynBandScale,
-                              FIXP_QMF *RESTRICT maxBandValue,
-                              SCHAR  *RESTRICT dmxScale)
+static void psFindBestScaling(
+        HANDLE_PARAMETRIC_STEREO  hParametricStereo,
+        FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2],
+        UCHAR                    *dynBandScale,
+        FIXP_QMF                 *maxBandValue,
+        SCHAR                    *dmxScale
+        )
 {
   HANDLE_PS_ENCODE hPsEncode      =  hParametricStereo->hPsEncode;
-  HANDLE_PS_HYBRID_DATA hHybDatal =  hParametricStereo->hPsChannelData[0]->hHybData;
 
-  INT group, bin, border, col, band;
-  INT frameSize    = FDKsbrEnc_GetHybridFrameSize(hHybDatal); /* same as FDKsbrEnc_GetHybridFrameSize(hHybDatar) */
-  INT psBands      = (INT) hPsEncode->psEncMode;
-  INT nIidGroups   = hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups;
-
-  FIXP_QMF **lr = hParametricStereo->hPsChannelData[0]->hHybData->rHybData;
-  FIXP_QMF **li = hParametricStereo->hPsChannelData[0]->hHybData->iHybData;
-  FIXP_QMF **rr = hParametricStereo->hPsChannelData[1]->hHybData->rHybData;
-  FIXP_QMF **ri = hParametricStereo->hPsChannelData[1]->hHybData->iHybData;
-  FIXP_QMF **lrBuffer = hParametricStereo->hPsChannelData[0]->hPsQmfData->rQmfData;
-  FIXP_QMF **liBuffer = hParametricStereo->hPsChannelData[0]->hPsQmfData->iQmfData;
-  FIXP_QMF **rrBuffer = hParametricStereo->hPsChannelData[1]->hPsQmfData->rQmfData;
-  FIXP_QMF **riBuffer = hParametricStereo->hPsChannelData[1]->hPsQmfData->iQmfData;
+  INT group, bin, col, band;
+  const INT frameSize  = hParametricStereo->noQmfSlots;
+  const INT psBands    = (INT) hPsEncode->psEncMode;
+  const INT nIidGroups = hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups;
 
   /* group wise scaling */
   FIXP_QMF maxVal [2][PS_MAX_BANDS];
   FIXP_QMF maxValue = FL2FXCONST_DBL(0.f);
-
-  INT nHybridQmfOffset = 0;
-
-  UCHAR switched = 0;
 
   FDKmemclear(maxVal, sizeof(maxVal));
 
@@ -1004,53 +502,32 @@ static void psFindBestScaling(HANDLE_PARAMETRIC_STEREO hParametricStereo,
     /* Translate group to bin */
     bin = hPsEncode->subband2parameterIndex[group];
 
-    if (!switched && group == hPsEncode->nSubQmfIidGroups) {
-      /* switch to qmf data */
-      lr = lrBuffer; li = liBuffer;
-      rr = rrBuffer; ri = riBuffer;
-
-      /* calc offset between hybrid subsubbands and qmf bands */
-      nHybridQmfOffset = FDKsbrEnc_GetNumberHybridQmfBands(hHybDatal) - FDKsbrEnc_GetNumberHybridBands(hHybDatal);
-      switched = 1;
-    }
-
     /* Translate from 20 bins to 10 bins */
     if (hPsEncode->psEncMode == PS_BANDS_COARSE) {
       bin >>= 1;
     }
 
-    /* determine group border */
-    border = hPsEncode->iidGroupBorders[group+1];
-
     /* QMF downmix scaling */
     {
       FIXP_QMF tmp = maxVal[0][bin];
       int i;
-      for (col=HYBRID_READ_OFFSET; col<frameSize; col++) {
-        FIXP_QMF *pLR = &lr[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pLI = &li[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pRR = &rr[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pRI = &ri[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        for (i = 0; i<border-hPsEncode->iidGroupBorders[group]; i++) {
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pLR++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pLI++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pRR++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pRI++));
+      for (col=0; col<frameSize-HYBRID_READ_OFFSET; col++) {
+        for (i = hPsEncode->iidGroupBorders[group]; i < hPsEncode->iidGroupBorders[group+1]; i++) {
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][0][0][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][0][1][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][1][0][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][1][1][i]));
         }
       }
       maxVal[0][bin] = tmp;
 
       tmp = maxVal[1][bin];
-      for (col=frameSize; col<HYBRID_READ_OFFSET+frameSize; col++) {
-        FIXP_QMF *pLR = &lr[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pLI = &li[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pRR = &rr[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        FIXP_QMF *pRI = &ri[col][hPsEncode->iidGroupBorders[group] + nHybridQmfOffset];
-        for (i = 0; i<border-hPsEncode->iidGroupBorders[group]; i++) {
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pLR++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pLI++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pRR++));
-          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(*pRI++));
+      for (col=frameSize-HYBRID_READ_OFFSET; col<frameSize; col++) {
+        for (i = hPsEncode->iidGroupBorders[group]; i < hPsEncode->iidGroupBorders[group+1]; i++) {
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][0][0][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][0][1][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][1][0][i]));
+          tmp = fixMax(tmp, (FIXP_QMF)fixp_abs(hybridData[col][1][1][i]));
         }
       }
       maxVal[1][bin] = tmp;

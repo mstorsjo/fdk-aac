@@ -344,7 +344,7 @@ static inline void fft15(FIXP_DBL *pInput)
   y[ 3 + iy] = ur - vi;          /* Im B'= -Re C + Re D + Im A - Im B */  \
   y[ 7 + iy] = vi + ur;          /* Im D'= Re C - Re D + Im A - Im B */
 
-static const FIXP_SPK fft16_w16[2] = { {{STC(0x7641af3d), STC(0x30fbc54d)}}, {{ STC(0x30fbc54d), STC(0x7641af3d)}} };
+static const FIXP_STP fft16_w16[2] =  { STCP(0x7641af3d, 0x30fbc54d), STCP(0x30fbc54d, 0x7641af3d) };
 
 LNK_SECTION_CODE_L1
 inline void fft_16(FIXP_DBL *RESTRICT x)
@@ -527,10 +527,10 @@ inline void fft_16(FIXP_DBL *RESTRICT x)
 }
 
 #ifndef FUNCTION_fft_32
-static const FIXP_SPK fft32_w32[6] =
+static const FIXP_STP fft32_w32[6] =
 {
-  {{ STC(0x7641af3d), STC(0x30fbc54d)}}, {{ STC(0x30fbc54d), STC(0x7641af3d)}}, {{ STC(0x7d8a5f40), STC(0x18f8b83c)}},
-  {{ STC(0x6a6d98a4), STC(0x471cece7)}}, {{ STC(0x471cece7), STC(0x6a6d98a4)}}, {{ STC(0x18f8b83c), STC(0x7d8a5f40)}}
+  STCP (0x7641af3d, 0x30fbc54d), STCP(0x30fbc54d, 0x7641af3d), STCP(0x7d8a5f40, 0x18f8b83c),
+  STCP (0x6a6d98a4, 0x471cece7), STCP(0x471cece7, 0x6a6d98a4), STCP(0x18f8b83c, 0x7d8a5f40)
 };
 
 LNK_SECTION_CODE_L1

@@ -159,6 +159,33 @@ typedef struct {
 
 typedef struct AAC_ENC *HANDLE_AAC_ENC;
 
+/**
+ * \brief Limit given bit rate to a valid value
+ * \param hTpEnc transport encoder handle
+ * \param coreSamplingRate the sample rate to be used for the AAC encoder
+ * \param frameLength the frameLength to be used for the AAC encoder
+ * \param nChannels number of total channels
+ * \param nChannelsEff number of effective channels
+ * \param bitRate the initial bit rate value for which the closest valid bit rate value is searched for
+ * \param averageBits average bits per frame for fixed framing. Set to -1 if not available.
+ * \param optional pointer where the current bits per frame are stored into.
+ * \param bitrateMode the current bit rate mode
+ * \param nSubFrames number of sub frames for super framing (not transport frames).
+ * \return a valid bit rate value as close as possible or identical to bitRate
+ */
+INT FDKaacEnc_LimitBitrate(
+        HANDLE_TRANSPORTENC hTpEnc,
+        INT coreSamplingRate,
+        INT frameLength,
+        INT nChannels,
+        INT nChannelsEff,
+        INT bitRate,
+        INT averageBits,
+        INT *pAverageBitsPerFrame,
+        INT bitrateMode,
+        INT nSubFrames
+        );
+
  /*-----------------------------------------------------------------------------
 
      functionname: FDKaacEnc_GetVBRBitrate

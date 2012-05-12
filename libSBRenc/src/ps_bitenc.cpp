@@ -202,8 +202,7 @@ static const UINT opdDeltaTime_Code[] =
 static const INT psBands[] =
 {
   PS_BANDS_COARSE,
-  PS_BANDS_MID,
-  PS_BANDS_FINE
+  PS_BANDS_MID
 };
 
 static INT getNoBands(PS_RESOLUTION mode)

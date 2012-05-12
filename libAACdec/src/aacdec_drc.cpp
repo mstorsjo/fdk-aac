@@ -42,7 +42,7 @@
 #define DRC_PARAMETER_BITS        ( 7 )
 #define DRC_MAX_QUANT_STEPS       ( 1<<DRC_PARAMETER_BITS )
 #define DRC_MAX_QUANT_FACTOR      ( DRC_MAX_QUANT_STEPS-1 )
-#define DRC_PARAM_QUANT_STEP      ( FL2FXCONST_DBL(1.0f/(float)DRC_MAX_QUANT_STEPS) )
+#define DRC_PARAM_QUANT_STEP      ( FL2FXCONST_DBL(1.0f/(float)DRC_MAX_QUANT_FACTOR) )
 #define DRC_PARAM_SCALE           ( 1 )
 
 #define MAX_REFERENCE_LEVEL       ( 127 )
@@ -99,6 +99,7 @@ void aacDecoder_drcInitChannelData (
     pDrcChData->bandTop[0]  = (1024 >> 2) - 1;
     pDrcChData->drcValue[0] = 0;
     pDrcChData->drcInterpolationScheme = 0;
+    pDrcChData->drcDataType = UNKNOWN_PAYLOAD;
   }
 }
 
@@ -130,7 +131,7 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-    self->params.cut = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)(value+1));
+    self->params.cut = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
     break;
   case DRC_BOOST_SCALE:
     /* set boost factor */
@@ -141,7 +142,7 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-    self->params.boost = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)(value+1));
+    self->params.boost = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
     break;
   case TARGET_REF_LEVEL:
     if ( value >  MAX_REFERENCE_LEVEL
@@ -300,13 +301,12 @@ int aacDecoder_drcMarkPayload (
     break;
 
     case DVB_DRC_ANC_DATA:
+      bitCnt += 8;
       /* check sync word */
       if (FDKreadBits(bs, 8) == DVB_ANC_DATA_SYNC_BYTE)
       {
         int dmxLevelsPresent, compressionPresent;
         int coarseGrainTcPresent, fineGrainTcPresent;
-
-        bitCnt+=8;
 
         /* bs_info field */ 
         FDKreadBits(bs, 8);                          /* mpeg_audio_type, dolby_surround_mode, presentation_mode */
@@ -432,7 +432,7 @@ static int aacDecoder_drcParse (
   }
 
   /* Set DRC payload type */
-  pDrcBs->type = MPEG_DRC_EXT_DATA;
+  pDrcBs->channelData.drcDataType = MPEG_DRC_EXT_DATA;
 
   return (bitCnt);
 }
@@ -515,23 +515,26 @@ static int aacDecoder_drcReadCompression (
 
     if ( compressionOn ) {
       /* A compression value is available so store the data just like MPEG DRC data */
-      pDrcBs->channelData.drcValue[0] =  compressionValue;
-      pDrcBs->channelData.numBands    =  1;  /* one value for all bands */
-      pDrcBs->pceInstanceTag          = -1;  /* not present */
-      pDrcBs->progRefLevel            = -1;  /* not present */
+      pDrcBs->channelData.numBands    =  1;                            /* One band ... */
+      pDrcBs->channelData.drcValue[0] =  compressionValue;             /* ... with one value ... */
+      pDrcBs->channelData.bandTop[0]  = (1024 >> 2) - 1;  /* ... comprising the whole spectrum. */
+      pDrcBs->pceInstanceTag          = -1;                            /* Not present */
+      pDrcBs->progRefLevel            = -1;                            /* Not present */
+      pDrcBs->channelData.drcDataType =  DVB_DRC_ANC_DATA;             /* Set DRC payload type to DVB. */
     } else {
       /* No compression value available */
       /* CAUTION: It is not clearly defined by standard how to react in this situation. */
-      pDrcBs->channelData.drcValue[0] = 0x7F;  /* 0dB */
-      pDrcBs->channelData.bandTop[0]  = 0;
+      /* Turn down the compression value to aprox. 0dB */
+      pDrcBs->channelData.numBands    =  1;                            /* One band ... */
+      pDrcBs->channelData.drcValue[0] =  0x80;                         /* ... with aprox. 0dB ... */
+      pDrcBs->channelData.bandTop[0]  = (1024 >> 2) - 1;  /* ... comprising the whole spectrum. */
+      pDrcBs->channelData.drcDataType =  DVB_DRC_ANC_DATA;             /* Set DRC payload type to DVB. */
 
       /* If compression_on field is set to "0" the compression_value field shall be "0000 0000". */
       if (compressionValue != 0) {
         return 0;
       }
     }
-    /* Set DRC payload type now because the payload seems to be correct. */
-    pDrcBs->type = DVB_DRC_ANC_DATA;
   }
 
   /* Read timecodes if available just to get the right amount of bits. */
@@ -617,7 +620,7 @@ static int aacDecoder_drcExtractAndMap (
     CDrcPayload *pThreadBs = &threadBs[thread];
     int numExclChns = 0;
 
-    switch (pThreadBs->type) {
+    switch ((AACDEC_DRC_PAYLOAD_TYPE)pThreadBs->channelData.drcDataType) {
       default:
         continue;
       case MPEG_DRC_EXT_DATA:
@@ -659,7 +662,7 @@ static int aacDecoder_drcExtractAndMap (
 
 
         /* thread applies to this channel */
-        if ( (pThreadBs->type == MPEG_DRC_EXT_DATA)
+        if ( (pThreadBs->channelData.drcDataType == MPEG_DRC_EXT_DATA)
           && ( (numExcludedChns[thread] == 0)
             || (!(pThreadBs->excludedChnsMask & (1<<ch))) ) ) {
           present++;
@@ -678,6 +681,7 @@ static int aacDecoder_drcExtractAndMap (
   {
     CDrcPayload *pThreadBs = validThreadBs[thread];
     INT exclMask = pThreadBs->excludedChnsMask;
+    AACDEC_DRC_PAYLOAD_TYPE drcPayloadType = (AACDEC_DRC_PAYLOAD_TYPE)pThreadBs->channelData.drcDataType;
     int ch;
 
     /* last progRefLevel transmitted is the one that is used
@@ -692,9 +696,9 @@ static int aacDecoder_drcExtractAndMap (
       int mapedChannel = channelMapping[ch];
 
       if ( ((exclMask & (1<<mapedChannel)) == 0)
-        && ( ( self->params.applyHeavyCompression && (pThreadBs->type == DVB_DRC_ANC_DATA))
-          || (!self->params.applyHeavyCompression && (pThreadBs->type == MPEG_DRC_EXT_DATA)) )
-         ) {
+        && ( (drcPayloadType == MPEG_DRC_EXT_DATA)
+          || ((drcPayloadType == DVB_DRC_ANC_DATA) && self->params.applyHeavyCompression)
+         ) ) {
         /* copy thread to channel */
         pAacDecoderStaticChannelInfo[ch]->drcData = pThreadBs->channelData;
       }
@@ -781,10 +785,17 @@ void aacDecoder_drcApply (
     UCHAR drcVal = pDrcChData->drcValue[band];
     top = fixMin((int)( (pDrcChData->bandTop[band]+1)<<2 ), aacFrameSize);
 
-    if ( pParams->applyHeavyCompression ) {
+    fact_mantissa[band] = FL2FXCONST_DBL(0.5f);
+    fact_exponent[band] = 1;
+
+    if (  pParams->applyHeavyCompression
+      && ((AACDEC_DRC_PAYLOAD_TYPE)pDrcChData->drcDataType == DVB_DRC_ANC_DATA) )
+    {
       INT compressionFactorVal_e;
-      int valX = drcVal >> 4;
-      int valY = drcVal & 0x0F;
+      int valX, valY;
+
+      valX = drcVal >> 4;
+      valY = drcVal & 0x0F;
 
       /* calculate the unscaled heavy compression factor.
          compressionFactor = 48.164 - 6.0206*valX - 0.4014*valY dB
@@ -801,11 +812,8 @@ void aacDecoder_drcApply (
 
         fact_exponent[band] = DVB_COMPRESSION_SCALE - valX + compressionFactorVal_e;
       }
-      else {
-        fact_mantissa[band] = FL2FXCONST_DBL(0.5f);
-        fact_exponent[band] = 1;
-      }
     } else
+    if ((AACDEC_DRC_PAYLOAD_TYPE)pDrcChData->drcDataType == MPEG_DRC_EXT_DATA)
     {
     /* apply the scaled dynamic range control words to factor.
      * if scaling drc_cut (or drc_boost), or control word drc_mantissa is 0
@@ -823,10 +831,6 @@ void aacDecoder_drcApply (
         f2Pow( (FIXP_DBL)((INT)fMult(FL2FXCONST_DBL(1.0f/192.0f), tParamVal) * (drcVal&0x7F)),
                  3+DRC_PARAM_SCALE,
                 &fact_exponent[band] );
-    }
-    else {
-      fact_mantissa[band] = FL2FXCONST_DBL(0.5f);
-      fact_exponent[band] = 1;
     }
     }
 

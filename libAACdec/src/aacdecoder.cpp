@@ -345,6 +345,7 @@ static AAC_DECODER_ERROR CProgramConfigElement_Read (
     HANDLE_FDK_BITSTREAM bs,
     HANDLE_TRANSPORTDEC  pTp,
     CProgramConfig      *pce,
+    UINT                 channelConfig,
     UINT                 alignAnchor )
 {
   AAC_DECODER_ERROR error = AAC_DEC_OK;
@@ -362,8 +363,15 @@ static AAC_DECODER_ERROR CProgramConfigElement_Read (
 
   transportDec_CrcEndReg(pTp, crcReg);
 
-  if (!pce->isValid && tmpPce->NumChannels <= (6) && tmpPce->Profile == 1) {
-    /* store PCE data */
+  if (  CProgramConfig_IsValid(tmpPce)
+    && ( (channelConfig == 6 && (tmpPce->NumChannels == 6))
+      || (channelConfig == 5 && (tmpPce->NumChannels == 5))
+      || (channelConfig == 0 && (tmpPce->NumChannels == pce->NumChannels)) )
+    && (tmpPce->NumFrontChannelElements == 2)
+    && (tmpPce->NumSideChannelElements  == 0)
+    && (tmpPce->NumBackChannelElements  == 1)
+    && (tmpPce->Profile == 1) )
+  { /* Copy the complete PCE including metadata. */
     FDKmemcpy(pce, tmpPce, sizeof(CProgramConfig));
   }
 
@@ -411,29 +419,18 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
       INT readBits = aacDecoder_drcMarkPayload( self->hDrcInfo, hBs, MPEG_DRC_EXT_DATA );
 
       if (readBits > *count)
-      {
-        FDKpushBack(hBs, readBits - *count);
+      { /* Read too much. Something went wrong! */
         error = AAC_DEC_PARSE_ERROR;
-        return error;
       }
-      else
-      {
-        *count -= (readBits+7) & ~0x7;
-      }
+      *count -= readBits;
     }
     break;
-  case EXT_LDSAC_DATA:
-  case EXT_SAC_DATA:
-    /* Skip MPEG Surround Extension payload */
-    FDKpushFor(hBs, *count);
-    *count = 0;
-    break;
+
 
   case EXT_SBR_DATA_CRC:
     crcFlag = 1;
-
   case EXT_SBR_DATA:
-    {
+    if (IS_CHANNEL_ELEMENT(previous_element)) {
       SBR_ERROR sbrError;
 
       CAacDecoder_SyncQmfMode(self);
@@ -479,6 +476,8 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
           self->frameOK = 0;
         }
       }
+    } else {
+      error = AAC_DEC_PARSE_ERROR;
     }
     break;
 
@@ -523,14 +522,16 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
         *count -= (dataElementLength<<3);
       } else {
         /* align = 0 */
-        FDKpushFor(hBs, (*count)<<3);
-        *count = 0;
+        error = AAC_DEC_PARSE_ERROR;
+        goto bail;
       }
     }
     break;
 
   case EXT_DATA_LENGTH:
-    {
+    if ( !fIsFillElement          /* Makes no sens to have an additional length in a fill ...   */
+      && (self->flags & AC_ER) )  /* ... element because this extension payload type was ...    */
+    {                             /* ... created to circumvent the missing length in ER-Syntax. */
       int bitCnt, len = FDKreadBits(hBs, 4);
       *count -= 4;
       
@@ -551,7 +552,9 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
         /* Check NOTE 2: The extension_payload() included here must
                          not have extension_type == EXT_DATA_LENGTH. */
         error = AAC_DEC_PARSE_ERROR;
-      } else {
+        goto bail;
+      }
+      else {
         /* rewind and call myself again. */
         FDKpushBack(hBs, 4);
 
@@ -562,12 +565,13 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
                  &bitCnt,
                   previous_element,
                   elIndex,
-                  0 );
+                  1 );      /* Treat same as fill element */
 
         *count -= len - bitCnt;
       }
+      /* Note: the fall through in case the if statement above is not taken is intentional. */
+      break;
     }
-    break;
 
   case EXT_FIL:
 
@@ -578,6 +582,16 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
     break;
   }
 
+bail:
+  if ( (error != AAC_DEC_OK)
+    && fIsFillElement )
+  { /* Skip the remaining extension bytes */
+    FDKpushBiDirectional(hBs, *count);
+    *count = 0;
+    /* Patch error code because decoding can go on. */
+    error = AAC_DEC_OK;
+    /* Be sure that parsing errors have been stored. */
+  }
   return error;
 }
 
@@ -750,7 +764,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
         /* valid number of channels -> copy program config element (PCE) from ASC */
         FDKmemcpy(&self->pce, &asc->m_progrConfigElement, sizeof(CProgramConfig));
         /* Built element table */
-        el = CProgramConfig_GetElementTable(&asc->m_progrConfigElement, self->elements);
+        el = CProgramConfig_GetElementTable(&asc->m_progrConfigElement, self->elements, 7);
         for (; el<7; el++) {
           self->elements[el] = ID_NONE;
         }
@@ -1286,7 +1300,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           }
         }
 
-#if defined(PCM_POSTPROCESS_ENABLE) && defined(DVB_MIXDOWN_ENABLE) && defined(AACDEC_DVB_SUPPORT_ENABLE)
         {
           UCHAR *pDvbAncData = NULL;
           AAC_DECODER_ERROR ancErr;
@@ -1309,7 +1322,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                   0 /* not mpeg2 */ );
           }
         }
-#endif /* PCM_POSTPROCESS_ENABLE && DVB_MIXDOWN_ENABLE && AACDEC_DVB_SUPPORT_ENABLE */
         break;
 
 #ifdef TP_PCE_ENABLE
@@ -1318,9 +1330,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
         if ( CProgramConfigElement_Read( bs,
                                     self->hInput,
                                     pce,
+                                    self->streamInfo.channelConfig,
                                     auStartAnchor ) )
         { /* Built element table */
-          int elIdx = CProgramConfig_GetElementTable(pce, self->elements);
+          int elIdx = CProgramConfig_GetElementTable(pce, self->elements, 7);
           /* Reset the remaining tabs */
           for ( ; elIdx<7; elIdx++) {
             self->elements[elIdx] = ID_NONE;
@@ -1368,7 +1381,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
           if ( (bitCnt > 0) && (self->flags & AC_SBR_PRESENT) && (self->flags & (AC_USAC|AC_RSVD50|AC_ELD)) )
           {
-            SBR_ERROR err;
+            SBR_ERROR err = SBRDEC_OK;
             int  elIdx, numChElements = el_cnt[ID_SCE] + el_cnt[ID_CPE];
 
             for (elIdx = 0; elIdx < numChElements; elIdx += 1)
@@ -1494,7 +1507,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
   /* Update number of output channels */
   self->streamInfo.numChannels = aacChannels;
 
-#if defined(TP_PCE_ENABLE) && defined(PCM_POSTPROCESS_ENABLE) && defined(MPEG_PCE_MIXDOWN_ENABLE)
+ #ifdef TP_PCE_ENABLE
   if (pceRead == 1 || CProgramConfig_IsValid(pce)) {
     /* Set matrix mixdown infos if available from PCE. */
     pcmDmx_SetMatrixMixdownFromPce ( self->hPcmUtils,
@@ -1502,7 +1515,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                                      pce->MatrixMixdownIndex,
                                      pce->PseudoSurroundEnable );
   }
-#endif
+ #endif
 
   /* If there is no valid data to transfrom into time domain, return. */
   if ( ! IS_OUTPUT_VALID(ErrorStatus) ) {

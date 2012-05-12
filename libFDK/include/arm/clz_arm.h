@@ -43,11 +43,11 @@
   inline INT fixnorm_D(LONG value)
   {
     INT result;
-    if (value < 0) {
-      value = ~value;
-    }
     if (value == 0) {
       return 0;
+    }
+    if (value < 0) {
+      value = ~value;
     }
     result =  fixnormz_D(value);
     return result - 1;

@@ -382,10 +382,18 @@ int CProgramConfig_LookupElement(
 #ifdef  TP_PCE_ENABLE
 int CProgramConfig_GetElementTable(
         const CProgramConfig *pPce,
-        MP4_ELEMENT_ID  elList[]
+        MP4_ELEMENT_ID  elList[],
+        const INT elListSize
        )
 {
   int i, el = 0;
+
+  if ( elListSize 
+    < pPce->NumFrontChannelElements + pPce->NumSideChannelElements + pPce->NumBackChannelElements + pPce->NumLfeChannelElements 
+    )
+  {
+    return 0;
+  }
 
   for (i=0; i < pPce->NumFrontChannelElements; i++)
   {
@@ -619,94 +627,6 @@ bail:
 #endif /* TP_ELD_ENABLE */
 
 
-static
-TRANSPORTDEC_ERROR AudioSpecificConfig_ExtensionParse(CSAudioSpecificConfig *self, HANDLE_FDK_BITSTREAM bs, CSTpCallBacks *cb)
-{
-  TP_ASC_EXTENSION_ID  lastAscExt, ascExtId = ASCEXT_UNKOWN;
-  INT  bitsAvailable = (INT)FDKgetValidBits(bs);
-  
-  while (bitsAvailable >= 11)
-  {
-    lastAscExt = ascExtId;
-    ascExtId   = (TP_ASC_EXTENSION_ID)FDKreadBits(bs, 11);
-    bitsAvailable -= 11;
-
-    switch (ascExtId) {
-    case ASCEXT_SBR:    /* 0x2b7 */
-      if ( (self->m_extensionAudioObjectType != AOT_SBR) && (bitsAvailable >= 5) ) {
-        self->m_extensionAudioObjectType = getAOT(bs);
-
-        if ( (self->m_extensionAudioObjectType == AOT_SBR)
-          || (self->m_extensionAudioObjectType == AOT_ER_BSAC) )
-        { /* Get SBR extension configuration */
-          self->m_sbrPresentFlag = FDKreadBits(bs, 1);
-          bitsAvailable -= 1;
-
-          if ( self->m_sbrPresentFlag == 1 ) {
-            self->m_extensionSamplingFrequency = getSampleRate(bs, &self->m_extensionSamplingFrequencyIndex, 4);
-
-            if ((INT)self->m_extensionSamplingFrequency <= 0) {
-              return TRANSPORTDEC_PARSE_ERROR;
-            }
-          }
-          if ( self->m_extensionAudioObjectType == AOT_ER_BSAC ) {
-            self->m_extensionChannelConfiguration = FDKreadBits(bs, 4);
-            bitsAvailable -= 4;
-          }
-        }
-        /* Update counter because of variable length fields (AOT and sampling rate) */
-        bitsAvailable = (INT)FDKgetValidBits(bs);
-      }
-      break;
-    case ASCEXT_PS:     /* 0x548 */
-      if ( (lastAscExt == ASCEXT_SBR)
-        && (self->m_extensionAudioObjectType == AOT_SBR)
-        && (bitsAvailable > 0) )
-      { /* Get PS extension configuration */
-        self->m_psPresentFlag = FDKreadBits(bs, 1);
-        bitsAvailable -= 1;
-      }
-      break;
-    case ASCEXT_MPS:    /* 0x76a */
-      if ( self->m_extensionAudioObjectType == AOT_MPEGS )
-        break;
-    case ASCEXT_LDMPS:  /* 0x7cc */
-      if ( (ascExtId == ASCEXT_LDMPS)
-        && (self->m_extensionAudioObjectType == AOT_LD_MPEGS) )
-        break;
-      if (bitsAvailable >= 1)
-      {
-        bitsAvailable -= 1;
-        if ( FDKreadBits(bs, 1) ) {  /* self->m_mpsPresentFlag */
-          int sscLen = FDKreadBits(bs, 8);
-          bitsAvailable -= 8;
-          if (sscLen == 0xFF) {
-            sscLen += FDKreadBits(bs, 16);
-            bitsAvailable -= 16;
-          }
-          if (cb->cbSsc != NULL) {
-            cb->cbSsc(
-                    cb->cbSscData,
-                    bs,
-                    self->m_aot,
-                    self->m_samplingFrequency,
-                    1,
-                    sscLen
-                    );
-          } else
-            FDKpushFor(bs, sscLen);  /* Skip SSC to be able to read the next extension if there is one. */
-
-          bitsAvailable -= sscLen*8;
-        }
-      }
-      break;
-    default:
-      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
-    }
-  }
-
-  return TRANSPORTDEC_OK;
-}
 
 /*
  * API Functions
@@ -857,9 +777,6 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
       break;
   }
 
-  if (fExplicitBackwardCompatible) {
-    ErrorStatus = AudioSpecificConfig_ExtensionParse(self, bs, cb);
-  }
 
   return (ErrorStatus);
 }

@@ -27,7 +27,7 @@
 ******************************************************************************/
 /*!
   \file
-  \brief  PS parameter extraction, encoding functions $Revision: 36847 $
+  \brief  PS parameter extraction, encoding functions $Revision: 37142 $
 */
 
 #include "ps_main.h"
@@ -42,7 +42,6 @@
 #include "sbr_misc.h"
 
 #include "genericStds.h"
-
 
 inline void FDKsbrEnc_addFIXP_DBL(const FIXP_DBL *X, const FIXP_DBL *Y, FIXP_DBL *Z, INT n)
 {
@@ -78,7 +77,6 @@ static const INT subband2parameter20[QMF_GROUPS_LO_RES + SUBQMF_GROUPS_LO_RES] =
 };
 
 
-
 typedef enum {
   MAX_TIME_DIFF_FRAMES = 20,
   MAX_PS_NOHEADER_CNT  = 10,
@@ -106,54 +104,17 @@ static const FIXP_DBL iccQuant[8] = {
   0x7fffffff, 0x77ef9d7f, 0x6babc97f, 0x4ceaf27f, 0x2f0ed3c0, 0x00000000, 0xb49ba601, 0x80000000
 };
 
-
-
-
-/*
-  name:        static HANDLE_ERROR_INFO CreatePSData()
-  description: Creates struct (buffer) to store ps data
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       none
-  output:      - HANDLE_PS_DATA *hPsData: according handle
-*/
-static HANDLE_ERROR_INFO CreatePSData(HANDLE_PS_DATA *hPsData)
+static FDK_PSENC_ERROR InitPSData(
+        HANDLE_PS_DATA            hPsData
+        )
 {
-  HANDLE_ERROR_INFO error = noError;
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-  *hPsData = GetRam_PsData();
-  if (*hPsData==NULL) {
-    error = 1;
-    goto bail;
+  if(hPsData == NULL) {
+    error = PSENC_INVALID_HANDLE;
   }
-  FDKmemclear(*hPsData,sizeof(PS_DATA));
-
-bail:
-  return error;
-}
-
-
-/*
-  name:        static HANDLE_ERROR_INFO DestroyPSData()
-  description: frees according data handle
-  returns:     error code of type HANDLE_ERROR_INFO
-  input:       - HANDLE_PS_DATA *hPsData
-  output:      none
-*/
-static HANDLE_ERROR_INFO DestroyPSData(HANDLE_PS_DATA *phPsData)
-{
-  FreeRam_PsData(phPsData);
-
-  return noError;
-}
-
-
-static HANDLE_ERROR_INFO InitPSData(HANDLE_PS_DATA hPsData)
-{
-  INT i, env;
-  HANDLE_ERROR_INFO error = noError;
-
-  if(hPsData != NULL){
-
+  else {
+    int i, env;
     FDKmemclear(hPsData,sizeof(PS_DATA));
 
     for (i=0; i<PS_MAX_BANDS; i++) {
@@ -182,8 +143,6 @@ static HANDLE_ERROR_INFO InitPSData(HANDLE_PS_DATA hPsData)
     hPsData->iidTimeCnt = MAX_TIME_DIFF_FRAMES;
     hPsData->iccTimeCnt = MAX_TIME_DIFF_FRAMES;
     hPsData->noEnvCnt   = MAX_NOENV_CNT;
-  } else {
-    error = ERROR(CDI, "Unable to write to hPsData.");
   }
 
   return error;
@@ -226,9 +185,6 @@ static INT getICCMode(const INT nBands,
   case PS_BANDS_MID:
     mode = PS_RES_MID;
     break;
-  case PS_BANDS_FINE:
-    mode = PS_RES_FINE;
-    break;
   default:
     mode = 0;
   }
@@ -251,9 +207,6 @@ static INT getIIDMode(const INT nBands,
     break;
   case PS_BANDS_MID:
     mode = PS_RES_MID;
-    break;
-  case PS_BANDS_FINE:
-    mode = PS_RES_FINE;
     break;
   default:
     mode = 0;
@@ -339,7 +292,6 @@ static void processIidData(PS_DATA       *psData,
   INT loudnDiff = 0;
   INT iidTransmit = 0;
 
-
   bitsIidFreq = bitsIidTime = 0;
 
   /* Quantize IID coefficients */
@@ -347,7 +299,6 @@ static void processIidData(PS_DATA       *psData,
     errIID     += quantizeCoef(iid[env], psBands, iidQuant_fx,      7, 15, iidIdxCoarse[env]);
     errIIDFine += quantizeCoef(iid[env], psBands, iidQuantFine_fx, 15, 31, iidIdxFine[env]);
   }
-
 
   /* normalize error to number of envelopes, ps bands
      errIID /= psBands*nEnvelopes;
@@ -638,8 +589,8 @@ static void calculateIID(FIXP_DBL ldPwrL[PS_MAX_ENVELOPES][PS_MAX_BANDS],
       */
       FIXP_DBL IID = fMultDiv2( FL2FXCONST_DBL(LOG10_2_10/IID_SCALE_FT), (ldPwrL[env][i]-ldPwrR[env][i]) );
 
-      IID = fixMin( IID, (FIXP_DBL)(FL2FXCONST_DBL( 1.f)>>(LD_DATA_SHIFT+1)) );
-      IID = fixMax( IID, (FIXP_DBL)(FL2FXCONST_DBL(-1.f)>>(LD_DATA_SHIFT+1)) );
+      IID = fixMin( IID, (FIXP_DBL)(MAXVAL_DBL>>(LD_DATA_SHIFT+1)) );
+      IID = fixMax( IID, (FIXP_DBL)(MINVAL_DBL>>(LD_DATA_SHIFT+1)) );
       iid[env][i] = IID << (LD_DATA_SHIFT+1);
     }
   }
@@ -663,9 +614,6 @@ static void calculateICC(FIXP_DBL ldPwrL[PS_MAX_ENVELOPES][PS_MAX_BANDS],
     break;
   case PS_BANDS_MID:
     border = 11;
-    break;
-  case PS_BANDS_FINE:
-    border = 16;
     break;
   default:
     break;
@@ -748,70 +696,74 @@ void FDKsbrEnc_initPsBandNrgScale(HANDLE_PS_ENCODE hPsEncode)
   }
 }
 
-HANDLE_ERROR_INFO FDKsbrEnc_CreatePSEncode(HANDLE_PS_ENCODE *phPsEncode){
+FDK_PSENC_ERROR FDKsbrEnc_CreatePSEncode(
+        HANDLE_PS_ENCODE         *phPsEncode
+        )
+{
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-  HANDLE_ERROR_INFO error = noError;
-
-  HANDLE_PS_ENCODE hPsEncode = GetRam_PsEncode();
-  FDKmemclear(hPsEncode,sizeof(PS_ENCODE));
-
-  if(error == noError){
-    if(noError != (error = CreatePSData(&hPsEncode->hPsData))){
-      error = handBack(error);
-    }
+  if (phPsEncode==NULL) {
+    error = PSENC_INVALID_HANDLE;
   }
-
-  *phPsEncode = hPsEncode;
-
+  else {
+    HANDLE_PS_ENCODE hPsEncode = NULL;
+    if (NULL==(hPsEncode = GetRam_PsEncode())) {
+      error = PSENC_MEMORY_ERROR;
+      goto bail;
+    }
+    FDKmemclear(hPsEncode,sizeof(PS_ENCODE));
+    *phPsEncode = hPsEncode; /* return allocated handle */
+  }
+bail:
   return error;
 }
 
-HANDLE_ERROR_INFO FDKsbrEnc_InitPSEncode(HANDLE_PS_ENCODE hPsEncode, const PS_BANDS psEncMode, const FIXP_DBL iidQuantErrorThreshold){
+FDK_PSENC_ERROR FDKsbrEnc_InitPSEncode(
+        HANDLE_PS_ENCODE          hPsEncode,
+        const PS_BANDS            psEncMode,
+        const FIXP_DBL            iidQuantErrorThreshold
+        )
+{
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-  HANDLE_ERROR_INFO error = noError;
-
-  if(error == noError){
-    if(noError != (InitPSData(hPsEncode->hPsData))){
-      error = handBack(error);
-    }
+  if (NULL==hPsEncode) {
+    error = PSENC_INVALID_HANDLE;
   }
+  else {
+    if (PSENC_OK != (InitPSData(&hPsEncode->psData))) {
+      goto bail;
+    }
 
-  if(error == noError){
     switch(psEncMode){
-    case PS_BANDS_COARSE:
-    case PS_BANDS_MID:
-      hPsEncode->nQmfIidGroups    = QMF_GROUPS_LO_RES;
-      hPsEncode->nSubQmfIidGroups = SUBQMF_GROUPS_LO_RES;
-      FDKmemcpy(hPsEncode->iidGroupBorders,        iidGroupBordersLoRes, (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups + 1)*sizeof(INT));
-      FDKmemcpy(hPsEncode->subband2parameterIndex, subband2parameter20,  (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups)    *sizeof(INT));
-      FDKmemcpy(hPsEncode->iidGroupWidthLd,        iidGroupWidthLdLoRes, (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups)    *sizeof(UCHAR));
-      break;
-    case PS_BANDS_FINE:
-      FDK_ASSERT(0); /* we don't support this mode! */
-
-      break;
-    default:
-      error = ERROR(CDI, "Invalid stereo band configuration.");
-      break;
+      case PS_BANDS_COARSE:
+      case PS_BANDS_MID:
+        hPsEncode->nQmfIidGroups    = QMF_GROUPS_LO_RES;
+        hPsEncode->nSubQmfIidGroups = SUBQMF_GROUPS_LO_RES;
+        FDKmemcpy(hPsEncode->iidGroupBorders,        iidGroupBordersLoRes, (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups + 1)*sizeof(INT));
+        FDKmemcpy(hPsEncode->subband2parameterIndex, subband2parameter20,  (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups)    *sizeof(INT));
+        FDKmemcpy(hPsEncode->iidGroupWidthLd,        iidGroupWidthLdLoRes, (hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups)    *sizeof(UCHAR));
+        break;
+      default:
+        error = PSENC_INIT_ERROR;
+        goto bail;
     }
-  }
 
-  if(error == noError){
     hPsEncode->psEncMode = psEncMode;
     hPsEncode->iidQuantErrorThreshold = iidQuantErrorThreshold;
     FDKsbrEnc_initPsBandNrgScale(hPsEncode);
   }
-
+bail:
   return error;
 }
 
 
-HANDLE_ERROR_INFO FDKsbrEnc_DestroyPSEncode(HANDLE_PS_ENCODE *phPsEncode){
+FDK_PSENC_ERROR FDKsbrEnc_DestroyPSEncode(
+        HANDLE_PS_ENCODE         *phPsEncode
+        )
+{
+  FDK_PSENC_ERROR error = PSENC_OK;
 
-  HANDLE_ERROR_INFO error = noError;
-
-  if(error == noError){
-    DestroyPSData(&(*phPsEncode)->hPsData);
+  if (NULL !=phPsEncode) {
     FreeRam_PsEncode(phPsEncode);
   }
 
@@ -825,44 +777,42 @@ typedef struct {
   FIXP_DBL ldPwrR[PS_MAX_ENVELOPES][PS_MAX_BANDS];
   FIXP_DBL pwrCr[PS_MAX_ENVELOPES][PS_MAX_BANDS];
   FIXP_DBL pwrCi[PS_MAX_ENVELOPES][PS_MAX_BANDS];
+
 } PS_PWR_DATA;
 
-HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
-                           HANDLE_PS_OUT RESTRICT hPsOut,
-                           HANDLE_PS_CHANNEL_DATA RESTRICT hChanDatal,
-                           HANDLE_PS_CHANNEL_DATA RESTRICT hChanDatar,
-                           UCHAR *RESTRICT dynBandScale,
-                           UINT maxEnvelopes,
-                           const int sendHeader)
+
+FDK_PSENC_ERROR FDKsbrEnc_PSEncode(
+        HANDLE_PS_ENCODE          hPsEncode,
+        HANDLE_PS_OUT             hPsOut,
+        UCHAR                    *dynBandScale,
+        UINT                      maxEnvelopes,
+        FIXP_DBL                 *hybridData[HYBRID_FRAMESIZE][MAX_PS_CHANNELS][2],
+        const INT                 frameSize,
+        const INT                 sendHeader
+        )
 {
-  HANDLE_ERROR_INFO error = noError;
-  HANDLE_PS_DATA hPsData = hPsEncode->hPsData;
-  HANDLE_PS_HYBRID_DATA hHybDatal = hChanDatal->hHybData;
-  HANDLE_PS_HYBRID_DATA hHybDatar = hChanDatar->hHybData;
-  FIXP_QMF **RESTRICT lr = NULL, **RESTRICT li = NULL, **RESTRICT rr = NULL, **RESTRICT ri = NULL;
+  FDK_PSENC_ERROR error = PSENC_OK;
+
+  HANDLE_PS_DATA hPsData = &hPsEncode->psData;
   FIXP_DBL iid [PS_MAX_ENVELOPES][PS_MAX_BANDS];
   FIXP_DBL icc [PS_MAX_ENVELOPES][PS_MAX_BANDS];
   int envBorder[PS_MAX_ENVELOPES+1];
 
-  int group, bin, border, col, subband, band;
+  int group, bin, col, subband, band;
   int i = 0;
 
   int env = 0;
   int psBands      = (int) hPsEncode->psEncMode;
-  int frameSize    = FDKsbrEnc_GetHybridFrameSize(hHybDatal); /* same as FDKsbrEnc_GetHybridFrameSize(hHybDatar) */
   int nIidGroups   = hPsEncode->nQmfIidGroups + hPsEncode->nSubQmfIidGroups;
   int nEnvelopes   = fixMin(maxEnvelopes, (UINT)PS_MAX_ENVELOPES);
 
   C_ALLOC_SCRATCH_START(pwrData, PS_PWR_DATA, 1);
-
 
   for(env=0; env<nEnvelopes+1;env++) {
     envBorder[env] = fMultI(GetInvInt(nEnvelopes),frameSize*env);
   }
 
   for(env=0; env<nEnvelopes;env++) {
-    INT nHybridQmfOffset = 0;
-    int descale = 0;
 
     /* clear energy array */
     for (band=0; band<psBands; band++) {
@@ -872,10 +822,6 @@ HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
     /**** calculate energies and correlation ****/
 
     /* start with hybrid data */
-    lr = hHybDatal->rHybData; li = hHybDatal->iHybData;
-    rr = hHybDatar->rHybData; ri = hHybDatar->iHybData;
-    UCHAR switched = 0;
-
     for (group=0; group < nIidGroups; group++) {
       /* Translate group to bin */
       bin = hPsEncode->subband2parameterIndex[group];
@@ -885,30 +831,21 @@ HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
         bin >>= 1;
       }
 
-      if (!switched && group == hPsEncode->nSubQmfIidGroups) {
-        /* switch to qmf data */
-        lr = hChanDatal->hPsQmfData->rQmfData; li = hChanDatal->hPsQmfData->iQmfData;
-        rr = hChanDatar->hPsQmfData->rQmfData; ri = hChanDatar->hPsQmfData->iQmfData;
-        /* calc offset between hybrid subsubbands and qmf bands */
-        nHybridQmfOffset = FDKsbrEnc_GetNumberHybridQmfBands(hHybDatal) - FDKsbrEnc_GetNumberHybridBands(hHybDatal);
-        switched = 1;
-      }
-
       /* determine group border */
-      int bScale = 2*descale + hPsEncode->psBandNrgScale[bin];
-      border = hPsEncode->iidGroupBorders[group+1];
+      int bScale = hPsEncode->psBandNrgScale[bin];
 
       FIXP_DBL pwrL_env_bin = pwrData->pwrL[env][bin];
       FIXP_DBL pwrR_env_bin = pwrData->pwrR[env][bin];
       FIXP_DBL pwrCr_env_bin = pwrData->pwrCr[env][bin];
       FIXP_DBL pwrCi_env_bin = pwrData->pwrCi[env][bin];
+
       int scale = (int)dynBandScale[bin];
       for (col=envBorder[env]; col<envBorder[env+1]; col++) {
-        for (subband = hPsEncode->iidGroupBorders[group]; subband < border; subband++) {
-          FIXP_QMF l_real = (lr[col][subband + nHybridQmfOffset]) << scale;
-          FIXP_QMF l_imag = (li[col][subband + nHybridQmfOffset]) << scale;
-          FIXP_QMF r_real = (rr[col][subband + nHybridQmfOffset]) << scale;
-          FIXP_QMF r_imag = (ri[col][subband + nHybridQmfOffset]) << scale;
+        for (subband = hPsEncode->iidGroupBorders[group]; subband < hPsEncode->iidGroupBorders[group+1]; subband++) {
+          FIXP_QMF l_real = (hybridData[col][0][0][subband]) << scale;
+          FIXP_QMF l_imag = (hybridData[col][0][1][subband]) << scale;
+          FIXP_QMF r_real = (hybridData[col][1][0][subband]) << scale;
+          FIXP_QMF r_imag = (hybridData[col][1][1][subband]) << scale;
 
           pwrL_env_bin  += (fPow2Div2(l_real) + fPow2Div2(l_imag)) >> bScale;
           pwrR_env_bin  += (fPow2Div2(r_real) + fPow2Div2(r_imag)) >> bScale;
@@ -931,12 +868,9 @@ HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
 
   } /* nEnvelopes */
 
-
   /* calculate iid and icc */
   calculateIID(pwrData->ldPwrL, pwrData->ldPwrR, iid, nEnvelopes, psBands);
   calculateICC(pwrData->ldPwrL, pwrData->ldPwrR, pwrData->pwrCr, pwrData->pwrCi, icc, nEnvelopes, psBands);
-
-
 
   /*** Envelope Reduction ***/
   while (envelopeReducible(iid,icc,psBands,nEnvelopes)) {
@@ -1001,7 +935,6 @@ HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
   }
 
 
-
   if (nEnvelopes>0) {
 
     hPsOut->enableIID      = hPsData->iidEnable;
@@ -1059,7 +992,6 @@ HANDLE_ERROR_INFO FDKsbrEnc_PSEncode(HANDLE_PS_ENCODE RESTRICT hPsEncode,
       hPsData->iccIdxLast[i] = hPsData->iccIdx[nEnvelopes-1][i];
     }
   } /* Envelope > 0 */
-
 
   C_ALLOC_SCRATCH_END(pwrData, PS_PWR_DATA, 1)
 

@@ -85,6 +85,7 @@ struct TRANSPORTDEC
 #define TPDEC_IGNORE_BUFFERFULLNESS 4
 #define TPDEC_EARLY_CONFIG          8
 #define TPDEC_LOST_FRAMES_PENDING  16
+#define TPDEC_CONFIG_FOUND         32
 
 C_ALLOC_MEM(Ram_TransportDecoder, TRANSPORTDEC, 1)
 C_ALLOC_MEM(Ram_TransportDecoderBuffer, UCHAR, TRANSPORTDEC_INBUF_SIZE)
@@ -177,11 +178,10 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *
         }
       }
       break;
+    default:
     case TT_MP4_RAW:
       err = AudioSpecificConfig_Parse(&hTp->asc[layer], hBs, 1, &hTp->callbacks);
       break;
-    default:
-      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
   }
   if (err == TRANSPORTDEC_OK) {
     int errC;
@@ -190,6 +190,10 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *
     if (errC != 0) {
       err = TRANSPORTDEC_PARSE_ERROR;
     }
+  }
+
+  if (err == TRANSPORTDEC_OK) {
+    hTp->flags |= TPDEC_CONFIG_FOUND;
   }
 
   return err;
@@ -439,6 +443,14 @@ TRANSPORTDEC_ERROR synchronization(
 
   totalBits = (INT)FDKgetValidBits(hBs);
 
+  if (totalBits <= 0) {
+    /* Return sync error, because this happens only in case of severly damaged bit streams.
+       Returning TRANSPORTDEC_NOT_ENOUGH_BITS here is very dangerous. */
+    /* numberOfRawDataBlocks must be always reset in case of sync errors. */
+    hTp->numberOfRawDataBlocks = 0;
+    goto bail;
+  }
+
   fTraverseMoreFrames = (hTp->flags & (TPDEC_MINIMIZE_DELAY|TPDEC_EARLY_CONFIG)) && ! (hTp->flags & TPDEC_SYNCOK);
 
   /* Set transport specific sync parameters */
@@ -625,13 +637,15 @@ TRANSPORTDEC_ERROR synchronization(
     if (err == TRANSPORTDEC_SYNC_ERROR) {
       int bits;
 
-      FDK_ASSERT(hTp->numberOfRawDataBlocks == 0);
+      /* Enforce re-sync of transport headers. */
+      hTp->numberOfRawDataBlocks = 0;
+
       /* Ensure that the bit amount lands and a multiple of TPDEC_SYNCSKIP */
       bits = (bitsAvail + headerBits) % TPDEC_SYNCSKIP;
       /* Rewind - TPDEC_SYNCSKIP, in order to look for a synch one bit ahead next time. */
       FDKpushBiDirectional(hBs, -(headerBits - TPDEC_SYNCSKIP) + bits);
       bitsAvail += headerBits - TPDEC_SYNCSKIP - bits;
-      headerBits = 0;
+      headerBits = 0;      
     }
 
     /* Frame traversal */
@@ -710,6 +724,7 @@ TRANSPORTDEC_ERROR synchronization(
     err = TRANSPORTDEC_OK;
   }
 
+bail:
   hTp->auLength[0] = rawDataBlockLength;
 
   if (err == TRANSPORTDEC_OK) {
@@ -852,7 +867,7 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, c
 
     case TT_MP4_ADIF:
       /* Read header if not already done */
-      if (!(hTp->flags & TPDEC_SYNCOK))
+      if (!(hTp->flags & TPDEC_CONFIG_FOUND))
       {
         CProgramConfig *pce;
 
@@ -876,8 +891,7 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, c
 
           errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[0]);
           if (errC == 0) {
-            /* Misuse sync flag to parse header only once. */
-            hTp->flags |= TPDEC_SYNCOK;
+            hTp->flags |= TPDEC_CONFIG_FOUND;
           } else {
             err = TRANSPORTDEC_PARSE_ERROR;
             goto bail;

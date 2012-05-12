@@ -43,48 +43,61 @@
 
 
 
+#define MIN_BUFSIZE_PER_EFF_CHAN 6144
+
 static AAC_ENCODER_ERROR FDKaacEnc_InitCheckAncillary(INT bitRate,
                                                       INT framelength,
                                                       INT ancillaryRate,
                                                       INT *ancillaryBitsPerFrame,
                                                       INT sampleRate);
 
-/**
- * For calculating average bitrate of an access unit 32 bit data width is not sufficient
- * in worst case. Therefore use scaling of the samplingrate parameter to keep complete information.
- */
-typedef struct {
-    INT   samplingRate;
-    UCHAR scalingFactor;
-} SR_SCALING_TAB;
-
-static const SR_SCALING_TAB samplingRateScalingTable[] =
+INT FDKaacEnc_LimitBitrate(
+        HANDLE_TRANSPORTENC hTpEnc,
+        INT coreSamplingRate,
+        INT frameLength,
+        INT nChannels,
+        INT nChannelsEff,
+        INT bitRate,
+        INT averageBits,
+        INT *pAverageBitsPerFrame,
+        INT bitrateMode,
+        INT nSubFrames
+        )
 {
-  {  8000, 5 }, { 11025, 0 }, { 12000, 5 }, { 16000, 5 },
-  { 22050, 1 }, { 24000, 5 }, { 32000, 5 }, { 44100, 2 },
-  { 48000, 5 }, { 64000, 5 }, { 88200, 3 }, { 96000, 5 }
-};
+  INT transportBits, prevBitRate, averageBitsPerFrame, shift = 0, iter=0;
 
-/**
- * Get maximal scaling factor without losing samplingrate accuracy.
- *
- * \param  samplingRate Samplingrate to be used.
- * \return scaling value.
- */
-static int GetSrSf(const INT samplingRate)
-{
-  int i, result = 0;
-
-  for (i=0; i<(int)(sizeof(samplingRateScalingTable)/sizeof(SR_SCALING_TAB)); i++) {
-    if ( samplingRateScalingTable[i].samplingRate == samplingRate ) {
-      result = samplingRateScalingTable[i].scalingFactor;
-      break;
-    }
+  while ( (frameLength & ~((1<<(shift+1))-1)) == frameLength
+    && (coreSamplingRate & ~((1<<(shift+1))-1)) == coreSamplingRate )
+  {
+    shift ++;
   }
-  return result;
+
+  do {
+    prevBitRate = bitRate;
+     averageBitsPerFrame = (bitRate*(frameLength>>shift)) / (coreSamplingRate>>shift) / nSubFrames;
+
+    if (pAverageBitsPerFrame != NULL) {
+      *pAverageBitsPerFrame = averageBitsPerFrame;
+    }
+
+    if (hTpEnc != NULL) {
+      transportBits = transportEnc_GetStaticBits(hTpEnc, averageBitsPerFrame);
+    } else {
+      /* Assume some worst case */
+      transportBits = 208;
+    }
+
+    bitRate = FDKmax(bitRate, ((((40 * nChannels) + transportBits + frameLength) * (coreSamplingRate)) / frameLength) );
+    FDK_ASSERT(bitRate >= 0);
+
+    bitRate = FDKmin(bitRate, ((nChannelsEff * MIN_BUFSIZE_PER_EFF_CHAN)*(coreSamplingRate>>shift)) / (frameLength>>shift)) ;
+    FDK_ASSERT(bitRate >= 0);
+
+  } while (prevBitRate != bitRate && iter++ < 3) ;
+
+  return bitRate;
 }
 
-#define MIN_BUFSIZE_PER_EFF_CHAN 6144
 
 typedef struct
 {
@@ -349,16 +362,20 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
 
   /* check bit rate */
 
-  /* check if bitRate is not too low or high */
-    averageBitsPerFrame = (config->bitRate*(config->framelength>>GetSrSf(config->sampleRate))) / (config->sampleRate>>GetSrSf(config->sampleRate)) / config->nSubFrames;
-
-  /* assume minimum static bits of 40 in each channel. */
-  if ( (averageBitsPerFrame <= ((40*config->nChannels) + transportEnc_GetStaticBits(hTpEnc, averageBitsPerFrame))) ||
-       ( ((config->bitRate*(config->framelength>>GetSrSf(config->sampleRate)))) >
-         ((FDKaacEnc_GetChannelModeConfiguration(config->channelMode)->nChannelsEff * MIN_BUFSIZE_PER_EFF_CHAN))*(config->sampleRate>>GetSrSf(config->sampleRate)) )
-     )
+  if (FDKaacEnc_LimitBitrate(
+          hTpEnc,
+          config->sampleRate,
+          config->framelength,
+          config->nChannels,
+          FDKaacEnc_GetChannelModeConfiguration(config->channelMode)->nChannelsEff,
+          config->bitRate,
+          config->averageBits,
+         &averageBitsPerFrame,
+          config->bitrateMode,
+          config->nSubFrames
+          ) != config->bitRate )
   {
-      return AAC_ENC_UNSUPPORTED_BITRATE;
+    return AAC_ENC_UNSUPPORTED_BITRATE;
   }
 
   if (config->syntaxFlags & AC_ER_VCB11) {

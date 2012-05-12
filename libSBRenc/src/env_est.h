@@ -25,7 +25,7 @@
 ****************************************************************************/
 /*!
   \file
-  \brief  Envelope estimation structs and prototypes $Revision: 36847 $
+  \brief  Envelope estimation structs and prototypes $Revision: 37142 $
 */
 #ifndef __ENV_EST_H
 #define __ENV_EST_H
@@ -56,7 +56,6 @@ typedef struct
   int YBufferWriteOffset;
   int YBufferSzShift;
   int rBufferReadOffset;
-  int rBufferWriteOffset;
 
   int no_cols;
   int no_rows;

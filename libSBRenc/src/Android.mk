@@ -16,7 +16,6 @@ LOCAL_SRC_FILES := \
         env_est.cpp \
         invf_est.cpp \
         nf_est.cpp \
-        psenc_hybrid.cpp \
         ps_main.cpp \
         sbrenc_freq_sca.cpp \
         sbr_misc.cpp \
