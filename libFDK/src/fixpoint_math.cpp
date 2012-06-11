@@ -1,28 +1,90 @@
+
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
+
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
+
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
+
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
+
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
-                        (C) Copyright Fraunhofer IIS (1999)
-                               All Rights Reserved
-
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
-
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
-
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
-
-
-   $Id$
    Author(s):   M. Gayer
    Description: Fixed point specific mathematical functions
-
-   This software and/or program is protected by copyright law and international
-   treaties. Any reproduction or distribution of this software and/or program,
-   or any portion of it, may result in severe civil and criminal penalties, and
-   will be prosecuted to the maximum extent possible under law.
 
 ******************************************************************************/
 
@@ -148,9 +210,6 @@ static const FIXP_SGL pow2Coeff[MAX_POW2_PRECISION] = {
 *****************************************************************************/
 
 /* for rounding a dfract to fract */
-/* static LONG accu_r = (int64)((INT64(1)<<(DFRACT_BITS-1))>>FRACT_BITS); */
-//LNK_SECTION_CONSTDATA
-//static const LONG accu_r = 0x00008000;
 #define ACCU_R (LONG) 0x00008000
 
 LNK_SECTION_CODE_L1
@@ -792,373 +851,3 @@ FIXP_DBL fLog2(FIXP_DBL x_m, INT x_e)
 
 
 
-#if TEST_ROUNDING
-#include <math.h>
-
-void writeToFile( FDKFILE *fh, float v) {
-    FDKfprintf(fh, "%22.16f\n", v );
-}
-FDKFILE* openAppend(CHAR* filNam)
-{
-    FDKFILE* fh = NULL;
-    fh = FDKfopen(filNam, "a");
-    if (!fh) {
-      FDKprintf("\nError at fio_open\n");
-      return NULL;
-    }
-    return fh;
-}
-
-// loop version, long duration, huge output data
-void checkRound()
-{
-    #define  IN_INT     0   // all four rounding modes are bitexact for 0 and for 1
-
-    float    inp;
-    FIXP_DBL f_inp;
-    float    r,  rnd;
-    FIXP_DBL f_trc,f_rnd;
-    float    step;
-
-    //step=0.1f;
-    step=0.001f;
-    //step=0.0001f;
-    //step=0.00001f;
-    //step=0.0000001f;        // BEWARE output data of test might get huge!
-    //step=0.00000000005f;    // BEWARE output data of test might get huge!
-
-    double   d_floor,d_ceil;
-    FIXP_DBL f_floor,f_ceil;
-    INT      i,j,floorInt,ceilInt,roundInt,truncInt;
-
-    FDKFILE *fpF_a = NULL;  FDKFILE *fpC_a = NULL;
-    FDKFILE *fpF_b = NULL;  FDKFILE *fpC_b = NULL;
-    FDKFILE *fpF_c = NULL;  FDKFILE *fpC_c = NULL;
-    FDKFILE *fpF_d = NULL;  FDKFILE *fpC_d = NULL;
-    FDKFILE *fpF_e = NULL;  FDKFILE *fpC_e = NULL;
-
-    fpF_a = openAppend("_FLT_a.txt");  fpC_a = openAppend("_FDK_a.txt");
-    fpF_b = openAppend("_FLT_b.txt");  fpC_b = openAppend("_FDK_b.txt");
-    fpF_c = openAppend("_FLT_c.txt");  fpC_c = openAppend("_FDK_c.txt");
-    fpF_d = openAppend("_FLT_d.txt");  fpC_d = openAppend("_FDK_d.txt");
-    fpF_e = openAppend("_FLT_e.txt");  fpC_e = openAppend("_FDK_e.txt");
-
-
-
-    #define  INPUT_SF       3  // BEWARE at SF 0 !!!  over/under-flow
-    #define  INPUT_SCALE    (float)(1<<INPUT_SF)
-
-    for (inp = -3.1f;        inp < 2.1f;        inp=inp+step)
-  //for (inp = -0.9f;  inp < 0.9f;  inp=inp+step)
-  //for (inp = -0.0000000001f;  inp < 0.0000000001f;  inp=inp+step)
-  //for (inp = -3.1f;        inp < 2.1f;        inp=inp+step)
-    {  //       #                   #
-       // --- write input
-                                                         writeToFile(fpF_a,(float)  inp);
-       f_inp = (FIXP_DBL)(inp / INPUT_SCALE);            writeToFile(fpC_a,(float)f_inp    * (float)FDKpow(2,INPUT_SF));
-
-
-       // --- floor
-       d_floor   = FDKfloor(inp);                        writeToFile(fpF_b,(float)  d_floor);
-       // --- floor fixedpoint
-       floorInt = fixp_floorToInt(f_inp,INPUT_SF);
-       f_floor  = fixp_floor     (f_inp,INPUT_SF);
-      #if IN_INT
-                                                         writeToFile(fpC_b,(float)  floorInt);
-      #else
-                                                         writeToFile(fpC_b,(float)  f_floor * (float)FDKpow(2,INPUT_SF));
-      #endif
-
-
-       // --- ceil
-       d_ceil  = FDKceil(inp);                           writeToFile(fpF_c,(float)  d_ceil );
-       // --- ceil fixedpoint
-       ceilInt = fixp_ceilToInt(f_inp,INPUT_SF);
-       f_ceil  = fixp_ceil     (f_inp,INPUT_SF);
-      #if IN_INT
-                                                         writeToFile(fpC_c,(float)  ceilInt);
-      #else
-                                                         writeToFile(fpC_c,(float)  f_ceil  * (float)FDKpow(2,INPUT_SF));
-      #endif
-
-
-       // --- truncate
-       i = (INT)inp;                                     writeToFile(fpF_d,(float)  i);
-       // --- truncate fixedpoint
-       truncInt = fixp_truncateToInt(f_inp,INPUT_SF);
-       f_trc    = fixp_truncate     (f_inp,INPUT_SF);
-      #if IN_INT
-                                                         writeToFile(fpC_d,(float)  truncInt);
-      #else
-                                                         writeToFile(fpC_d,(float)  f_trc   * (float)FDKpow(2,INPUT_SF));
-      #endif
-
-
-       // --- round
-       r = 0.5f;
-       if (inp > 0)  rnd =    inp + r;
-       if (inp < 0)  rnd = -(-inp + r);  // avoid offset; you might get offset with 'rnd = inp - r'
-       j = (INT)(rnd);                                   writeToFile(fpF_e,(float)  j);
-       // --- round fixedpoint
-       roundInt = fixp_roundToInt(f_inp,INPUT_SF);
-       f_rnd    = fixp_round     (f_inp,INPUT_SF);
-      #if IN_INT
-                                                         writeToFile(fpC_e,(float)  roundInt);
-      #else
-                                                         writeToFile(fpC_e,(float)  f_rnd   * (float)FDKpow(2,INPUT_SF));
-      #endif
-    }
-
-    if (fpF_a) FDKfclose(fpF_a);  if (fpC_a) FDKfclose(fpC_a);
-    if (fpF_b) FDKfclose(fpF_b);  if (fpC_b) FDKfclose(fpC_b);
-    if (fpF_c) FDKfclose(fpF_c);  if (fpC_c) FDKfclose(fpC_c);
-    if (fpF_d) FDKfclose(fpF_d);  if (fpC_d) FDKfclose(fpC_d);
-    if (fpF_e) FDKfclose(fpF_e);  if (fpC_e) FDKfclose(fpC_e);
-}
-
-
-// round only a few selected values (faster)
-void checkRound2()
-{
-  // set point
-  #define BLOD               24  // left  bits (of dot): number of bits _left_  of decimal point  ==>  Q 24.8 format (incl. sign bit)
-  #define BROD               8   // right bits (of dot): number of bits _right_ of decimal point  ==>  Q 24.8 format
-  FDK_ASSERT((BROD+BLOD)==DFRACT_BITS);
-
-  // scale factors
-  #define FL_SF              BLOD
-  #define FL_SCALE                  (1<<FL_SF)
-
-  #define FR_SF              BROD
-  #define FR_SCALE                  (1<<FR_SF)
-
-  #define INL_SF             7                      // bits at INput Left of dot
-  #define INL_SCALE          (float)(1<<INL_SF)
-
-  #define INR_SF             (DFRACT_BITS-1-INL_SF) // bits at INput Right of dot    32-1-7 = 24
-  #define INR_SCALE          (float)(1<<INR_SF)
-
-
-  // testdata
-  #define X_MIN                          -128.0000f   //
-  #define X0                             -127.0000f   //
-
-  #define X1                               -5.0000f   //
-//#define X1                               -4.4999f   // round
-//#define X1                                4.4999f   // round
-
-  #define X2                               -4.9999f   //
-  #define X3                               -4.5000f   //
-  #define X4                               -0.1234f   //
-  #define X_NULL                            0.0f      //
-  #define X5                                0.1234f   //
-  #define X6                                4.5000f   //
-  #define X7                                4.9999f   //
-  #define X8                                5.0000f   //
-  // subtract one LSB from 128.0f [this is needed AFTER hex values have been dumped --> this is needed to get a valid float reference for floor and trunc ]
-  #define X_MAX ((-0.0000000004656613f) + 128.0000f)
-
-
-  FIXP_DBL f_reg0, f_reg1, f_reg2, f_reg3, f_reg4, f_reg5, f_reg6, f_reg7, f_reg8, f_reg_min, f_reg_max, f_reg_null;
-  INT        res0,   res1,   res2,   res3,   res4,   res5,   res6,   res7,   res8;
-  FIXP_DBL f_res0, f_res1, f_res2, f_res3, f_res4, f_res5, f_res6, f_res7, f_res8;
-
-  f_reg_min  = (LONG)0x80000000 ; // data taken from above dump; cast to LONG needed because of
-  f_reg0     = (LONG)0x81000000 ; // fract-class needs a sign;  0x######## is of type unsigned int.
-  f_reg1     = (LONG)0xfb000000 ;
-  f_reg2     = (LONG)0xfb000690 ;
-  f_reg3     = (LONG)0xfb800000 ;
-  f_reg4     = (LONG)0xffe068dc ;
-  f_reg_null = (LONG)0x00000000 ;
-  f_reg5     = (LONG)0x001f9724 ;
-  f_reg6     = (LONG)0x04800000 ;
-  f_reg7     = (LONG)0x04fff970 ;
-  f_reg8     = (LONG)0x05000000 ;
-  f_reg_max  = (LONG)0x7fffffff ;
-
-
-  FDKprintf("---- input values ----\n");
-  FDKprintf("%f %f %f %f %f %f %f %f %f\n", X0
-                                          , X1
-                                          , X2
-                                          , X3
-                                          , X4
-                                          , X5
-                                          , X6
-                                          , X7
-                                          , X8
-           );
-  FDKprintf("%f %f %f %f %f %f %f %f %f\n", (float)f_reg0     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg1     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg2     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg3     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg4     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg5     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg6     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg7     * (float)FDKpow(2,INL_SF)
-                                          , (float)f_reg8     * (float)FDKpow(2,INL_SF)
-           );
-  FDKprintf("---- min/max input values ----\n");
-  FDKprintf("%f %f %f\n", X_MIN
-                        , X_NULL
-                        , X_MAX
-           );
-  FDKprintf("%f %f %f\n", (float)f_reg_min  * (float)FDKpow(2,INL_SF)
-                        , (float)f_reg_null * (float)FDKpow(2,INL_SF)
-                        , (float)f_reg_max  * (float)FDKpow(2,INL_SF)
-           );
-  FDKprintf("\n");
-
-  FDKprintf("\n---- floor ----\n");
-  res0 = fixp_floorToInt(f_reg0,     INL_SF);    f_res0 = fixp_floor(f_reg0,     INL_SF);
-  res1 = fixp_floorToInt(f_reg1,     INL_SF);    f_res1 = fixp_floor(f_reg1,     INL_SF);
-  res2 = fixp_floorToInt(f_reg2,     INL_SF);    f_res2 = fixp_floor(f_reg2,     INL_SF);
-  res3 = fixp_floorToInt(f_reg3,     INL_SF);    f_res3 = fixp_floor(f_reg3,     INL_SF);
-  res4 = fixp_floorToInt(f_reg4,     INL_SF);    f_res4 = fixp_floor(f_reg4,     INL_SF);
-  res5 = fixp_floorToInt(f_reg5,     INL_SF);    f_res5 = fixp_floor(f_reg5,     INL_SF);
-  res6 = fixp_floorToInt(f_reg6,     INL_SF);    f_res6 = fixp_floor(f_reg6,     INL_SF);
-  res7 = fixp_floorToInt(f_reg7,     INL_SF);    f_res7 = fixp_floor(f_reg7,     INL_SF);
-  res8 = fixp_floorToInt(f_reg8,     INL_SF);    f_res8 = fixp_floor(f_reg8,     INL_SF);
-  FDKprintf("reference          %i %i %i %i %i %i %i %i %i\n", (int)floor(X0), (int)floor(X1), (int)floor(X2), (int)floor(X3), (int)floor(X4), (int)floor(X5), (int)floor(X6), (int)floor(X7), (int)floor(X8));
-  FDKprintf("fixp_floorToInt    %i %i %i %i %i %i %i %i %i\n", res0, res1, res2, res3, res4, res5, res6, res7, res8);
-  FDKprintf("fixp_floor         %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f\n", (float)f_res0*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res3*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res4*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res5*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res6*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res7*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res8*(float)FDKpow(2,INL_SF));
-
-  FDKprintf("\n---- min/max floor ----\n");
-  res1 = fixp_floorToInt(f_reg_min,  INL_SF);    f_res1 = fixp_floor(f_reg_min,  INL_SF);
-  res2 = fixp_floorToInt(f_reg_null, INL_SF);    f_res2 = fixp_floor(f_reg_null, INL_SF);
-  res3 = fixp_floorToInt(f_reg_max,  INL_SF);    f_res3 = fixp_floor(f_reg_max,  INL_SF);
-  FDKprintf("reference          %i %i %i\n", (int)floor(X_MIN), (int)floor(X_NULL), (int)floor(X_MAX));
-  FDKprintf("fixp_floorToInt    %i %i %i\n", res1, res2, res3);
-  FDKprintf("fixp_floor         %10.7f %10.7f %10.7f\n", (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res3*(float)FDKpow(2,INL_SF));
-  FDKprintf("\n\n\n");
-
-
-  FDKprintf("---- ceil ----\n");
-  res0 = fixp_ceilToInt(f_reg0,      INL_SF);    f_res0 = fixp_ceil(f_reg0,      INL_SF);
-  res1 = fixp_ceilToInt(f_reg1,      INL_SF);    f_res1 = fixp_ceil(f_reg1,      INL_SF);
-  res2 = fixp_ceilToInt(f_reg2,      INL_SF);    f_res2 = fixp_ceil(f_reg2,      INL_SF);
-  res3 = fixp_ceilToInt(f_reg3,      INL_SF);    f_res3 = fixp_ceil(f_reg3,      INL_SF);
-  res4 = fixp_ceilToInt(f_reg4,      INL_SF);    f_res4 = fixp_ceil(f_reg4,      INL_SF);
-  res5 = fixp_ceilToInt(f_reg5,      INL_SF);    f_res5 = fixp_ceil(f_reg5,      INL_SF);
-  res6 = fixp_ceilToInt(f_reg6,      INL_SF);    f_res6 = fixp_ceil(f_reg6,      INL_SF);
-  res7 = fixp_ceilToInt(f_reg7,      INL_SF);    f_res7 = fixp_ceil(f_reg7,      INL_SF);
-  res8 = fixp_ceilToInt(f_reg8,      INL_SF);    f_res8 = fixp_ceil(f_reg8,      INL_SF);
-  FDKprintf("reference          %i %i %i %i %i %i %i %i %i\n", (int)ceil(X0), (int)ceil(X1), (int)ceil(X2), (int)ceil(X3), (int)ceil(X4), (int)ceil(X5), (int)ceil(X6), (int)ceil(X7), (int)ceil(X8));
-  FDKprintf("fixp_ceilToInt     %i %i %i %i %i %i %i %i %i\n", res0, res1, res2, res3, res4, res5, res6, res7, res8);
-  FDKprintf("fixp_ceil          %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f\n", (float)f_res0*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res3*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res4*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res5*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res6*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res7*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res8*(float)FDKpow(2,INL_SF));
-
-  FDKprintf("\n---- min/max ceil ----\n");
-  res1 = fixp_ceilToInt(f_reg_min,   INL_SF);
-  res2 = fixp_ceilToInt(f_reg_null,  INL_SF);
-  res3 = fixp_ceilToInt(f_reg_max,   INL_SF);
-
-  f_res1 = fixp_ceil(f_reg_min,   INL_SF);
-  f_res2 = fixp_ceil(f_reg_null,  INL_SF);
-  f_res3 = fixp_ceil(f_reg_max,   INL_SF);
-
-  FDKprintf("reference          %i %i %i\n", (int)ceil(X_MIN), (int)ceil(X_NULL), (int)ceil(X_MAX));
-  FDKprintf("fixp_ceilToInt     %i %i %i\n", res1, res2, res3);
-  FDKprintf("fixp_ceil          %10.7f %10.7f %10.7f\n", (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res3*(float)FDKpow(2,INL_SF));
-  FDKprintf("\n\n\n");
-
-
-  FDKprintf("---- trunc ----\n");
-  res0 = fixp_truncateToInt(f_reg0,  INL_SF);    f_res0 = fixp_truncate(f_reg0,  INL_SF);
-  res1 = fixp_truncateToInt(f_reg1,  INL_SF);    f_res1 = fixp_truncate(f_reg1,  INL_SF);
-  res2 = fixp_truncateToInt(f_reg2,  INL_SF);    f_res2 = fixp_truncate(f_reg2,  INL_SF);
-  res3 = fixp_truncateToInt(f_reg3,  INL_SF);    f_res3 = fixp_truncate(f_reg3,  INL_SF);
-  res4 = fixp_truncateToInt(f_reg4,  INL_SF);    f_res4 = fixp_truncate(f_reg4,  INL_SF);
-  res5 = fixp_truncateToInt(f_reg5,  INL_SF);    f_res5 = fixp_truncate(f_reg5,  INL_SF);
-  res6 = fixp_truncateToInt(f_reg6,  INL_SF);    f_res6 = fixp_truncate(f_reg6,  INL_SF);
-  res7 = fixp_truncateToInt(f_reg7,  INL_SF);    f_res7 = fixp_truncate(f_reg7,  INL_SF);
-  res8 = fixp_truncateToInt(f_reg8,  INL_SF);    f_res8 = fixp_truncate(f_reg8,  INL_SF);
-  FDKprintf("reference          %i %i %i %i %i %i %i %i %i\n", (int)(X0), (int)(X1), (int)(X2), (int)(X3), (int)(X4), (int)(X5), (int)(X6), (int)(X7), (int)(X8));
-  FDKprintf("fixp_truncateToInt %i %i %i %i %i %i %i %i %i\n", res0, res1, res2, res3, res4, res5, res6, res7, res8);
-  FDKprintf("fixp_truncate      %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f\n", (float)f_res0*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res3*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res4*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res5*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res6*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res7*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res8*(float)FDKpow(2,INL_SF));
-
-  FDKprintf("\n---- min/max trunc ----\n");
-  res1 = fixp_truncateToInt(f_reg_min, INL_SF);  f_res1 = fixp_truncate(f_reg_min, INL_SF);
-  res2 = fixp_truncateToInt(f_reg_null,INL_SF);  f_res2 = fixp_truncate(f_reg_null,INL_SF);
-  res3 = fixp_truncateToInt(f_reg_max, INL_SF);  f_res3 = fixp_truncate(f_reg_max, INL_SF);
-  FDKprintf("reference          %i %i %i\n", (int)(X_MIN), (int)(X_NULL), (int)(X_MAX));
-  FDKprintf("fixp_truncateToInt %i %i %i\n", res1, res2, res3);
-  FDKprintf("fixp_truncate      %10.7f %10.7f %10.7f\n", (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res3*(float)FDKpow(2,INL_SF));
-  FDKprintf("\n\n\n");
-
-
-  FDKprintf("---- round ----\n");
-  res0 = fixp_roundToInt(f_reg0,  INL_SF);    f_res0 = fixp_round(f_reg0,  INL_SF);
-  res1 = fixp_roundToInt(f_reg1,  INL_SF);    f_res1 = fixp_round(f_reg1,  INL_SF);
-  res2 = fixp_roundToInt(f_reg2,  INL_SF);    f_res2 = fixp_round(f_reg2,  INL_SF);
-  res3 = fixp_roundToInt(f_reg3,  INL_SF);    f_res3 = fixp_round(f_reg3,  INL_SF);
-  res4 = fixp_roundToInt(f_reg4,  INL_SF);    f_res4 = fixp_round(f_reg4,  INL_SF);
-  res5 = fixp_roundToInt(f_reg5,  INL_SF);    f_res5 = fixp_round(f_reg5,  INL_SF);
-  res6 = fixp_roundToInt(f_reg6,  INL_SF);    f_res6 = fixp_round(f_reg6,  INL_SF);
-  res7 = fixp_roundToInt(f_reg7,  INL_SF);    f_res7 = fixp_round(f_reg7,  INL_SF);
-  res8 = fixp_roundToInt(f_reg8,  INL_SF);    f_res8 = fixp_round(f_reg8,  INL_SF);
-  FDKprintf("reference          %i %i %i %i %i %i %i %i %i\n", roundRef(X0),
-                                                               roundRef(X1),
-                                                               roundRef(X2),
-                                                               roundRef(X3),
-                                                               roundRef(X4),
-                                                               roundRef(X5),
-                                                               roundRef(X6),
-                                                               roundRef(X7),
-                                                               roundRef(X8));
-  FDKprintf("fixp_roundToInt    %i %i %i %i %i %i %i %i %i\n", res0, res1, res2, res3, res4, res5, res6, res7, res8);
-  FDKprintf("fixp_round         %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f %10.7f\n", (float)f_res0*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res3*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res4*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res5*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res6*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res7*(float)FDKpow(2,INL_SF),
-                                                                                                   (float)f_res8*(float)FDKpow(2,INL_SF));
-
-  FDKprintf("\n---- min/max round ----\n");
-  res1 = fixp_roundToInt(f_reg_min, INL_SF);  f_res1 = fixp_round(f_reg_min, INL_SF);
-  res2 = fixp_roundToInt(f_reg_null,INL_SF);  f_res2 = fixp_round(f_reg_null,INL_SF);
-  res3 = fixp_roundToInt(f_reg_max, INL_SF);  f_res3 = fixp_round(f_reg_max, INL_SF);
-
-  FDKprintf("reference          %i %i %i\n", roundRef(X_MIN),
-                                             roundRef(X_NULL),
-                                             roundRef(X_MAX));
-  FDKprintf("fixp_roundToInt    %i %i %i\n", res1, res2, res3);
-  FDKprintf("fixp_round         %10.7f %10.7f %10.7f\n", (float)f_res1*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res2*(float)FDKpow(2,INL_SF),
-                                                         (float)f_res3*(float)FDKpow(2,INL_SF));
-  FDKprintf("\n\n\n");
-
-}
-#endif

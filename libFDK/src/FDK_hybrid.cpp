@@ -1,28 +1,90 @@
+
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
+
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
+
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
+
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
+
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
-                        (C) Copyright Fraunhofer IIS (2011)
-                               All Rights Reserved
-
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
-
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
-
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
-
-
-   $Id$
    Author(s): Markus Lohwasser
    Description: FDK Tools Hybrid Filterbank
-
-   This software and/or program is protected by copyright law and international
-   treaties. Any reproduction or distribution of this software and/or program,
-   or any portion of it, may result in severe civil and criminal penalties, and
-   will be prosecuted to the maximum extent possible under law.
 
 ******************************************************************************/
 
@@ -386,33 +448,6 @@ INT FDKhybridSynthesisApply(
     return err;
 }
 
-/*****************************************************************************/
-/* **** FILTERBANK **** */
-
-/*
-   2 channel filter
-   Filter Coefs:
-   0.0,
-   0.01899487526049,
-   0.0,
-   -0.07293139167538,
-   0.0,
-   0.30596630545168,
-   0.5,
-   0.30596630545168,
-   0.0,
-   -0.07293139167538,
-   0.0,
-   0.01899487526049,
-   0.0
-
-
-   Filter design:
-   h[q,n] = g[n] * cos(2pi/2 * q * (n-6) );  n = 0..12,  q = 0,1;
-
-   ->  h[0,n] = g[n] * 1;
-   ->  h[1,n] = g[n] * pow(-1,n);
-*/
 static void dualChannelFiltering(
         const FIXP_DBL *const      pQmfReal,
         const FIXP_DBL *const      pQmfImag,
@@ -554,98 +589,6 @@ static void fourChannelFiltering(
 }
 
 
-
-/*
-   8 channel filter
-
-   Implementation using a FFT of length 8
-
-   prototype filter coefficients:
-   0.00746082949812   0.02270420949825   0.04546865930473   0.07266113929591   0.09885108575264   0.11793710567217
-   0.125
-   0.11793710567217   0.09885108575264   0.07266113929591   0.04546865930473   0.02270420949825   0.00746082949812
-
-   Filter design:
-   N = 13; Q = 8;
-   h[q,n]       = g[n] * exp(j * 2 * pi / Q * (q + .5) * (n - 6));  n = 0..(N-1),  q = 0..(Q-1);
-
-   Time Signal:   x[t];
-   Filter Bank Output
-   y[q,t] = conv(x[t],h[q,t]) = conv(h[q,t],x[t]) = sum(x[k] * h[q, t - k] ) = sum(h[q, k] * x[t - k] ); k = 0..(N-1);
-
-   y[q,t] =   x[t - 12]*h[q, 12]  +  x[t - 11]*h[q, 11]  +  x[t - 10]*h[q, 10]  +  x[t -  9]*h[q,  9]
-           +  x[t -  8]*h[q,  8]  +  x[t -  7]*h[q,  7]
-           +  x[t -  6]*h[q,  6]
-           +  x[t -  5]*h[q,  5]  +  x[t -  4]*h[q,  4]
-           +  x[t -  3]*h[q,  3]  +  x[t -  2]*h[q,  2]  +  x[t -  1]*h[q,  1]  +  x[t -  0]*h[q,  0];
-
-   h'[q, n] = h[q,(N-1)-n] = g[n] * exp(j * 2 * pi / Q * (q + .5) * (6 - n));  n = 0..(N-1),  q = 0..(Q-1);
-
-   y[q,t] =   x[t - 12]*h'[q,  0]  +  x[t - 11]*h'[q,  1]  +  x[t - 10]*h'[q,  2]  +  x[t -  9]*h'[q,  3]
-           +  x[t -  8]*h'[q,  4]  +  x[t -  7]*h'[q,  5]
-           +  x[t -  6]*h'[q,  6]
-           +  x[t -  5]*h'[q,  7]  +  x[t -  4]*h'[q,  8]
-           +  x[t -  3]*h'[q,  9]  +  x[t -  2]*h'[q, 10]  +  x[t -  1]*h'[q, 11]  +  x[t -  0]*h'[q, 12];
-
-   Try to split off FFT Modulation Term:
-   FFT(x[t], q) = sum(x[t+k]*exp(-j*2*pi/N *q * k))
-                                           c                                           m
-   Step 1:  h'[q,n] = g[n] * ( exp(j * 2 * pi / 8 * .5 * (6 - n)) ) * ( exp (j * 2 * pi / 8 * q * (6 - n)) );
-
-    h'[q,n] = g[n] *c[n] * m[q,n]; (see above)
-    c[n]    = exp( j * 2 * pi / 8 * .5 * (6 - n) );
-    m[q,n]  = exp( j * 2 * pi / 8 *  q * (6 - n) );
-
-    y[q,t] = x[t -  0]*g[0]*c[0]*m[q,0]  +  x[t -  1]*g[1]*c[ 1]*m[q, 1]  + ...
-             ...                         +  x[t - 12]*g[2]*c[12]*m[q,12];
-
-                                                                              |
-    n                   m                            *exp(-j*2*pi)            |   n'                   fft
--------------------------------------------------------------------------------------------------------------------------
-    0       exp( j * 2 * pi / 8 * q * 6) ->  exp(-j * 2 * pi / 8 * q * 2)     |   2         exp(-j * 2 * pi / 8 * q * 0)
-    1       exp( j * 2 * pi / 8 * q * 5) ->  exp(-j * 2 * pi / 8 * q * 3)     |   3         exp(-j * 2 * pi / 8 * q * 1)
-    2       exp( j * 2 * pi / 8 * q * 4) ->  exp(-j * 2 * pi / 8 * q * 4)     |   4         exp(-j * 2 * pi / 8 * q * 2)
-    3       exp( j * 2 * pi / 8 * q * 3) ->  exp(-j * 2 * pi / 8 * q * 5)     |   5         exp(-j * 2 * pi / 8 * q * 3)
-    4       exp( j * 2 * pi / 8 * q * 2) ->  exp(-j * 2 * pi / 8 * q * 6)     |   6         exp(-j * 2 * pi / 8 * q * 4)
-    5       exp( j * 2 * pi / 8 * q * 1) ->  exp(-j * 2 * pi / 8 * q * 7)     |   7         exp(-j * 2 * pi / 8 * q * 5)
-    6       exp( j * 2 * pi / 8 * q * 0)                                      |   0         exp(-j * 2 * pi / 8 * q * 6)
-    7       exp(-j * 2 * pi / 8 * q * 1)                                      |   1         exp(-j * 2 * pi / 8 * q * 7)
-    8       exp(-j * 2 * pi / 8 * q * 2)                                      |   2
-    9       exp(-j * 2 * pi / 8 * q * 3)                                      |   3
-    10      exp(-j * 2 * pi / 8 * q * 4)                                      |   4
-    11      exp(-j * 2 * pi / 8 * q * 5)                                      |   5
-    12      exp(-j * 2 * pi / 8 * q * 6)                                      |   6
-
-
-    now use fft modulation coefficients
-    m[6]  =       = fft[0]
-    m[7]  =       = fft[1]
-    m[8]  = m[ 0] = fft[2]
-    m[9]  = m[ 1] = fft[3]
-    m[10] = m[ 2] = fft[4]
-    m[11] = m[ 3] = fft[5]
-    m[12] = m[ 4] = fft[6]
-            m[ 5] = fft[7]
-
-    y[q,t] = (                       x[t- 6]*g[ 6]*c[ 6] ) * fft[q,0]  +
-             (                       x[t- 7]*g[ 7]*c[ 7] ) * fft[q,1]  +
-             ( x[t- 0]*g[ 0]*c[ 0] + x[t- 8]*g[ 8]*c[ 8] ) * fft[q,2]  +
-             ( x[t- 1]*g[ 1]*c[ 1] + x[t- 9]*g[ 9]*c[ 9] ) * fft[q,3]  +
-             ( x[t- 2]*g[ 2]*c[ 2] + x[t-10]*g[10]*c[10] ) * fft[q,4]  +
-             ( x[t- 3]*g[ 3]*c[ 3] + x[t-11]*g[11]*c[11] ) * fft[q,5]  +
-             ( x[t- 4]*g[ 4]*c[ 4] + x[t-12]*g[12]*c[12] ) * fft[q,6]  +
-             ( x[t- 5]*g[ 5]*c[ 5]                       ) * fft[q,7];
-
-    pre twiddle factors c[n] = exp(j * 2 * pi / 8 * .5 * (6 - n));
-    n                c]           |  n                c[n]         |  n                c[n]
----------------------------------------------------------------------------------------------------
-    0       exp( j * 6 * pi / 8)  |  1       exp( j * 5 * pi / 8)  |  2       exp( j * 4 * pi / 8)
-    3       exp( j * 3 * pi / 8)  |  4       exp( j * 2 * pi / 8)  |  5       exp( j * 1 * pi / 8)
-    6       exp( j * 0 * pi / 8)  |  7       exp(-j * 1 * pi / 8)  |  8       exp(-j * 2 * pi / 8)
-    9       exp(-j * 3 * pi / 8)  | 10       exp(-j * 4 * pi / 8)  | 11       exp(-j * 5 * pi / 8)
-   12       exp(-j * 6 * pi / 8)  |                                |
-
-*/
 static void eightChannelFiltering(
         const FIXP_DBL *const      pQmfReal,
         const FIXP_DBL *const      pQmfImag,

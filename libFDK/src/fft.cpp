@@ -1,34 +1,90 @@
+
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
+
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
+
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
+
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
+
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
-                        (C) Copyright Fraunhofer IIS (2001)
-                               All Rights Reserved
-
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
-
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
-
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
-
-
-   $Id$
    Author(s):   Josef Hoepfl, DSP Solutions
    Description: Fix point FFT
-
-   This software and/or program is protected by copyright law and international
-   treaties. Any reproduction or distribution of this software and/or program,
-   or any portion of it, may result in severe civil and criminal penalties, and
-   will be prosecuted to the maximum extent possible under law.
-
-   History:
-   20-APR-2010  A. Tritthart  replaced modulo operations with comparisons in fft15
-                to avoid failures with ARM RVCT 4.0 compiler
-                Tuned fft15 by 18% (Cortex-A8) to 25% (ARM926) by reprogramming
-                with merged loops.
 
 ******************************************************************************/
 
@@ -71,7 +127,6 @@ static FORCEINLINE void fft3(FIXP_DBL *RESTRICT pDat)
 }
 
 
-//#define F5C(x) ((FIXP_DBL)x)
 #define F5C(x) STC(x)
 
 #define     C51       (F5C(0x79bc3854))      /* FL2FXCONST_DBL( 0.95105652)   */
@@ -148,10 +203,6 @@ static FORCEINLINE void fft5(FIXP_DBL *RESTRICT pDat)
 /* Performs the FFT of length 15. It is split into FFTs of length 3 and length 5. */
 static inline void fft15(FIXP_DBL *pInput)
 {
-#if FORCE_CRITICAL_CODE_FOR_RVCT4
-  FIXP_DBL  accu;
-  int j;
-#endif
   FIXP_DBL  aDst[2*N15];
   FIXP_DBL  aDst1[2*N15];
   int    i,k,l;
@@ -162,48 +213,6 @@ static inline void fft15(FIXP_DBL *pInput)
   input3(6:8)   = [input(6) input(11) input(1)];
   input3(9:11)  = [input(9) input(14) input(4)];
   input3(12:14) = [input(12) input(2) input(7)]; */
-#if FORCE_CRITICAL_CODE_FOR_RVCT4
-  /* This branch generate failures on RVCT 4.0 with ARM926/ARM1136/ARM1176/C-R4, but not on Cortex-A8 */
-  pSrc = pInput;
-  pDst = aDst;
-  for(i=0,l=0,k=0; i<N5; i++)
-  {
-    for(j=0; j<N3; j++)
-    {
-      pDst[k]   = pSrc[l];
-      pDst[k+1] = pSrc[l+1];
-      k += 2;
-      l += 2*N5;
-      if (l >= (2*N15))
-        l -= (2*N15);
-    }
-    l += (2*N3);
-    if (l >= (2*N15))
-      l -= (2*N15);
-  }
-  /* Perform 5 times the fft of length 3
-  output3(0:2)   = fft3(input3(0:2));
-  output3(3:5)   = fft3(input3(3:5));
-  output3(6:8)   = fft3(input3(6:8));
-  output3(9:11)  = fft3(input3(9:11));
-  output3(12:14) = fft3(input3(12:14)); */
-  pSrc=aDst;
-  for(i=0; i<N5; i++)
-  {
-    fft3(pSrc);
-    pSrc += (2*N3);
-  }
-
-  /* Scaling of the input vector of the fft5 with the scale factor 0.125 */
-  pSrc=aDst;
-  for(j=0; j<(2*N3*N5); j++)
-  {
-    accu = pSrc[j];
-    /* 2 bit right shift */
-    accu >>= 2;
-    pSrc[j] = accu;
-  }
-#else
   {
     const FIXP_DBL *pSrc = pInput;
     FIXP_DBL *RESTRICT pDst = aDst;
@@ -251,7 +260,6 @@ static inline void fft15(FIXP_DBL *pInput)
       pDst[k+5] = (s1 - r2)>>2;
     }
   }
-#endif
   /* Sort input vector for fft's of length 5
   input5(0:4)   = [output3(0) output3(3) output3(6) output3(9) output3(12)];
   input5(5:9)   = [output3(1) output3(4) output3(7) output3(10) output3(13)];

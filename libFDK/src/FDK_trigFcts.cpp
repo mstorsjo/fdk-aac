@@ -1,28 +1,90 @@
+
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
+
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
+
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
+
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
+
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
-                        (C) Copyright Fraunhofer IIS (2005)
-                               All Rights Reserved
-
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
-
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
-
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
-
-
-   $Id$
    Author(s):   Haricharan Lakshman, Manuel Jander
    Description: Trigonometric functions fixed point fractional implementation.
-
-   This software and/or program is protected by copyright law and international
-   treaties. Any reproduction or distribution of this software and/or program,
-   or any portion of it, may result in severe civil and criminal penalties, and
-   will be prosecuted to the maximum extent possible under law.
 
 ******************************************************************************/
 
@@ -31,7 +93,6 @@
 #include "fixpoint_math.h"
 
 
-// #define CORDIC_SINCOS
 
 
 #define IMPROVE_ATAN2_ACCURACY  1  // 0 --> 59 dB SNR     1 --> 65 dB SNR
@@ -109,8 +170,6 @@ FIXP_DBL fixp_atan2(FIXP_DBL y, FIXP_DBL x)
         sf = 0;
     }
     sfo = sf;
-    //write2file(fpF__h,(float)y/(float)x);
-    //write2file(fpC__h,(float) q * (float)FDKpow(2,sfo));  // SNR 86 dB  But range not limited to [-64..64] which is the input range of fixp_atan()
 
     // --- atan()
 
@@ -145,12 +204,8 @@ FIXP_DBL fixp_atan2(FIXP_DBL y, FIXP_DBL x)
         stf = sfo - ATI_SF;
         if (stf > 0)  q = q << (INT)fMin( stf,DFRACT_BITS-1);
         else          q = q >> (INT)fMin(-stf,DFRACT_BITS-1);
-        //write2file(fpF__e,(float)y/(float)x);
-        //write2file(fpC__e,(float)q * (float)FDKpow(2,ATI_SF)); // 88.9 dB
         at = fixp_atan(q);  // ATO_SF
     }
-    //write2file(fpF__g,(float)FDKatan( (float)y/(float)x ));
-    //write2file(fpC__g,(float)   at * (float)FDKpow(2,ATO_SF) ); // todo dB
 
     // --- atan2()
 
@@ -177,8 +232,6 @@ FIXP_DBL fixp_atan2(FIXP_DBL y, FIXP_DBL x)
             ret = FL2FXCONST_DBL(0.0f);
         }
     }
-    //write2file(fpC__f,(float)ret * (float)FDKpow(2,AT2O_SF));  // 65 dB
-    //write2file(fpF__f,(float)FDKatan2(y,x));
     return ret;
 }
 
@@ -237,7 +290,6 @@ FIXP_DBL fixp_atan(FIXP_DBL x)
 }
 
 
-#ifndef CORDIC_SINCOS
 
 #include "FDK_tools_rom.h"
 
@@ -272,335 +324,6 @@ void fixp_cos_sin (FIXP_DBL x, int scale, FIXP_DBL *cos, FIXP_DBL *sin)
     *sin  = sine + error1;
 }
 
-#else /* #ifndef CORDIC_SINCOS */
-
-/*
-  // Matlab
-  function v = cordic(beta,n)
-  % This function computes v = [cos(beta), sin(beta)] (beta in radians)
-  % using n iterations. Increasing n will increase the precision.
-
-  if beta < -pi/2 | beta > pi/2
-      if beta < 0
-          v = cordic(beta + pi, n);
-      else
-          v = cordic(beta - pi, n);
-      end
-      v = -v; % flip the sign for second or third quadrant
-      return
-  end
-
-  % Initialization of tables of constants used by CORDIC
-  % need a table of arctangents of negative powers of two, in radians:
-  % angles = atan(2.^-(0:27));
-  angles =  [  ...
-      0.78539816339745   0.46364760900081   0.24497866312686   0.12435499454676 ...
-      0.06241880999596   0.03123983343027   0.01562372862048   0.00781234106010 ...
-      0.00390623013197   0.00195312251648   0.00097656218956   0.00048828121119 ...
-      0.00024414062015   0.00012207031189   0.00006103515617   0.00003051757812 ...
-      0.00001525878906   0.00000762939453   0.00000381469727   0.00000190734863 ...
-      0.00000095367432   0.00000047683716   0.00000023841858   0.00000011920929 ...
-      0.00000005960464   0.00000002980232   0.00000001490116   0.00000000745058 ];
-  % and a table of products of reciprocal lengths of vectors [1, 2^-j]:
-  Kvalues = [ ...
-      0.70710678118655   0.63245553203368   0.61357199107790   0.60883391251775 ...
-      0.60764825625617   0.60735177014130   0.60727764409353   0.60725911229889 ...
-      0.60725447933256   0.60725332108988   0.60725303152913   0.60725295913894 ...
-      0.60725294104140   0.60725293651701   0.60725293538591   0.60725293510314 ...
-      0.60725293503245   0.60725293501477   0.60725293501035   0.60725293500925 ...
-      0.60725293500897   0.60725293500890   0.60725293500889   0.60725293500888 ];
-  Kn = Kvalues(min(n, length(Kvalues)));
-
-  % Initialize loop variables:
-  v = [1;0]; % start with 2-vector cosine and sine of zero
-  poweroftwo = 1;
-  angle = angles(1);
-
-  % Iterations
-  for j = 0:n-1;
-      if beta < 0
-          sigma = -1;
-      else
-          sigma = 1;
-      end
-      factor = sigma * poweroftwo;
-      R = [1, -factor; factor, 1];
-      v = R * v; % 2-by-2 matrix multiply
-      beta = beta - sigma * angle; % update the remaining angle
-      poweroftwo = poweroftwo / 2;
-      % update the angle from table, or eventually by just dividing by two
-      if j+2 > length(angles)
-          angle = angle / 2;
-      else
-          angle = angles(j+2);
-      end
-  end
-
-  % Adjust length of output vector to be [cos(beta), sin(beta)]:
-  v = v * Kn;
-  return
-
-  // C++
-  #define C1
-  #define C2
-  #define TYPE double
-
-  TYPE fixp_cordic(TYPE in, 
-                   int n, 
-                   int type)
-  {
-    int i;
-    TYPE c,s,a;
-    TYPE x,y,v;
-    TYPE b;
-
-    c = 0.5;
-    s = 0.0;
-    b = 1.0;
-
-    for (i=0; i<n; i++) { 
-      a = angleValues[i];
-      x =  b * s;
-      y =  b * c;
-
-      if (in < 0.0) {
-        c = c + x; 
-        s = s - y; 
-        in = in + a;
-      }                        
-      else {
-        c = c - x; 
-        s = s + y; 
-        in = in - a; 
-      }           
-      b = b / 2;
-    }
-
-    if (type == 0)
-      v = c * kValues[n-1]*2;        
-    else
-      v = s * kValues[n-1]*2;        
-
-    return (v);
-  }
-
-  TYPE fixp_cos(TYPE in, 
-                int n,
-                int scale)
-  {
-    TYPE v;
-    INT sign = 0;
-
-    while ( (in < -M_PI/2) || (in > M_PI/2) ) {
-      if (in < 0)
-        in = in + M_PI;
-      else
-        in = in - M_PI;
-
-      if (sign == 0)
-        sign = 1;
-      else
-        sign = 0;
-    }
-
-    v = fixp_cordic(in,n,0);
-
-    if (sign)
-      v = -v;
-
-    return (v);
-  }
-
-  TYPE fixp_sin(TYPE in, 
-                int n,
-                int scale)
-  {
-    TYPE v;
-    INT sign = 0;
-
-    while ( (in < -M_PI/2) || (in > M_PI/2) ) {
-      if (in < 0)
-        in = in + M_PI;
-      else
-        in = in - M_PI;
-
-      if (sign == 0)
-        sign = 1;
-      else
-        sign = 0;
-    }
-
-    v = fixp_cordic(in,n,1);
-
-    if (sign)
-      v = -v;
-
-    return (v);
-  }
-*/
-
-
-#define SF_C1   1
-#define C1(x)   FL2FXCONST_DBL(x/(1<<SF_C1))
-#define C2(x)   FL2FXCONST_DBL(x)
-#define M_PI_4  FL2FXCONST_DBL(M_PI/4)
-#define ITER    (DFRACT_BITS-1)
-
-/*
-  for (i=0; i<DFRACT_BITS; i++) {
-    angleValues[i] = FDKatan(FDKpow(2.0,-i));
-  }
-*/
-const FIXP_DBL angleValues[DFRACT_BITS] = {
-  C1(7.853981633974483e-001), C1(4.636476090008061e-001), C1(2.449786631268641e-001), C1(1.243549945467614e-001), 
-  C1(6.241880999595735e-002), C1(3.123983343026828e-002), C1(1.562372862047683e-002), C1(7.812341060101111e-003), 
-  C1(3.906230131966972e-003), C1(1.953122516478819e-003), C1(9.765621895593195e-004), C1(4.882812111948983e-004), 
-  C1(2.441406201493618e-004), C1(1.220703118936702e-004), C1(6.103515617420877e-005), C1(3.051757811552610e-005), 
-  C1(1.525878906131576e-005), C1(7.629394531101970e-006), C1(3.814697265606496e-006), C1(1.907348632810187e-006), 
-  C1(9.536743164059608e-007), C1(4.768371582030888e-007), C1(2.384185791015580e-007), C1(1.192092895507807e-007), 
-  C1(5.960464477539055e-008), C1(2.980232238769530e-008), C1(1.490116119384766e-008), C1(7.450580596923828e-009), 
-  C1(3.725290298461914e-009), C1(1.862645149230957e-009), C1(9.313225746154785e-010), C1(4.656612873077393e-010)
-};
-
-/*
-  for (i=0; i<DFRACT_BITS; i++) {
-    kValues[i] = 1.0;
-    for (j=0; j<=i; j++) {
-      val = FDKcos(FDKatan(FDKpow(2.0,-j)));
-      kValues[i] *= val;
-    }
-  }
-*/
-const FIXP_DBL kValues[DFRACT_BITS] = {
-  C2(7.071067811865476e-001), C2(6.324555320336759e-001), C2(6.135719910778964e-001), C2(6.088339125177524e-001), 
-  C2(6.076482562561683e-001), C2(6.073517701412960e-001), C2(6.072776440935261e-001), C2(6.072591122988928e-001), 
-  C2(6.072544793325625e-001), C2(6.072533210898753e-001), C2(6.072530315291345e-001), C2(6.072529591389450e-001), 
-  C2(6.072529410413973e-001), C2(6.072529365170104e-001), C2(6.072529353859136e-001), C2(6.072529351031395e-001), 
-  C2(6.072529350324459e-001), C2(6.072529350147725e-001), C2(6.072529350103542e-001), C2(6.072529350092496e-001), 
-  C2(6.072529350089735e-001), C2(6.072529350089044e-001), C2(6.072529350088872e-001), C2(6.072529350088829e-001), 
-  C2(6.072529350088818e-001), C2(6.072529350088816e-001), C2(6.072529350088814e-001), C2(6.072529350088814e-001), 
-  C2(6.072529350088814e-001), C2(6.072529350088814e-001), C2(6.072529350088814e-001), C2(6.072529350088814e-001)
-};
-
-inline
-static FIXP_DBL fixp_cordic(FIXP_DBL in, 
-                            INT type)
-{
-  int i;
-  FIXP_DBL c,s,a;
-  FIXP_DBL x,y;
-  int n = ITER;
-
-  in = fMult(in,M_PI_4);
-  c  = kValues[n-1] >> 1;
-  s  = FL2FXCONST_DBL(0.0f);
-
-  for (i=0; i<n; i++) { 
-    a = angleValues[i];
-    x = s >> i;
-    y = c >> i;
-
-    if (in < FL2FXCONST_DBL(0.0)) {
-      c = c + x; 
-      s = s - y; 
-      in = in + a;
-    }                        
-    else {
-      c = c - x; 
-      s = s + y; 
-      in = in - a; 
-    }           
-  }
-
-  /* 1 headroom bit */
-  if (type == 0)
-    return (c);  
-  else
-    return (s);  
-}
-
-/*
-   in:    argument
-   scale: scalefactor of argument has to be in the range of 0, ... ,DFRACT_BITS-1
-   type: calculate cosine 0
-         calculate sine   1 
-*/
-static FIXP_DBL fixp_sincos(FIXP_DBL in, 
-                            INT scale,
-                            INT type)
-{
-  FIXP_DBL v;
-  INT sign = 0;
-  FIXP_DBL pi,pi_2;
-
-  if (scale < 2) {
-    in = in >> (2-scale);
-    scale = 2;
-  }
-
-  pi   = M_PI_4 >> (scale-2);
-  pi_2 = M_PI_4 >> (scale-1);
-   
-  /* move signal into the range of -pi/2 to +pi/2 */
-  while ( (in < (-pi_2)) || (in > (pi_2)) ) {
-    if (in < FL2FXCONST_DBL(0.0))
-      in = in + pi;
-    else
-      in = in - pi;
-
-    sign = ~sign;
-  }
-
-  /* scale signal with 2/pi => unscaled signal is in the range of [-1.0,...,+1.0[ */
-  in = fMult(in,FL2FXCONST_DBL(2/M_PI)) << scale;
-
-  v = fixp_cordic(in,type);
-
-  if (sign)
-    v = -v;
-
-  /* compensate 1 headroom bit */
-  if ( v <= FL2FXCONST_DBL(-0.5f) )
-    v = (FIXP_DBL) (MINVAL_DBL+1); 
-  else 
-    v = SATURATE_LEFT_SHIFT(v,1,DFRACT_BITS);
-
-  return (v);
-}
-
-/*
-   in:    argument
-   scale: scalefactor of argument has to be in the range of 0, ... ,DFRACT_BITS-1
-*/
-FIXP_DBL fixp_cos(FIXP_DBL in, 
-                  INT scale)
-                   
-{
-  FDK_ASSERT ((scale >= 0) && (scale < DFRACT_BITS));
-
-  if (in == FL2FXCONST_DBL(0.0f))
-    return /*FL2FXCONST_DBL(1.0)*/ (FIXP_DBL)MAXVAL_DBL;
-
-  return (fixp_sincos(in,scale,0));
-}
-
-/*
-   in:    argument
-   scale: scalefactor of argument has to be in the range of 0, ... ,DFRACT_BITS-1
-*/
-FIXP_DBL fixp_sin(FIXP_DBL in, 
-                  INT scale)
-                   
-{
-  FDK_ASSERT ((scale >= 0) && (scale < DFRACT_BITS));
-
-  if (in == FL2FXCONST_DBL(0.0f))
-    return FL2FXCONST_DBL(0.0f);
-
-  return (fixp_sincos(in,scale,1));
-}
-
-#endif /* #ifndef CORDIC_SINCOS */
 
 
 

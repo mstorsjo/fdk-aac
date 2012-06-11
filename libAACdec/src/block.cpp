@@ -1,28 +1,90 @@
+
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
+
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
+
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
+
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
+
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /*****************************  MPEG-4 AAC Decoder  **************************
 
-                        (C) Copyright Fraunhofer IIS (2004)
-                               All Rights Reserved
-
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
-
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
-
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
-
-
-   $Id$
    Author(s):   Josef Hoepfl
    Description: long/short-block decoding
-
-   This software and/or program is protected by copyright law and international
-   treaties. Any reproduction or distribution of this software and/or program,
-   or any portion of it, may result in severe civil and criminal penalties, and
-   will be prosecuted to the maximum extent possible under law.
 
 ******************************************************************************/
 
@@ -214,7 +276,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(HANDLE_FDK_BITSTREAM bs,
 {
   int top, band;
   int sect_len, sect_len_incr;
-  int group;  
+  int group;
   UCHAR sect_cb;
   UCHAR *pCodeBook = pAacDecoderChannelInfo->pDynData->aCodeBook;
   /* HCR input (long) */
@@ -312,7 +374,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(HANDLE_FDK_BITSTREAM bs,
 /* mso: provides a faster way to i-quantize a whole band in one go */
 
 /**
- * \brief inverse quantize one sfb. Each value of the sfb is processed according to the 
+ * \brief inverse quantize one sfb. Each value of the sfb is processed according to the
  *        formula: spectrum[i] = Sign(spectrum[i]) * Matissa(spectrum[i])^(4/3) * 2^(lsb/4).
  * \param spectrum pointer to first line of the sfb to be inverse quantized.
  * \param noLines number of lines belonging to the sfb.
@@ -380,7 +442,7 @@ AAC_DECODER_ERROR CBlock_InverseQuantizeSpectralData(CAacDecoderChannelInfo *pAa
       for (band=0; band < ScaleFactorBandsTransmitted; band++)
       {
         FIXP_DBL *pSpectralCoefficient = SPEC(pAacDecoderChannelInfo->pSpectralCoefficient, window, pAacDecoderChannelInfo->granuleLength) + BandOffsets[band];
-        
+
         int noLines = BandOffsets[band+1] - BandOffsets[band];
         int bnds = group*16+band;
         int i;
@@ -417,7 +479,7 @@ AAC_DECODER_ERROR CBlock_InverseQuantizeSpectralData(CAacDecoderChannelInfo *pAa
         pSpectralCoefficient[i] = Sign(pSpectralCoefficient[i]) * 2^(0.25*pScaleFactor[bnds]) * pSpectralCoefficient[i]^(4/3)
            This is equivalent to:
         pSpectralCoefficient[i]    = Sign(pSpectralCoefficient[i]) * (2^(pScaleFactor[bnds] % 4) * pSpectralCoefficient[i]^(4/3))
-        pSpectralCoefficient_e[i] += pScaleFactor[bnds]/4 
+        pSpectralCoefficient_e[i] += pScaleFactor[bnds]/4
         */
         {
           int msb = pScaleFactor [bnds] >> 2 ;
@@ -468,10 +530,10 @@ AAC_DECODER_ERROR  CBlock_ReadSpectralData(HANDLE_FDK_BITSTREAM bs,
         int bnds = group*16+band;
         UCHAR currentCB = pCodeBook[bnds];
 
-        /* patch to run plain-huffman-decoder with vcb11 input codebooks (LAV-checking might be possible below using the virtual cb and a LAV-table) */ 
+        /* patch to run plain-huffman-decoder with vcb11 input codebooks (LAV-checking might be possible below using the virtual cb and a LAV-table) */
         if ((currentCB >= 16) && (currentCB <= 31)) {
           pCodeBook[bnds] = currentCB = 11;
-        } 
+        }
         if ( !((currentCB == ZERO_HCB)
             || (currentCB == NOISE_HCB)
             || (currentCB == INTENSITY_HCB)
@@ -543,18 +605,18 @@ AAC_DECODER_ERROR  CBlock_ReadSpectralData(HANDLE_FDK_BITSTREAM bs,
 #else
         return AAC_DEC_DECODE_FRAME_ERROR;
 #endif
-      }  
+      }
 
       /* HCR decoding short */
       hcrStatus = HcrDecoder(hHcr, pAacDecoderChannelInfo, pSamplingRateInfo, bs);
-      
+
 
 #if HCR_ERROR_CONCEALMENT
       HcrMuteErroneousLines(hHcr);
 #else
       return AAC_DEC_DECODE_FRAME_ERROR;
 #endif /* HCR_ERROR_CONCEALMENT */
-     
+
       FDKpushFor (bs, pAacDecoderChannelInfo->pDynData->specificTo.aac.lenOfReorderedSpectralData);
     }
   }
@@ -628,8 +690,8 @@ void CBlock_FrequencyToTime(CAacDecoderStaticChannelInfo *pAacDecoderStaticChann
   int fr, fl, tl, nSamples, nSpec;
 
   /* Determine left slope length (fl), right slope length (fr) and transform length (tl).
-     USAC: The slope length may mismatch with the previous frame in case of LPD / FD 
-           transitions. The adjustment is handled by the imdct implementation. 
+     USAC: The slope length may mismatch with the previous frame in case of LPD / FD
+           transitions. The adjustment is handled by the imdct implementation.
   */
   tl = frameLen;
   nSpec = 1;

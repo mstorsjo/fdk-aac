@@ -1,27 +1,89 @@
-/****************************************************************************
 
-                       (C) copyright Fraunhofer IIS (2004)
-                               All Rights Reserved
+/* -----------------------------------------------------------------------------------------------------------
+Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-    Please be advised that this software and/or program delivery is
-    Confidential Information of Fraunhofer and subject to and covered by the
+© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+  All rights reserved.
 
-    Fraunhofer IIS Software Evaluation Agreement
-    between Google Inc. and  Fraunhofer
-    effective and in full force since March 1, 2012.
+ 1.    INTRODUCTION
+The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
 
-    You may use this software and/or program only under the terms and
-    conditions described in the above mentioned Fraunhofer IIS Software
-    Evaluation Agreement. Any other and/or further use requires a separate agreement.
+AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+of the MPEG specifications.
 
+Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+individually for the purpose of encoding or decoding bit streams in products that are compliant with
+the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+software may already be covered under those patent licenses when it is used for those licensed purposes only.
 
+Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+applications information and documentation.
 
- $Id$
+2.    COPYRIGHT LICENSE
 
-*******************************************************************************/
+Redistribution and use in source and binary forms, with or without modification, are permitted without
+payment of copyright license fees provided that you satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+your modifications thereto in source code form.
+
+You must retain the complete text of this software license in the documentation and/or other materials
+provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+modifications thereto to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+software or your modifications thereto.
+
+Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+and the date of any change. For modified versions of the FDK AAC Codec, the term
+"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+respect to this software.
+
+You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+by appropriate patent licenses.
+
+4.    DISCLAIMER
+
+This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+or business interruption, however caused and on any theory of liability, whether in contract, strict
+liability, or tort (including negligence), arising in any way out of the use of this software, even if
+advised of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Audio and Multimedia Departments - FDK AAC LL
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------------------------------------- */
+
 /*!
   \file   dct.cpp
-  \brief  DCT Implementations  $Revision: 37444 $
+  \brief  DCT Implementations   
   Library functions to calculate standard DCTs. This will most likely be replaced by hand-optimized
   functions for the specific target processor.
 
@@ -47,28 +109,6 @@
 #endif
 
 
-/*!
- *
- * \brief Perform dct type 3
- * The dct 3 is calculated by a inverse real fft, with
- * some pre twiddeling before the inverse real fft, as discribed by Takuya OOURA.
- * (http://momonga.t.u-tokyo.ac.jp/~ooura/fftman/ftmn2_32.html#sec2_3_2)
- * The real inverse fft is calculated by a inverse complex fft, as described
- * in numerical recipes in C, Cambridge University press
- * the auxiliary function is built by reversing the odd samples
- *
- * Instead of doing 2 times the conjugation to calculate the
- * inverse cfft with the cfft, one can also swap elements before
- * calling the cfft to get the same result:
- * swap
- * r(1),i(1) with r(n-1),i(n-1),
- * r(2),i(2) with r(n-2),i(n-2), ...
- * r(n/2-1),i(n/2-1) with r(n/2+1),i(n/2+1)
- *
- *
- * Scaling 1 shift in pre twiddeling,
- *         log2(L)-1 in cfft
- */
 #if !defined(FUNCTION_dct_III)
 void dct_III(FIXP_DBL *pDat, /*!< pointer to input/output */
              FIXP_DBL *tmp,  /*!< pointer to temporal working buffer */
@@ -142,19 +182,6 @@ void dct_III(FIXP_DBL *pDat, /*!< pointer to input/output */
 }
 #endif
 
-/*!
- *
- * \brief Perform dct type 2
- * The dct 2 is calculated by a real inverse fft, with
- * some pre twiddeling after the  fft, as discribed by Takuya OOURA.
- * (http://momonga.t.u-tokyo.ac.jp/~ooura/fftman/ftmn2_32.html#sec2_3_2)
- * The real inverse fft is calculated by a inverse complex fft, as described
- * in numerical recipes in C, Cambridge University press
- * the auxilery function is build by reversing the odd samples
- *
- * Scaling 1 shift in pre twiddeling,
- *         5 in cfft
- */
 #if !defined(FUNCTION_dct_II)
 void dct_II(FIXP_DBL *pDat, /*!< pointer to input/output */
             FIXP_DBL *tmp,  /*!< pointer to temporal working buffer */
@@ -347,14 +374,14 @@ void dct_IV(FIXP_DBL *pDat,
     pDat_0[0] = (pDat_0[0]>>1);
 
 
-    /* 28 cycles for ARM926 */  
+    /* 28 cycles for ARM926 */
     for (idx = sin_step,i=1; i<(M+1)>>1; i++, idx+=sin_step)
     {
       FIXP_STP twd = sin_twiddle[idx];
       cplxMultDiv2(&accu3, &accu4, accu1, accu2, twd);
       pDat_0[1] =  accu3;
       pDat_1[0] =  accu4;
-      
+
       pDat_0+=2;
       pDat_1-=2;
 
@@ -417,22 +444,22 @@ void dst_IV(FIXP_DBL *pDat,
 #ifdef FUNCTION_dst_IV_func1
   if ( (M>=4) && ((M&3) == 0) ) {
     dst_IV_func1(M, twiddle, &pDat[0], &pDat[L]);
-  } else 
+  } else
 #endif
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
-  
+
     register int i;
 
     /* 34 cycles on ARM926 */
-    for (i = 0; i < M-1; i+=2,pDat_0+=2,pDat_1-=2) 
+    for (i = 0; i < M-1; i+=2,pDat_0+=2,pDat_1-=2)
     {
       register FIXP_DBL accu1,accu2,accu3,accu4;
 
       accu1 =  pDat_1[1]; accu2 = -pDat_0[0];
       accu3 =  pDat_0[1]; accu4 = -pDat_1[0];
-    
+
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
       cplxMultDiv2(&accu3, &accu4, accu4, accu3, twiddle[i+1]);
 
@@ -444,7 +471,7 @@ void dst_IV(FIXP_DBL *pDat,
       register FIXP_DBL accu1,accu2;
 
       accu1 =  pDat_1[1]; accu2 = -pDat_0[0];
-    
+
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
 
       pDat_0[0] = accu2; pDat_0[1] = accu1;
