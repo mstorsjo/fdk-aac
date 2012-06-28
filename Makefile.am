@@ -152,7 +152,7 @@ SBRENC_SRC = \
     $(SBRENC_DIR)/ps_encode.cpp \
     $(SBRENC_DIR)/resampler.cpp \
     $(SBRENC_DIR)/sbr_encoder.cpp \
-    $(SBRENC_DIR)/sbr_ram.cpp \
+    $(SBRENC_DIR)/sbr_ram_enc.cpp \
     $(SBRENC_DIR)/ton_corr.cpp \
     $(SBRENC_DIR)/code_env.cpp \
     $(SBRENC_DIR)/env_est.cpp \
@@ -161,7 +161,7 @@ SBRENC_SRC = \
     $(SBRENC_DIR)/ps_main.cpp \
     $(SBRENC_DIR)/sbrenc_freq_sca.cpp \
     $(SBRENC_DIR)/sbr_misc.cpp \
-    $(SBRENC_DIR)/sbr_rom.cpp \
+    $(SBRENC_DIR)/sbr_rom_enc.cpp \
     $(SBRENC_DIR)/tran_det.cpp
 
 SYS_DIR = $(top_srcdir)/libSYS/src
