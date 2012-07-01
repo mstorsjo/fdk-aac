@@ -7,7 +7,17 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([tar-ustar foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+dnl Various options for configure
+AC_ARG_ENABLE([example],
+            [AS_HELP_STRING([--enable-example],
+                [enable example encoding program (default is no)])],
+            [example=$enableval], [example=no])
+
+dnl Automake conditionals to set
+AM_CONDITIONAL(EXAMPLE, test x$example = xyes)
+
 dnl Checks for programs.
+AC_PROG_CC
 AC_PROG_CXX
 LT_INIT
 

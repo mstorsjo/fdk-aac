@@ -32,6 +32,15 @@ lib_LTLIBRARIES = libfdk-aac.la
 libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
     -export-symbols $(top_srcdir)/fdk-aac.sym
 
+if EXAMPLE
+bin_PROGRAMS = aac-enc$(EXEEXT)
+
+aac_enc_LDADD = libfdk-aac.la
+aac_enc_SOURCES = aac-enc.c wavreader.c
+
+noinst_HEADERS = wavreader.h
+endif
+
 AACDEC_DIR = $(top_srcdir)/libAACdec/src
 AACDEC_SRC = \
     $(AACDEC_DIR)/aacdec_drc.cpp \
