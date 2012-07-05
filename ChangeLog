@@ -1,0 +1,4 @@
+0.1.0
+ - Initial release of fdk-aac
+ - autotools based build system
+ - Enable setting VBR bitrate modes
