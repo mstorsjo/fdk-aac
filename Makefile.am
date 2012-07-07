@@ -29,7 +29,8 @@ pkgconfig_DATA = fdk-aac.pc
 
 lib_LTLIBRARIES = libfdk-aac.la
 
-libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined
+libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
+    -export-symbols $(top_srcdir)/fdk-aac.sym
 
 AACDEC_DIR = $(top_srcdir)/libAACdec/src
 AACDEC_SRC = \
@@ -185,6 +186,7 @@ libfdk_aac_la_SOURCES = \
 EXTRA_DIST = \
     $(top_srcdir)/NOTICE \
     $(top_srcdir)/Android.mk \
+    $(top_srcdir)/fdk-aac.sym \
     $(top_srcdir)/documentation/*.pdf \
     $(top_srcdir)/libAACdec/src/*.h \
     $(top_srcdir)/libAACdec/src/arm/*.cpp \
