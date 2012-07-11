@@ -8,9 +8,6 @@ AM_INIT_AUTOMAKE([tar-ustar])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_HEADERS([config.h])
 
-# Cross compiling support
-AC_CANONICAL_HOST
-
 # Checks for programs.
 AC_PROG_CXX
 
