@@ -11,6 +11,8 @@ dnl Checks for programs.
 AC_PROG_CXX
 LT_INIT
 
+AC_CHECK_LIB([m], [sin])
+
 dnl soname version to use
 dnl goes by ‘current[:revision[:age]]’ with the soname ending up as
 dnl current.age.revision
