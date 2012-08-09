@@ -1150,8 +1150,8 @@ static INT FDKaacEnc_AutoToParcor(
     for(j=numOfCoeff-i-1; j>=0; j--) {
       FIXP_DBL accu1 = fMult(tmp, input[j]);
       FIXP_DBL accu2 = fMult(tmp, workBuffer[j]);
-      workBuffer[j] += accu1;
-      input[j] += accu2;
+      workBuffer[j] = fAddSaturate(workBuffer[j], accu1);
+      input[j] = fAddSaturate(input[j], accu2);
     }
 
     workBuffer++;

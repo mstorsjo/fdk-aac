@@ -195,7 +195,7 @@ FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out             
       FIXP_DBL energy = sfbEnergy->Short[wnd][sfb];
       for (j=1; j<groupLen[grp]; j++)
       {
-        energy += sfbEnergy->Short[wnd+j][sfb];
+        energy = fAddSaturate(energy, sfbEnergy->Short[wnd+j][sfb]);
       }
       sfbEnergy->Long[i++] = energy;
     }
