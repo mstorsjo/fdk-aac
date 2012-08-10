@@ -177,7 +177,7 @@ FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out             
       FIXP_DBL thresh = sfbThreshold->Short[wnd][sfb];
       for (j=1; j<groupLen[grp]; j++)
       {
-        thresh += sfbThreshold->Short[wnd+j][sfb];
+        thresh = fAddSaturate(thresh, sfbThreshold->Short[wnd+j][sfb]);
       }
       sfbThreshold->Long[i++] = thresh;
     }
@@ -213,7 +213,7 @@ FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out             
       FIXP_DBL energy = sfbEnergyMS->Short[wnd][sfb];
       for (j=1; j<groupLen[grp]; j++)
       {
-        energy += sfbEnergyMS->Short[wnd+j][sfb];
+        energy = fAddSaturate(energy, sfbEnergyMS->Short[wnd+j][sfb]);
       }
       sfbEnergyMS->Long[i++] = energy;
     }
@@ -231,7 +231,7 @@ FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out             
       FIXP_DBL energy = sfbSpreadEnergy->Short[wnd][sfb];
       for (j=1; j<groupLen[grp]; j++)
       {
-         energy += sfbSpreadEnergy->Short[wnd+j][sfb];
+         energy = fAddSaturate(energy, sfbSpreadEnergy->Short[wnd+j][sfb]);
       }
       sfbSpreadEnergy->Long[i++] = energy;
     }
