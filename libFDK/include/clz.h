@@ -115,6 +115,11 @@ inline INT fixnormz_S (SHORT a)
 {
   return fixnormz_D((INT)(a));
 }
+#elif defined(__GNUC__)
+inline INT fixnormz_S (SHORT a)
+{
+    return a ? __builtin_clz(a) : 16;
+}
 #else
 inline INT fixnormz_S (SHORT a)
 {
@@ -131,6 +136,12 @@ inline INT fixnormz_S (SHORT a)
 #endif
 
 #if !defined(FUNCTION_fixnormz_D)
+#if defined(__GNUC__)
+inline INT fixnormz_D (LONG a)
+{
+    return a ? __builtin_clz(a) : 32;
+}
+#else
 inline INT fixnormz_D (LONG a)
 {
     INT leadingBits = 0;
@@ -142,6 +153,7 @@ inline INT fixnormz_D (LONG a)
 
     return (leadingBits);
 }
+#endif
 #endif
 
 
