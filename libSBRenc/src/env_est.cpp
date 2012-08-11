@@ -762,8 +762,8 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
       /* save energies */
       pNrgLeft[j]  = nrgLeft;
       pNrgRight[j] = nrgRight;
-      envNrgLeft  += nrgLeft;
-      envNrgRight += nrgRight;
+      envNrgLeft   = fAddSaturate(envNrgLeft, nrgLeft);
+      envNrgRight  = fAddSaturate(envNrgRight, nrgRight);
 
     } /* j */
 
