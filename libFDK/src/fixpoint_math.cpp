@@ -443,6 +443,15 @@ FIXP_DBL sqrtFixp(FIXP_DBL op)
 
 *****************************************************************************/
 
+#if defined(__x86__)
+FIXP_DBL schur_div(FIXP_DBL num, FIXP_DBL denum, INT count)
+{
+    INT64 tmp=(INT64)num<<31;
+    LONG div=(tmp/denum)>>(DFRACT_BITS-count);
+    return (FIXP_DBL)(div) << (DFRACT_BITS-count);
+}
+
+#else
 
 FIXP_DBL schur_div(FIXP_DBL num, FIXP_DBL denum, INT count)
 {
@@ -469,6 +478,7 @@ FIXP_DBL schur_div(FIXP_DBL num, FIXP_DBL denum, INT count)
     return (FIXP_DBL)(div << (DFRACT_BITS - count));
 }
 
+#endif
 
 #endif /* !defined(FUNCTION_schur_div) */
 
