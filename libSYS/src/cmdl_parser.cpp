@@ -92,9 +92,6 @@ amm-info@iis.fraunhofer.de
 
 #define _CRT_SECURE_NO_WARNINGS
 
-/* Work around for broken android toolchain: sys/types.h:137: error: 'uint64_t' does not name a type */
-#define _SYS_TYPES_H_
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
