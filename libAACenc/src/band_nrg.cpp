@@ -267,7 +267,7 @@ FDKaacEnc_CalcBandEnergyOptimShort(const FIXP_DBL *RESTRICT mdctSpectrum,
        FIXP_DBL spec = mdctSpectrum[j]<<leadingBits;
        tmp = fPow2AddDiv2(tmp, spec);
     }
-    bandEnergy[i] = tmp<<1;
+    bandEnergy[i] = scaleValueSaturate(tmp, 1);
   }
 
   for(i=0; i<numBands; i++)
