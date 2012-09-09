@@ -536,13 +536,18 @@ mhLoweringEnergy(FIXP_DBL nrg, INT M)
   \return void
 
 ****************************************************************************/
-static FIXP_DBL
-nmhLoweringEnergy(FIXP_DBL nrg, FIXP_DBL nrgSum, INT M)
+static FIXP_DBL nmhLoweringEnergy(
+        FIXP_DBL nrg,
+        const FIXP_DBL nrgSum,
+        const INT nrgSum_scale,
+        const INT M
+        )
 {
   if (nrg>FL2FXCONST_DBL(0)) {
     int sc=0;
     /* gain = nrgSum / (nrg*(M+1)) */
     FIXP_DBL gain = fMult(fDivNorm(nrgSum, nrg, &sc), GetInvInt(M+1));
+    sc += nrgSum_scale;
 
     /* reduce nrg if gain smaller 1.f */
     if ( !((sc>=0) && ( gain > ((FIXP_DBL)MAXVAL_DBL>>sc) )) ) {
@@ -616,6 +621,7 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
 
     FIXP_DBL pNrgLeft[QMF_MAX_TIME_SLOTS];
     FIXP_DBL pNrgRight[QMF_MAX_TIME_SLOTS];
+    int envNrg_scale;
     FIXP_DBL envNrgLeft  = FL2FXCONST_DBL(0.0f);
     FIXP_DBL envNrgRight = FL2FXCONST_DBL(0.0f);
     int      missingHarmonic[QMF_MAX_TIME_SLOTS];
@@ -625,6 +631,7 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
     stop_pos = timeStep * frame_info->borders[i + 1];
     freq_res = frame_info->freqRes[i];
     no_of_bands = h_con->nSfb[freq_res];
+    envNrg_scale = DFRACT_BITS-fNormz((FIXP_DBL)no_of_bands);
 
     if (i == short_env) {
       stop_pos -= fixMax(2, timeStep);  /* consider at least 2 QMF slots less for short envelopes (envelopes just before transients) */
@@ -762,9 +769,8 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
       /* save energies */
       pNrgLeft[j]  = nrgLeft;
       pNrgRight[j] = nrgRight;
-      envNrgLeft  += nrgLeft;
-      envNrgRight += nrgRight;
-
+      envNrgLeft  += (nrgLeft>>envNrg_scale);
+      envNrgRight += (nrgRight>>envNrg_scale);
     } /* j */
 
     for (j = 0; j < no_of_bands; j++) {
@@ -777,9 +783,9 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
       if(!missingHarmonic[j] && h_sbr->fLevelProtect) {
         /* in case of missing energy in base band,
            reduce reference energy to prevent overflows in decoder output */
-        nrgLeft = nmhLoweringEnergy(nrgLeft, envNrgLeft, no_of_bands);
+        nrgLeft = nmhLoweringEnergy(nrgLeft, envNrgLeft, envNrg_scale, no_of_bands);
         if (stereoMode == SBR_COUPLING) {
-          nrgRight = nmhLoweringEnergy(nrgRight, envNrgRight, no_of_bands);
+          nrgRight = nmhLoweringEnergy(nrgRight, envNrgRight, envNrg_scale, no_of_bands);
         }
       }
 

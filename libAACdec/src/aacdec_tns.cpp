@@ -374,10 +374,10 @@ void CTns_Apply (
 
              switch (granuleLength) {
                case 480:
-                 tns_max_bands = tns_max_bands_tbl_480[pSamplingRateInfo->samplingRateIndex-3];
+                 tns_max_bands = tns_max_bands_tbl_480[pSamplingRateInfo->samplingRateIndex];
                  break;
                case 512:
-                 tns_max_bands = tns_max_bands_tbl_512[pSamplingRateInfo->samplingRateIndex-3];
+                 tns_max_bands = tns_max_bands_tbl_512[pSamplingRateInfo->samplingRateIndex];
                  break;
                default:
                  tns_max_bands = GetMaximumTnsBands(pIcsInfo, pSamplingRateInfo->samplingRateIndex);

@@ -1040,7 +1040,8 @@ qmfInitFilterBank (HANDLE_QMF_FILTER_BANK h_Qmf,     /*!< Handle to return */
 
   h_Qmf->outScalefactor = ALGORITHMIC_SCALING_IN_ANALYSIS_FILTERBANK + ALGORITHMIC_SCALING_IN_SYNTHESIS_FILTERBANK + h_Qmf->filterScale;
 
-  if (h_Qmf->p_stride == 2) {
+  if ( (h_Qmf->p_stride == 2)
+    || ((flags & QMF_FLAG_CLDFB) && (no_channels == 32)) ) {
     h_Qmf->outScalefactor -= 1;
   }
   h_Qmf->outGain = (FIXP_DBL)0x80000000; /* default init value will be not applied */
@@ -1147,7 +1148,8 @@ qmfChangeOutScalefactor (HANDLE_QMF_FILTER_BANK synQmf,     /*!< Handle of Qmf S
   /* Add internal filterbank scale */
   outScalefactor += ALGORITHMIC_SCALING_IN_ANALYSIS_FILTERBANK + ALGORITHMIC_SCALING_IN_SYNTHESIS_FILTERBANK + synQmf->filterScale;
 
-  if (synQmf->p_stride == 2) {
+  if ( (synQmf->p_stride == 2)
+    || ((synQmf->flags & QMF_FLAG_CLDFB) && (synQmf->no_channels == 32)) ) {
     outScalefactor -= 1;
   }
 

@@ -100,8 +100,14 @@ amm-info@iis.fraunhofer.de
 
 inline INT fixmuldiv2_DD (const INT a, const INT b)
 {
+  INT result ;
 
-  return ((long long) a * b) >> 32;
+  asm ("mult %1,%2;\n"
+	     : "=hi" (result)
+	     : "d" (a), "r" (b)
+             : "lo");
+
+  return result ;
 }
 
 #endif /* (__GNUC__) && defined(__mips__) */

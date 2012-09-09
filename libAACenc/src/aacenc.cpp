@@ -149,7 +149,7 @@ INT FDKaacEnc_LimitBitrate(
       transportBits = 208;
     }
 
-    bitRate = FDKmax(bitRate, ((((40 * nChannels) + transportBits + frameLength) * (coreSamplingRate)) / frameLength) );
+    bitRate = FDKmax(bitRate, ((((40 * nChannels) + transportBits) * (coreSamplingRate)) / frameLength) );
     FDK_ASSERT(bitRate >= 0);
 
     bitRate = FDKmin(bitRate, ((nChannelsEff * MIN_BUFSIZE_PER_EFF_CHAN)*(coreSamplingRate>>shift)) / (frameLength>>shift)) ;
@@ -280,7 +280,7 @@ void FDKaacEnc_AacInitDefaultConfig(AACENC_CONFIG *config)
     config->useTns          = TNS_ENABLE_MASK;      /* tns enabled completly */
     config->usePns          = 1;                    /* depending on channelBitrate this might be set to 0 later */
     config->useIS           = 1;                    /* Intensity Stereo Configuration */
-    config->framelength     = DEFAULT_FRAMELENGTH;  /* used frame size */
+    config->framelength     = -1;                   /* Framesize not configured */
     config->syntaxFlags     = 0;                    /* default syntax with no specialities */
     config->epConfig        = -1;                   /* no ER syntax -> no additional error protection */
     config->nSubFrames      = 1;                    /* default, no sub frames */
@@ -451,11 +451,8 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
   switch (config->framelength)
   {
     case 1024:
-      if ( config->audioObjectType != AOT_AAC_LC
-        && config->audioObjectType != AOT_SBR
-        && config->audioObjectType != AOT_PS
-        && config->audioObjectType != AOT_ER_AAC_LC
-        && config->audioObjectType != AOT_AAC_SCAL )
+      if ( config->audioObjectType == AOT_ER_AAC_LD
+        || config->audioObjectType == AOT_ER_AAC_ELD )
       {
         return AAC_ENC_INVALID_FRAME_LENGTH;
       }

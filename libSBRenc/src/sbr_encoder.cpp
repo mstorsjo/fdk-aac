@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 2
-#define SBRENCODER_LIB_VL2 1
+#define SBRENCODER_LIB_VL2 2
 
 
 

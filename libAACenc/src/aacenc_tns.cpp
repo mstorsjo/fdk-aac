@@ -1067,11 +1067,11 @@ static void FDKaacEnc_CalcGaussWindow(
         const INT timeResolution_e
         )
 {
-  #define PI_SCALE         (2)
-  #define PI_FIX           FL2FXCONST_DBL(3.1416f/(float)(1<<PI_SCALE))
+  #define PI_E           (2)
+  #define PI_M           FL2FXCONST_DBL(3.1416f/(float)(1<<PI_E))
 
-  #define EULER_SCALE      (2)
-  #define EULER_FIX        FL2FXCONST_DBL(2.7183/(float)(1<<EULER_SCALE))
+  #define EULER_E        (2)
+  #define EULER_M        FL2FXCONST_DBL(2.7183/(float)(1<<EULER_E))
 
   #define COEFF_LOOP_SCALE (4)
 
@@ -1083,9 +1083,9 @@ static void FDKaacEnc_CalcGaussWindow(
    *   gaussExp = PI * samplingRate * 0.001f * timeResolution / transformResolution;
    *   gaussExp = -0.5f * gaussExp * gaussExp;
    */
-  gaussExp_m = fMultNorm(timeResolution, fMult(PI_FIX, fDivNorm( (FIXP_DBL)(samplingRate), (FIXP_DBL)(LONG)(transformResolution*1000.f), &e1)), &e2);
+  gaussExp_m = fMultNorm(timeResolution, fMult(PI_M, fDivNorm( (FIXP_DBL)(samplingRate), (FIXP_DBL)(LONG)(transformResolution*1000.f), &e1)), &e2);
   gaussExp_m = -fPow2Div2(gaussExp_m);
-  gaussExp_e = 2*(e1+e2+timeResolution_e+PI_SCALE);
+  gaussExp_e = 2*(e1+e2+timeResolution_e+PI_E);
 
   FDK_ASSERT( winSize < (1<<COEFF_LOOP_SCALE) );
 
@@ -1095,13 +1095,13 @@ static void FDKaacEnc_CalcGaussWindow(
   for( i=0; i<winSize; i++) {
 
     win[i] = fPow(
-            EULER_FIX,
-            EULER_SCALE,
+            EULER_M,
+            EULER_E,
             fMult(gaussExp_m, fPow2((i*FL2FXCONST_DBL(1.f/(float)(1<<COEFF_LOOP_SCALE)) + FL2FXCONST_DBL(.5f/(float)(1<<COEFF_LOOP_SCALE))))),
             gaussExp_e + 2*COEFF_LOOP_SCALE,
            &e1);
 
-    win[i] = scaleValue(win[i], e1);
+    win[i] = scaleValueSaturate(win[i], e1);
   }
 }
 
@@ -1157,7 +1157,10 @@ static INT FDKaacEnc_AutoToParcor(
     workBuffer++;
   }
 
-  tmp = fMult((FIXP_DBL)((LONG)TNS_PREDGAIN_SCALE<<21), fDivNorm(autoCorr_0, input[0], &scale));
+  tmp = fMult((FIXP_DBL)((LONG)TNS_PREDGAIN_SCALE<<21), fDivNorm(fAbs(autoCorr_0), fAbs(input[0]), &scale));
+  if ( fMultDiv2(autoCorr_0, input[0])<FL2FXCONST_DBL(0.0f) ) {
+    tmp = -tmp;
+  }
   predictionGain = (LONG)scaleValue(tmp,scale-21);
 
   return (predictionGain);

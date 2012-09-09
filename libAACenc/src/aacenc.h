@@ -153,7 +153,6 @@ typedef enum {
 /*-------------------------- defines --------------------------------------*/
 
 #define ANC_DATA_BUFFERSIZE 1024      /* ancBuffer size */
-#define DEFAULT_FRAMELENGTH 1024      /* size of AAC core frame in (new) PCM samples */
 
 #define MAX_TOTAL_EXT_PAYLOADS  (((6) * (1)) + (2+2))
 

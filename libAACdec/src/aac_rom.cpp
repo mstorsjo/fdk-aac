@@ -1729,20 +1729,36 @@ const UCHAR tns_max_bands_tbl[13][2] =
   { 39, 14 }, /*  7350 */
 };
 
-/* TNS_MAX_BANDS for low delay. The array index is sampleRateIndex-3 */
-const UCHAR tns_max_bands_tbl_480[5] = {
-  31, /* 48000  */
+/* TNS_MAX_BANDS for low delay. The array index is the sampleRateIndex */
+const UCHAR tns_max_bands_tbl_480[13] = {
+  31, /* 96000 */
+  31, /* 88200 */
+  31, /* 64000 */
+  31, /* 48000 */
   32, /* 44100 */
   37, /* 32000 */
   30, /* 24000 */
-  30  /* 22050 */
+  30, /* 22050 */
+  30, /* 16000 */
+  30, /* 12000 */
+  30, /* 11025 */
+  30, /*  8000 */
+  30  /*  7350 */
 };
-const UCHAR tns_max_bands_tbl_512[5] = {
-  31, /* 48000  */
+const UCHAR tns_max_bands_tbl_512[13] = {
+  31, /* 96000 */
+  31, /* 88200 */
+  31, /* 64000 */
+  31, /* 48000 */
   32, /* 44100 */
   37, /* 32000 */
   31, /* 24000 */
-  31  /* 22050 */
+  31, /* 22050 */
+  31, /* 16000 */
+  31, /* 12000 */
+  31, /* 11025 */
+  31, /*  8000 */
+  31  /*  7350 */
 };
 
 #define TCC(x) (FIXP_DBL(x))

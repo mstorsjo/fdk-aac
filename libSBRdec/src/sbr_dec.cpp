@@ -581,7 +581,7 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
       outScalefactor += (SCAL_HEADROOM+1); /* psDiffScale! */
 
     {
-      C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, 2*(64));
+      C_AALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, 2*(64));
 
       int maxShift = 0;
 
@@ -682,7 +682,7 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
                               synQmf->lsb,
                               synQmf->no_col );
 
-      C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, 2*(64));
+      C_AALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, 2*(64));
     }
   }
 

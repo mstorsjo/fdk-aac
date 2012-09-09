@@ -797,7 +797,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
 {
   int i, c;
   AAC_ENCODER_ERROR ErrorStatus = AAC_ENC_OK;
-  INT avgTotalDynBits = 0; /* maximal allowd dynamic bits for all frames */
+  INT avgTotalDynBits = 0; /* maximal allowed dynamic bits for all frames */
   INT totalAvailableBits = 0;
   INT nSubFrames = 1;
 
@@ -1092,7 +1092,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                 int sumBitsConsumedTotal = FDKaacEnc_getTotalConsumedBits(qcOut, qcElement, cm, hQC->globHdrBits, nSubFrames);
 
                 /* in all frames are valid dynamic bits */
-                if (sumBitsConsumedTotal < totalAvailableBits && (decreaseBitConsumption==1) && checkMinFrameBitsDemand(qcOut,hQC->minBitsPerFrame,nSubFrames)
+                if ( ((sumBitsConsumedTotal < totalAvailableBits) || qcOut[c]->usedDynBits==0) && (decreaseBitConsumption==1) && checkMinFrameBitsDemand(qcOut,hQC->minBitsPerFrame,nSubFrames)
                       /*()*/  )
                 {
                     quantizationDone = 1; /* exit bit adjustment */
@@ -1365,42 +1365,54 @@ AAC_ENCODER_ERROR FDKaacEnc_FinalizeBitConsumption(CHANNEL_MAPPING *cm,
   QC_OUT_EXTENSION fillExtPayload;
   INT totFillBits, alignBits;
 
-  {
-    int exactTpBits;
-    int max_iter = 3;
+  /* Get total consumed bits in AU */
+  qcOut->totalBits = qcOut->staticBits + qcOut->usedDynBits  + qcOut->totFillBits +
+                     qcOut->elementExtBits + qcOut->globalExtBits;
 
-    /* Get total consumed bits in AU */
-    qcOut->totalBits = qcOut->staticBits + qcOut->usedDynBits  + qcOut->totFillBits +
-                       qcOut->elementExtBits + qcOut->globalExtBits;
+  if (qcKernel->bitrateMode==QCDATA_BR_MODE_CBR) {
 
     /* Now we can get the exact transport bit amount, and hopefully it is equal to the estimated value */
-    exactTpBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
+    INT exactTpBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
 
     if (exactTpBits != qcKernel->globHdrBits) {
       INT diffFillBits = 0;
 
+      /* How many bits can be taken by bitreservoir */
+      const INT bitresSpace = qcKernel->bitResTotMax - (qcKernel->bitResTot + (qcOut->grantedDynBits - (qcOut->usedDynBits + qcOut->totFillBits) ) );
+
       /* Number of bits which can be moved to bitreservoir. */
-      INT bitsToBitres = qcKernel->globHdrBits - exactTpBits;
+      const INT bitsToBitres = qcKernel->globHdrBits - exactTpBits;
+      FDK_ASSERT(bitsToBitres>=0); /* is always positive */
 
-      if (bitsToBitres>0) {
-        /* if bitreservoir can not take all bits, move ramaining bits to fillbits */
-        diffFillBits = FDKmax(0, bitsToBitres - (qcKernel->bitResTotMax-qcKernel->bitResTot));
-      }
-      else if (bitsToBitres<0) {
-        /* if bits mus be taken from bitreservoir, reduce fillbits first. */
-        diffFillBits = (FDKmax(FDKmax(bitsToBitres, -qcKernel->bitResTot), -qcOut->totFillBits));
-      }
+      /* If bitreservoir can not take all bits, move ramaining bits to fillbits */
+      diffFillBits = FDKmax(0, bitsToBitres - bitresSpace);
 
-      diffFillBits = (diffFillBits+7)&~7; /* assure previous alignment */
+      /* Assure previous alignment */
+      diffFillBits = (diffFillBits+7)&~7;
 
+      /* Move as many bits as possible to bitreservoir */
+      qcKernel->bitResTot    += (bitsToBitres-diffFillBits);
+
+      /* Write remaing bits as fill bits */
       qcOut->totFillBits     += diffFillBits;
       qcOut->totalBits       += diffFillBits;
       qcOut->grantedDynBits  += diffFillBits;
 
-      /* new header bits */
+      /* Get new header bits */
       qcKernel->globHdrBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
+
+      if (qcKernel->globHdrBits != exactTpBits) {
+        /* In previous step, fill bits and corresponding total bits were changed when bitreservoir was completely filled.
+           Now we can take the too much taken bits caused by header overhead from bitreservoir.
+         */
+        qcKernel->bitResTot -= (qcKernel->globHdrBits - exactTpBits);
+      }
     }
-  }
+
+  } /* MODE_CBR */
+
+  /* Update exact number of consumed header bits. */
+  qcKernel->globHdrBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
 
   /* Save total fill bits and distribut to alignment and fill bits */
   totFillBits = qcOut->totFillBits;
