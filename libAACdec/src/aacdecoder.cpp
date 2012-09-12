@@ -1646,10 +1646,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
               self->sbrEnabled
             );
 
-      if ( flags&AACDEC_FLUSH ) {
-        FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, sizeof(FIXP_DBL)*self->streamInfo.aacSamplesPerFrame);
-      }
-
       switch (pAacDecoderChannelInfo->renderMode)
       {
         case AACDEC_RENDER_IMDCT:
@@ -1677,6 +1673,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           break;
       }
       if ( flags&AACDEC_FLUSH ) {
+        FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, sizeof(FIXP_DBL)*self->streamInfo.aacSamplesPerFrame);
         FDKmemclear(self->pAacDecoderStaticChannelInfo[c]->pOverlapBuffer, OverlapBufferSize*sizeof(FIXP_DBL));
       }
     }
