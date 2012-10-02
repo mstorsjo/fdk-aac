@@ -585,14 +585,16 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
 
       int maxShift = 0;
 
-      if (hSbrDec->sbrDrcChannel.prevFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.prevFact_exp;
-      }
-      if (hSbrDec->sbrDrcChannel.currFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.currFact_exp;
-      }
-      if (hSbrDec->sbrDrcChannel.nextFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.nextFact_exp;
+      if (hSbrDec->sbrDrcChannel.enable != 0) {
+        if (hSbrDec->sbrDrcChannel.prevFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.prevFact_exp;
+        }
+        if (hSbrDec->sbrDrcChannel.currFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.currFact_exp;
+        }
+        if (hSbrDec->sbrDrcChannel.nextFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.nextFact_exp;
+        }
       }
 
       /* copy DRC data to right channel (with PS both channels use the same DRC gains) */

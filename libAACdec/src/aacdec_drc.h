@@ -99,10 +99,7 @@ amm-info@iis.fraunhofer.de
 #include "FDK_bitstream.h"
 
 #define AACDEC_DRC_DEFAULT_REF_LEVEL  ( 108 )   /* -27 dB below full scale (typical for movies) */
-#define AACDEC_DRC_DFLT_EXPIRY_FRAMES (  40 )   /* Default DRC data expiry time in AAC frames   */
-#define MAX_SBR_SYN_CHAN              (  64 )
-#define MAX_SBR_COLS                  (  32 )
-
+#define AACDEC_DRC_DFLT_EXPIRY_FRAMES (  50 )   /* Default DRC data expiry time in AAC frames   */
 
 /**
  * \brief DRC module setting parameters

@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 1
-#define SBRDECODER_LIB_VL2 2
+#define SBRDECODER_LIB_VL2 3
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -533,7 +533,7 @@ SBR_ERROR sbrDecoder_InitElement (
   FDKmemclear(self->pSbrElement[elementIndex]->frameErrorFlag, ((1)+1)*sizeof(UCHAR));
 
   /* Initialize this instance */
-  sbrError = sbrDecoder_ResetElement( 
+  sbrError = sbrDecoder_ResetElement(
           self,
           sampleRateIn,
           sampleRateOut,
@@ -577,7 +577,7 @@ SBR_ERROR sbrDecoder_HeaderUpdate(
         )
 {
   SBR_ERROR errorStatus = SBRDEC_OK;
- 
+
   /*
     change of control data, reset decoder
   */
@@ -818,6 +818,7 @@ SBR_ERROR sbrDecoder_drcFeedChannel ( HANDLE_SBRDECODER  self,
                                       USHORT            *pBandTop )
 {
   SBRDEC_DRC_CHANNEL *pSbrDrcChannelData = NULL;
+  int band, isValidData = 0;
 
   if (self == NULL) {
     return SBRDEC_NOT_INITIALIZED;
@@ -826,10 +827,21 @@ SBR_ERROR sbrDecoder_drcFeedChannel ( HANDLE_SBRDECODER  self,
     return SBRDEC_SET_PARAM_FAIL;
   }
 
+  /* Search for gain values different to 1.0f */
+  for (band = 0; band < numBands; band += 1) {
+    if ( !((pNextFact_mag[band] == FL2FXCONST_DBL(0.5))  && (nextFact_exp == 1))
+      && !((pNextFact_mag[band] == (FIXP_DBL)MAXVAL_DBL) && (nextFact_exp == 0)) ) {
+      isValidData = 1;
+      break;
+    }
+  }
+
   /* Find the right SBR channel */
   pSbrDrcChannelData = sbrDecoder_drcGetChannel( self, ch );
 
   if ( pSbrDrcChannelData != NULL ) {
+    if ( pSbrDrcChannelData->enable || isValidData )
+  { /* Activate processing only with real and valid data */
     int i;
 
     pSbrDrcChannelData->enable   = 1;
@@ -843,6 +855,7 @@ SBR_ERROR sbrDecoder_drcFeedChannel ( HANDLE_SBRDECODER  self,
       pSbrDrcChannelData->bandTopNext[i]  = pBandTop[i];
       pSbrDrcChannelData->nextFact_mag[i] = pNextFact_mag[i];
     }
+  }
   }
 
   return SBRDEC_OK;

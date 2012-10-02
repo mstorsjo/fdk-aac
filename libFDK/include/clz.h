@@ -100,6 +100,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__mips__)	/* cppp replaced: elif */
 #include "mips/clz_mips.h"
 
+#elif defined(__x86__)	/* cppp replaced: elif */
+#include "x86/clz_x86.h"
+
 #endif /* all cores */
 
 

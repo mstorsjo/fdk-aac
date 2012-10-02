@@ -260,21 +260,21 @@ FDKaacEnc_CalcBandEnergyOptimShort(const FIXP_DBL *RESTRICT mdctSpectrum,
 
   for(i=0; i<numBands; i++)
   {
-    int leadingBits = fixMax(0,sfbMaxScaleSpec[i]-4);            /* max sfbWidth = 96 ; 2^7=128 => 7/2 = 4 (spc*spc) */
+    int leadingBits = sfbMaxScaleSpec[i]-3;            /* max sfbWidth = 36 ; 2^6=64 => 6/2 = 3 (spc*spc) */
     FIXP_DBL tmp = FL2FXCONST_DBL(0.0);
     for (j=bandOffset[i];j<bandOffset[i+1];j++)
     {
-       FIXP_DBL spec = mdctSpectrum[j]<<leadingBits;
+       FIXP_DBL spec = scaleValue(mdctSpectrum[j],leadingBits);
        tmp = fPow2AddDiv2(tmp, spec);
     }
-    bandEnergy[i] = tmp<<1;
+    bandEnergy[i] = tmp;
   }
 
   for(i=0; i<numBands; i++)
   {
-      INT scale = 2*fixMax(0,sfbMaxScaleSpec[i]-4);            /* max sfbWidth = 96 ; 2^7=128 => 7/2 = 4 (spc*spc) */
-      scale = fixMin(scale,(DFRACT_BITS-1));
-      bandEnergy[i] >>= scale;
+      INT scale = (2*(sfbMaxScaleSpec[i]-3))-1;         /* max sfbWidth = 36 ; 2^6=64 => 6/2 = 3 (spc*spc) */
+      scale = fixMax(fixMin(scale,(DFRACT_BITS-1)),-(DFRACT_BITS-1));
+      bandEnergy[i] = scaleValueSaturate(bandEnergy[i], -scale);
   }
 }
 
@@ -343,7 +343,7 @@ void FDKaacEnc_CalcBandNrgMSOpt(const FIXP_DBL   *RESTRICT mdctSpectrumLeft,
     {
        /* using the minimal scaling of left and right channel can cause very small energies;
        check ldNrg before subtract scaling multiplication: fract*INT we don't need fMult */
-       
+
        int minus = scale*FL2FXCONST_DBL(1.0/64);
 
        if (bandEnergyMidLdData[i] != FL2FXCONST_DBL(-1.0f))

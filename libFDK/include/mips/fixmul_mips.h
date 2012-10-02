@@ -100,11 +100,14 @@ amm-info@iis.fraunhofer.de
 
 inline INT fixmuldiv2_DD (const INT a, const INT b)
 {
-
-  return ((long long) a * b) >> 32;
+  INT result ;
+  result = ((long long)a * b)>>32;
+  return result ;
 }
 
 #endif /* (__GNUC__) && defined(__mips__) */
 
 #endif /* __mips__ */
 
+#define FUNCTION_fixmulBitExact_DD
+#define fixmulBitExact_DD fixmul_DD
