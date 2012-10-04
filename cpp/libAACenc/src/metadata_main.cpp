@@ -491,10 +491,17 @@ FDK_METADATA_ERROR FDK_MetadataEnc_Init(
       FDK_channelMapDescr mapDescrPrev, mapDescr;
       int c, src[2] = {-1, -1}, dst[2] = {-1, -1};
 
-      FDK_chMapDescr_init(&mapDescrPrev, NULL, 0,
-                          (channelOrder == CH_ORDER_MPEG) ? 1 : 0);
-      FDK_chMapDescr_init(&mapDescr, NULL, 0,
-                          (channelOrder == CH_ORDER_MPEG) ? 1 : 0);
+      if (channelOrder == CH_ORDER_WG4) {
+        FDK_chMapDescr_init(&mapDescrPrev, FDK_mapInfoTabWg4,
+                            FDK_mapInfoTabLenWg4, 0);
+        FDK_chMapDescr_init(&mapDescr, FDK_mapInfoTabWg4,
+                            FDK_mapInfoTabLenWg4, 0);
+      } else {
+        FDK_chMapDescr_init(&mapDescrPrev, NULL, 0,
+                            (channelOrder == CH_ORDER_MPEG) ? 1 : 0);
+        FDK_chMapDescr_init(&mapDescr, NULL, 0,
+                            (channelOrder == CH_ORDER_MPEG) ? 1 : 0);
+      }
 
       switch (channelMode) {
         case MODE_1:
