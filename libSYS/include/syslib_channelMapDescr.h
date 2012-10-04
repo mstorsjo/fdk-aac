@@ -189,6 +189,12 @@ UCHAR FDK_chMapDescr_getMapValue(const FDK_channelMapDescr* const pMapDescr,
  */
 int FDK_chMapDescr_isValid(const FDK_channelMapDescr* const pMapDescr);
 
+/**
+ * Extra variables for setting up Wg4 channel mapping.
+ */
+extern const CHANNEL_MAP_INFO FDK_mapInfoTabWg4[];
+extern const UINT FDK_mapInfoTabLenWg4;
+
 #ifdef __cplusplus
 }
 #endif
