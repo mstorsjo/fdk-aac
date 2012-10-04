@@ -157,6 +157,18 @@ static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabWav[] =
      { MODE_7_1_FRONT_CENTER,        { 2, 6, 7, 0, 1, 4, 5, 3,-1,-1,-1,-1} },  /*  7.1ch     */
 };
 
+static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabWg4[] =
+{
+     { MODE_INVALID,                 {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  invalid   */
+     { MODE_1,                       { 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  mono      */
+     { MODE_2,                       { 0, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  stereo    */
+     { MODE_1_2,                     { 2, 0, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  3ch       */
+     { MODE_1_2_1,                   { 3, 0, 1, 2,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  4ch       */
+     { MODE_1_2_2,                   { 4, 0, 1, 2, 3,-1,-1,-1,-1,-1,-1,-1} },  /*  5ch       */
+     { MODE_1_2_2_1,                 { 4, 0, 1, 2, 3, 5,-1,-1,-1,-1,-1,-1} },  /*  5.1ch     */
+     { MODE_1_2_2_2_1,               { 6, 0, 1, 2, 3, 4, 5, 7,-1,-1,-1,-1} },  /*  7.1ch     */
+};
+
 /* Channel mode configuration tab provides,
    corresponding number of channels and elements
 */
@@ -182,8 +194,10 @@ const INT* FDKaacEnc_getChannelAssignment(CHANNEL_MODE encMode, CHANNEL_ORDER co
 
   if (co == CH_ORDER_MPEG)
     pTab = assignmentInfoTabMpeg;
-  else
+  else if (co == CH_ORDER_WAV)
     pTab = assignmentInfoTabWav;
+  else
+    pTab = assignmentInfoTabWg4;
 
   for(i=MAX_MODES-1; i>0; i--) {
     if (encMode== pTab[i].encoderMode) {
