@@ -206,8 +206,9 @@ typedef enum {
 
   CH_ORDER_MPEG =
       0, /*!< MPEG channel ordering (e. g. 5.1: C, L, R, SL, SR, LFE)       */
-  CH_ORDER_WAV /*!< WAV fileformat channel ordering (e. g. 5.1: L, R, C, LFE,
-                  SL, SR) */
+  CH_ORDER_WAV, /*!< WAV fileformat channel ordering (e. g. 5.1: L, R, C, LFE,
+                   SL, SR) */
+  CH_ORDER_WG4  /*!< WG4 fileformat channel ordering (e. g. 5.1: L, R, SL, SR, C, LFE) */
 
 } CHANNEL_ORDER;
 

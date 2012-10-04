@@ -2234,7 +2234,7 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
       break;
     case AACENC_CHANNELORDER:
       if (hAacEncoder->aacConfig.channelOrder != (CHANNEL_ORDER)value) {
-        if (!((value == 0) || (value == 1))) {
+        if (!((value == 0) || (value == 1) || (value == 2))) {
           err = AACENC_INVALID_CONFIG;
           break;
         }

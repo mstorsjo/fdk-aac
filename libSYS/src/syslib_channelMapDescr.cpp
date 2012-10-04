@@ -155,6 +155,37 @@ static const CHANNEL_MAP_INFO mapInfoTabDflt[DFLT_CH_MAP_TAB_LEN] =
      /* 13 */ {mapCfg13, 24},
      /* 14 */ {mapCfg14, 8}};
 
+
+static const UCHAR mapWg4Cfg1[]  = {0, 1};
+static const UCHAR mapWg4Cfg2[]  = {0, 1};
+static const UCHAR mapWg4Cfg3[]  = {2, 0, 1};
+static const UCHAR mapWg4Cfg4[]  = {3, 0, 1, 2};
+static const UCHAR mapWg4Cfg5[]  = {4, 0, 1, 2, 3};
+static const UCHAR mapWg4Cfg6[]  = {4, 0, 1, 2, 3, 5};
+static const UCHAR mapWg4Cfg7[]  = {6, 0, 1, 2, 3, 4, 5, 7};
+static const UCHAR mapWg4Cfg14[] = {6, 0, 1, 2, 3, 4, 5, 7};
+
+const CHANNEL_MAP_INFO FDK_mapInfoTabWg4[] =
+    {/* chCfg,  map,         numCh */
+     /*  0 */ {mapFallback, 24},
+     /*  1 */ {mapWg4Cfg1, 2},
+     /*  2 */ {mapWg4Cfg2, 2},
+     /*  3 */ {mapWg4Cfg3, 3},
+     /*  4 */ {mapWg4Cfg4, 4},
+     /*  5 */ {mapWg4Cfg5, 5},
+     /*  6 */ {mapWg4Cfg6, 6},
+     /*  7 */ {mapWg4Cfg7, 8},
+     /*  8 */ {mapFallback, 24},
+     /*  9 */ {mapFallback, 24},
+     /* 10 */ {mapFallback, 24},
+     /* 11 */ {mapFallback, 24},  // Unhandled for Wg4 yet
+     /* 12 */ {mapFallback, 24},  // Unhandled for Wg4 yet
+     /* 13 */ {mapFallback, 24},  // Unhandled for Wg4 yet
+     /* 14 */ {mapFallback, 24}}; // Unhandled for Wg4 yet
+
+const UINT FDK_mapInfoTabLenWg4 = sizeof(FDK_mapInfoTabWg4)/sizeof(FDK_mapInfoTabWg4[0]);
+
+
 /**
  * Get the mapping value for a specific channel and map index.
  */
