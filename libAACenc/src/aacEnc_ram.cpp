@@ -95,7 +95,7 @@ amm-info@iis.fraunhofer.de
 
 #include "aacEnc_ram.h"
 
-  C_ALLOC_MEM (AACdynamic_RAM, FIXP_DBL, AAC_ENC_DYN_RAM_SIZE/sizeof(FIXP_DBL))
+  C_AALLOC_MEM (AACdynamic_RAM, FIXP_DBL, AAC_ENC_DYN_RAM_SIZE/sizeof(FIXP_DBL))
 
 /*
   Static memory areas, must not be overwritten in other sections of the decoder !
