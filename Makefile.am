@@ -98,8 +98,7 @@ AACENC_SRC = \
     $(AACENC_DIR)/dyn_bits.cpp \
     $(AACENC_DIR)/metadata_compressor.cpp \
     $(AACENC_DIR)/pnsparam.cpp \
-    $(AACENC_DIR)/qc_main.cpp \
-    $(AACENC_DIR)/tns_param.cpp
+    $(AACENC_DIR)/qc_main.cpp
 
 FDK_DIR = $(top_srcdir)/libFDK/src
 FDK_SRC = \
