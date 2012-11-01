@@ -115,17 +115,17 @@ void sbrDecoder_drcInitChannel (
   }
 
   for (band = 0; band < (64); band++) {
-    hDrcData->prevFact_mag[band] = (FIXP_DBL)MAXVAL_DBL /*FL2FXCONST_DBL(1.0f)*/;
+    hDrcData->prevFact_mag[band] = FL2FXCONST_DBL(0.5f);
   }
 
   for (band = 0; band < SBRDEC_MAX_DRC_BANDS; band++) {
-    hDrcData->currFact_mag[band] = (FIXP_DBL)MAXVAL_DBL /*FL2FXCONST_DBL(1.0f)*/;
-    hDrcData->nextFact_mag[band] = (FIXP_DBL)MAXVAL_DBL /*FL2FXCONST_DBL(1.0f)*/;
+    hDrcData->currFact_mag[band] = FL2FXCONST_DBL(0.5f);
+    hDrcData->nextFact_mag[band] = FL2FXCONST_DBL(0.5f);
   }
 
-  hDrcData->prevFact_exp = 0;
-  hDrcData->currFact_exp = 0;
-  hDrcData->nextFact_exp = 0;
+  hDrcData->prevFact_exp = 1;
+  hDrcData->currFact_exp = 1;
+  hDrcData->nextFact_exp = 1;
 
   hDrcData->numBandsCurr = 0;
   hDrcData->numBandsNext = 0;
@@ -238,7 +238,7 @@ void sbrDecoder_drcApplySlot (
       }
       else {
         if (j >= offset[hDrcData->drcInterpolationSchemeCurr - 1]) {
-          alphaValue = FL2FXCONST_DBL(1.0f);
+          alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
       }
     }
@@ -262,7 +262,7 @@ void sbrDecoder_drcApplySlot (
       }
       else {
         if (j >= offset[hDrcData->drcInterpolationSchemeNext - 1]) {
-          alphaValue = FL2FXCONST_DBL(1.0f);
+          alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
       }
 
@@ -301,7 +301,7 @@ void sbrDecoder_drcApplySlot (
       }
       else {
         if (j >= offset[hDrcData->drcInterpolationSchemeNext - 1]) {
-          alphaValue = FL2FXCONST_DBL(1.0f);
+          alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
       }
     }
@@ -322,7 +322,7 @@ void sbrDecoder_drcApplySlot (
   for (band = 0; band < (int)numBands; band++) {
     int bottomQmf, topQmf;
 
-    FIXP_DBL drcFact_mag = FL2FXCONST_DBL(1.0f);
+    FIXP_DBL drcFact_mag = (FIXP_DBL)MAXVAL_DBL;
 
     topMdct = (bandTop[band]+1) << 2;
 
@@ -361,7 +361,13 @@ void sbrDecoder_drcApplySlot (
         }
 
         /* interpolate */
-        drcFact_mag = fMult(alphaValue, drcFact2_mag) + fMult((FL2FXCONST_DBL(1.0f) - alphaValue), drcFact1_mag);
+        if (alphaValue == (FIXP_DBL)0) {
+          drcFact_mag = drcFact1_mag;
+        } else if (alphaValue == (FIXP_DBL)MAXVAL_DBL) {
+          drcFact_mag = drcFact2_mag;
+        } else {
+          drcFact_mag = fMult(alphaValue, drcFact2_mag) + fMult(((FIXP_DBL)MAXVAL_DBL - alphaValue), drcFact1_mag);
+        }
 
         /* apply scaling */
         qmfRealSlot[bin] = fMult(qmfRealSlot[bin], drcFact_mag);
@@ -480,6 +486,15 @@ void sbrDecoder_drcApply (
 {
   int col;
   int maxShift = 0;
+
+  if (hDrcData == NULL) {
+    return;
+  }
+  if ( (hDrcData->enable == 0)
+    || ((hDrcData->numBandsCurr == 0) && (hDrcData->numBandsNext == 0))
+     ) {
+    return;  /* Avoid changing the scaleFactor even though the processing is disabled. */
+  }
 
   /* get max scale factor */
   if (hDrcData->prevFact_exp > maxShift) {

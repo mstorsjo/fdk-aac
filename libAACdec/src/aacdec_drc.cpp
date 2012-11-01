@@ -220,8 +220,9 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     else {
       /* ref_level must be between 0 and MAX_REFERENCE_LEVEL, inclusive */
       self->digitalNorm    = 1;
-      self->progRefLevel   = AACDEC_DRC_DEFAULT_REF_LEVEL;
       self->params.targetRefLevel = value;
+      self->progRefLevel = (SCHAR)value;  /* Set the program reference level equal to the target
+                                               level according to 4.5.2.7.3 of ISO/IEC 14496-3. */
     }
     break;
   case APPLY_HEAVY_COMPRESSION:
@@ -783,6 +784,7 @@ void aacDecoder_drcApply (
 {
   int band, top, bin, numBands;
   int bottom = 0;
+  int modifyBins = 0;
 
   FIXP_DBL max_mantissa;
   INT max_exponent;
@@ -937,6 +939,12 @@ void aacDecoder_drcApply (
       if (fact_exponent[band] < max_exponent) {
         fact_mantissa[band] >>= max_exponent - fact_exponent[band];
       }
+      if (fact_mantissa[band] != FL2FXCONST_DBL(0.5f)) {
+        modifyBins = 1;
+      }
+    }
+    if (max_exponent != 1) {
+      modifyBins = 1;
     }
   }
 
@@ -948,23 +956,28 @@ void aacDecoder_drcApply (
   {
     bottom = 0;
 
-    for (band = 0; band < numBands; band++)
+    if (!modifyBins) {
+      /* We don't have to modify the spectral bins because the fractional part of all factors is 0.5.
+         In order to keep accurancy we don't apply the factor but decrease the exponent instead. */
+      max_exponent -= 1;
+    } else
     {
-      top = fixMin((int)( (pDrcChData->bandTop[band]+1)<<2 ), aacFrameSize);   /* ... * DRC_BAND_MULT; */
+      for (band = 0; band < numBands; band++)
+      {
+        top = fixMin((int)( (pDrcChData->bandTop[band]+1)<<2 ), aacFrameSize);   /* ... * DRC_BAND_MULT; */
 
-      for (bin = bottom; bin < top; bin++) {
-        pSpectralCoefficient[bin] = fMult(pSpectralCoefficient[bin], fact_mantissa[band]);
+        for (bin = bottom; bin < top; bin++) {
+          pSpectralCoefficient[bin] = fMult(pSpectralCoefficient[bin], fact_mantissa[band]);
+        }
+
+        bottom = top;
       }
-
-      bottom = top;
     }
 
     /* above topmost DRC band gain factor is 1 */
     if (max_exponent > 0) {
-      FIXP_DBL fact = FL2FXCONST_DBL(0.5f) >> (max_exponent - 1);
-
-      for (bin = top; bin < aacFrameSize; bin++) {
-        pSpectralCoefficient[bin] = fMult(pSpectralCoefficient[bin], fact);
+      for (bin = bottom; bin < aacFrameSize; bin+=1) {
+        pSpectralCoefficient[bin] >>= max_exponent;
       }
     }
 
@@ -980,12 +993,13 @@ void aacDecoder_drcApply (
   }
   else {
     HANDLE_SBRDECODER hSbrDecoder = (HANDLE_SBRDECODER)pSbrDec;
+    UINT numBands = pDrcChData->numBands;
 
     /* feed factors into SBR decoder for application in QMF domain. */
     sbrDecoder_drcFeedChannel (
             hSbrDecoder,
             ch,
-            pDrcChData->numBands,
+            numBands,
             fact_mantissa,
             max_exponent,
             pDrcChData->drcInterpolationScheme,

@@ -164,8 +164,8 @@ extern const UINT   aHuffTreeRvlCodewds[];
 
 extern const UCHAR tns_max_bands_tbl[13][2];
 
-extern const UCHAR tns_max_bands_tbl_480[5];
-extern const UCHAR tns_max_bands_tbl_512[5];
+extern const UCHAR tns_max_bands_tbl_480[13];
+extern const UCHAR tns_max_bands_tbl_512[13];
 
 #define FIXP_TCC FIXP_DBL
 

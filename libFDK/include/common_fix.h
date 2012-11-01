@@ -225,7 +225,6 @@ FDK_INLINE FIXP_DBL fAbs(FIXP_DBL x)
 FDK_INLINE FIXP_SGL fAbs(FIXP_SGL x)
                 { return fixabs_S(x); }
 
-
 /* workaround for TI C6x compiler but not for TI ARM9E compiler */
 #if (!defined(__TI_COMPILER_VERSION__) || defined(__TI_TMS470_V5__)) && !defined(__x86_64__)
 FDK_INLINE INT  fAbs(INT x)
@@ -335,7 +334,6 @@ FDK_INLINE FIXP_SGL fMin(FIXP_SGL a, FIXP_SGL b)
                 { return fixmin_S(a,b); }
 FDK_INLINE FIXP_SGL fMax(FIXP_SGL a, FIXP_SGL b)
                 { return fixmax_S(a,b); }
-
 
 /* workaround for TI C6x compiler but not for TI ARM9E */
 #if ((!defined(__TI_COMPILER_VERSION__) || defined(__TI_TMS470_V5__)) && !defined(__x86_64__)) || (FIX_FRACT == 1)

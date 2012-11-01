@@ -581,18 +581,20 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
       outScalefactor += (SCAL_HEADROOM+1); /* psDiffScale! */
 
     {
-      C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, 2*(64));
+      C_AALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, 2*(64));
 
       int maxShift = 0;
 
-      if (hSbrDec->sbrDrcChannel.prevFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.prevFact_exp;
-      }
-      if (hSbrDec->sbrDrcChannel.currFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.currFact_exp;
-      }
-      if (hSbrDec->sbrDrcChannel.nextFact_exp > maxShift) {
-        maxShift = hSbrDec->sbrDrcChannel.nextFact_exp;
+      if (hSbrDec->sbrDrcChannel.enable != 0) {
+        if (hSbrDec->sbrDrcChannel.prevFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.prevFact_exp;
+        }
+        if (hSbrDec->sbrDrcChannel.currFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.currFact_exp;
+        }
+        if (hSbrDec->sbrDrcChannel.nextFact_exp > maxShift) {
+          maxShift = hSbrDec->sbrDrcChannel.nextFact_exp;
+        }
       }
 
       /* copy DRC data to right channel (with PS both channels use the same DRC gains) */
@@ -682,7 +684,7 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
                               synQmf->lsb,
                               synQmf->no_col );
 
-      C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, 2*(64));
+      C_AALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, 2*(64));
     }
   }
 

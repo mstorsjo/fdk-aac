@@ -424,101 +424,10 @@ For HE-AAC and HE-AAC v2 the lowest possible audio input sampling frequency is 1
 AAC-LC core encoder operates in dual rate mode at its lowest possible sampling frequency, which is 8 kHz.
 HE-AAC v2 requires stereo input audio data.
 
-The following table lists the supported bitrates for AAC-LC, HE-AAC and HE-AAC v2 encoding depending
-on input sampling frequency ("Hz") and number of input channels ("chan"). The minimum and maximum
-allowed bitrate ("BR Min", "BR Max") is given in bits per second.
-In case the desired combination of bitrate and sampling frequency is not available ("NA") for HE-AAC or
-HE-AAC v2 then the encoder will automatically switch to AAC-LC and give a command line warning.
 Please note that in HE-AAC or HE-AAC v2 mode the encoder supports much higher bitrates than are
 appropriate for HE-AAC or HE-AAC v2. For example, at a bitrate of more than 64 kbit/s for a stereo
 audio signal at 44.1 kHz it usually makes sense to use AAC-LC, which will produce better audio
 quality at that bitrate than HE-AAC or HE-AAC v2.
-
-
-\verbatim
-  Config            AAC-LC                  HE-AAC (SBR)          HE-AACv2 (SBR+PS)
-
- Hz   chan       BR Min   BR Max          BR Min   BR Max          BR Min   BR Max
-
-8000    1        758      48000           NA       NA               NA       NA
-11025   1        1045     66150           NA       NA               NA       NA
-12000   1        1137     72000           NA       NA               NA       NA
-16000   1        1516     96000           8000     48000            NA       NA
-22050   1        2089     132300          8000     64000            NA       NA
-24000   1        2274     144000          8000     64000            NA       NA
-32000   1        3032     192000          8000     64000            NA       NA
-44100   1        4178     264576          8000     64000            NA       NA
-48000   1        4547     288000          12000    64000            NA       NA
-64000   1        6063     384000          24000    160000           NA       NA
-88200   1        8355     529200          24000    160000           NA       NA
-96000   1        9094     576000          24000    160000           NA       NA
------------------------------------------------------------------------------------
-8000    2        1071     96000           NA       NA               NA       NA
-11025   2        1476     132300          NA       NA               NA       NA
-12000   2        1606     144000          NA       NA               NA       NA
-16000   2        2141     192000          16000    96000            8000     48000
-22050   2        2951     264600          16000    128000           8000     64000
-24000   2        3211     288000          16000    128000           8000     64000
-32000   2        4282     384000          16000    128000           8000     64000
-44100   2        5900     529152          16000    128000           8000     64000
-48000   2        6422     576000          16000    128000           12000    64000
-64000   2        8563     768000          32000    256000           24000    160000
-88200   2        11801    1058400         32000    256000           24000    160000
-96000   2        12844    1152000         32000    256000           24000    160000
------------------------------------------------------------------------------------
-8000    3        1383     144000          NA       NA               NA       NA
-11025   3        1906     198450          NA       NA               NA       NA
-12000   3        2075     216000          NA       NA               NA       NA
-16000   3        2766     288000          26667    120000           NA       NA
-22050   3        3812     396900          26667    160000           NA       NA
-24000   3        4149     432000          26667    160000           NA       NA
-32000   3        5532     576000          26667    160000           NA       NA
-44100   3        7623     793728          26667    160000           NA       NA
-48000   3        8297     864000          29996    160000           NA       NA
-64000   3        11063    1152000         59996    400000           NA       NA
-88200   3        15246    1587600         59996    400000           NA       NA
-96000   3        16594    1728000         59996    400000           NA       NA
------------------------------------------------------------------------------------
-8000    4        1696     192000          NA       NA               NA       NA
-11025   4        2337     264600          NA       NA               NA       NA
-12000   4        2543     288000          NA       NA               NA       NA
-16000   4        3391     384000          40000    160000           NA       NA
-22050   4        4673     529200          40000    213330           NA       NA
-24000   4        5086     576000          40000    213330           NA       NA
-32000   4        6782     768000          40000    213330           NA       NA
-44100   4        9345     1058304         40000    213330           NA       NA
-48000   4        10172    1152000         40000    213330           NA       NA
-64000   4        13563    1536000         80000    533330           NA       NA
-88200   4        18691    2116800         80000    533330           NA       NA
-96000   4        20344    2304000         80000    533330           NA       NA
------------------------------------------------------------------------------------
-8000    5        2008     240000          NA       NA               NA       NA
-11025   5        2768     330750          NA       NA               NA       NA
-12000   5        3012     360000          NA       NA               NA       NA
-16000   5        4016     480000          43244    184612           NA       NA
-22050   5        5535     661500          43244    246152           NA       NA
-24000   5        6024     720000          43244    246152           NA       NA
-32000   5        8032     960000          43244    246152           NA       NA
-44100   5        11068    1322880         43244    246152           NA       NA
-48000   5        12047    1440000         46140    246152           NA       NA
-64000   5        16063    1920000         92296    615384           NA       NA
-88200   5        22137    2646000         92296    615384           NA       NA
-96000   5        24094    2880000         92296    615384           NA       NA
------------------------------------------------------------------------------------
-8000    5.1      2321     240000          NA       NA               NA       NA
-11025   5.1      3198     330750          NA       NA               NA       NA
-12000   5.1      3481     360000          NA       NA               NA       NA
-16000   5.1      4641     480000          45715    199990           NA       NA
-22050   5.1      6396     661500          45715    266658           NA       NA
-24000   5.1      6961     720000          45715    266658           NA       NA
-32000   5.1      9282     960000          45715    266658           NA       NA
-44100   5.1      12790    1322880         45715    266658           NA       NA
-48000   5.1      13922    1440000         49982    266658           NA       NA
-64000   5.1      18563    1920000         99982    666658           NA       NA
-88200   5.1      25582    2646000         99982    666658           NA       NA
-96000   5.1      27844    2880000         99982    666658           NA       NA
-
-\endverbatim \n
 
 \section reommendedConfig Recommended Sampling Rate and Bitrate Combinations
 
@@ -956,8 +865,8 @@ typedef enum
 
   AACENC_GRANULE_LENGTH           = 0x0105,  /*!< Core encoder (AAC) audio frame length in samples:
                                                   - 1024: Default configuration.
-                                                  - 512: Optional length in LD/ELD configuration.
-                                                  - 480: Default LD/ELD configuration. */
+                                                  - 512: Default LD/ELD configuration.
+                                                  - 480: Optional length in LD/ELD configuration. */
 
   AACENC_CHANNELMODE              = 0x0106,  /*!< Set explicit channel mode. Channel mode must match with number of input channels.
                                                   - 1-6: MPEG channel modes supported, see ::CHANNEL_MODE in FDK_audio.h. */

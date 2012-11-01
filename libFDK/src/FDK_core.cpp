@@ -93,7 +93,7 @@ amm-info@iis.fraunhofer.de
 /* FDK tools library info */
 #define FDK_TOOLS_LIB_VL0 2
 #define FDK_TOOLS_LIB_VL1 2
-#define FDK_TOOLS_LIB_VL2 6
+#define FDK_TOOLS_LIB_VL2 8
 #define FDK_TOOLS_LIB_TITLE "FDK Tools"
 #define FDK_TOOLS_LIB_BUILD_DATE __DATE__
 #define FDK_TOOLS_LIB_BUILD_TIME __TIME__

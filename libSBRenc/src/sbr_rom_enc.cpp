@@ -588,7 +588,7 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 100000,160001, 44100, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
 
   /* 48/96 kHz dual rate */  /* not yet finally tuned */
-  {  24000, 36000, 48000, 1,  4, 4, 9, 9,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
+  {  32000, 36000, 48000, 1,  4, 4, 9, 9,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
   {  36000, 60000, 48000, 1,  7, 7,10,10,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
   {  60000, 72000, 48000, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
   {  72000,100000, 48000, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
@@ -671,7 +671,7 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 144000,256001, 44100, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
 
   /* 48/96 kHz dual rate */  /* not yet finally tuned */
-  {  32000, 60000, 48000, 2,  4, 4, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
+  {  36000, 60000, 48000, 2,  4, 4, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
   {  60000, 80000, 48000, 2,  7, 7, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 64 */
   {  80000,112000, 48000, 2,  9, 9,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 96 */
   { 112000,144000, 48000, 2, 11,11,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 128 */
@@ -680,9 +680,6 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   /** AAC LOW DELAY SECTION **/
 
   /* 22.05/44.1 kHz dual rate */
-  {  8000, 11369,  22050, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */ /**changed (not changed !!)*/
-  { 11369, 16000,  22050, 1,  1, 0, 3, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  22050, 1,  2, 4, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
   { 18000, 22000,  22050, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
   { 22000, 28000,  22050, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
   { 28000, 36000,  22050, 1,  7, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
@@ -691,10 +688,7 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 52000, 64001,  22050, 1, 12,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 56 kbit/s */
 
   /* 24/48 kHz dual rate */
-  {  8000, 12000,  24000, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */ /**changed (not changed !!)*/
-  { 12000, 16000,  24000, 1,  1, 0, 3, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  24000, 1,  2, 4, 4, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  24000, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { 20000, 22000,  24000, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
   { 22000, 28000,  24000, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
   { 28000, 36000,  24000, 1,  6, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  24000, 1,  8, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
@@ -702,8 +696,6 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 52000, 64001,  24000, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 22.05/44.1 kHz dual rate */
-  { 24000, 28000,  22050, 2,  3, 2, 5, 4,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 32000,  22050, 2,  3, 2, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 28 kbit/s */
   { 32000, 36000,  22050, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  22050, 2,  5, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
   { 44000, 52000,  22050, 2,  7,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
@@ -713,8 +705,7 @@ const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
   { 82000,128001,  22050, 2, 13,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 24/48 kHz dual rate */
-  { 24000, 28000,  24000, 2,  3, 3, 5, 5,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  24000, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { 32000, 36000,  24000, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
   { 36000, 44000,  24000, 2,  4, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
   { 44000, 52000,  24000, 2,  6,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
   { 52000, 60000,  24000, 2,  9,11, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */

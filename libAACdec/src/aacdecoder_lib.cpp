@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 4
-#define AACDECODER_LIB_VL2 4
+#define AACDECODER_LIB_VL2 7
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__

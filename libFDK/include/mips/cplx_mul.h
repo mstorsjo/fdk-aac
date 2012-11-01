@@ -107,10 +107,23 @@ inline void cplxMultDiv2( FIXP_DBL *c_Re,
                           FIXP_DBL  b_Re,
                           FIXP_DBL  b_Im)
 {
-   INT result;
-   result = (((long long)a_Re * b_Re) - ((long long) a_Im * b_Im)) >> 32;
+  INT result;
+
+   __asm__ ("mult %[a_Re], %[b_Re];\n"
+            "msub %[a_Im], %[b_Im];\n"
+            "mfhi %[result];\n"
+       : [result]"=r"(result)
+       : [a_Re]"d"(a_Re), [b_Re]"d"(b_Re),  [a_Im]"d"(a_Im), [b_Im]"d"(b_Im)
+       : "lo");
+
    *c_Re = result;
-   result = (((long long)a_Re * b_Im) - ((long long) a_Im * b_Re)) >> 32;
+
+   __asm__ ("mult %[a_Re], %[b_Im];\n"
+            "madd %[a_Im], %[b_Re];\n"
+            "mfhi %[result];\n"
+       : [result]"=r"(result) 
+       : [a_Re]"r"(a_Re), [b_Im]"r"(b_Im), [a_Im]"r"(a_Im), [b_Re]"r"(b_Re)
+       : "lo");
    *c_Im = result;
 }
 #endif
@@ -123,10 +136,24 @@ inline void cplxMult( FIXP_DBL *c_Re,
                       FIXP_DBL  b_Re,
                       FIXP_DBL  b_Im)
 {
-   INT result;
-   result = (((long long)a_Re * b_Re) - ((long long) a_Im * b_Im)) >> 32;
+  INT result;
+
+   __asm__ ("mult %[a_Re], %[b_Re];\n"
+            "msub %[a_Im], %[b_Im];\n"
+            "mfhi %[result];\n"
+            //"extr_w %[result], 31;\n"
+        : [result]"=r"(result)
+        : [a_Re]"r"(a_Re), [b_Re]"r"(b_Re), [a_Im]"r"(a_Im), [b_Im]"r"(b_Im)
+        : "lo");
    *c_Re = result<<1;
-   result = (((long long)a_Re * b_Im) - ((long long) a_Im * b_Re)) >> 32;
+
+   __asm__ ("mult %[a_Re], %[b_Im];\n"
+            "madd %[a_Im], %[b_Re];\n"
+            "mfhi %[result];\n"
+            //"extr_w %[result], 31;\n"
+        : [result]"=r"(result)
+        : [a_Re]"r"(a_Re), [b_Im]"r"(b_Im), [a_Im]"r"(a_Im), [b_Re]"r"(b_Re)
+        : "lo");
    *c_Im = result<<1;
 }
 #endif

@@ -865,6 +865,17 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
       self->chMapping[ch] = 255;
     }
   }
+ #ifdef TP_PCE_ENABLE
+  else {
+    if (CProgramConfig_IsValid(&asc->m_progrConfigElement)) {
+      /* Set matrix mixdown infos if available from PCE. */
+      pcmDmx_SetMatrixMixdownFromPce ( self->hPcmUtils,
+                                       asc->m_progrConfigElement.MatrixMixdownIndexPresent,
+                                       asc->m_progrConfigElement.MatrixMixdownIndex,
+                                       asc->m_progrConfigElement.PseudoSurroundEnable );
+    }
+  }
+ #endif
 
   self->streamInfo.channelConfig = asc->m_channelConfiguration;
 
@@ -1565,7 +1576,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
   self->streamInfo.numChannels = aacChannels;
 
  #ifdef TP_PCE_ENABLE
-  if (pceRead == 1 || CProgramConfig_IsValid(pce)) {
+  if (pceRead == 1 && CProgramConfig_IsValid(pce)) {
     /* Set matrix mixdown infos if available from PCE. */
     pcmDmx_SetMatrixMixdownFromPce ( self->hPcmUtils,
                                      pce->MatrixMixdownIndexPresent,
@@ -1646,10 +1657,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
               self->sbrEnabled
             );
 
-      if ( flags&AACDEC_FLUSH ) {
-        FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, sizeof(FIXP_DBL)*self->streamInfo.aacSamplesPerFrame);
-      }
-
       switch (pAacDecoderChannelInfo->renderMode)
       {
         case AACDEC_RENDER_IMDCT:
@@ -1677,6 +1684,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           break;
       }
       if ( flags&AACDEC_FLUSH ) {
+          FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, sizeof(FIXP_DBL)*self->streamInfo.aacSamplesPerFrame);
         FDKmemclear(self->pAacDecoderStaticChannelInfo[c]->pOverlapBuffer, OverlapBufferSize*sizeof(FIXP_DBL));
       }
     }

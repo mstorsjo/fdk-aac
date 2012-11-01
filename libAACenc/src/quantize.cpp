@@ -127,10 +127,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      if (totalShift < 32)
-          accu>>=totalShift;
-      else
-          accu = 0;
+      accu>>=totalShift;
       quaSpectrum[line] = (SHORT)(-((LONG)(k + accu) >> (DFRACT_BITS-1-16)));
     }
     else if(accu > FL2FXCONST_DBL(0.0f))
@@ -143,10 +140,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      if (totalShift < 32)
-          accu>>=totalShift;
-      else
-          accu = 0;
+      accu>>=totalShift;
       quaSpectrum[line] = (SHORT)((LONG)(k + accu) >> (DFRACT_BITS-1-16));
     }
     else
@@ -319,6 +313,9 @@ FIXP_DBL FDKaacEnc_calcSfbDist(FIXP_DBL *mdctSpectrum,
                  &mdctSpectrum[i],
                  &quantSpectrum[i]);
 
+    if (fAbs(quantSpectrum[i])>MAX_QUANT) {
+      return FL2FXCONST_DBL(0.0f);
+    }
     /* inverse quantization */
     FDKaacEnc_invQuantizeLines(gain,1,&quantSpectrum[i],&invQuantSpec);
 
@@ -361,15 +358,22 @@ void FDKaacEnc_calcSfbQuantEnergyAndDist(FIXP_DBL *mdctSpectrum,
   FIXP_DBL invQuantSpec;
   FIXP_DBL diff;
 
-  *en   = FL2FXCONST_DBL(0.0f);
-  *dist = FL2FXCONST_DBL(0.0f);
+  FIXP_DBL energy = FL2FXCONST_DBL(0.0f);
+  FIXP_DBL distortion = FL2FXCONST_DBL(0.0f);
 
   for (i=0; i<noOfLines; i++) {
+
+    if (fAbs(quantSpectrum[i])>MAX_QUANT) {
+      *en   = FL2FXCONST_DBL(0.0f);
+      *dist = FL2FXCONST_DBL(0.0f);
+      return;
+    }
+
     /* inverse quantization */
     FDKaacEnc_invQuantizeLines(gain,1,&quantSpectrum[i],&invQuantSpec);
 
     /* energy */
-    *en += fPow2(invQuantSpec);
+    energy += fPow2(invQuantSpec);
 
     /* dist */
     diff = fixp_abs(fixp_abs(invQuantSpec) - fixp_abs(mdctSpectrum[i]>>1));
@@ -382,10 +386,10 @@ void FDKaacEnc_calcSfbQuantEnergyAndDist(FIXP_DBL *mdctSpectrum,
 
     diff = scaleValue(diff, -scale);
 
-    *dist += diff;
+    distortion += diff;
   }
 
-  *en   = CalcLdData(*en)+FL2FXCONST_DBL(0.03125f);
-  *dist = CalcLdData(*dist);
+  *en   = CalcLdData(energy)+FL2FXCONST_DBL(0.03125f);
+  *dist = CalcLdData(distortion);
 }
 

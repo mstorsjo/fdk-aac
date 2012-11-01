@@ -94,6 +94,7 @@ amm-info@iis.fraunhofer.de
 #include "sbrdecoder.h"
 
 
+
 #define SBRDEC_MAX_DRC_CHANNELS  (6)
 #define SBRDEC_MAX_DRC_BANDS     ( 16 )
 

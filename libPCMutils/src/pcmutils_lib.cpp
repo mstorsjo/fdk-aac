@@ -96,7 +96,7 @@ amm-info@iis.fraunhofer.de
 
 /* Decoder library info */
 #define PCMDMX_LIB_VL0 2
-#define PCMDMX_LIB_VL1 2
+#define PCMDMX_LIB_VL1 3
 #define PCMDMX_LIB_VL2 1
 #define PCMDMX_LIB_TITLE "PCM Downmix Lib"
 #define PCMDMX_LIB_BUILD_DATE __DATE__
@@ -107,7 +107,7 @@ amm-info@iis.fraunhofer.de
 #define PCM_DMX_MAX_CHANNELS            ( 8 )
 #define PCM_DMX_MAX_CHANNEL_GROUPS      ( 4 )
 #define PCM_DMX_MAX_CHANNELS_PER_GROUP  ( 3 )   /* The maximum over all groups */
-#define PCMDMX_DFLT_EXPIRY_FRAME        ( 40 )  /* At least 400ms (FL 960 @ 96kHz) */
+#define PCMDMX_DFLT_EXPIRY_FRAME        ( 50 )  /* At least 500ms (FL 960 @ 96kHz) */
 
 /* Fixed and unique channel group indices.
  * The last group index has to be smaller than PCM_DMX_MAX_CHANNEL_GROUPS. */
@@ -264,7 +264,6 @@ C_ALLOC_MEM_STATIC(PcmDmxInstance, struct PCM_DMX_INSTANCE, 1)
  * @param [in] The total number of channels of the given configuration.
  * @param [in] Array holding the corresponding channel types for each channel.
  * @param [in] Array holding the corresponding channel type indices for each channel.
- * @param [in] Array containing the channel mapping to be used (From MPEG PCE ordering to whatever is required).
  * @param [out] Array where the buffer offsets for each channel are stored into.
  * @returns Returns the packed channel mode.
  **/
@@ -273,7 +272,6 @@ PCM_DMX_CHANNEL_MODE getChannelMode (
         const INT                numChannels,                           /* in */
         const AUDIO_CHANNEL_TYPE channelType[],                         /* in */
         const UCHAR              channelIndices[],                      /* in */
-        const UCHAR              channelMapping[PCM_DMX_MAX_CHANNELS],  /* in */
         UCHAR                    offsetTable[PCM_DMX_MAX_CHANNELS]      /* out */
       )
 {
@@ -284,12 +282,12 @@ PCM_DMX_CHANNEL_MODE getChannelMode (
 
   FDK_ASSERT(channelType != NULL);
   FDK_ASSERT(channelIndices != NULL);
-  FDK_ASSERT(channelMapping != NULL);
   FDK_ASSERT(offsetTable != NULL);
 
   /* For details see ISO/IEC 13818-7:2005(E), 8.5.3 Channel configuration */
   FDKmemclear(numChInGrp, PCM_DMX_MAX_CHANNEL_GROUPS*sizeof(UCHAR));
   FDKmemset(offsetTable, 255, PCM_DMX_MAX_CHANNELS*sizeof(UCHAR));
+  FDKmemset(chIdx, 255, PCM_DMX_MAX_CHANNEL_GROUPS*PCM_DMX_MAX_CHANNELS_PER_GROUP*sizeof(UCHAR));
 
   /* Categorize channels */
   for (ch = 0; ch < numChannels; ch += 1) {
@@ -335,7 +333,7 @@ PCM_DMX_CHANNEL_MODE getChannelMode (
   if (numChInGrp[CH_GROUP_FRONT] & 0x1) {
     /* Odd number of front channels -> we have a center channel.
        In MPEG-4 the center has the index 0. */
-    offsetTable[CENTER_FRONT_CHANNEL] = channelMapping[chIdx[CH_GROUP_FRONT][0]];
+    offsetTable[CENTER_FRONT_CHANNEL] = chIdx[CH_GROUP_FRONT][0];
   }
 
   for (grpIdx = 0; grpIdx < PCM_DMX_MAX_CHANNEL_GROUPS; grpIdx += 1) {
@@ -367,7 +365,7 @@ PCM_DMX_CHANNEL_MODE getChannelMode (
 
     for ( ; ch < numChInGrp[grpIdx]; ch += 1) {
       if (ch < maxChannels) {
-        offsetTable[chMapPos] = channelMapping[chIdx[grpIdx][ch]];
+        offsetTable[chMapPos] = chIdx[grpIdx][ch];
         chMapPos += 1;
       } else {
         err = -1;
@@ -814,7 +812,6 @@ PCMDMX_ERROR pcmDmx_ApplyFrame (
                    numInChannels,
                    channelType,
                    channelIndices,
-                   channelMapping[numInChannels],
                    inOffsetTable
                  );
   if (inChMode == CH_MODE_UNDEFINED) {
