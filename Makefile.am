@@ -159,7 +159,7 @@ SBRENC_SRC = \
     libSBRenc/src/ps_encode.cpp \
     libSBRenc/src/resampler.cpp \
     libSBRenc/src/sbr_encoder.cpp \
-    libSBRenc/src/sbr_ram_enc.cpp \
+    libSBRenc/src/sbr_ram.cpp \
     libSBRenc/src/ton_corr.cpp \
     libSBRenc/src/code_env.cpp \
     libSBRenc/src/env_est.cpp \
@@ -168,7 +168,7 @@ SBRENC_SRC = \
     libSBRenc/src/ps_main.cpp \
     libSBRenc/src/sbrenc_freq_sca.cpp \
     libSBRenc/src/sbr_misc.cpp \
-    libSBRenc/src/sbr_rom_enc.cpp \
+    libSBRenc/src/sbr_rom.cpp \
     libSBRenc/src/tran_det.cpp
 
 SYS_SRC = \
