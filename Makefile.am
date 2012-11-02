@@ -1,4 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
+AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS = \
     -I$(top_srcdir)/libAACdec/include \
