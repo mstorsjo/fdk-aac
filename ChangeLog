@@ -1,3 +1,12 @@
+0.1.1
+ - Updated to a new upstream version from Android 4.2, fixing a lot of crashes
+ - Cleanup of autotools usage
+ - Make sure the shared library links to libm if necessary
+ - Performance improvements on x86
+ - Added support for WG4/DVD audio channel mappings
+ - Minimized the differences to upstream
+ - Added an example encoder tool
+
 0.1.0
  - Initial release of fdk-aac
  - autotools based build system
