@@ -96,9 +96,6 @@ amm-info@iis.fraunhofer.de
 
 #include "machine_type.h"
 
-/* Work around for broken android toolchain: sys/types.h:137: error: 'uint64_t' does not name a type */
-#define _SYS_TYPES_H_
-
 
 /* Always increase verbosity of memory allocation in case of a debug built. DEBUG is defined globally in that case. */
 #if defined(DEBUG) || defined(FDK_DEBUG)
