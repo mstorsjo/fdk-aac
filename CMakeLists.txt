@@ -577,20 +577,32 @@ if(BUILD_PROGRAMS)
     wavreader.c
     wavreader.h)
 
+  set(aac_dec_SOURCES
+    aac-dec.c
+    wavwriter.c
+    wavwriter.h)
+
   ## Program target
   add_executable(aac-enc ${aac_enc_SOURCES})
+  add_executable(aac-dec ${aac_dec_SOURCES})
 
   ## Program target configuration
   target_link_libraries(aac-enc PRIVATE fdk-aac)
+  target_link_libraries(aac-dec PRIVATE fdk-aac)
   target_compile_definitions(aac-enc PRIVATE $<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>)
+  target_compile_definitions(aac-dec PRIVATE $<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>)
   target_include_directories(aac-enc PRIVATE cpp)
+  target_include_directories(aac-dec PRIVATE cpp)
   if(WIN32)
     target_sources(aac-enc PRIVATE win32/getopt.h)
+    target_sources(aac-dec PRIVATE win32/getopt.h)
     target_include_directories(aac-enc PRIVATE win32)
+    target_include_directories(aac-dec PRIVATE win32)
   endif()
 
   ## Program target installation
   install(TARGETS aac-enc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(TARGETS aac-dec RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
   ## Tool for testing the library
