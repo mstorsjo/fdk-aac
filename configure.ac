@@ -13,8 +13,13 @@ AC_ARG_ENABLE([example],
                 [enable example encoding program (default is no)])],
             [example=$enableval], [example=no])
 
+if test x$example = xyes; then
+	PKG_CHECK_MODULES([libavformat], [libavformat], [libavformat=yes], [libavformat=no])
+fi
+
 dnl Automake conditionals to set
 AM_CONDITIONAL(EXAMPLE, test x$example = xyes)
+AM_CONDITIONAL(HAVE_LIBAVFORMAT, test x$libavformat = xyes)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -36,3 +41,7 @@ AC_SUBST(LIBS_PRIVATE)
 AC_CONFIG_FILES([Makefile
                  fdk-aac.pc])
 AC_OUTPUT
+
+if test x$example = xyes; then
+	AC_MSG_NOTICE([Found libavformat: ${libavformat}])
+fi

@@ -43,6 +43,14 @@ aac_dec_LDADD = libfdk-aac.la
 aac_dec_SOURCES = aac-dec.c wavwriter.c
 
 noinst_HEADERS = wavreader.h wavwriter.h
+
+if HAVE_LIBAVFORMAT
+bin_PROGRAMS += m4a-dec$(EXEEXT)
+
+m4a_dec_LDADD = $(libavformat_LIBS) libfdk-aac.la
+m4a_dec_CFLAGS = $(libavformat_CFLAGS)
+m4a_dec_SOURCES = m4a-dec.c wavwriter.c
+endif
 endif
 
 AACDEC_SRC = \
