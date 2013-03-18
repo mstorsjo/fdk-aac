@@ -584,6 +584,7 @@ void FDKaacEnc_IntensityStereoProcessing(
   FIXP_DBL realIsScale[MAX_GROUPED_SFB];
   INTENSITY_PARAMETERS isParams;
   INT isMask[MAX_GROUPED_SFB];
+  INT lastValIs = 0, delta;
 
   FDKmemclear((void*)isBook,sfbCnt*sizeof(INT));
   FDKmemclear((void*)isMask,sfbCnt*sizeof(INT));
@@ -738,6 +739,14 @@ void FDKaacEnc_IntensityStereoProcessing(
       else {
         isScale[sfb+sfboffs] = (INT)(((realIsScale[sfb+sfboffs]>>1)+FL2FXCONST_DBL(0.5f/(1<<(REAL_SCALE_SF+LD_DATA_SHIFT+1))))>>(DFRACT_BITS-1-REAL_SCALE_SF-LD_DATA_SHIFT-1));
       }
+
+      delta = isScale[sfb+sfboffs] - lastValIs;
+      if (delta < -CODE_BOOK_SCF_LAV) {
+          isScale[sfb+sfboffs] = lastValIs - CODE_BOOK_SCF_LAV;
+      } else if (delta + CODE_BOOK_SCF_LAV >= (INT)(sizeof(FDKaacEnc_huff_ltabscf)/sizeof(FDKaacEnc_huff_ltabscf[0]))) {
+          isScale[sfb+sfboffs] = lastValIs + sizeof(FDKaacEnc_huff_ltabscf)/sizeof(FDKaacEnc_huff_ltabscf[0]) - CODE_BOOK_SCF_LAV - 1;
+      }
+      lastValIs = isScale[sfb+sfboffs];
 
       sfbEnergyRight[sfb+sfboffs] = FL2FXCONST_DBL(0.0f);
       sfbEnergyLdDataRight[sfb+sfboffs] = FL2FXCONST_DBL(-1.0f);
