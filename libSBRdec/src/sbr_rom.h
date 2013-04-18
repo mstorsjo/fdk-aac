@@ -106,6 +106,8 @@ extern const UCHAR FDK_sbrDecoder_sbr_start_freq_32[16];
 extern const UCHAR FDK_sbrDecoder_sbr_start_freq_40[16];
 extern const UCHAR FDK_sbrDecoder_sbr_start_freq_44[16];
 extern const UCHAR FDK_sbrDecoder_sbr_start_freq_48[16];
+extern const UCHAR FDK_sbrDecoder_sbr_start_freq_64[16];
+extern const UCHAR FDK_sbrDecoder_sbr_start_freq_88[16];
 
 /*
   Low-Power-Profile Transposer

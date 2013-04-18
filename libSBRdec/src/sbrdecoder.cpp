@@ -217,14 +217,14 @@ SBR_ERROR sbrDecoder_ResetElement (
 
   /* Check in/out samplerates */
   if ( sampleRateIn < 6400
-    || sampleRateIn > 24000
+    || sampleRateIn > 48000
      )
   {
     sbrError = SBRDEC_UNSUPPORTED_CONFIG;
     goto bail;
   }
 
-  if ( sampleRateOut > 48000 )
+  if ( sampleRateOut > 96000 )
   {
     sbrError = SBRDEC_UNSUPPORTED_CONFIG;
     goto bail;
