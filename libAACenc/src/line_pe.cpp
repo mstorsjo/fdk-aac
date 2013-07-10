@@ -184,7 +184,7 @@ void FDKaacEnc_calcSfbPe(PE_CHANNEL_DATA  *RESTRICT peChanData,
          }
          peChanData->sfbNActiveLines[sfbGrp+sfb] = nLines;
       }
-      else if( isBook[sfb] ) {
+      else if( isBook[sfbGrp+sfb] ) {
         /* provide for cost of scale factor for Intensity */
         INT delta = isScale[sfbGrp+sfb] - lastValIs;
         lastValIs = isScale[sfbGrp+sfb];
