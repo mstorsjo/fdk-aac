@@ -1,3 +1,7 @@
+0.1.2
+ - Fix a few more crashes
+ - Include dependency libs (such as -lm) in the pkg-config file
+
 0.1.1
  - Updated to a new upstream version from Android 4.2, fixing a lot of crashes
  - Cleanup of autotools usage
