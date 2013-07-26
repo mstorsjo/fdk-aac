@@ -27,7 +27,11 @@ dnl soname version to use
 dnl goes by ‘current[:revision[:age]]’ with the soname ending up as
 dnl current.age.revision
 FDK_AAC_VERSION=0:2:0
+
+AS_IF([test x$enable_shared = xyes], [LIBS_PRIVATE=$LIBS], [LIBS_PUBLIC=$LIBS])
 AC_SUBST(FDK_AAC_VERSION)
+AC_SUBST(LIBS_PUBLIC)
+AC_SUBST(LIBS_PRIVATE)
 
 AC_CONFIG_FILES([Makefile
                  fdk-aac.pc])
