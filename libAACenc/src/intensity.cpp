@@ -450,23 +450,24 @@ FDKaacEnc_finalizeIntensityDecision(const FIXP_DBL *hrrErr,
                                     const INT       maxSfbPerGroup)
 {
   INT sfb,sfboffs, j;
-  INT startIsSfb = 0;
-  INT inIsBlock;
-  INT currentIsSfbCount;
-  FIXP_DBL overallHrrError;
   FIXP_DBL isScaleLast = FL2FXCONST_DBL(0.0f);
-  FIXP_DBL isRegionLoudness;
+  INT isStartValueFound = 0;
 
   for (sfboffs = 0; sfboffs < sfbCnt; sfboffs += sfbPerGroup) {
-    inIsBlock = 0;
-    currentIsSfbCount = 0;
-    overallHrrError = FL2FXCONST_DBL(0.0f);
-    isRegionLoudness = FL2FXCONST_DBL(0.0f);
+    INT startIsSfb = 0;
+    INT inIsBlock = 0;
+    INT currentIsSfbCount = 0;
+    FIXP_DBL overallHrrError = FL2FXCONST_DBL(0.0f);
+    FIXP_DBL isRegionLoudness = FL2FXCONST_DBL(0.0f);
+
     for (sfb = 0; sfb < maxSfbPerGroup; sfb++) {
       if (isMask[sfboffs + sfb] == 1) {
         if (currentIsSfbCount == 0) {
           startIsSfb = sfboffs + sfb;
+        }
+        if (isStartValueFound==0) {
           isScaleLast = realIsScale[sfboffs + sfb];
+          isStartValueFound = 1;
         }
         inIsBlock = 1;
         currentIsSfbCount++;
@@ -509,6 +510,14 @@ FDKaacEnc_finalizeIntensityDecision(const FIXP_DBL *hrrErr,
         if (currentIsSfbCount < isParams->min_is_sfbs || (isRegionLoudness < isParams->is_region_min_loudness>>MAX_SFB_PER_GROUP_SF)) {
           for(j = startIsSfb; j <= sfboffs + sfb; j++) {
             isMask[j] = 0;
+          }
+          isScaleLast = FL2FXCONST_DBL(0.0f);
+          isStartValueFound = 0;
+          for (j=0; j < startIsSfb; j++) {
+            if (isMask[j]!=0) {
+              isScaleLast = realIsScale[j];
+              isStartValueFound = 1;
+            }
           }
         }
         currentIsSfbCount = 0;
