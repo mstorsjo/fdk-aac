@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 4
+#define AACENCODER_LIB_VL2 5
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -525,56 +525,58 @@ INT aacEncoder_LimitBitrate(
   /* Limit bit rate in respect to available SBR modes if active */
   if (sbrActive)
   {
-    SBR_ELEMENT_INFO sbrElInfo[6];
-    INT sbrBitRate = 0;
-    int e, tooBig=-1;
+    int numIterations = 0;
+    INT initialBitrate, adjustedBitrate;
+    initialBitrate = adjustedBitrate = bitRate;
 
-    FDK_ASSERT(cm.nElements <= (6));
+    /* Find total bitrate which provides valid configuration for each SBR element. */
+    do {
+      int e;
+      SBR_ELEMENT_INFO sbrElInfo[(6)];
+      FDK_ASSERT(cm.nElements <= (6));
 
-    /* Get bit rate for each SBR element */
-    aacEncDistributeSbrBits(&cm, sbrElInfo, bitRate);
+      initialBitrate = adjustedBitrate;
 
-    for (e=0; e<cm.nElements; e++)
-    {
-      INT sbrElementBitRateIn, sbrBitRateOut;
+      /* Get bit rate for each SBR element */
+      aacEncDistributeSbrBits(&cm, sbrElInfo, initialBitrate);
 
-      if (cm.elInfo[e].elType != ID_SCE && cm.elInfo[e].elType != ID_CPE) {
-        continue;
-      }
-      sbrElementBitRateIn = sbrElInfo[e].bitRate;
-      sbrBitRateOut = sbrEncoder_LimitBitRate(sbrElementBitRateIn , cm.elInfo[e].nChannelsInEl, coreSamplingRate, aot);
-      if (sbrBitRateOut == 0) {
-        return 0;
-      }
-      if (sbrElementBitRateIn < sbrBitRateOut) {
-        FDK_ASSERT(tooBig != 1);
-        tooBig = 0;
-        if (e == 0) {
-          sbrBitRate = 0;
-        }
-      }
-      if (sbrElementBitRateIn > sbrBitRateOut) {
-        FDK_ASSERT(tooBig != 0);
-        tooBig = 1;
-        if (e == 0) {
-          sbrBitRate = 5000000;
-        }
-      }
-      if (tooBig != -1)
+      for (e=0; e<cm.nElements; e++)
       {
-        INT sbrBitRateLimit = (INT)fDivNorm((FIXP_DBL)sbrBitRateOut, cm.elInfo[e].relativeBits);
-        if (tooBig) {
-          sbrBitRate = fMin(sbrBitRate, sbrBitRateLimit-16);
-          FDK_ASSERT( (INT)fMultNorm(cm.elInfo[e].relativeBits, (FIXP_DBL)sbrBitRate) < sbrBitRateOut);
-        } else {
-          sbrBitRate = fMax(sbrBitRate, sbrBitRateLimit+16);
-          FDK_ASSERT( (INT)fMultNorm(cm.elInfo[e].relativeBits, (FIXP_DBL)sbrBitRate) >= sbrBitRateOut);
+        INT sbrElementBitRateIn, sbrBitRateOut;
+
+        if (cm.elInfo[e].elType != ID_SCE && cm.elInfo[e].elType != ID_CPE) {
+          continue;
         }
-      }
-    }
-    if (tooBig != -1) {
-      bitRate = sbrBitRate;
-    }
+        sbrElementBitRateIn = sbrElInfo[e].bitRate;
+        sbrBitRateOut = sbrEncoder_LimitBitRate(sbrElementBitRateIn , cm.elInfo[e].nChannelsInEl, coreSamplingRate, aot);
+        if (sbrBitRateOut == 0) {
+          return 0;
+        }
+
+        /* If bitrates don't match, distribution and limiting needs to be determined again.
+           Abort element loop and restart with adapted bitrate. */
+        if (sbrElementBitRateIn != sbrBitRateOut) {
+
+          if (sbrElementBitRateIn < sbrBitRateOut) {
+            adjustedBitrate = fMax(initialBitrate, (INT)fDivNorm((FIXP_DBL)(sbrBitRateOut+8), cm.elInfo[e].relativeBits));
+            break;
+          }
+
+          if (sbrElementBitRateIn > sbrBitRateOut) {
+            adjustedBitrate = fMin(initialBitrate, (INT)fDivNorm((FIXP_DBL)(sbrBitRateOut-8), cm.elInfo[e].relativeBits));
+            break;
+          }
+
+        } /* sbrElementBitRateIn != sbrBitRateOut */
+
+      } /* elements */
+
+      numIterations++; /* restrict iteration to worst case of num elements */
+
+    } while ( (initialBitrate!=adjustedBitrate) && (numIterations<=cm.nElements) );
+
+    /* Unequal bitrates mean that no reasonable bitrate configuration found. */
+    bitRate = (initialBitrate==adjustedBitrate) ? adjustedBitrate : 0;
   }
 
   FDK_ASSERT(bitRate > 0);
@@ -840,7 +842,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
         INT sbrError;
         SBR_ELEMENT_INFO sbrElInfo[(6)];
         CHANNEL_MAPPING channelMapping;
-        
+
         AUDIO_OBJECT_TYPE aot = hAacConfig->audioObjectType;
 
         if ( FDKaacEnc_InitChannelMapping(hAacConfig->channelMode,
@@ -1097,7 +1099,7 @@ AACENC_ERROR aacEncOpen(
         goto bail;
     }
     else {
-        C_ALLOC_SCRATCH_START(pLibInfo, LIB_INFO, FDK_MODULE_LAST); 
+        C_ALLOC_SCRATCH_START(pLibInfo, LIB_INFO, FDK_MODULE_LAST);
 
         FDKinitLibInfo( pLibInfo);
         transportEnc_GetLibInfo( pLibInfo );
