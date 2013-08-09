@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 3
-#define SBRENCODER_LIB_VL2 1
+#define SBRENCODER_LIB_VL2 2
 
 
 
@@ -1462,6 +1462,7 @@ INT FDKsbrEnc_EnvInit (
                        AUDIO_OBJECT_TYPE aot,
                        int       nBitstrDelay,
                        int       nElement,
+                       const int headerPeriod,
                        ULONG     statesInitFlag
                       ,UCHAR    *dynamic_RAM
                       )
@@ -1521,9 +1522,16 @@ INT FDKsbrEnc_EnvInit (
   hSbrElement->sbrBitstreamData.CountSendHeaderData = 0;
   if (params->SendHeaderDataTime > 0 ) {
 
-    hSbrElement->sbrBitstreamData.NrSendHeaderData = (INT)(params->SendHeaderDataTime * hSbrElement->sbrConfigData.sampleFreq
+    if (headerPeriod==-1) {
+
+      hSbrElement->sbrBitstreamData.NrSendHeaderData = (INT)(params->SendHeaderDataTime * hSbrElement->sbrConfigData.sampleFreq
                                                / (1000 * hSbrElement->sbrConfigData.frameSize));
-    hSbrElement->sbrBitstreamData.NrSendHeaderData = fixMax(hSbrElement->sbrBitstreamData.NrSendHeaderData,1);
+      hSbrElement->sbrBitstreamData.NrSendHeaderData = fixMax(hSbrElement->sbrBitstreamData.NrSendHeaderData,1);
+    }
+    else {
+      /* assure header period at least once per second */
+      hSbrElement->sbrBitstreamData.NrSendHeaderData = fixMin(fixMax(headerPeriod,1),(hSbrElement->sbrConfigData.sampleFreq/hSbrElement->sbrConfigData.frameSize));
+    }
   }
   else {
    hSbrElement->sbrBitstreamData.NrSendHeaderData = 0;
@@ -1723,6 +1731,7 @@ INT sbrEncoder_Init(
                      AUDIO_OBJECT_TYPE *aot,
                      int *delay,
                      int  transformFactor,
+                     const int headerPeriod,
                      ULONG  statesInitFlag
                     )
 {
@@ -1962,6 +1971,7 @@ INT sbrEncoder_Init(
                                   *aot,
                                    nBitstrDelay,
                                    el,
+                                   headerPeriod,
                                    statesInitFlag
                                   ,hSbrEncoder->dynamicRam
                                   );

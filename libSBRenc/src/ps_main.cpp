@@ -227,6 +227,8 @@ FDK_PSENC_ERROR PSEnc_Init(
     /* clear bs buffer */
     FDKmemclear(hParametricStereo->psOut, sizeof(hParametricStereo->psOut));
 
+    hParametricStereo->psOut[0].enablePSHeader = 1; /* write ps header in first frame */
+
     /* clear scaling buffer */
     FDKmemclear(hParametricStereo->dynBandScale, sizeof(UCHAR)*PS_MAX_BANDS);
     FDKmemclear(hParametricStereo->maxBandValue, sizeof(FIXP_QMF)*PS_MAX_BANDS);

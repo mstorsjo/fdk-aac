@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 5
+#define AACENCODER_LIB_VL2 6
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -121,6 +121,8 @@ amm-info@iis.fraunhofer.de
 #define DELAY_AACELD(fl)   ( (fl) + ((fl)/2)  )   /*!< ELD FB delay */
 
 #define INPUTBUFFER_SIZE (1537+100+2048)
+
+#define DEFAULT_HEADER_PERIOD_REPETITION_RATE  10 /*!< Default header repetition rate used in transport library and for SBR header. */
 
 ////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -335,7 +337,7 @@ void FDKaacEnc_MapConfig(CODER_CONFIG *cc, USER_PARAM *extCfg, HANDLE_AACENC_CON
       case TT_MP4_ADTS:
       case TT_MP4_LOAS:
       case TT_MP4_LATM_MCP1:
-        cc->headerPeriod = 10;
+        cc->headerPeriod = DEFAULT_HEADER_PERIOD_REPETITION_RATE;
         break;
       default:
         cc->headerPeriod = 0;
@@ -876,6 +878,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
                                 &hAacConfig->audioObjectType,
                                 &hAacEncoder->nDelay,
                                  (hAacConfig->audioObjectType == AOT_ER_AAC_ELD) ? 1 : TRANS_FAC,
+                                 (config->userTpHeaderPeriod!=0xFF) ? config->userTpHeaderPeriod : DEFAULT_HEADER_PERIOD_REPETITION_RATE,
                                  initFlag
                                 );
 

@@ -298,6 +298,9 @@ UINT sbrEncoder_LimitBitRate(UINT bitRate, UINT numChannels, UINT coreSampleRate
  * \param aot              Input: Desired AOT. output AOT to be used after parameter checking.
  * \param delay            Input: core encoder delay. Output: total delay because of SBR.
  * \param transformFactor  The core encoder transform factor (blockswitching).
+ * \param headerPeriod     Repetition rate of the SBR header:
+ *                           - (-1) means intern configuration.
+ *                           - (1-10) corresponds to header repetition rate in frames.
  * \return                 0 on success, and non-zero if failed.
  */
 INT sbrEncoder_Init( HANDLE_SBR_ENCODER hSbrEncoder,
@@ -312,6 +315,7 @@ INT sbrEncoder_Init( HANDLE_SBR_ENCODER hSbrEncoder,
                      AUDIO_OBJECT_TYPE *aot,
                      int *delay,
                      int  transformFactor,
+                     const int headerPeriod,
                      ULONG statesInitFlag
                     );
 
