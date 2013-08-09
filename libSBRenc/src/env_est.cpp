@@ -817,22 +817,22 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
       }
 
       /* ld64 to integer conversion */
-      nrgLeft = fixMin(fixMax(nrgLeft,FL2FXCONST_DBL(0.0f)),FL2FXCONST_DBL(0.5f));
+      nrgLeft = fixMin(fixMax(nrgLeft,FL2FXCONST_DBL(0.0f)),(FL2FXCONST_DBL(0.5f)>>oneBitLess));
       nrgLeft = (FIXP_DBL)(LONG)nrgLeft >> (DFRACT_BITS-1-LD_DATA_SHIFT-1-oneBitLess-1);
       sfb_nrgLeft[m] = ((INT)nrgLeft+1)>>1; /* rounding */
 
       if (stereoMode == SBR_COUPLING) {
         FIXP_DBL scaleFract;
+        int sc0, sc1;
 
-        if (nrgRight != FL2FXCONST_DBL(0.0f)) {
-          int sc0 = CountLeadingBits(nrgLeft2);
-          int sc1 = CountLeadingBits(nrgRight);
+        nrgLeft2 = fixMax((FIXP_DBL)0x1, nrgLeft2);
+        nrgRight = fixMax((FIXP_DBL)0x1, nrgRight);
 
-          scaleFract = ((FIXP_DBL)(sc0-sc1)) << (DFRACT_BITS-1-LD_DATA_SHIFT); /* scale value in ld64 representation */
-          nrgRight = CalcLdData(nrgLeft2<<sc0) - CalcLdData(nrgRight<<sc1) - scaleFract;
-        }
-        else
-          nrgRight =  FL2FXCONST_DBL(0.5f);   /* ld64(4294967296.0f) */
+        sc0 = CountLeadingBits(nrgLeft2);
+        sc1 = CountLeadingBits(nrgRight);
+
+        scaleFract = ((FIXP_DBL)(sc0-sc1)) << (DFRACT_BITS-1-LD_DATA_SHIFT); /* scale value in ld64 representation */
+        nrgRight = CalcLdData(nrgLeft2<<sc0) - CalcLdData(nrgRight<<sc1) - scaleFract;
 
         /* ld64 to integer conversion */
         nrgRight = (FIXP_DBL)(LONG)(nrgRight) >> (DFRACT_BITS-1-LD_DATA_SHIFT-1-oneBitLess);
