@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 0
+#define AACENCODER_LIB_VL2 1
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -506,7 +506,7 @@ INT aacEncoder_LimitBitrate(
     bitRate = FDKmin(576000*nChannels, bitRate);
     /*bitRate = FDKmax(0*nChannels, bitRate);*/
   }
-  
+
 
   /* Limit bit rate in respect to the core coder */
   bitRate = FDKaacEnc_LimitBitrate(
@@ -535,7 +535,7 @@ INT aacEncoder_LimitBitrate(
     aacEncDistributeSbrBits(&cm, sbrElInfo, bitRate);
 
     for (e=0; e<cm.nElements; e++)
-    { 
+    {
       INT sbrElementBitRateIn, sbrBitRateOut;
 
       if (cm.elInfo[e].elType != ID_SCE && cm.elInfo[e].elType != ID_CPE) {
@@ -632,18 +632,7 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       case AOT_PS:
           config->userTpType = (config->userTpType!=TT_UNKNOWN) ? config->userTpType : TT_MP4_ADTS;
           hAacConfig->framelength = (config->userFramelength!=(UINT)-1) ? config->userFramelength : 1024;
-          if (hAacConfig->framelength != 1024 && hAacConfig->framelength != 960) {
-            return AACENC_INVALID_CONFIG;
-          }
-          break;
-      case AOT_ER_AAC_LC:
-          hAacConfig->epConfig = 0;
-          hAacConfig->syntaxFlags |= AC_ER;
-          hAacConfig->syntaxFlags |= ((config->userErTools & 0x1) ? AC_ER_VCB11 : 0);
-          hAacConfig->syntaxFlags |= ((config->userErTools & 0x2) ? AC_ER_HCR : 0);
-          config->userTpType = (config->userTpType!=TT_UNKNOWN) ? config->userTpType : TT_MP4_LOAS;
-          hAacConfig->framelength = (config->userFramelength!=(UINT)-1) ? config->userFramelength : 1024;
-          if (hAacConfig->framelength != 1024 && hAacConfig->framelength != 960) {
+          if (hAacConfig->framelength != 1024) {
             return AACENC_INVALID_CONFIG;
           }
           break;
@@ -1573,7 +1562,6 @@ AACENC_ERROR aacEncoder_SetParam(
                 }
               case AOT_AAC_LC:
               case AOT_MP2_AAC_LC:
-              case AOT_ER_AAC_LC:
               case AOT_ER_AAC_LD:
               case AOT_ER_AAC_ELD:
                 if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_AAC))) {

@@ -113,7 +113,7 @@ typedef enum {
   /* initialization errors */
   aac_enc_init_error_start      = 0x2000,
   AAC_ENC_INVALID_HANDLE        = 0x2020,             /*!< The handle passed to the function call was invalid (probably NULL).        */
-  AAC_ENC_INVALID_FRAME_LENGTH  = 0x2080,             /*!< Invalid frame length (must be 1024 or 960).                                */
+  AAC_ENC_INVALID_FRAME_LENGTH  = 0x2080,             /*!< Invalid frame length.                                                      */
   AAC_ENC_INVALID_N_CHANNELS    = 0x20e0,             /*!< Invalid amount of audio input channels.                                    */
   AAC_ENC_INVALID_SFB_TABLE     = 0x2140,             /*!< Internal encoder error.                                                    */
 

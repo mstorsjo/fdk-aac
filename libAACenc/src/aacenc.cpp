@@ -558,6 +558,13 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
   qcInit.channelMapping      = &hAacEnc->channelMapping;
   qcInit.sceCpe              = 0;
 
+  if ((config->bitrateMode>=1) && (config->bitrateMode<=5)) {
+      qcInit.averageBits     = (averageBitsPerFrame+7)&~7;
+      qcInit.bitRes          = MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff;
+      qcInit.maxBits         = MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff;
+      qcInit.minBits         = 0;
+  }
+  else
   {
       int maxBitres;
       qcInit.averageBits     = (averageBitsPerFrame+7)&~7;

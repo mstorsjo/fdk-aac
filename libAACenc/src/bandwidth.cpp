@@ -204,7 +204,6 @@ static INT GetBandwidthEntry(
   INT bwTabSize = 0;
 
   switch (frameLength) {
-    case 960:
     case 1024:
       pBwTab = bandWidthTable;
       bwTabSize = sizeof(bandWidthTable)/sizeof(BANDWIDTH_TAB);
@@ -253,7 +252,6 @@ static INT GetBandwidthEntry(
           chanBitRate < pBwTab[i+1].chanBitRate)
       {
         switch (frameLength) {
-          case 960:
           case 1024:
             bandwidth = (entryNo==0)
               ? pBwTab[i].bandWidthMono
