@@ -127,7 +127,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      accu>>=totalShift;
+      accu >>= fixMin(totalShift,DFRACT_BITS-1);
       quaSpectrum[line] = (SHORT)(-((LONG)(k + accu) >> (DFRACT_BITS-1-16)));
     }
     else if(accu > FL2FXCONST_DBL(0.0f))
@@ -140,7 +140,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      accu>>=totalShift;
+      accu >>= fixMin(totalShift,DFRACT_BITS-1);
       quaSpectrum[line] = (SHORT)((LONG)(k + accu) >> (DFRACT_BITS-1-16));
     }
     else
