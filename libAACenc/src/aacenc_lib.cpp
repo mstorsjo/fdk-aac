@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -97,8 +97,8 @@ amm-info@iis.fraunhofer.de
 
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
-#define AACENCODER_LIB_VL1 3
-#define AACENCODER_LIB_VL2 3
+#define AACENCODER_LIB_VL1 4
+#define AACENCODER_LIB_VL2 0
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__

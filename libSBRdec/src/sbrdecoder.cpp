@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  SBR decoder frontend  
+  \brief  SBR decoder frontend
   This module provides a frontend to the SBR decoder. The function openSBR() is called for
   initialization. The function sbrDecoder_Apply() is called for each frame. sbr_Apply() will call the
   required functions to decode the raw SBR data (provided by env_extr.cpp), to decode the envelope data and noise floor levels [decodeSbrData()],
@@ -136,8 +136,8 @@ amm-info@iis.fraunhofer.de
 
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
-#define SBRDECODER_LIB_VL1 1
-#define SBRDECODER_LIB_VL2 3
+#define SBRDECODER_LIB_VL1 2
+#define SBRDECODER_LIB_VL2 0
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
