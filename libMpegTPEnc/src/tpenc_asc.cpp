@@ -255,7 +255,7 @@ int transportEnc_writePCE(HANDLE_FDK_BITSTREAM hBs,
   if ( matrixMixdownA!=0 && ((channelMode==MODE_1_2_2)||(channelMode==MODE_1_2_2_1)) ) {
       FDKwriteBits(hBs, 1, 1);                                  /* Matrix mixdown present */
       FDKwriteBits(hBs, (matrixMixdownA-1)&0x3, 2);             /* matrix_mixdown_idx */
-      FDKwriteBits(hBs, pseudoSurroundEnable&0x1, 1);           /* pseudo_surround_enable */
+      FDKwriteBits(hBs, (pseudoSurroundEnable)?1:0, 1);         /* pseudo_surround_enable */
   }
   else {
       FDKwriteBits(hBs, 0, 1);                                  /* Matrix mixdown not present */
@@ -379,7 +379,7 @@ int transportEnc_writeGASpecificConfig(
 
   /* Write PCE if channel config is not 1-7 */
   if (getChannelConfig(config->channelMode) == 0) {
-      transportEnc_writePCE(asc, config->channelMode, config->samplingRate, 0, 1, 0, 0, alignAnchor);
+      transportEnc_writePCE(asc, config->channelMode, config->samplingRate, 0, 1, config->matrixMixdownA, (config->flags&CC_PSEUDO_SURROUND)?1:0, alignAnchor);
   }
   if (extFlg) {
     if (aot == AOT_ER_BSAC) {

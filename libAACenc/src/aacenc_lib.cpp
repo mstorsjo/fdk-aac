@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 6
+#define AACENCODER_LIB_VL2 7
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -759,6 +759,7 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       /* Allow metadata support */
       case AOT_AAC_LC:
       case AOT_SBR:
+      case AOT_PS:
         hAacEncoder->metaDataAllowed = 1;
         if (((INT)hAacConfig->channelMode < 1) || ((INT)hAacConfig->channelMode > 7)) {
           config->userMetaDataMode = 0;
@@ -1337,8 +1338,12 @@ AACENC_ERROR aacEncEncode(
         for (i=0; i<(INT)nMetaDataExtensions; i++) {  /* Get meta data extension payload. */
             hAacEncoder->extPayload[nExtensions++] = pMetaDataExtPayload[i];
         }
-        if (matrix_mixdown_idx!=-1) {            /* Set matrix mixdown coefficient. */
-          UINT pceValue = (UINT)( (1<<3) | ((matrix_mixdown_idx&0x2)<<1) | 1 );
+
+        if ( (matrix_mixdown_idx!=-1)
+          && ((hAacEncoder->extParam.userChannelMode==MODE_1_2_2)||(hAacEncoder->extParam.userChannelMode==MODE_1_2_2_1)) )
+        {
+          /* Set matrix mixdown coefficient. */
+          UINT pceValue = (UINT)( (1<<3) | ((matrix_mixdown_idx&0x3)<<1) | 1 );
           if (hAacEncoder->extParam.userPceAdditions != pceValue) {
             hAacEncoder->extParam.userPceAdditions = pceValue;
             hAacEncoder->InitFlags |= AACENC_INIT_TRANSPORT;
