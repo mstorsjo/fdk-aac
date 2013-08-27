@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 1
+#define SBRDECODER_LIB_VL2 2
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -878,7 +878,7 @@ void sbrDecoder_drcDisable ( HANDLE_SBRDECODER  self,
   pSbrDrcChannelData = sbrDecoder_drcGetChannel( self, ch );
 
   if ( pSbrDrcChannelData != NULL ) {
-    pSbrDrcChannelData->enable = 0;
+    sbrDecoder_drcInitChannel( pSbrDrcChannelData );
   }
 }
 
