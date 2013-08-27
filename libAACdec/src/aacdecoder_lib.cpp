@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 1
+#define AACDECODER_LIB_VL2 2
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -794,8 +794,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
       /* Export data into streaminfo structure */
       self->streamInfo.sampleRate = self->streamInfo.aacSampleRate;
       self->streamInfo.frameSize  = self->streamInfo.aacSamplesPerFrame;
-      self->streamInfo.numChannels = self->aacChannels;
     }
+    self->streamInfo.numChannels = self->streamInfo.aacNumChannels;
 
 
 
@@ -832,7 +832,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
                                     pTimeData,
                                    &self->streamInfo.numChannels,
                                    &self->streamInfo.sampleRate,
-                                    self->channelOutputMapping[self->aacChannels-1],
+                                    self->channelOutputMapping[self->streamInfo.numChannels-1],
                                     interleaved,
                                     self->frameOK,
                                    &self->psPossible);

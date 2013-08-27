@@ -267,7 +267,7 @@ void getImplicitAudioChannelTypeAndIndex(
 
 int CProgramConfig_LookupElement(
         CProgramConfig *pPce,
-        const UINT      channelConfig,
+        UINT            channelConfig,
         const UINT      tag,
         const UINT      channelIdx,
         UCHAR           chMapping[],
@@ -289,7 +289,13 @@ int CProgramConfig_LookupElement(
       *elMapping = pPce->elCounter;
       if (elList[pPce->elCounter] != elType) {
         /* Not in the list */
-        return 0;
+        if ( (channelConfig == 2) && (elType == ID_SCE) )
+        { /* This scenario occurs with HE-AAC v2 streams of buggy encoders.
+             Due to other decoder implementations decoding of these kind of streams is desired. */
+          channelConfig = 1;
+        } else {
+          return 0;
+        }
       }
       /* Assume all front channels */
       getImplicitAudioChannelTypeAndIndex(&chType[channelIdx], &chIndex[channelIdx], channelConfig, channelIdx);

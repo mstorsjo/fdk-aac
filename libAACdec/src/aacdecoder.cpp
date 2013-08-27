@@ -183,7 +183,7 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
   if ( self->qmfModeCurr == NOT_DEFINED )
   {
     if ( (IS_LOWDELAY(self->streamInfo.aot) && (self->flags & AC_MPS_PRESENT))
-      || ( (self->ascChannels == 1)
+      || ( (self->streamInfo.aacNumChannels == 1)
         && ( (CAN_DO_PS(self->streamInfo.aot) && !(self->flags & AC_MPS_PRESENT))
           || (  IS_USAC(self->streamInfo.aot) &&  (self->flags & AC_MPS_PRESENT)) ) ) )
     {
@@ -196,7 +196,7 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
 
   /* Set SBR to current QMF mode. Error does not matter. */
   sbrDecoder_SetParam(self->hSbrDecoder, SBR_QMF_MODE, (self->qmfModeCurr == MODE_LP));
-  self->psPossible = ((CAN_DO_PS(self->streamInfo.aot) && self->aacChannels == 1 && ! (self->flags & AC_MPS_PRESENT))) && self->qmfModeCurr == MODE_HQ ;
+  self->psPossible = ((CAN_DO_PS(self->streamInfo.aot) && self->streamInfo.aacNumChannels == 1 && ! (self->flags & AC_MPS_PRESENT))) && self->qmfModeCurr == MODE_HQ ;
   FDK_ASSERT( ! ( (self->flags & AC_MPS_PRESENT) && self->psPossible ) );
 }
 
@@ -1573,7 +1573,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
   }
 
   /* Update number of output channels */
-  self->streamInfo.numChannels = aacChannels;
+  self->streamInfo.aacNumChannels = aacChannels;
 
  #ifdef TP_PCE_ENABLE
   if (pceRead == 1 && CProgramConfig_IsValid(pce)) {

@@ -206,7 +206,7 @@ void  CProgramConfig_Read ( CProgramConfig       *pPce,
  */
 int CProgramConfig_LookupElement(
         CProgramConfig *pPce,
-        const UINT      channelConfig,
+        UINT            channelConfig,
         const UINT      tag,
         const UINT      channelIdx,
         UCHAR           chMapping[],
