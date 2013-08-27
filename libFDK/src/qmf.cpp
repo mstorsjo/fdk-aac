@@ -1017,8 +1017,14 @@ qmfInitFilterBank (HANDLE_QMF_FILTER_BANK h_Qmf,     /*!< Handle to return */
         break;
       case 32:
         h_Qmf->p_filter = qmf_64;
+        if (flags & QMF_FLAG_DOWNSAMPLED) {
+          h_Qmf->t_cos = qmf_phaseshift_cos_downsamp32;
+          h_Qmf->t_sin = qmf_phaseshift_sin_downsamp32;
+        }
+        else {
         h_Qmf->t_cos = qmf_phaseshift_cos32;
         h_Qmf->t_sin = qmf_phaseshift_sin32;
+        }
         h_Qmf->p_stride = 2;
         h_Qmf->FilterSize = 640;
         h_Qmf->filterScale = 0;
