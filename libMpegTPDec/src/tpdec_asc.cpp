@@ -205,6 +205,145 @@ void CProgramConfig_Read(
 
   pPce->isValid = 1;
 }
+
+/*
+ * Compare two program configurations.
+ * Returns the result of the comparison:
+ *  -1 - completely different
+ *   0 - completely equal
+ *   1 - different but same channel configuration
+ *   2 - different channel configuration but same number of channels
+ */
+int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
+                             const CProgramConfig * const pPce2 )
+{
+  int result = 0;  /* Innocent until proven false. */
+
+  if (FDKmemcmp(pPce1, pPce2, sizeof(CProgramConfig)) != 0)
+  { /* Configurations are not completely different.
+       So look into details and analyse the channel configurations: */
+    result = -1;
+
+    if (pPce1->NumChannels == pPce2->NumChannels)
+    { /* Now the logic changes. We first assume to have the same channel configuration
+         and then prove if this assumption is true. */
+      result = 1;
+
+      /* Front channels */
+      if (pPce1->NumFrontChannelElements != pPce2->NumFrontChannelElements) {
+        result = 2;  /* different number of front channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumFrontChannelElements; el += 1) {
+          numCh1 += pPce1->FrontElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->FrontElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of front channels */
+        }
+      }
+      /* Side channels */
+      if (pPce1->NumSideChannelElements != pPce2->NumSideChannelElements) {
+        result = 2;  /* different number of side channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumSideChannelElements; el += 1) {
+          numCh1 += pPce1->SideElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->SideElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of side channels */
+        }
+      }
+      /* Back channels */
+      if (pPce1->NumBackChannelElements != pPce2->NumBackChannelElements) {
+        result = 2;  /* different number of back channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumBackChannelElements; el += 1) {
+          numCh1 += pPce1->BackElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->BackElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of back channels */
+        }
+      }
+      /* LFE channels */
+      if (pPce1->NumLfeChannelElements != pPce2->NumLfeChannelElements) {
+        result = 2;  /* different number of lfe channels */
+      }
+      /* LFEs are always SCEs so we don't need to count the channels. */
+    }
+  }
+
+  return result;
+}
+
+void CProgramConfig_GetDefault( CProgramConfig *pPce,
+                                const UINT channelConfig )
+{
+  FDK_ASSERT(pPce != NULL);
+
+  /* Init PCE */
+  CProgramConfig_Init(pPce);
+  pPce->Profile = 1;  /* Set AAC LC because it is the only supported object type. */
+
+  switch (channelConfig) {
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 6:   /* 3/0/2.1ch */
+    pPce->NumLfeChannelElements   += 1;
+    pPce->NumChannels             += 1;
+  case 5:   /* 3/0/2.0ch */
+  case 4:   /* 3/0/1.0ch */
+    pPce->NumBackChannelElements  += 1;
+    pPce->BackElementIsCpe[0]      = (channelConfig>4) ? 1 : 0;
+    pPce->NumChannels             += (channelConfig>4) ? 2 : 1;
+    pPce->NumEffectiveChannels    += (channelConfig>4) ? 2 : 1;
+  case 3:   /* 3/0/0.0ch */
+    pPce->NumFrontChannelElements += 1;
+    pPce->FrontElementIsCpe[1]     = 1;
+    pPce->NumChannels             += 2;
+    pPce->NumEffectiveChannels    += 2;
+  case 1:   /* 1/0/0.0ch */
+    pPce->NumFrontChannelElements += 1;
+    pPce->FrontElementIsCpe[0]     = 0;
+    pPce->NumChannels             += 1;
+    pPce->NumEffectiveChannels    += 1;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 2:   /* 2/0/0.ch */
+    pPce->NumFrontChannelElements  = 1;
+    pPce->FrontElementIsCpe[0]     = 1;
+    pPce->NumChannels             += 2;
+    pPce->NumEffectiveChannels    += 2;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  default:
+    pPce->isValid                  = 0;   /* To be explicit! */
+    break;
+  }
+
+  if (pPce->isValid) {
+    /* Create valid element instance tags */
+    int el, elTagSce = 0, elTagCpe = 0;
+
+    for (el = 0; el < pPce->NumFrontChannelElements; el += 1) {
+      pPce->FrontElementTagSelect[el] = (pPce->FrontElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    for (el = 0; el < pPce->NumSideChannelElements; el += 1) {
+      pPce->SideElementTagSelect[el] = (pPce->SideElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    for (el = 0; el < pPce->NumBackChannelElements; el += 1) {
+      pPce->BackElementTagSelect[el] = (pPce->BackElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    elTagSce = 0;
+    for (el = 0; el < pPce->NumLfeChannelElements; el += 1) {
+      pPce->LfeElementTagSelect[el] = elTagSce++;
+    }
+  }
+}
 #endif /* TP_PCE_ENABLE */
 
 /**
@@ -589,18 +728,18 @@ static INT ld_sbr_header( const CSAudioSpecificConfig *asc,
   }
 
   switch ( channelConfiguration ) {
+    case 7:
+      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
+    case 6:
     case 5:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 3:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
       break;
 
-    case 7:
-      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_SCE, i++);
-    case 6:
-      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 4:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
+      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_SCE, i++);
       break;
   }
 

@@ -374,12 +374,12 @@ int adtsRead_GetRawDataBlockLength(
       length = -1; /* raw data block length is unknown */
     } else {
       if (blockNum < 0 || blockNum > 3) {
-        return TRANSPORTDEC_INVALID_PARAMETER;
+        length = -1;
       }
       length = (pAdts->rawDataBlockDist[blockNum] << 3) - 16;
     }
   }
-  if (blockNum == 0) {
+  if (blockNum == 0 && length > 0) {
     length -= pAdts->bs.num_pce_bits;
   }
   return length;

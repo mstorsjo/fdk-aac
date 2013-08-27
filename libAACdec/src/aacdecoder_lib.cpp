@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 3
+#define AACDECODER_LIB_VL2 4
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -261,7 +261,7 @@ setConcealMethod ( const HANDLE_AACDECODER  self,   /*!< Handle of the decoder i
   HANDLE_SBRDECODER hSbrDec = NULL;
   HANDLE_AAC_DRC hDrcInfo = NULL;
   HANDLE_PCM_DOWNMIX hPcmDmx = NULL;
-  CConcealmentMethod backupMethod;
+  CConcealmentMethod backupMethod = ConcealMethodNone;
   int backupDelay = 0;
   int bsDelay = 0;
 
@@ -396,11 +396,15 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
   AAC_DECODER_ERROR errorStatus = AAC_DEC_OK;
   CConcealParams  *pConcealData = NULL;
   HANDLE_AAC_DRC hDrcInfo = NULL;
+  HANDLE_PCM_DOWNMIX hPcmDmx = NULL;
 
   /* check decoder handle */
   if (self != NULL) {
     pConcealData = &self->concealCommonData;
     hDrcInfo = self->hDrcInfo;
+    hPcmDmx = self->hPcmUtils;
+  } else {
+    errorStatus = AAC_DEC_INVALID_HANDLE;
   }
 
   /* configure the subsystems */
@@ -417,11 +421,14 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
     break;
 
   case AAC_PCM_OUTPUT_CHANNELS:
+    if (value < -1 || value > (6)) {
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
     {
       PCMDMX_ERROR err;
 
       err = pcmDmx_SetParam (
-              self->hPcmUtils,
+              hPcmDmx,
               NUMBER_OF_OUTPUT_CHANNELS,
               value );
 
@@ -441,7 +448,7 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
       PCMDMX_ERROR err;
 
       err = pcmDmx_SetParam (
-              self->hPcmUtils,
+              hPcmDmx,
               DUAL_CHANNEL_DOWNMIX_MODE,
               value );
 
@@ -459,10 +466,14 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
   case AAC_PCM_OUTPUT_CHANNEL_MAPPING:
     switch (value) {
       case 0:
-        self->channelOutputMapping = channelMappingTablePassthrough;
+        if (self != NULL) {
+          self->channelOutputMapping = channelMappingTablePassthrough;
+        }
         break;
       case 1:
-        self->channelOutputMapping = channelMappingTableWAV;
+        if (self != NULL) {
+          self->channelOutputMapping = channelMappingTableWAV;
+        }
         break;
       default:
         errorStatus = AAC_DEC_SET_PARAM_FAIL;
@@ -472,6 +483,9 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
 
 
   case AAC_QMF_LOWPOWER:
+    if (value < -1 || value > 1) {
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }

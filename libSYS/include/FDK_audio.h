@@ -144,6 +144,12 @@ typedef enum
 
 } TRANSPORT_TYPE;
 
+#define TT_IS_PACKET(x) \
+       ( ((x) == TT_MP4_RAW) \
+      || ((x) == TT_DRM) \
+      || ((x) == TT_MP4_LATM_MCP0) \
+      || ((x) == TT_MP4_LATM_MCP1) )
+
 /**
  * Audio Object Type definitions.
  */

@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 2
+#define SBRDECODER_LIB_VL2 3
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -552,7 +552,7 @@ bail:
       sbrDecoder_DestroyElement( self, elementIndex );
     } else if (self->pSbrElement[elementIndex] != NULL) {
       /* Set error flag to trigger concealment */
-      self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;;
+      self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;
     }
   }
 
@@ -731,6 +731,12 @@ SBR_ERROR sbrDecoder_SetParam (HANDLE_SBRDECODER   self,
   case SBR_BS_INTERRUPTION:
     {
       int elementIndex;
+
+      if (self == NULL) {
+        errorStatus = SBRDEC_NOT_INITIALIZED;
+        break;
+      }
+
       /* Loop over SBR elements */
       for (elementIndex = 0; elementIndex < self->numSbrElements; elementIndex++)
       {
