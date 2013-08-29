@@ -234,28 +234,32 @@ typedef enum
 
 /** Channel Mode ( 1-7 equals MPEG channel configurations, others are arbitrary). */
 typedef enum {
-  MODE_INVALID    = -1,
-  MODE_UNKNOWN    = 0,
-  MODE_1          = 1,           /**< SCE                 */
-  MODE_2          = 2,           /**< CPE                 */
-  MODE_1_2        = 3,           /**< SCE,CPE             */
-  MODE_1_2_1      = 4,           /**< SCE,CPE,SCE         */
-  MODE_1_2_2      = 5,           /**< SCE,CPE,CPE         */
-  MODE_1_2_2_1    = 6,           /**< SCE,CPE,CPE,LFE     */
-  MODE_1_2_2_2_1  = 7,           /**< SCE,CPE,CPE,CPE,LFE */
+  MODE_INVALID                  = -1,
+  MODE_UNKNOWN                  =  0,
+  MODE_1                        =  1,       /**< C */
+  MODE_2                        =  2,       /**< L+R */
+  MODE_1_2                      =  3,       /**< C, L+R */
+  MODE_1_2_1                    =  4,       /**< C, L+R, Rear */
+  MODE_1_2_2                    =  5,       /**< C, L+R, LS+RS */
+  MODE_1_2_2_1                  =  6,       /**< C, L+R, LS+RS, LFE */
+  MODE_1_2_2_2_1                =  7,       /**< C, LC+RC, L+R, LS+RS, LFE */
 
-  MODE_1_1                      = 16,          /**< 2 SCEs (dual mono) */
-  MODE_1_1_1_1                  = 17,          /**< 4 SCEs */
-  MODE_1_1_1_1_1_1              = 18,          /**< 6 SCEs */
-  MODE_1_1_1_1_1_1_1_1          = 19,          /**< 8 SCEs */
-  MODE_1_1_1_1_1_1_1_1_1_1_1_1  = 20,          /**< 12 SCEs */
 
-  MODE_2_2                      = 21,          /**< 2 CPEs */
-  MODE_2_2_2                    = 22,          /**< 3 CPEs */
-  MODE_2_2_2_2                  = 23,          /**< 4 CPEs */
-  MODE_2_2_2_2_2_2              = 24,          /**< 6 CPEs */
+  MODE_1_1                      = 16,       /**< 2 SCEs (dual mono) */
+  MODE_1_1_1_1                  = 17,       /**< 4 SCEs */
+  MODE_1_1_1_1_1_1              = 18,       /**< 6 SCEs */
+  MODE_1_1_1_1_1_1_1_1          = 19,       /**< 8 SCEs */
+  MODE_1_1_1_1_1_1_1_1_1_1_1_1  = 20,       /**< 12 SCEs */
 
-  MODE_2_1                      = 30           /**< CPE,SCE (ARIB standard) */
+  MODE_2_2                      = 21,       /**< 2 CPEs */
+  MODE_2_2_2                    = 22,       /**< 3 CPEs */
+  MODE_2_2_2_2                  = 23,       /**< 4 CPEs */
+  MODE_2_2_2_2_2_2              = 24,       /**< 6 CPEs */
+
+  MODE_2_1                      = 30,       /**< CPE,SCE (ARIB standard B32) */
+
+  MODE_7_1_REAR_SURROUND        = 33,       /**< C, L+R, LS+RS, Lrear+Rrear, LFE */
+  MODE_7_1_FRONT_CENTER         = 34        /**< C, LC+RC, L+R, LS+RS, LFE */
 
 } CHANNEL_MODE;
 

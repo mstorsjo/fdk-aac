@@ -112,7 +112,7 @@ INT  FDKaacEnc_AdjThrNew(ADJ_THR_STATE** phAdjThr,
 
 void FDKaacEnc_AdjThrInit(ADJ_THR_STATE *hAdjThr,
                 const INT peMean,
-                ELEMENT_BITS* elBits[(6)],
+                ELEMENT_BITS* elBits[(8)],
                 INT invQuant,
                 INT nElements,
                 INT nChannelsEff,
@@ -135,10 +135,10 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     const FIXP_DBL    maxBitFac,
     const INT         bitDistributionMode);
 
-void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(6)],
-    QC_OUT_ELEMENT*   qcElement[(6)],
+void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(8)],
+    QC_OUT_ELEMENT*   qcElement[(8)],
     QC_OUT*           qcOut,
-    PSY_OUT_ELEMENT*  psyOutElement[(6)],
+    PSY_OUT_ELEMENT*  psyOutElement[(8)],
     INT               CBRbitrateMode,
     CHANNEL_MAPPING*  cm);
 

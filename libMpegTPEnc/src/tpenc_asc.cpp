@@ -127,8 +127,7 @@ typedef struct {
  *
  * The number of channel element parameter describes the kind of consecutively elements.
  * E.g. MODE_1_2_2_2_1 means:
- *                          - First 2 elements (SCE,CPE) are front channel elements.
- *                          - Following element (CPE) is a side channel element.
+ *                          - First 3 elements (SCE,CPE,CPE) are front channel elements.
  *                          - Next element (CPE) is a back channel element.
  *                          - Last element (LFE) is a lfe channel element.
  */
@@ -140,7 +139,8 @@ static const CHANNEL_CONFIGURATION pceConfigTab[] =
   { MODE_1_2_1,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_2_2,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_2_2_1,                  {  2, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_LFE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_2_2_1,                {  2, 1, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE, ID_NONE, ID_NONE, ID_NONE } } },
+  { MODE_1_2_2_2_1,                {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+
 
   { MODE_1_1,                      {  2, 0, 0, 0, { ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_1_1_1,                  {  2, 2, 0, 0, { ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
@@ -151,7 +151,11 @@ static const CHANNEL_CONFIGURATION pceConfigTab[] =
   { MODE_2_2_2,                    {  1, 1, 1, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_2_2_2_2,                  {  4, 0, 0, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
 
-  { MODE_2_1,                      {  1, 0, 1, 0, { ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } }
+  { MODE_2_1,                      {  1, 0, 1, 0, { ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
+
+  { MODE_7_1_REAR_SURROUND,        {  2, 0, 2, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+  { MODE_7_1_FRONT_CENTER,         {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+
 };
 
 

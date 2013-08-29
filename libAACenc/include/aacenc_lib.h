@@ -377,16 +377,20 @@ For user defined Configurations the Channel Configuration is set to 0 and the Ch
 Program Config Element. The present Encoder implementation does not allow the user to configure this Channel Configuration from
 extern. The Encoder implementation supports fixed Channel Modes which are mapped to Channel Configuration as follow.
 \verbatim
---------------------------------------------------------------------
- ChannelMode     | ChCfg  | front_El | side_El  | back_El  | lfe_El
------------------+--------+----------+----------+----------+--------
-MODE_1           |      1 | SCE      |          |          |
-MODE_2           |      2 | CPE      |          |          |
-MODE_1_2         |      3 | SCE, CPE |          |          |
-MODE_1_2_1       |      4 | SCE, CPE |          | SCE      |
-MODE_1_2_2       |      5 | SCE, CPE |          | CPE      |
-MODE_1_2_2_1     |      6 | SCE, CPE |          | CPE      | LFE
---------------------------------------------------------------------
+-------------------------------------------------------------------------------
+ ChannelMode           | ChCfg  | front_El      | side_El  | back_El  | lfe_El
+-----------------------+--------+---------------+----------+----------+--------
+MODE_1                 |      1 | SCE           |          |          |
+MODE_2                 |      2 | CPE           |          |          |
+MODE_1_2               |      3 | SCE, CPE      |          |          |
+MODE_1_2_1             |      4 | SCE, CPE      |          | SCE      |
+MODE_1_2_2             |      5 | SCE, CPE      |          | CPE      |
+MODE_1_2_2_1           |      6 | SCE, CPE      |          | CPE      | LFE
+MODE_1_2_2_2_1         |      7 | SCE, CPE, CPE |          | CPE      | LFE
+-----------------------+--------+---------------+----------+----------+--------
+MODE_7_1_REAR_SURROUND |      0 | SCE, CPE      |          | CPE, CPE | LFE
+MODE_7_1_FRONT_CENTER  |      0 | SCE, CPE, CPE |          | CPE      | LFE
+-------------------------------------------------------------------------------
  - SCE: Single Channel Element.
  - CPE: Channel Pair.
  - SCE: Low Frequency Element.
@@ -402,16 +406,20 @@ Beside the Channel Element assignment the Channel Modes are resposible for audio
 of the audio data depends on the selected ::AACENC_CHANNELORDER which can be MPEG or WAV like order.\n
 Following Table describes the complete channel mapping for both Channel Order configurations.
 \verbatim
----------------------------------------------------------------------------------
-ChannelMode      |  MPEG-Channelorder            |  WAV-Channelorder
------------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---
-MODE_1           | 0 |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |
-MODE_2           | 0 | 1 |   |   |   |   |   |   | 0 | 1 |   |   |   |   |   |
-MODE_1_2         | 0 | 1 | 2 |   |   |   |   |   | 2 | 0 | 1 |   |   |   |   |
-MODE_1_2_1       | 0 | 1 | 2 | 3 |   |   |   |   | 2 | 0 | 1 | 3 |   |   |   |
-MODE_1_2_2       | 0 | 1 | 2 | 3 | 4 |   |   |   | 2 | 0 | 1 | 3 | 4 |   |   |
-MODE_1_2_2_1     | 0 | 1 | 2 | 3 | 4 | 5 |   |   | 2 | 0 | 1 | 4 | 5 | 3 |   |
----------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+ChannelMode            |  MPEG-Channelorder            |  WAV-Channelorder
+-----------------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---
+MODE_1                 | 0 |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |
+MODE_2                 | 0 | 1 |   |   |   |   |   |   | 0 | 1 |   |   |   |   |   |
+MODE_1_2               | 0 | 1 | 2 |   |   |   |   |   | 2 | 0 | 1 |   |   |   |   |
+MODE_1_2_1             | 0 | 1 | 2 | 3 |   |   |   |   | 2 | 0 | 1 | 3 |   |   |   |
+MODE_1_2_2             | 0 | 1 | 2 | 3 | 4 |   |   |   | 2 | 0 | 1 | 3 | 4 |   |   |
+MODE_1_2_2_1           | 0 | 1 | 2 | 3 | 4 | 5 |   |   | 2 | 0 | 1 | 4 | 5 | 3 |   |
+MODE_1_2_2_2_1         | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 2 | 6 | 7 | 0 | 1 | 4 | 5 | 3
+-----------------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---
+MODE_7_1_REAR_SURROUND | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 2 | 0 | 1 | 6 | 7 | 4 | 5 | 3
+MODE_7_1_FRONT_CENTER  | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 2 | 6 | 7 | 0 | 1 | 4 | 5 | 3
+---------------------------------------------------------------------------------------
 \endverbatim
 
 The denoted mapping is important for correct audio channel assignment when using MPEG or WAV ordering. The incoming audio
@@ -920,7 +928,7 @@ typedef enum
                                                   - 480: Optional length in LD/ELD configuration. */
 
   AACENC_CHANNELMODE              = 0x0106,  /*!< Set explicit channel mode. Channel mode must match with number of input channels.
-                                                  - 1-6: MPEG channel modes supported, see ::CHANNEL_MODE in FDK_audio.h. */
+                                                  - 1-7 and 33,34: MPEG channel modes supported, see ::CHANNEL_MODE in FDK_audio.h. */
 
   AACENC_CHANNELORDER             = 0x0107,  /*!< Input audio data channel ordering scheme:
                                                   - 0: MPEG channel ordering (e. g. 5.1: C, L, R, SL, SR, LFE). (default)

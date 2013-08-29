@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 11
+#define AACENCODER_LIB_VL2 12
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -215,8 +215,8 @@ struct AACENCODER
 
     AACENC_EXT_PAYLOAD       extPayload [MAX_TOTAL_EXT_PAYLOADS];
     /* Extension payload */
-    UCHAR                    extPayloadData [(1)][(6)][MAX_PAYLOAD_SIZE];
-    UINT                     extPayloadSize [(1)][(6)]; /* payload sizes in bits */
+    UCHAR                    extPayloadData [(1)][(8)][MAX_PAYLOAD_SIZE];
+    UINT                     extPayloadSize [(1)][(8)]; /* payload sizes in bits */
 
     ULONG                    InitFlags;         /* internal status to treggier re-initialization */
 
@@ -699,8 +699,8 @@ INT aacEncoder_LimitBitrate(
     /* Find total bitrate which provides valid configuration for each SBR element. */
     do {
       int e;
-      SBR_ELEMENT_INFO sbrElInfo[(6)];
-      FDK_ASSERT(cm.nElements <= (6));
+      SBR_ELEMENT_INFO sbrElInfo[(8)];
+      FDK_ASSERT(cm.nElements <= (8));
 
       initialBitrate = adjustedBitrate;
 
@@ -1061,7 +1061,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
         ((InitFlags & AACENC_INIT_CONFIG) || (InitFlags & AACENC_INIT_STATES)) )
     {
         INT sbrError;
-        SBR_ELEMENT_INFO sbrElInfo[(6)];
+        SBR_ELEMENT_INFO sbrElInfo[(8)];
         CHANNEL_MAPPING channelMapping;
 
         if ( FDKaacEnc_InitChannelMapping(hAacConfig->channelMode,
@@ -1072,7 +1072,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
         }
 
         /* Check return value and if the SBR encoder can handle enough elements */
-        if (channelMapping.nElements > (6)) {
+        if (channelMapping.nElements > (8)) {
             return AACENC_INIT_ERROR;
         }
 
@@ -1249,8 +1249,8 @@ AACENC_ERROR aacEncOpen(
 
     /* Determine max channel configuration. */
     if (maxChannels==0) {
-        hAacEncoder->nMaxAacChannels = (6);
-        hAacEncoder->nMaxSbrChannels = (6);
+        hAacEncoder->nMaxAacChannels = (8);
+        hAacEncoder->nMaxSbrChannels = (8);
     }
     else {
         hAacEncoder->nMaxAacChannels = (maxChannels&0x00FF);
@@ -1258,15 +1258,15 @@ AACENC_ERROR aacEncOpen(
             hAacEncoder->nMaxSbrChannels = (maxChannels&0xFF00) ? (maxChannels>>8) : hAacEncoder->nMaxAacChannels;
         }
 
-        if ( (hAacEncoder->nMaxAacChannels>(6)) || (hAacEncoder->nMaxSbrChannels>(6)) ) {
+        if ( (hAacEncoder->nMaxAacChannels>(8)) || (hAacEncoder->nMaxSbrChannels>(8)) ) {
             err = AACENC_INVALID_CONFIG;
             goto bail;
         }
     } /* maxChannels==0 */
 
     /* Max number of elements could be tuned any more. */
-    hAacEncoder->nMaxAacElements = fixMin((6), hAacEncoder->nMaxAacChannels);
-    hAacEncoder->nMaxSbrElements = fixMin((6), hAacEncoder->nMaxSbrChannels);
+    hAacEncoder->nMaxAacElements = fixMin((8), hAacEncoder->nMaxAacChannels);
+    hAacEncoder->nMaxSbrElements = fixMin((8), hAacEncoder->nMaxSbrChannels);
     hAacEncoder->nMaxSubFrames = (1);
 
 
@@ -1595,7 +1595,7 @@ AACENC_ERROR aacEncEncode(
         }
         else {
             /* Add SBR extension payload */
-            for (i = 0; i < (6); i++) {
+            for (i = 0; i < (8); i++) {
                 if (hAacEncoder->extPayloadSize[nPayload][i] > 0) {
                     hAacEncoder->extPayload[nExtensions].pData    = hAacEncoder->extPayloadData[nPayload][i];
                     {
@@ -1850,7 +1850,7 @@ AACENC_ERROR aacEncoder_SetParam(
             }
             if ( (pConfig->nElements > hAacEncoder->nMaxAacElements)
               || (pConfig->nChannelsEff > hAacEncoder->nMaxAacChannels)
-              || !((value>=1) && (value<=6))
+              || !(((value>=1) && (value<=7))||((value>=33) && (value<=34)))
                 )
             {
                 err = AACENC_INVALID_CONFIG;

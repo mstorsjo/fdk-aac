@@ -324,7 +324,7 @@ UINT sbrEncoder_IsSingleRatePossible(AUDIO_OBJECT_TYPE aot);
  */
 INT sbrEncoder_Init(
         HANDLE_SBR_ENCODER   hSbrEncoder,
-        SBR_ELEMENT_INFO     elInfo[(6)],
+        SBR_ELEMENT_INFO     elInfo[(8)],
         int                  noElements,
         INT_PCM             *inputBuffer,
         INT                 *coreBandwidth,
@@ -369,8 +369,8 @@ void sbrEncoder_Close(HANDLE_SBR_ENCODER *phEbrEncoder);
 INT sbrEncoder_EncodeFrame(HANDLE_SBR_ENCODER  hEnvEncoder,
                            INT_PCM            *samples,
                            UINT                timeInStride,
-                           UINT                sbrDataBits[(6)],
-                           UCHAR               sbrData[(6)][MAX_PAYLOAD_SIZE]
+                           UINT                sbrDataBits[(8)],
+                           UCHAR               sbrData[(8)][MAX_PAYLOAD_SIZE]
                           );
 
 /**

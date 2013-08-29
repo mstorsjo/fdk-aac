@@ -539,14 +539,25 @@ INT FDK_DRC_Generator_Initialize(
         drcComp->channelIdx[RS]  = channelMapping.elInfo[2].ChannelIndex[1];
         break;
     case MODE_1_2_2_2_1: /* 7.1 ch */
-        drcComp->channelIdx[L]   = channelMapping.elInfo[1].ChannelIndex[0];
-        drcComp->channelIdx[R]   = channelMapping.elInfo[1].ChannelIndex[1];
-        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0];
-        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0];
-        drcComp->channelIdx[LS]  = channelMapping.elInfo[2].ChannelIndex[0];
-        drcComp->channelIdx[RS]  = channelMapping.elInfo[2].ChannelIndex[1];
-        drcComp->channelIdx[LS2] = channelMapping.elInfo[3].ChannelIndex[0];
-        drcComp->channelIdx[RS2] = channelMapping.elInfo[3].ChannelIndex[1];
+    case MODE_7_1_FRONT_CENTER:
+        drcComp->channelIdx[L]   = channelMapping.elInfo[2].ChannelIndex[0]; /* l */
+        drcComp->channelIdx[R]   = channelMapping.elInfo[2].ChannelIndex[1]; /* r */
+        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0]; /* c */
+        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0]; /* lfe */
+        drcComp->channelIdx[LS]  = channelMapping.elInfo[3].ChannelIndex[0]; /* ls */
+        drcComp->channelIdx[RS]  = channelMapping.elInfo[3].ChannelIndex[1]; /* rs */
+        drcComp->channelIdx[LS2] = channelMapping.elInfo[1].ChannelIndex[0]; /* lc */
+        drcComp->channelIdx[RS2] = channelMapping.elInfo[1].ChannelIndex[1]; /* rc */
+        break;
+    case MODE_7_1_REAR_SURROUND:
+        drcComp->channelIdx[L]   = channelMapping.elInfo[1].ChannelIndex[0]; /* l */
+        drcComp->channelIdx[R]   = channelMapping.elInfo[1].ChannelIndex[1]; /* r */
+        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0]; /* c */
+        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0]; /* lfe */
+        drcComp->channelIdx[LS]  = channelMapping.elInfo[3].ChannelIndex[0]; /* lrear */
+        drcComp->channelIdx[RS]  = channelMapping.elInfo[3].ChannelIndex[1]; /* rrear */
+        drcComp->channelIdx[LS2] = channelMapping.elInfo[2].ChannelIndex[0]; /* ls */
+        drcComp->channelIdx[RS2] = channelMapping.elInfo[2].ChannelIndex[1]; /* rs */
         break;
     case MODE_1_1:
     case MODE_1_1_1_1:

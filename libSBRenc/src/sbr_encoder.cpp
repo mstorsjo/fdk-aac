@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 3
-#define SBRENCODER_LIB_VL2 3
+#define SBRENCODER_LIB_VL2 4
 
 
 
@@ -653,7 +653,7 @@ void sbrEncoder_Close (HANDLE_SBR_ENCODER *phSbrEncoder)
   {
     int el, ch;
 
-    for (el=0; el<(6); el++)
+    for (el=0; el<(8); el++)
     {
       if (hSbrEncoder->sbrElement[el]!=NULL) {
         sbrEncoder_ElementClose(&hSbrEncoder->sbrElement[el]);
@@ -661,7 +661,7 @@ void sbrEncoder_Close (HANDLE_SBR_ENCODER *phSbrEncoder)
     }
 
     /* Close sbr Channels */
-    for (ch=0; ch<(6); ch++)
+    for (ch=0; ch<(8); ch++)
     {
       if (hSbrEncoder->pSbrChannel[ch]) {
         sbrEncoder_ChannelClose(hSbrEncoder->pSbrChannel[ch]);
@@ -1468,7 +1468,7 @@ bail:
 static
 INT FDKsbrEnc_Reallocate(
                     HANDLE_SBR_ENCODER   hSbrEncoder,
-                    SBR_ELEMENT_INFO     elInfo[(6)],
+                    SBR_ELEMENT_INFO     elInfo[(8)],
                     const INT            noElements)
 {
   INT totalCh = 0;
@@ -1806,7 +1806,7 @@ UINT sbrEncoder_IsSingleRatePossible(AUDIO_OBJECT_TYPE aot)
 
 INT sbrEncoder_Init(
         HANDLE_SBR_ENCODER   hSbrEncoder,
-        SBR_ELEMENT_INFO     elInfo[(6)],
+        SBR_ELEMENT_INFO     elInfo[(8)],
         int                  noElements,
         INT_PCM             *inputBuffer,
         INT                 *coreBandwidth,
@@ -1823,7 +1823,7 @@ INT sbrEncoder_Init(
         )
 {
     HANDLE_ERROR_INFO errorInfo = noError;
-    sbrConfiguration sbrConfig[(6)];
+    sbrConfiguration sbrConfig[(8)];
     INT error = 0;
     INT lowestBandwidth;
     /* Save input parameters */
@@ -2211,8 +2211,8 @@ INT
 sbrEncoder_EncodeFrame(  HANDLE_SBR_ENCODER   hSbrEncoder,
                          INT_PCM             *samples,
                          UINT                 timeInStride,
-                         UINT                 sbrDataBits[(6)],
-                         UCHAR                sbrData[(6)][MAX_PAYLOAD_SIZE]
+                         UINT                 sbrDataBits[(8)],
+                         UCHAR                sbrData[(8)][MAX_PAYLOAD_SIZE]
                         )
 {
   INT error;

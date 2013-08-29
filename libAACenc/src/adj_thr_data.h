@@ -144,7 +144,7 @@ typedef struct {
 
 typedef struct {
   BRES_PARAM bresParamLong, bresParamShort;
-  ATS_ELEMENT* adjThrStateElem[(6)];
+  ATS_ELEMENT* adjThrStateElem[(8)];
 } ADJ_THR_STATE;
 
 #endif

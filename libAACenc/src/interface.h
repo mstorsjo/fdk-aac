@@ -156,8 +156,8 @@ typedef struct {
 
 typedef struct {
 
-  PSY_OUT_ELEMENT* psyOutElement[(6)];
-  PSY_OUT_CHANNEL* pPsyOutChannels[(6)];
+  PSY_OUT_ELEMENT* psyOutElement[(8)];
+  PSY_OUT_CHANNEL* pPsyOutChannels[(8)];
 
 }PSY_OUT;
 

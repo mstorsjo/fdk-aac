@@ -154,7 +154,7 @@ typedef enum {
 
 #define ANC_DATA_BUFFERSIZE 1024      /* ancBuffer size */
 
-#define MAX_TOTAL_EXT_PAYLOADS  (((6) * (1)) + (2+2))
+#define MAX_TOTAL_EXT_PAYLOADS  (((8) * (1)) + (2+2))
 
 
 typedef enum {

@@ -1340,7 +1340,7 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
 
       if (hPsyInternal)
       {
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
           if (hPsyInternal->pStaticChannels[i]) {
             if (hPsyInternal->pStaticChannels[i]->psyInputBuffer)
               FreeRam_aacEnc_PsyInputBuffer(&hPsyInternal->pStaticChannels[i]->psyInputBuffer);  /* AUDIO INPUT BUFFER */
@@ -1349,7 +1349,7 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
           }
         }
 
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
           if (hPsyInternal->psyElement[i])
             FreeRam_aacEnc_PsyElement(&hPsyInternal->psyElement[i]);                             /* PSY_ELEMENT */
         }
@@ -1363,12 +1363,12 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
       for (n=0; n<(1); n++) {
         if (phPsyOut[n])
         {
-          for (i=0; i<(6); i++) {
+          for (i=0; i<(8); i++) {
             if (phPsyOut[n]->pPsyOutChannels[i])
               FreeRam_aacEnc_PsyOutChannel(&phPsyOut[n]->pPsyOutChannels[i]);                  /* PSY_OUT_CHANNEL */
           }
 
-          for (i=0; i<(6); i++) {
+          for (i=0; i<(8); i++) {
             if (phPsyOut[n]->psyOutElement[i])
               FreeRam_aacEnc_PsyOutElements(&phPsyOut[n]->psyOutElement[i]);                   /* PSY_OUT_ELEMENTS */
           }
