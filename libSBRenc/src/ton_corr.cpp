@@ -303,8 +303,6 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
     }
   }
 
-  FDK_ASSERT(noEstPerFrame == 2);
-
 
   C_ALLOC_SCRATCH_END(realBuf, FIXP_DBL, 2*BAND_V_SIZE*NUM_V_COMBINE);
   C_ALLOC_SCRATCH_END(ac, ACORR_COEFS, 1);

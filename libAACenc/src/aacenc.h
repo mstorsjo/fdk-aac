@@ -204,6 +204,8 @@ struct AACENC_CONFIG {
   INT   maxBitsPerFrame;        /* maximum number of bits in AU */
   INT   bitreservoir;           /* size of bitreservoir */
 
+  UINT  sbrRatio;               /* sbr sampling rate ratio: dual- or single-rate */
+
   UCHAR useTns;                 /* flag: use temporal noise shaping */
   UCHAR usePns;                 /* flag: use perceptual noise substitution */
   UCHAR useIS;                  /* flag: use intensity coding */

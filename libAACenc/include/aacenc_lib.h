@@ -316,7 +316,8 @@ if the parameter was not set from extern. The bitrate depends on the number of e
 channels and sampling rate and is determined as follows.
 \code
 AAC-LC (AOT_AAC_LC): 1.5 bits per sample
-HE-AAC (AOT_SBR): 0.625 bits per sample
+HE-AAC (AOT_SBR): 0.625 bits per sample (dualrate sbr)
+HE-AAC (AOT_SBR): 1.125 bits per sample (downsampled sbr)
 HE-AAC v2 (AOT_PS): 0.5 bits per sample
 \endcode
 
@@ -416,8 +417,9 @@ determines the maximum allowed bitrate for AAC-LC. For HE-AAC and HE-AAC v2 a li
 look-up table is used.
 
 A good working point in terms of audio quality, sampling rate and bitrate, is at 1 to 1.5
-bits/audio sample for AAC-LC, 0.625 bits/audio sample for HE-AAC and 0.5 bits/audio sample
-for HE-AAC v2. For example for one channel with a sampling frequency of 48 kHz, the range from
+bits/audio sample for AAC-LC, 0.625 bits/audio sample for dualrate HE-AAC, 1.125 bits/audio sample
+for downsampled HE-AAC and 0.5 bits/audio sample for HE-AAC v2.
+For example for one channel with a sampling frequency of 48 kHz, the range from
 48 kbit/s to 72 kbit/s achieves reasonable audio quality for AAC-LC.
 
 For HE-AAC and HE-AAC v2 the lowest possible audio input sampling frequency is 16 kHz because then the
@@ -434,7 +436,7 @@ quality at that bitrate than HE-AAC or HE-AAC v2.
 The following table provides an overview of recommended encoder configuration parameters
 which we determined by virtue of numerous listening tests.
 
-\subsection reommendedConfigLC AAC-LC, HE-AAC, HE-AACv2.
+\subsection reommendedConfigLC AAC-LC, HE-AAC, HE-AACv2 in Dualrate SBR mode.
 \verbatim
 -----------------------------------------------------------------------------------
 Audio Object Type  |  Bit Rate Range  |            Supported  | Preferred  | No. of
@@ -457,8 +459,8 @@ AAC LC + SBR       |  64000 - 128000  |  32.00, 44.10, 48.00  |     48.00  |    
 -------------------+------------------+-----------------------+------------+-------
 AAC LC + SBR       |  64000 -  69999  |  32.00, 44.10, 48.00  |     32.00  | 5, 5.1
 AAC LC + SBR       |  70000 - 159999  |  32.00, 44.10, 48.00  |     44.10  | 5, 5.1
-AAC LC + SBR       | 160000 - 319999  |  32.00, 44.10, 48.00  |     48.00  | 5, 5.1
-AAC LC + SBR       | 320000 - 640000  |  64.00, 88.20, 96.00  |     96.00  | 5, 5.1
+AAC LC + SBR       | 160000 - 245999  |  32.00, 44.10, 48.00  |     48.00  |      5
+AAC LC + SBR       | 160000 - 265999  |  32.00, 44.10, 48.00  |     48.00  |    5.1
 -------------------+------------------+-----------------------+------------+-------
 AAC LC             |   8000 -  15999  | 11.025, 12.00, 16.00  |     12.00  |      1
 AAC LC             |  16000 -  23999  |                16.00  |     16.00  |      1
@@ -481,7 +483,7 @@ AAC LC             | 280000 - 800000  |  32.00, 44.10, 48.00  |     44.10  | 5, 
 -----------------------------------------------------------------------------------
 \endverbatim \n
 
-\subsection reommendedConfigLD AAC-LD, AAC-ELD, AAC-ELD with SBR.
+\subsection reommendedConfigLD AAC-LD, AAC-ELD, AAC-ELD with SBR in Dualrate SBR mode.
 \verbatim
 -----------------------------------------------------------------------------------
 Audio Object Type  |  Bit Rate Range  |            Supported  | Preferred  | No. of
@@ -489,18 +491,20 @@ Audio Object Type  |  Bit Rate Range  |            Supported  | Preferred  | No.
                    |                  |                [kHz]  |      Rate  |
                    |                  |                       |     [kHz]  |
 -------------------+------------------+-----------------------+------------+-------
-ELD + SBR          |  16000 -  24999  |        32.00 - 44.10  |     32.00  |      1
+ELD + SBR          |  18000 -  24999  |        32.00 - 44.10  |     32.00  |      1
 ELD + SBR          |  25000 -  31999  |        32.00 - 48.00  |     32.00  |      1
 ELD + SBR          |  32000 -  64000  |        32.00 - 48.00  |     48.00  |      1
 -------------------+------------------+-----------------------+------------+-------
 ELD + SBR          |  32000 -  51999  |        32.00 - 48.00  |     44.10  |      2
 ELD + SBR          |  52000 - 128000  |        32.00 - 48.00  |     48.00  |      2
 -------------------+------------------+-----------------------+------------+-------
-ELD + SBR          |  72000 - 192000  |        44.10 - 48.00  |     48.00  |      3
+ELD + SBR          |  72000 - 160000  |        44.10 - 48.00  |     48.00  |      3
 -------------------+------------------+-----------------------+------------+-------
-ELD + SBR          |  96000 - 256000  |        44.10 - 48.00  |     48.00  |      4
+ELD + SBR          |  96000 - 212000  |        44.10 - 48.00  |     48.00  |      4
 -------------------+------------------+-----------------------+------------+-------
-ELD + SBR          | 120000 - 320000  |        44.10 - 48.00  |     48.00  |      5
+ELD + SBR          | 120000 - 246000  |        44.10 - 48.00  |     48.00  |      5
+-------------------+------------------+-----------------------+------------+-------
+ELD + SBR          | 120000 - 266000  |        44.10 - 48.00  |     48.00  |    5.1
 -------------------+------------------+-----------------------+------------+-------
 LD, ELD            |  16000 -  19999  |        16.00 - 24.00  |     16.00  |      1
 LD, ELD            |  20000 -  39999  |        16.00 - 32.00  |     24.00  |      1
@@ -531,13 +535,33 @@ LD, ELD            | 340000 - 960000  |        44.10 - 48.00  |     48.00  |    
 -----------------------------------------------------------------------------------
 \endverbatim \n
 
+\subsection reommendedConfigELD AAC-ELD with SBR in Downsampled SBR mode.
+\verbatim
+-----------------------------------------------------------------------------------
+Audio Object Type  |  Bit Rate Range  |            Supported  | Preferred  | No. of
+                   |         [bit/s]  |       Sampling Rates  |    Sampl.  |  Chan.
+                   |                  |                [kHz]  |      Rate  |
+                   |                  |                       |     [kHz]  |
+-------------------+------------------+-----------------------+------------+-------
+ELD + SBR          |  18000 -  24999  |        16.00 - 22.05  |     22.05  |      1
+(downsampled SBR)  |  25000 -  35999  |        22.05 - 32.00  |     24.00  |      1
+                   |  36000 -  64000  |        32.00 - 48.00  |     32.00  |      1
+-----------------------------------------------------------------------------------
+\endverbatim \n
+
+
 \page ENCODERBEHAVIOUR Encoder Behaviour
 
 \section BEHAVIOUR_BANDWIDTH Bandwidth
 
 The FDK AAC encoder usually does not use the full frequency range of the input signal, but restricts the bandwidth
 according to certain library-internal settings. They can be changed in the table "bandWidthTable" in the
-file bandwidth.cpp (if available), or via command-line argument "-w" (see chapter \ref CommandLineUsage).
+file bandwidth.cpp (if available).
+
+The encoder API provides the ::AACENC_BANDWIDTH parameter to adjust the bandwidth explicitly.
+\code
+aacEncoder_SetParam(hAacEncoder, AACENC_BANDWIDTH, value);
+\endcode
 
 However it is not recommended to change these settings, because they are based on numerious listening
 tests and careful tweaks to ensure the best overall encoding quality.
@@ -637,7 +661,6 @@ an MPEG-2 AOT is choosen since PNS is an MPEG-4 AAC feature.
 
 If SBR is activated, the encoder automatically deactivates PNS internally. If TNS is disabled but PNS is allowed,
 the encoder deactivates PNS calculation internally.
-
 
 */
 
@@ -874,6 +897,15 @@ typedef enum
   AACENC_CHANNELORDER             = 0x0107,  /*!< Input audio data channel ordering scheme:
                                                   - 0: MPEG channel ordering (e. g. 5.1: C, L, R, SL, SR, LFE). (default)
                                                   - 1: WAVE file format channel ordering (e. g. 5.1: L, R, C, LFE, SL, SR). */
+
+  AACENC_SBR_RATIO                = 0x0108,  /*!<  Controls activation of downsampled SBR. With downsampled SBR, the delay will be
+                                                   shorter. On the other hand, for achieving the same quality level, downsampled SBR
+                                                   needs more bits than dual-rate SBR.
+                                                   With downsampled SBR, the AAC encoder will work at the same sampling rate as the
+                                                   SBR encoder (single rate).
+                                                   Downsampled SBR is supported for AAC-ELD and HE-AACv1.
+                                                   - 1: Downsampled SBR (default for ELD).
+                                                   - 2: Dual-rate SBR   (default for HE-AAC). */
 
   AACENC_AFTERBURNER              = 0x0200,  /*!< This parameter controls the use of the afterburner feature.
                                                   The afterburner is a type of analysis by synthesis algorithm which increases the

@@ -125,11 +125,6 @@ struct SBR_HEADER_DATA
   INT freqScale;
 
   /*
-    element of sbrdata
-  */
-  SR_MODE sampleRateMode;
-
-  /*
     element of channelpairelement
   */
   INT coupling;

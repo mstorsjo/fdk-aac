@@ -270,13 +270,6 @@ INVF_MODE;
 
 typedef enum
 {
-  SINGLE_RATE,
-  DUAL_RATE
-}
-SR_MODE;
-
-typedef enum
-{
   FREQ_RES_LOW = 0,
   FREQ_RES_HIGH
 }

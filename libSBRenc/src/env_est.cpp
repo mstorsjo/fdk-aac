@@ -129,9 +129,6 @@ FDKsbrEnc_getEnergyFromCplxQmfData(FIXP_DBL **RESTRICT energyValues,/*!< the res
   /* Get Scratch buffer */
   C_ALLOC_SCRATCH_START(tmpNrg, FIXP_DBL, QMF_CHANNELS*QMF_MAX_TIME_SLOTS/2);
 
-  FDK_ASSERT(numberBands <= QMF_CHANNELS);
-  FDK_ASSERT(numberCols <= QMF_MAX_TIME_SLOTS);
-
   /* Get max possible scaling of QMF data */
   scale = DFRACT_BITS;
   for (k=0; k<numberCols; k++) {
