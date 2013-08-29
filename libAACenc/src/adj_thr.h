@@ -98,13 +98,14 @@ amm-info@iis.fraunhofer.de
 #include "interface.h"
 
 
-
-void FDKaacEnc_peCalculation(PE_DATA *peData,
-                             PSY_OUT_CHANNEL* psyOutChannel[(2)],
-                             QC_OUT_CHANNEL* qcOutChannel[(2)],
-                             struct TOOLSINFO *toolsInfo,
-                             ATS_ELEMENT* adjThrStateElement,
-                             const INT nChannels);
+void FDKaacEnc_peCalculation(
+        PE_DATA *peData,
+        PSY_OUT_CHANNEL* psyOutChannel[(2)],
+        QC_OUT_CHANNEL* qcOutChannel[(2)],
+        struct TOOLSINFO *toolsInfo,
+        ATS_ELEMENT* adjThrStateElement,
+        const INT nChannels
+        );
 
 INT  FDKaacEnc_AdjThrNew(ADJ_THR_STATE** phAdjThr,
                          INT             nElements);
@@ -112,9 +113,13 @@ INT  FDKaacEnc_AdjThrNew(ADJ_THR_STATE** phAdjThr,
 void FDKaacEnc_AdjThrInit(ADJ_THR_STATE *hAdjThr,
                 const INT peMean,
                 ELEMENT_BITS* elBits[(6)],
+                INT invQuant,
                 INT nElements,
+                INT nChannelsEff,
+                INT sampleRate,
+                INT advancedBitsToPe,
                 FIXP_DBL vbrQualFactor);
-
+ 
 
 void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     ATS_ELEMENT       *AdjThrStateElement,
@@ -128,7 +133,7 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     const INT         bitresBits,
     const INT         maxBitresBits,
     const FIXP_DBL    maxBitFac,
-    const INT         bitDistributenMode);
+    const INT         bitDistributionMode);
 
 void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(6)],
     QC_OUT_ELEMENT*   qcElement[(6)],

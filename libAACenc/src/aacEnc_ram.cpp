@@ -89,13 +89,13 @@ amm-info@iis.fraunhofer.de
 ******************************************************************************/
 /*!
   \file
-  \brief  Memory layout   
+  \brief  Memory layout
   \author Markus Lohwasser
 */
 
 #include "aacEnc_ram.h"
 
-  C_ALLOC_MEM (AACdynamic_RAM, FIXP_DBL, AAC_ENC_DYN_RAM_SIZE/sizeof(FIXP_DBL))
+  C_AALLOC_MEM (AACdynamic_RAM, FIXP_DBL, AAC_ENC_DYN_RAM_SIZE/sizeof(FIXP_DBL))
 
 /*
   Static memory areas, must not be overwritten in other sections of the decoder !
@@ -175,7 +175,7 @@ C_ALLOC_MEM (Ram_aacEnc_BitCntrState, BITCNTR_STATE, 1)
 */
 
 C_ALLOC_MEM2 (Ram_aacEnc_QCout, QC_OUT, 1, (1))
-C_ALLOC_MEM2 (Ram_aacEnc_QCelement, QC_OUT_ELEMENT, 1, (1)*(6))
+C_ALLOC_MEM2 (Ram_aacEnc_QCelement, QC_OUT_ELEMENT, (1), (6))
   QC_OUT_CHANNEL *GetRam_aacEnc_QCchannel (int n, UCHAR* dynamic_RAM) {
       FDK_ASSERT(dynamic_RAM!=0);
       return ((QC_OUT_CHANNEL*) (dynamic_RAM + P_BUF_0 + n*sizeof(QC_OUT_CHANNEL)));

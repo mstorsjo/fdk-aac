@@ -92,6 +92,7 @@ amm-info@iis.fraunhofer.de
 #define _INTERFACE_H
 
 #include "common_fix.h"
+#include "FDK_audio.h"
 
 #include "psy_data.h"
 #include "aacenc_tns.h"
@@ -159,5 +160,10 @@ typedef struct {
   PSY_OUT_CHANNEL* pPsyOutChannels[(6)];
 
 }PSY_OUT;
+
+inline int isLowDelay( AUDIO_OBJECT_TYPE aot )
+{
+  return (aot==AOT_ER_AAC_LD || aot==AOT_ER_AAC_ELD);
+}
 
 #endif /* _INTERFACE_H */

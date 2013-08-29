@@ -382,10 +382,10 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
   if ( isConstantBitrateMode(hQC->bitrateMode) ) {
     INT bitresPerChannel = (hQC->bitResTotMax / init->channelMapping->nChannelsEff);
     /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
-    hQC->bitDistributenMode = (bitresPerChannel>50) ? 0 : (bitresPerChannel>0) ? 1 : 2;
+    hQC->bitDistributionMode = (bitresPerChannel>100) ? 0 : (bitresPerChannel>0) ? 1 : 2;
   }
   else {
-    hQC->bitDistributenMode = 0; /* full bitreservoir */
+    hQC->bitDistributionMode = 0; /* full bitreservoir */
   }
 
 
@@ -420,11 +420,17 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
       break;
   }
 
-  FDKaacEnc_AdjThrInit(hQC->hAdjThr,
-             init->meanPe,
-             hQC->elementBits,                 /* or channelBitrates, was: channelBitrate */
-             init->channelMapping->nElements,
-             hQC->vbrQualFactor);
+  FDKaacEnc_AdjThrInit(
+        hQC->hAdjThr,
+        init->meanPe,
+        hQC->elementBits,                 /* or channelBitrates, was: channelBitrate */
+        hQC->invQuant,
+        init->channelMapping->nElements,
+        init->channelMapping->nChannelsEff,
+        init->sampleRate,                 /* output sample rate */
+        init->advancedBitsToPe,           /* if set, calc bits2PE factor depending on samplerate */
+        hQC->vbrQualFactor
+        );
 
   return AAC_ENC_OK;
 }
@@ -655,7 +661,7 @@ static AAC_ENCODER_ERROR FDKaacEnc_prepareBitDistribution(QC_STATE*            h
                                          hQC->elementBits[i]->bitResLevelEl,
                                          hQC->elementBits[i]->maxBitResBitsEl,
                                          hQC->maxBitFac,
-                                         hQC->bitDistributenMode);
+                                         hQC->bitDistributionMode);
 
                 *totalAvailableBits += hQC->elementBits[i]->bitResLevelEl;
         /* get total corrected granted PE */

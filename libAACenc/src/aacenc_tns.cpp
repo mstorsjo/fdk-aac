@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /******************************** MPEG Audio Encoder **************************
 
-   Initial author:       Alex Groeschel
+   Initial author:       Alex Groeschel, Tobias Chalupka
    contents/description: Temporal noise shaping
 
 ******************************************************************************/

@@ -143,6 +143,8 @@ struct QC_INIT{
   INT maxBits;     /* maximum number of bits in reservoir  */
   INT averageBits; /* average number of bits we should use */
   INT bitRes;
+  INT sampleRate;       /* output sample rate                   */
+  INT advancedBitsToPe; /* if set, calc bits2PE factor depending on samplerate */
   INT staticBits;  /* Bits per frame consumed by transport layers. */
   QCDATA_BR_MODE bitrateMode;
   INT meanPe;
@@ -252,7 +254,7 @@ typedef struct
   INT minBitsPerFrame;   /* minimal allowd bits per fram, superframing - DRM */
   INT nElements;
   QCDATA_BR_MODE bitrateMode;
-  INT bitDistributenMode; /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
+  INT bitDistributionMode; /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
   INT bitResTot;
   INT bitResTotMax;
   INT maxIterations;      /* Maximum number of allowed iterations before FDKaacEnc_crashRecovery() is applied. */

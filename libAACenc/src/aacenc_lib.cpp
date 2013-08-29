@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 7
+#define AACENCODER_LIB_VL2 8
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -689,7 +689,7 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
           hAacConfig->bitrateMode = 0;
         }
         if (config->userBitrateMode==0) {
-          hAacConfig->bitreservoir = 50*config->nChannels; /* default, reduced bitreservoir */
+          hAacConfig->bitreservoir = 100*config->nChannels; /* default, reduced bitreservoir */
         }
         if (hAacConfig->bitrateMode!=0) {
           return AACENC_INVALID_CONFIG;

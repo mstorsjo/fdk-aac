@@ -116,11 +116,6 @@ static const FIXP_DBL fadeOutFactor[FADE_OUT_LEN] = {1840644096, 1533870080, 122
 /* forward definitions */
 
 
-static inline int isLowDelay( AUDIO_OBJECT_TYPE aot )
-{
-  return (aot==AOT_ER_AAC_LD || aot==AOT_ER_AAC_ELD);
-}
-
 /*****************************************************************************
 
     functionname: FDKaacEnc_PsyNew
@@ -513,28 +508,28 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
 
       for(ch = 0; ch < channels; ch++)
       {
-          C_ALLOC_SCRATCH_START(timeSignal, INT_PCM, (1024));
-          psyStatic[ch]->blockSwitchingControl.timeSignal = timeSignal;
+          C_ALLOC_SCRATCH_START(pTimeSignal, INT_PCM, (1024))
 
           /* deinterleave input data and use for block switching */
-          FDKaacEnc_deinterleaveInputBuffer( psyStatic[ch]->blockSwitchingControl.timeSignal,
+          FDKaacEnc_deinterleaveInputBuffer( pTimeSignal,
                                             &pInput[chIdx[ch]],
                                              psyConf->granuleLength,
                                              totalChannels);
 
 
           FDKaacEnc_BlockSwitching (&psyStatic[ch]->blockSwitchingControl,
-                                     psyConf->granuleLength
-                                    ,psyStatic[ch]->isLFE
+                                     psyConf->granuleLength,
+                                     psyStatic[ch]->isLFE,
+                                     pTimeSignal
                                    );
 
 
             /* fill up internal input buffer, to 2xframelength samples */
             FDKmemcpy(psyStatic[ch]->psyInputBuffer+blockSwitchingOffset,
-                      psyStatic[ch]->blockSwitchingControl.timeSignal,
+                      pTimeSignal,
                       (2*psyConf->granuleLength-blockSwitchingOffset)*sizeof(INT_PCM));
 
-            C_ALLOC_SCRATCH_END(timeSignal, INT_PCM, (1024));
+            C_ALLOC_SCRATCH_END(pTimeSignal, INT_PCM, (1024))
       }
 
       /* synch left and right block type */

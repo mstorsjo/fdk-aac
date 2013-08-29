@@ -578,6 +578,8 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
       qcInit.minBits         = (config->minBitsPerFrame!=-1) ? fixMax(qcInit.minBits, config->minBitsPerFrame) : qcInit.minBits;
   }
 
+  qcInit.sampleRate          = config->sampleRate;
+  qcInit.advancedBitsToPe    = isLowDelay(config->audioObjectType) ? 1 : 0 ;
   qcInit.nSubFrames          = config->nSubFrames;
   qcInit.padding.paddingRest = config->sampleRate;
 
