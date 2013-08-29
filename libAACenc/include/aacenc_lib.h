@@ -342,6 +342,33 @@ increase which might be significant. If workload is not an issue in the applicat
 we recommended to activate this feature.
 \code aacEncoder_SetParam(hAacEncoder, AACENC_AFTERBURNER, 1); \endcode
 
+\subsection encELD ELD Auto Configuration Mode
+For ELD configuration a so called auto configurator is available which configures SBR and the SBR ratio by itself.
+The configurator is used when the encoder parameter ::AACENC_SBR_MODE and ::AACENC_SBR_RATIO are not set explicitely.
+
+Based on sampling rate and chosen bitrate per channel a reasonable SBR configuration will be used.
+\verbatim
+------------------------------------------------------------
+  Sampling Rate  | Channel Bitrate |  SBR |       SBR Ratio
+-----------------+-----------------+------+-----------------
+ ]min, 16] kHz   |     min - 27999 |   on | downsampled SBR
+                 |   28000 -   max |  off |             ---
+-----------------+-----------------+------+-----------------
+ ]16 - 24] kHz   |     min - 39999 |   on | downsampled SBR
+                 |   40000 -   max |  off |             ---
+-----------------+-----------------+------+-----------------
+ ]24 - 32] kHz   |     min - 27999 |   on |    dualrate SBR
+                 |   28000 - 55999 |   on | downsampled SBR
+                 |   56000 -   max |  off |             ---
+-----------------+-----------------+------+-----------------
+ ]32 - 44.1] kHz |     min - 63999 |   on |    dualrate SBR
+                 |   64000 -   max |  off |             ---
+-----------------+-----------------+------+-----------------
+ ]44.1 - 48] kHz |     min - 63999 |   on |    dualrate SBR
+                 |   64000 - max   |  off |             ---
+------------------------------------------------------------
+\endverbatim
+
 
 \section audiochCfg Audio Channel Configuration
 The MPEG standard refers often to the so-called Channel Configuration. This Channel Configuration is used for a fixed Channel
@@ -881,8 +908,9 @@ typedef enum
   AACENC_SAMPLERATE               = 0x0103,  /*!< Audio input data sampling rate. Encoder supports following sampling rates:
                                                   8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 64000, 88200, 96000 */
 
-  AACENC_SBR_MODE                 = 0x0104,  /*!< Configure SBR independently of the chosen Audio Object Type ::AUDIO_OBJECT_TYPE:.
-                                                  This parameter is only available for ELD.
+  AACENC_SBR_MODE                 = 0x0104,  /*!< Configure SBR independently of the chosen Audio Object Type ::AUDIO_OBJECT_TYPE.
+                                                  This parameter is for ELD audio object type only.
+                                                  - -1: Use ELD SBR auto configurator (default).
                                                   - 0: Disable Spectral Band Replication.
                                                   - 1: Enable Spectral Band Replication. */
 

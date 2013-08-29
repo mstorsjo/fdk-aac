@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 10
+#define AACENCODER_LIB_VL2 11
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -235,7 +235,87 @@ struct AACENCODER
 
 } ;
 
-////////////////////////////////////////////////////////////////////////////////////
+typedef struct
+{
+    ULONG               samplingRate;   /*!< Encoder output sampling rate. */
+    ULONG               bitrateRange;   /*!< Lower bitrate range for config entry. */
+
+    UCHAR               lowDelaySbr;    /*!< 0: ELD sbr off,
+                                             1: ELD sbr on */
+
+    UCHAR               downsampledSbr; /*!< 0: ELD with dualrate sbr,
+                                             1: ELD with downsampled sbr */
+
+} ELD_SBR_CONFIGURATOR;
+
+/**
+ * \brief  This table defines ELD/SBR default configurations.
+ */
+static const ELD_SBR_CONFIGURATOR eldSbrAutoConfigTab[] =
+{
+  { 48000,     0, 1, 0 },
+  { 48000, 64001, 0, 0 },
+
+  { 44100,     0, 1, 0 },
+  { 44100, 64001, 0, 0 },
+
+  { 32000,     0, 1, 0 },
+  { 32000, 28000, 1, 1 },
+  { 32000, 56000, 0, 0 },
+
+  { 24000,     0, 1, 1 },
+  { 24000, 40000, 0, 0 },
+
+  { 16000,     0, 1, 1 },
+  { 16000, 28000, 0, 0 }
+
+};
+
+/*
+ * \brief  Configure SBR for ELD configuration.
+ *
+ * This function finds default SBR configuration for ELD based on sampling rate and channel bitrate.
+ * Outputparameters are SBR on/off, and SBR ratio.
+ *
+ * \param samplingRate          Audio signal sampling rate.
+ * \param channelMode           Channel configuration to be used.
+ * \param totalBitrate          Overall bitrate.
+ * \param eldSbr                Pointer to eldSbr parameter, filled on return.
+ * \param eldSbrRatio           Pointer to eldSbrRatio parameter, filled on return.
+ *
+ * \return - AACENC_OK, all fine.
+ *         - AACENC_INVALID_CONFIG, on failure.
+ */
+static AACENC_ERROR eldSbrConfigurator(
+        const ULONG                      samplingRate,
+        const CHANNEL_MODE               channelMode,
+        const ULONG                      totalBitrate,
+        UINT * const                     eldSbr,
+        UINT * const                     eldSbrRatio
+        )
+{
+    AACENC_ERROR err = AACENC_OK;
+    int i, cfgIdx = -1;
+    const ULONG channelBitrate = totalBitrate / FDKaacEnc_GetChannelModeConfiguration(channelMode)->nChannelsEff;
+
+    for (i=0; i<(sizeof(eldSbrAutoConfigTab)/sizeof(ELD_SBR_CONFIGURATOR)); i++) {
+      if ( (samplingRate <= eldSbrAutoConfigTab[i].samplingRate)
+        && (channelBitrate >= eldSbrAutoConfigTab[i].bitrateRange) )
+      {
+        cfgIdx = i;
+      }
+    }
+
+    if (cfgIdx != -1) {
+      *eldSbr      = (eldSbrAutoConfigTab[cfgIdx].lowDelaySbr==0) ? 0 : 1;
+      *eldSbrRatio = (eldSbrAutoConfigTab[cfgIdx].downsampledSbr==0) ? 2 : 1;
+    }
+    else {
+      err = AACENC_INVALID_CONFIG; /* no default configuration for eld-sbr available. */
+    }
+
+    return err;
+}
 
 static inline INT isSbrActive(const HANDLE_AACENC_CONFIG hAacConfig)
 {
@@ -800,6 +880,26 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     }
 
     /* Initialize SBR parameters */
+    if ( (hAacConfig->audioObjectType==AOT_ER_AAC_ELD)
+      && (config->userSbrEnabled == (UCHAR)-1) && (config->userSbrRatio==0) )
+    {
+      UINT eldSbr = 0;
+      UINT eldSbrRatio = 0;
+
+      if ( AACENC_OK!=(err=eldSbrConfigurator(
+            hAacConfig->sampleRate,
+            hAacConfig->channelMode,
+            hAacConfig->bitRate,
+           &eldSbr,
+           &eldSbrRatio)) )
+      {
+        return err;
+      }
+
+      hAacConfig->syntaxFlags |= ((eldSbr) ? AC_SBR_PRESENT : 0);
+      hAacConfig->sbrRatio = eldSbrRatio;
+    }
+    else
     if ( (config->userSbrRatio==0) && (isSbrActive(hAacConfig)) ) {
       /* Automatic SBR ratio configuration
        * - downsampled SBR for ELD
