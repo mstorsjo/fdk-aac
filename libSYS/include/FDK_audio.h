@@ -272,6 +272,15 @@ typedef enum {
   ACT_TOP /* Ts */
 } AUDIO_CHANNEL_TYPE;
 
+typedef enum
+{
+  SIG_UNKNOWN                 = -1,
+  SIG_IMPLICIT                =  0,
+  SIG_EXPLICIT_BW_COMPATIBLE  =  1,
+  SIG_EXPLICIT_HIERARCHICAL   =  2
+
+} SBR_PS_SIGNALING;
+
 /**
  * Audio Codec flags.
  */
@@ -334,6 +343,10 @@ typedef struct {
 
   UCHAR      stereoConfigIndex; /**< USAC MPS stereo mode */
   UCHAR      sbrMode;           /**< USAC SBR mode */
+  SBR_PS_SIGNALING sbrSignaling;/**< 0: implicit signaling, 1: backwards compatible explicit signaling, 2: hierarcical explicit signaling */
+
+  UCHAR      sbrPresent;
+  UCHAR      psPresent;
 } CODER_CONFIG;
 
 /** MP4 Element IDs. */

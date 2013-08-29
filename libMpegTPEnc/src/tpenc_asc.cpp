@@ -474,7 +474,7 @@ int transportEnc_writeASC (
         break;
   }
 
-  if (config->extAOT == AOT_SBR || config->extAOT == AOT_PS)
+  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent)
     writeAot(asc, config->extAOT);
   else
     writeAot(asc, config->aot);
@@ -492,7 +492,7 @@ int transportEnc_writeASC (
 
   FDKwriteBits( asc, getChannelConfig(config->channelMode), 4 );
 
-  if (config->extAOT == AOT_SBR || config->extAOT == AOT_PS) {
+  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent) {
     writeSampleRate(asc, config->extSamplingRate);
     writeAot(asc, config->aot);
   }
@@ -543,6 +543,26 @@ int transportEnc_writeASC (
       break;
     default:
       break;
+  }
+
+  /* backward compatible explicit signaling of extension AOT */
+  if (config->sbrSignaling==SIG_EXPLICIT_BW_COMPATIBLE)
+  {
+    TP_ASC_EXTENSION_ID ascExtId = ASCEXT_UNKOWN;
+
+    if (config->sbrPresent) {
+      ascExtId=ASCEXT_SBR;
+      FDKwriteBits( asc, ascExtId, 11 );
+      writeAot(asc, config->extAOT);
+      FDKwriteBits( asc, 1, 1 ); /* sbrPresentFlag=1 */
+      writeSampleRate(asc, config->extSamplingRate);
+      if (config->psPresent) {
+        ascExtId=ASCEXT_PS;
+        FDKwriteBits( asc, ascExtId, 11 );
+        FDKwriteBits( asc, 1, 1 ); /* psPresentFlag=1 */
+      }
+    }
+
   }
 
   /* Make sure all bits are sync'ed */

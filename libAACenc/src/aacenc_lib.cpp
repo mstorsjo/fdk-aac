@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 9
+#define AACENCODER_LIB_VL2 10
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #define AACENCODER_LIB_BUILD_DATE __DATE__
 #define AACENCODER_LIB_BUILD_TIME __TIME__
@@ -270,6 +270,56 @@ static inline INT isPsActive(const AUDIO_OBJECT_TYPE audioObjectType)
 
     return ( psUsed );
 }
+
+static SBR_PS_SIGNALING getSbrSignalingMode(
+        const AUDIO_OBJECT_TYPE          audioObjectType,
+        const TRANSPORT_TYPE             transportType,
+        const UCHAR                      transportSignaling,
+        const UINT                       sbrRatio
+        )
+
+{
+  SBR_PS_SIGNALING sbrSignaling;
+
+  if (transportType==TT_UNKNOWN || sbrRatio==0) {
+    sbrSignaling = SIG_UNKNOWN; /* Needed parameters have not been set */
+    return sbrSignaling;
+  } else {
+    sbrSignaling = SIG_IMPLICIT; /* default: implicit signaling */
+  }
+
+  if ((audioObjectType==AOT_AAC_LC)     || (audioObjectType==AOT_SBR)     || (audioObjectType==AOT_PS)    ||
+      (audioObjectType==AOT_MP2_AAC_LC) || (audioObjectType==AOT_MP2_SBR) || (audioObjectType==AOT_MP2_PS) ) {
+    switch (transportType) {
+      case TT_MP4_ADIF:
+      case TT_MP4_ADTS:
+        sbrSignaling = SIG_IMPLICIT; /* For MPEG-2 transport types, only implicit signaling is possible */
+        break;
+
+      case TT_MP4_RAW:
+      case TT_MP4_LATM_MCP1:
+      case TT_MP4_LATM_MCP0:
+      case TT_MP4_LOAS:
+      default:
+        if ( transportSignaling==0xFF ) {
+          /* Defaults */
+          if ( sbrRatio==1 ) {
+            sbrSignaling = SIG_EXPLICIT_HIERARCHICAL; /* For downsampled SBR, explicit signaling is mandatory */
+          } else {
+            sbrSignaling = SIG_IMPLICIT; /* For dual-rate SBR, implicit signaling is default */
+          }
+        } else {
+          /* User set parameters */
+          /* Attention: Backward compatible explicit signaling does only work with AMV1 for LATM/LOAS */
+          sbrSignaling = (SBR_PS_SIGNALING)transportSignaling;
+        }
+        break;
+    }
+  }
+
+  return sbrSignaling;
+}
+
 /****************************************************************************
                                Allocate Encoder
 ****************************************************************************/
@@ -283,8 +333,12 @@ C_ALLOC_MEM (_AacEncoder, AACENCODER, 1)
 /*
  * Map Encoder specific config structures to CODER_CONFIG.
  */
-static
-void FDKaacEnc_MapConfig(CODER_CONFIG *cc, USER_PARAM *extCfg, HANDLE_AACENC_CONFIG hAacConfig)
+static void FDKaacEnc_MapConfig(
+        CODER_CONFIG *const              cc,
+        const USER_PARAM *const          extCfg,
+        const SBR_PS_SIGNALING           sbrSignaling,
+        const HANDLE_AACENC_CONFIG       hAacConfig
+        )
 {
   AUDIO_OBJECT_TYPE transport_AOT = AOT_NULL_OBJECT;
   FDKmemclear(cc, sizeof(CODER_CONFIG));
@@ -321,17 +375,26 @@ void FDKaacEnc_MapConfig(CODER_CONFIG *cc, USER_PARAM *extCfg, HANDLE_AACENC_CON
   }
 
   /* Configure extension aot. */
-  if (extCfg->userTpSignaling==0) {
+  if (sbrSignaling==SIG_IMPLICIT) {
     cc->extAOT = AOT_NULL_OBJECT;  /* implicit */
   }
   else {
-    if ( (extCfg->userTpSignaling==1) && ( (transport_AOT==AOT_SBR) || (transport_AOT==AOT_PS) ) ) {
+    if ( (sbrSignaling==SIG_EXPLICIT_BW_COMPATIBLE) && ( (transport_AOT==AOT_SBR) || (transport_AOT==AOT_PS) ) ) {
       cc->extAOT = AOT_SBR;        /* explicit backward compatible */
     }
     else {
       cc->extAOT = transport_AOT;  /* explicit hierarchical */
     }
   }
+
+  if ( (transport_AOT==AOT_SBR) || (transport_AOT==AOT_PS) ) {
+    cc->sbrPresent=1;
+    if (transport_AOT==AOT_PS) {
+      cc->psPresent=1;
+    }
+  }
+  cc->sbrSignaling    = sbrSignaling;
+
   cc->extSamplingRate = extCfg->userSamplerate;
   cc->bitRate         = hAacConfig->bitRate;
   cc->noChannels      = hAacConfig->nChannels;
@@ -368,7 +431,6 @@ void FDKaacEnc_MapConfig(CODER_CONFIG *cc, USER_PARAM *extCfg, HANDLE_AACENC_CON
     case AOT_MP2_SBR:
     case AOT_MP2_PS:
       cc->flags &= ~CC_MPEG_ID; /* Required for ADTS. */
-      //config->userTpSignaling=0;
       cc->extAOT = AOT_NULL_OBJECT;
       break;
     default:
@@ -428,7 +490,7 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HANDLE_AACENC_CONFIG hAacConfig,
     /* make reasonable default settings */
     FDKaacEnc_AacInitDefaultConfig (hAacConfig);
 
-    /* clear confure structure and copy default settings */
+    /* clear configuration structure and copy default settings */
     FDKmemclear(config, sizeof(USER_PARAM));
 
     /* copy encoder configuration settings */
@@ -455,7 +517,7 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HANDLE_AACENC_CONFIG hAacConfig,
     /* initialize transport parameters */
     config->userTpType         = TT_UNKNOWN;
     config->userTpAmxv         = 0;
-    config->userTpSignaling    = 0;    /* default, implicit signaling */
+    config->userTpSignaling    = 0xFF;    /* choose signaling automatically */
     config->userTpNsubFrames   = 1;
     config->userTpProtection   = 0;    /* not crc protected*/
     config->userTpHeaderPeriod = 0xFF; /* header period in auto mode */
@@ -651,9 +713,6 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       case AOT_MP2_SBR:
       case AOT_MP2_PS:
           hAacConfig->usePns = 0;
-          if (config->userTpSignaling!=0) {
-            return AACENC_INVALID_CONFIG; /* only implicit signaling allowed */
-          }
       case AOT_AAC_LC:
       case AOT_SBR:
       case AOT_PS:
@@ -681,7 +740,7 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
           hAacConfig->syntaxFlags |= ((config->userErTools & 0x1) ? AC_ER_VCB11 : 0);
           hAacConfig->syntaxFlags |= ((config->userErTools & 0x2) ? AC_ER_HCR : 0);
           hAacConfig->syntaxFlags |= ((config->userErTools & 0x4) ? AC_ER_RVLC : 0);
-          hAacConfig->syntaxFlags |= ((config->userSbrEnabled)    ? AC_SBR_PRESENT : 0);
+          hAacConfig->syntaxFlags |= ((config->userSbrEnabled==1)  ? AC_SBR_PRESENT : 0);
           config->userTpType = (config->userTpType!=TT_UNKNOWN) ? config->userTpType : TT_MP4_LOAS;
           hAacConfig->framelength = (config->userFramelength!=(UINT)-1) ? config->userFramelength : 512;
           if (hAacConfig->framelength != 512 && hAacConfig->framelength != 480) {
@@ -752,6 +811,26 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       /* SBR ratio has been set by the user, so use it. */
       hAacConfig->sbrRatio = config->userSbrRatio;
     }
+
+    {
+      UCHAR tpSignaling=getSbrSignalingMode(hAacConfig->audioObjectType, config->userTpType, config->userTpSignaling, hAacConfig->sbrRatio);
+
+      if ( (hAacConfig->audioObjectType==AOT_AAC_LC || hAacConfig->audioObjectType==AOT_SBR || hAacConfig->audioObjectType==AOT_PS) &&
+           (config->userTpType==TT_MP4_LATM_MCP1 || config->userTpType==TT_MP4_LATM_MCP0 || config->userTpType==TT_MP4_LOAS) &&
+           (tpSignaling==1) && (config->userTpAmxv==0) ) {
+             /* For backward compatible explicit signaling, AMV1 has to be active */
+             return AACENC_INVALID_CONFIG;
+      }
+
+      if ( (hAacConfig->audioObjectType==AOT_AAC_LC || hAacConfig->audioObjectType==AOT_SBR || hAacConfig->audioObjectType==AOT_PS) &&
+           (tpSignaling==0) && (hAacConfig->sbrRatio==1)) {
+             /* Downsampled SBR has to be signaled explicitely (for transmission of SBR sampling fequency) */
+             return AACENC_INVALID_CONFIG;
+      }
+    }
+
+
+
     /* We need the frame length to call aacEncoder_LimitBitrate() */
     hAacConfig->bitRate = aacEncoder_LimitBitrate(
               NULL,
@@ -948,7 +1027,11 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
     {
         UINT flags = 0;
 
-        FDKaacEnc_MapConfig(&hAacEncoder->coderConfig, config, hAacConfig);
+        FDKaacEnc_MapConfig(
+                &hAacEncoder->coderConfig,
+                config,
+                getSbrSignalingMode(hAacConfig->audioObjectType, config->userTpType, config->userTpSignaling, hAacConfig->sbrRatio),
+                hAacConfig);
 
         /* create flags for transport encoder */
         if (config->userTpAmxv == 1) {
@@ -1880,7 +1963,7 @@ UINT aacEncoder_GetParam(
         value = (UINT)settings->userTpType;
         break;
     case AACENC_SIGNALING_MODE:
-        value = (UINT)settings->userTpSignaling;
+        value = (UINT)getSbrSignalingMode(hAacEncoder->aacConfig.audioObjectType, settings->userTpType, settings->userTpSignaling, hAacEncoder->aacConfig.sbrRatio);
         break;
     case AACENC_PROTECTION:
         value = (UINT)settings->userTpProtection;

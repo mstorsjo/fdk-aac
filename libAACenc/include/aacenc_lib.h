@@ -938,14 +938,50 @@ typedef enum
                                                   - n: Frame count period. */
 
   AACENC_SIGNALING_MODE           = 0x0302,  /*!< Signaling mode of the extension AOT:
-                                                  - 0: Implicit backward compatible signaling. (default)
-                                                  - 1: Explicit SBR and implicit PS signaling.
-                                                  - 2: Explicit hierarchical signaling.
+                                                  - 0: Implicit backward compatible signaling (default for non-MPEG-4 based
+                                                       AOT's and for the transport formats ADIF and ADTS)
+                                                       - A stream that uses implicit signaling can be decoded by every AAC decoder, even AAC-LC-only decoders
+                                                       - An AAC-LC-only decoder will only decode the low-frequency part of the stream, resulting in a band-limited output
+                                                       - This method works with all transport formats
+                                                       - This method does not work with downsampled SBR
+                                                  - 1: Explicit backward compatible signaling
+                                                       - A stream that uses explicit backward compatible signaling can be decoded by every AAC decoder, even AAC-LC-only decoders
+                                                       - An AAC-LC-only decoder will only decode the low-frequency part of the stream, resulting in a band-limited output
+                                                       - A decoder not capable of decoding PS will only decode the AAC-LC+SBR part.
+                                                         If the stream contained PS, the result will be a a decoded mono downmix
+                                                       - This method does not work with ADIF or ADTS. For LOAS/LATM, it only works with AudioMuxVersion==1
+                                                       - This method does work with downsampled SBR
+                                                  - 2: Explicit hierarchical signaling (default for MPEG-4 based AOT's and for all transport formats excluding ADIF and ADTS)
+                                                       - A stream that uses explicit hierarchical signaling can be decoded only by HE-AAC decoders
+                                                       - An AAC-LC-only decoder will not decode a stream that uses explicit hierarchical signaling
+                                                       - A decoder not capable of decoding PS will not decode the stream at all if it contained PS
+                                                       - This method does not work with ADIF or ADTS. It works with LOAS/LATM and the MPEG-4 File format
+                                                       - This method does work with downsampled SBR
 
-                                                  The use of backward-compatible implicit signaling is recommended if the user specically
-                                                  aims at preserving compatibility with decoders only capable of decoding AAC-LC. Otherwise
-                                                  use non-backward-compatible explicit signaling.
-                                                  Bitstream formats ADTS and ADIF can only do implicit signaling. */
+                                                   For making sure that the listener always experiences the best audio quality,
+                                                   explicit hierarchical signaling should be used.
+                                                   This makes sure that only a full HE-AAC-capable decoder will decode those streams.
+                                                   The audio is played at full bandwidth.
+                                                   For best backwards compatibility, it is recommended to encode with implicit SBR signaling.
+                                                   A decoder capable of AAC-LC only will then only decode the AAC part, which means the decoded
+                                                   audio will sound band-limited.
+
+                                                   For MPEG-2 transport types (ADTS,ADIF), only implicit signaling is possible.
+
+                                                   For LOAS and LATM, explicit backwards compatible signaling only works together with AudioMuxVersion==1.
+                                                   The reason is that, for explicit backwards compatible signaling, additional information will be appended to the ASC.
+                                                   A decoder that is only capable of decoding AAC-LC will skip this part.
+                                                   Nevertheless, for jumping to the end of the ASC, it needs to know the ASC length.
+                                                   Transmitting the length of the ASC is a feature of AudioMuxVersion==1, it is not possible to transmit the
+                                                   length of the ASC with AudioMuxVersion==0, therefore an AAC-LC-only decoder will not be able to parse a
+                                                   LOAS/LATM stream that was being encoded with AudioMuxVersion==0.
+
+                                                   For downsampled SBR, explicit signaling is mandatory. The reason for this is that the
+                                                   extension sampling frequency (which is in case of SBR the sampling frequqncy of the SBR part)
+                                                   can only be signaled in explicit mode.
+
+                                                   For AAC-ELD, the SBR information is transmitted in the ELDSpecific Config, which is part of the
+                                                   AudioSpecificConfig. Therefore, the settings here will have no effect on AAC-ELD.*/
 
   AACENC_TPSUBFRAMES              = 0x0303,  /*!< Number of sub frames in a transport frame for LOAS/LATM or ADTS (default 1).
                                                   - ADTS: Maximum number of sub frames restricted to 4.
