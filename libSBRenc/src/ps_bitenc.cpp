@@ -267,13 +267,13 @@ static const INT psBands[] =
   PS_BANDS_MID
 };
 
-static INT getNoBands(PS_RESOLUTION mode)
+static INT getNoBands(UINT mode)
 {
   if(mode>=6)
     return 0;
 
   if(mode>=3)
-    mode = (PS_RESOLUTION)(mode-3);
+    mode = mode-3;
 
   return psBands[mode];
 }
@@ -524,7 +524,7 @@ static INT encodeIpdOpd(HANDLE_PS_OUT        psOut,
       bitCnt += FDKsbrEnc_EncodeIpd( hBitBuf,
                            psOut->ipd[env],
                            ipdLast,
-                           getNoBands((PS_RESOLUTION)psOut->iidMode),
+                           getNoBands((UINT)psOut->iidMode),
                            psOut->deltaIPD[env],
                            &error);
 
@@ -532,7 +532,7 @@ static INT encodeIpdOpd(HANDLE_PS_OUT        psOut,
       bitCnt += FDKsbrEnc_EncodeOpd( hBitBuf,
                            psOut->opd[env],
                            opdLast,
-                           getNoBands((PS_RESOLUTION)psOut->iidMode),
+                           getNoBands((UINT)psOut->iidMode),
                            psOut->deltaOPD[env],
                            &error );
     }
@@ -661,7 +661,7 @@ INT FDKsbrEnc_WritePSBitstream(const HANDLE_PS_OUT   psOut,
         bitCnt += FDKsbrEnc_EncodeIid( hBitBuf,
                              psOut->iid[env],
                              iidLast,
-                             getNoBands((PS_RESOLUTION)psOut->iidMode),
+                             getNoBands((UINT)psOut->iidMode),
                              (PS_IID_RESOLUTION)getIIDRes(psOut->iidMode),
                              psOut->deltaIID[env],
                              &error );
@@ -677,7 +677,7 @@ INT FDKsbrEnc_WritePSBitstream(const HANDLE_PS_OUT   psOut,
         bitCnt += FDKsbrEnc_EncodeIcc( hBitBuf,
                              psOut->icc[env],
                              iccLast,
-                             getNoBands((PS_RESOLUTION)psOut->iccMode),
+                             getNoBands((UINT)psOut->iccMode),
                              psOut->deltaICC[env],
                              &error);
 
