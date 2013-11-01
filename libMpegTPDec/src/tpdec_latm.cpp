@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -120,7 +120,8 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadAudioMuxElement(
         CLatmDemux *pLatmDemux,
         int m_muxConfigPresent,
         CSTpCallBacks *pTpDecCallbacks,
-        CSAudioSpecificConfig *pAsc
+        CSAudioSpecificConfig *pAsc,
+        int *pfConfigFound
         )
 {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
@@ -129,10 +130,15 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadAudioMuxElement(
     pLatmDemux->m_useSameStreamMux = FDKreadBits(bs,1);
 
     if (!pLatmDemux->m_useSameStreamMux) {
-      if ((ErrorStatus = CLatmDemux_ReadStreamMuxConfig(bs, pLatmDemux, pTpDecCallbacks, pAsc))) {
+      if ((ErrorStatus = CLatmDemux_ReadStreamMuxConfig(bs, pLatmDemux, pTpDecCallbacks, pAsc, pfConfigFound))) {
         return (ErrorStatus);
       }
     }
+  }
+
+  /* If there was no configuration read, its not possible to parse PayloadLengthInfo below. */
+  if (! *pfConfigFound) {
+    return TRANSPORTDEC_SYNC_ERROR;
   }
 
   if (pLatmDemux->m_AudioMuxVersionA == 0) {
@@ -154,6 +160,7 @@ TRANSPORTDEC_ERROR CLatmDemux_Read(
         TRANSPORT_TYPE tt,
         CSTpCallBacks *pTpDecCallbacks,
         CSAudioSpecificConfig *pAsc,
+        int *pfConfigFound,
         const INT ignoreBufferFullness
         )
 {
@@ -168,7 +175,7 @@ TRANSPORTDEC_ERROR CLatmDemux_Read(
     return TRANSPORTDEC_NOT_ENOUGH_BITS;
   }
 
-  if ((ErrorStatus = CLatmDemux_ReadAudioMuxElement(bs, pLatmDemux, (tt != TT_MP4_LATM_MCP0), pTpDecCallbacks, pAsc)))
+  if ((ErrorStatus = CLatmDemux_ReadAudioMuxElement(bs, pLatmDemux, (tt != TT_MP4_LATM_MCP0), pTpDecCallbacks, pAsc, pfConfigFound)))
     return (ErrorStatus);
 
   if (!ignoreBufferFullness)
@@ -205,7 +212,8 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
         HANDLE_FDK_BITSTREAM bs,
         CLatmDemux *pLatmDemux,
         CSTpCallBacks *pTpDecCallbacks,
-        CSAudioSpecificConfig *pAsc
+        CSAudioSpecificConfig *pAsc,
+        int * pfConfigFound
         )
 {
   LATM_LAYER_INFO *p_linfo = NULL;
@@ -272,6 +280,7 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
             if ((ErrorStatus = AudioSpecificConfig_Parse(&pAsc[TPDEC_TRACKINDEX(prog,lay)], &tmpBs, 1, pTpDecCallbacks))) {
               return (ErrorStatus);
             }
+            *pfConfigFound = 1;
 
             /* The field p_linfo->m_ascLen could be wrong, so check if */
             if ( 0 > (INT)FDKgetValidBits(&tmpBs)) {
@@ -292,6 +301,7 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
             if (cbError != 0) {
               return TRANSPORTDEC_UNKOWN_ERROR;
             }
+            *pfConfigFound = 1;
           }
         }
 
@@ -377,7 +387,7 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs, CLa
   else {
     ErrorStatus = TRANSPORTDEC_PARSE_ERROR; //AAC_DEC_LATM_TIMEFRAMING;
   }
-  if (pLatmDemux->m_audioMuxLengthBytes > 0 && totalPayloadBits > pLatmDemux->m_audioMuxLengthBytes*8) {
+  if (pLatmDemux->m_audioMuxLengthBytes > (UINT)0 && totalPayloadBits > (int)pLatmDemux->m_audioMuxLengthBytes*8) {
     return TRANSPORTDEC_PARSE_ERROR;
   }
   return (ErrorStatus);

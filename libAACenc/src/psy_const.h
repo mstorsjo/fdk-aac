@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -98,7 +98,6 @@ amm-info@iis.fraunhofer.de
 
 #define FRAME_MAXLEN_SHORT    ((1024)/TRANS_FAC)
 #define FRAME_LEN_SHORT_128   ((1024)/TRANS_FAC)
-#define FRAME_LEN_SHORT_120   (FRAME_LEN_LONG_960/TRANS_FAC)
 
 /* Filterbank type*/
 enum FB_TYPE {

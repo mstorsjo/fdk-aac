@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -118,13 +118,8 @@ extern const UCHAR         v_Huff_NoiseLevelL11T[63];
 extern const INT           bookSbrNoiseBalanceC11T[25];
 extern const UCHAR         bookSbrNoiseBalanceL11T[25];
 
-#define SBRENC_AACLC_TUNING_SIZE   124
-#define SBRENC_AACELD_TUNING_SIZE   (26)
-#define SBRENC_AACELD2_TUNING_SIZE  (26)
-
-#define SBRENC_TUNING_SIZE (SBRENC_AACLC_TUNING_SIZE + SBRENC_AACELD_TUNING_SIZE)
-
-extern const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE];
+extern const sbrTuningTable_t sbrTuningTable[];
+extern const int sbrTuningTableSize;
 
 extern const psTuningTable_t psTuningTable[4];
 

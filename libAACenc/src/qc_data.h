@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -127,7 +127,7 @@ typedef struct {
   INT nChannels;
   INT nChannelsEff;
   INT nElements;
-  ELEMENT_INFO elInfo[(6)];
+  ELEMENT_INFO elInfo[(8)];
 } CHANNEL_MAPPING;
 
 typedef struct {
@@ -143,6 +143,8 @@ struct QC_INIT{
   INT maxBits;     /* maximum number of bits in reservoir  */
   INT averageBits; /* average number of bits we should use */
   INT bitRes;
+  INT sampleRate;       /* output sample rate                   */
+  INT advancedBitsToPe; /* if set, calc bits2PE factor depending on samplerate */
   INT staticBits;  /* Bits per frame consumed by transport layers. */
   QCDATA_BR_MODE bitrateMode;
   INT meanPe;
@@ -215,8 +217,8 @@ typedef struct
 
 typedef struct
 {
-  QC_OUT_ELEMENT    *qcElement[(6)];
-  QC_OUT_CHANNEL    *pQcOutChannels[(6)];
+  QC_OUT_ELEMENT    *qcElement[(8)];
+  QC_OUT_CHANNEL    *pQcOutChannels[(8)];
   QC_OUT_EXTENSION   extension[(2+2)];  /* global extension payload */
   INT          nExtensions;       /* number of extension payloads for this AU */
   INT          maxDynBits;        /* maximal allowed dynamic bits in frame */
@@ -252,7 +254,7 @@ typedef struct
   INT minBitsPerFrame;   /* minimal allowd bits per fram, superframing - DRM */
   INT nElements;
   QCDATA_BR_MODE bitrateMode;
-  INT bitDistributenMode; /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
+  INT bitDistributionMode; /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
   INT bitResTot;
   INT bitResTotMax;
   INT maxIterations;      /* Maximum number of allowed iterations before FDKaacEnc_crashRecovery() is applied. */
@@ -263,7 +265,7 @@ typedef struct
 
   PADDING padding;
 
-  ELEMENT_BITS  *elementBits[(6)];
+  ELEMENT_BITS  *elementBits[(8)];
   BITCNTR_STATE *hBitCounter;
   ADJ_THR_STATE *hAdjThr;
 

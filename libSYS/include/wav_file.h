@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -111,16 +111,36 @@ amm-info@iis.fraunhofer.de
 extern "C" {
 #endif
 
+#define SPEAKER_FRONT_LEFT             0x1
+#define SPEAKER_FRONT_RIGHT            0x2
+#define SPEAKER_FRONT_CENTER           0x4
+#define SPEAKER_LOW_FREQUENCY          0x8
+#define SPEAKER_BACK_LEFT              0x10
+#define SPEAKER_BACK_RIGHT             0x20
+#define SPEAKER_FRONT_LEFT_OF_CENTER   0x40
+#define SPEAKER_FRONT_RIGHT_OF_CENTER  0x80
+#define SPEAKER_BACK_CENTER            0x100
+#define SPEAKER_SIDE_LEFT              0x200
+#define SPEAKER_SIDE_RIGHT             0x400
+#define SPEAKER_TOP_CENTER             0x800
+#define SPEAKER_TOP_FRONT_LEFT         0x1000
+#define SPEAKER_TOP_FRONT_CENTER       0x2000
+#define SPEAKER_TOP_FRONT_RIGHT        0x4000
+#define SPEAKER_TOP_BACK_LEFT          0x8000
+#define SPEAKER_TOP_BACK_CENTER        0x10000
+#define SPEAKER_TOP_BACK_RIGHT         0x20000
+#define SPEAKER_RESERVED               0x80000000
+
 /*!
  * RIFF WAVE file struct.
  * For details see WAVE file format documentation (for example at http://www.wotsit.org).
  */
 typedef struct WAV_HEADER
 {
-  char  riffType[4];
+  char   riffType[4];
   UINT   riffSize;
-  char  waveType[4];
-  char  formatType[4];
+  char   waveType[4];
+  char   formatType[4];
   UINT   formatSize;
   USHORT compressionCode;
   USHORT numChannels;
@@ -128,7 +148,7 @@ typedef struct WAV_HEADER
   UINT   bytesPerSecond;
   USHORT blockAlign;
   USHORT bitsPerSample;
-  char  dataType[4];
+  char   dataType[4];
   UINT   dataSize;
 } WAV_HEADER;
 
@@ -136,6 +156,7 @@ struct WAV
 {
   WAV_HEADER header;
   FDKFILE *fp;
+  UINT channelMask;
 };
 
 typedef struct WAV *HANDLE_WAV;

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -96,34 +96,42 @@ amm-info@iis.fraunhofer.de
 
 
 INT
-FDKsbrEnc_UpdateFreqScale(UCHAR *v_k_master, INT *h_num_bands,
-                const INT k0, const INT k2,
-                const INT freq_scale,
-                const INT alter_scale);
+FDKsbrEnc_UpdateFreqScale(
+        UCHAR *v_k_master,
+        INT   *h_num_bands,
+        const  INT k0,
+        const  INT k2,
+        const  INT freq_scale,
+        const  INT alter_scale
+        );
 
 INT
-FDKsbrEnc_UpdateHiRes(UCHAR *h_hires,
-            INT *num_hires,
-            UCHAR *v_k_master,
-            INT num_master ,
-            INT *xover_band,
-            SR_MODE drOrSr,
-            INT noQMFChannels);
+FDKsbrEnc_UpdateHiRes(
+        UCHAR *h_hires,
+        INT   *num_hires,
+        UCHAR *v_k_master,
+        INT    num_master,
+        INT   *xover_band
+        );
 
-void  FDKsbrEnc_UpdateLoRes(UCHAR * v_lores,
-                  INT *num_lores,
-                  UCHAR * v_hires,
-                  INT num_hires);
+void  FDKsbrEnc_UpdateLoRes(
+        UCHAR *v_lores,
+        INT   *num_lores,
+        UCHAR *v_hires,
+        INT    num_hires
+        );
 
 INT
-FDKsbrEnc_FindStartAndStopBand(const INT samplingFreq,
-                     const INT noChannels,
-                     const INT startFreq,
-                     const INT stop_freq,
-                     const SR_MODE sampleRateMode,
-                     INT *k0,
-                     INT *k2);
+FDKsbrEnc_FindStartAndStopBand(
+        const INT srSbr,
+        const INT srCore,
+        const INT noChannels,
+        const INT startFreq,
+        const INT stop_freq,
+        INT *k0,
+        INT *k2
+        );
 
-INT FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT QMFbands, INT fs );
-INT FDKsbrEnc_getSbrStopFreqRAW  (INT stopFreq, INT QMFbands, INT fs);
+INT FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT fsCore);
+INT FDKsbrEnc_getSbrStopFreqRAW  (INT stopFreq, INT fsCore);
 #endif

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -140,7 +140,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
 
 AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
                                            QC_STATE*                 qcKernel,
-                                           ELEMENT_BITS* RESTRICT    elBits[(6)],
+                                           ELEMENT_BITS* RESTRICT    elBits[(8)],
                                            QC_OUT**                  qcOut);
 
 

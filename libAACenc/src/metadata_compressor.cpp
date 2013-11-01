@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -421,7 +421,7 @@ static FIXP_DBL tc2Coeff(
    result = f2Pow(-exponent, DFRACT_BITS-1-METADATA_FRACT_BITS, &e_res);
 
    /* result = 1.0 - exp(-1.0/((t) * (f))) */
-   result = FL2FXCONST_DBL(1.0f) - scaleValue(result, e_res);
+   result = (FIXP_DBL)MAXVAL_DBL - scaleValue(result, e_res);
 
    return result;
 }
@@ -539,14 +539,25 @@ INT FDK_DRC_Generator_Initialize(
         drcComp->channelIdx[RS]  = channelMapping.elInfo[2].ChannelIndex[1];
         break;
     case MODE_1_2_2_2_1: /* 7.1 ch */
-        drcComp->channelIdx[L]   = channelMapping.elInfo[1].ChannelIndex[0];
-        drcComp->channelIdx[R]   = channelMapping.elInfo[1].ChannelIndex[1];
-        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0];
-        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0];
-        drcComp->channelIdx[LS]  = channelMapping.elInfo[2].ChannelIndex[0];
-        drcComp->channelIdx[RS]  = channelMapping.elInfo[2].ChannelIndex[1];
-        drcComp->channelIdx[LS2] = channelMapping.elInfo[3].ChannelIndex[0];
-        drcComp->channelIdx[RS2] = channelMapping.elInfo[3].ChannelIndex[1];
+    case MODE_7_1_FRONT_CENTER:
+        drcComp->channelIdx[L]   = channelMapping.elInfo[2].ChannelIndex[0]; /* l */
+        drcComp->channelIdx[R]   = channelMapping.elInfo[2].ChannelIndex[1]; /* r */
+        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0]; /* c */
+        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0]; /* lfe */
+        drcComp->channelIdx[LS]  = channelMapping.elInfo[3].ChannelIndex[0]; /* ls */
+        drcComp->channelIdx[RS]  = channelMapping.elInfo[3].ChannelIndex[1]; /* rs */
+        drcComp->channelIdx[LS2] = channelMapping.elInfo[1].ChannelIndex[0]; /* lc */
+        drcComp->channelIdx[RS2] = channelMapping.elInfo[1].ChannelIndex[1]; /* rc */
+        break;
+    case MODE_7_1_REAR_SURROUND:
+        drcComp->channelIdx[L]   = channelMapping.elInfo[1].ChannelIndex[0]; /* l */
+        drcComp->channelIdx[R]   = channelMapping.elInfo[1].ChannelIndex[1]; /* r */
+        drcComp->channelIdx[C]   = channelMapping.elInfo[0].ChannelIndex[0]; /* c */
+        drcComp->channelIdx[LFE] = channelMapping.elInfo[4].ChannelIndex[0]; /* lfe */
+        drcComp->channelIdx[LS]  = channelMapping.elInfo[3].ChannelIndex[0]; /* lrear */
+        drcComp->channelIdx[RS]  = channelMapping.elInfo[3].ChannelIndex[1]; /* rrear */
+        drcComp->channelIdx[LS2] = channelMapping.elInfo[2].ChannelIndex[0]; /* ls */
+        drcComp->channelIdx[RS2] = channelMapping.elInfo[2].ChannelIndex[1]; /* rs */
         break;
     case MODE_1_1:
     case MODE_1_1_1_1:
@@ -832,12 +843,12 @@ INT FDK_DRC_Generator_Calc(
                     FIXP_DBL accu;
 
                     /* drcComp->smoothLevel[i] = (1-alpha) * drcComp->smoothLevel[i] + alpha * level; */
-                    accu =  fMult((FL2FXCONST_DBL(1.f)-alpha), drcComp->smoothLevel[i]);
+                    accu =  fMult(((FIXP_DBL)MAXVAL_DBL-alpha), drcComp->smoothLevel[i]);
                     accu += fMult(alpha,level);
                     drcComp->smoothLevel[i] = accu;
 
                     /* drcComp->smoothGain[i]  = (1-alpha) * drcComp->smoothGain[i] + alpha * gain; */
-                    accu =  fMult((FL2FXCONST_DBL(1.f)-alpha), drcComp->smoothGain[i]);
+                    accu =  fMult(((FIXP_DBL)MAXVAL_DBL-alpha), drcComp->smoothGain[i]);
                     accu += fMult(alpha,gain);
                     drcComp->smoothGain[i] = accu;
                 }
@@ -941,7 +952,7 @@ INT FDK_DRC_Generator_Calc(
             if ((drcComp->channelIdx[LS] >= 0) && (drcComp->channelIdx[LS2] >= 0)) tmp = fMult(FL2FXCONST_DBL(0.707f), tmp);                                     /* 7.1ch */
             /*if ((drcComp->channelIdx[RS] >= 0) && (drcComp->channelIdx[RS2] >= 0)) tmp *=0.707f;*/                                                             /* 7.1ch */
             if (drcComp->channelIdx[S] >= 0) tmp += fMultDiv2(slev, fMult(FL2FXCONST_DBL(0.7f), (FIXP_PCM)pSamples[drcComp->channelIdx[S]]))>>(DOWNMIX_SHIFT-1); /* S */
-            if (drcComp->channelIdx[C] >= 0) tmp += fMultDiv2(clev, (FIXP_PCM)pSamples[drcComp->channelIdx[C]])>>(DOWNMIX_SHIFT-1);                              /* C */
+            if (drcComp->channelIdx[C] >= 0) tmp += fMult(clev, (FIXP_PCM)pSamples[drcComp->channelIdx[C]])>>(DOWNMIX_SHIFT-1);                                  /* C (2*clev) */
             tmp += (FX_PCM2FX_DBL((FIXP_PCM)pSamples[drcComp->channelIdx[L]])>>DOWNMIX_SHIFT);                                                                   /* L */
             tmp += (FX_PCM2FX_DBL((FIXP_PCM)pSamples[drcComp->channelIdx[R]])>>DOWNMIX_SHIFT);                                                                   /* R */
 
@@ -973,7 +984,7 @@ INT FDK_DRC_Generator_Calc(
        *         + 0.2f*2^(-METADATA_FRACT_BITS) + drcComp->smoothGain[i]
        */
       peak[i] = fMult((FIXP_DBL)(10<<(METADATA_FRACT_BITS+LD_DATA_SHIFT)), fMult( FL2FX_DBL(2*0.30102999566398119521373889472449f), ld_peak));
-      peak[i] += (FL2FX_DBL(0.2f)>>METADATA_INT_BITS);           /* add a little bit headroom */
+      peak[i] += (FL2FX_DBL(0.5f)>>METADATA_INT_BITS);           /* add a little bit headroom */
       peak[i] +=  drcComp->smoothGain[i];
     }
 

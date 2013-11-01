@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -144,14 +144,25 @@ TRANSPORTDEC_ERROR CLatmDemux_Read(
         TRANSPORT_TYPE tt,
         CSTpCallBacks *pTpDecCallbacks,
         CSAudioSpecificConfig *pAsc,
+        int *pfConfigFound,
         const INT ignoreBufferFullness
         );
 
+/**
+ * \brief Read StreamMuxConfig
+ * \param bs bit stream handle as data source
+ * \param pLatmDemux pointer to CLatmDemux struct of current LATM context
+ * \param pTpDecCallbacks Call back structure for configuration callbacks
+ * \param pAsc pointer to a ASC for configuration storage
+ * \param pfConfigFound pointer to a flag which is set to 1 if a configuration was found and processed successfully
+ * \return error code
+ */
 TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
         HANDLE_FDK_BITSTREAM bs,
         CLatmDemux *pLatmDemux,
         CSTpCallBacks *pTpDecCallbacks,
-        CSAudioSpecificConfig *pAsc
+        CSAudioSpecificConfig *pAsc,
+        int * pfConfigFound
         );
 
 TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs, CLatmDemux *pLatmDemux);

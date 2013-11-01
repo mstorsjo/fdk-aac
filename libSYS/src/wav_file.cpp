@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -174,7 +174,6 @@ INT WAV_InputOpen (HANDLE_WAV *pWav, const char *filename)
           0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71
       };
       USHORT extraFormatBytes, validBitsPerSample;
-      UINT channelMask;
       UCHAR guid[16];
       INT i;
 
@@ -184,7 +183,7 @@ INT WAV_InputOpen (HANDLE_WAV *pWav, const char *filename)
 
       if (extraFormatBytes >= 22) {
         FDKfread_EL(&(validBitsPerSample), 2, 1, wav->fp);
-        FDKfread_EL(&(channelMask), 4, 1, wav->fp);
+        FDKfread_EL(&(wav->channelMask), 4, 1, wav->fp);
         FDKfread_EL(&(guid), 16, 1, wav->fp);
 
         /* check for PCM GUID */
@@ -228,12 +227,12 @@ INT WAV_InputOpen (HANDLE_WAV *pWav, const char *filename)
 
     /* Error path */
 error:
-    if (wav->fp) {
-      FDKfclose(wav->fp);
-      wav->fp = NULL;
-    }
 
     if (wav) {
+      if (wav->fp) {
+        FDKfclose(wav->fp);
+        wav->fp = NULL;
+      }
       FDKfree(wav);
     }
 
@@ -388,6 +387,11 @@ INT WAV_OutputOpen(HANDLE_WAV *pWav, const char *outputFilename, INT sampleRate,
   HANDLE_WAV wav = (HANDLE_WAV)FDKcalloc(1, sizeof(struct WAV));
   UINT size = 0;
 
+  if (wav == NULL) {
+    FDKprintfErr("WAV_OutputOpen(): Unable to allocate WAV struct.\n");
+    goto bail;
+  }
+
   if (bitsPerSample != 16 && bitsPerSample != 24 && bitsPerSample != 32)
   {
       FDKprintfErr("WAV_OutputOpen(): Invalid argument (bitsPerSample).\n");
@@ -433,10 +437,12 @@ INT WAV_OutputOpen(HANDLE_WAV *pWav, const char *outputFilename, INT sampleRate,
   return 0;
 
 bail:
-  if (wav->fp)
-    FDKfclose(wav->fp);
-  if (wav)
+  if (wav) {
+    if (wav->fp) {
+      FDKfclose(wav->fp);
+    }
     FDKfree(wav);
+  }
 
   pWav = NULL;
 

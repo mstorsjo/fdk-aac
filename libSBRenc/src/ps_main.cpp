@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -227,6 +227,8 @@ FDK_PSENC_ERROR PSEnc_Init(
     /* clear bs buffer */
     FDKmemclear(hParametricStereo->psOut, sizeof(hParametricStereo->psOut));
 
+    hParametricStereo->psOut[0].enablePSHeader = 1; /* write ps header in first frame */
+
     /* clear scaling buffer */
     FDKmemclear(hParametricStereo->dynBandScale, sizeof(UCHAR)*PS_MAX_BANDS);
     FDKmemclear(hParametricStereo->maxBandValue, sizeof(FIXP_QMF)*PS_MAX_BANDS);
@@ -313,7 +315,7 @@ static FDK_PSENC_ERROR DownmixPSQmfData(
   }
   else {
     int n, k;
-    C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_QMF, QMF_CHANNELS*2);    
+    C_AALLOC_SCRATCH_START(pWorkBuffer, FIXP_QMF, 2*QMF_CHANNELS)
 
     /* define scalings */
     int dynQmfScale = fixMax(0, hParametricStereo->dmxScale-1); /* scale one bit more for addition of left and right */
@@ -398,8 +400,7 @@ static FDK_PSENC_ERROR DownmixPSQmfData(
 
     *qmfScale = -downmixScale + 7;
 
-    C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_QMF, QMF_CHANNELS*2);
-
+    C_AALLOC_SCRATCH_END(pWorkBuffer, FIXP_QMF, 2*QMF_CHANNELS)
 
   {
     const INT noQmfSlots2 = hParametricStereo->noQmfSlots>>1;
@@ -473,10 +474,9 @@ FDK_PSENC_ERROR FDKsbrEnc_PSEnc_ParametricStereoProcessing(
         )
 {
   FDK_PSENC_ERROR error = PSENC_OK;
-  INT noQmfBands  = hParametricStereo->noQmfBands;
   INT psQmfScale[MAX_PS_CHANNELS] = {0};
   int psCh, i;
-  C_ALLOC_SCRATCH_START(pWorkBuffer, FIXP_DBL, QMF_CHANNELS*4);    
+  C_AALLOC_SCRATCH_START(pWorkBuffer, FIXP_QMF, 4*QMF_CHANNELS)
 
   for (psCh = 0; psCh<MAX_PS_CHANNELS; psCh ++) {
 
@@ -505,7 +505,7 @@ FDK_PSENC_ERROR FDKsbrEnc_PSEnc_ParametricStereoProcessing(
 
   } /* for psCh */
 
-  C_ALLOC_SCRATCH_END(pWorkBuffer, FIXP_DBL, QMF_CHANNELS*4);
+  C_AALLOC_SCRATCH_END(pWorkBuffer, FIXP_QMF, 4*QMF_CHANNELS)
 
   /* find best scaling in new QMF and Hybrid data */
   psFindBestScaling( hParametricStereo,

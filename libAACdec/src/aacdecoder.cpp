@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -183,7 +183,7 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
   if ( self->qmfModeCurr == NOT_DEFINED )
   {
     if ( (IS_LOWDELAY(self->streamInfo.aot) && (self->flags & AC_MPS_PRESENT))
-      || ( (self->ascChannels == 1)
+      || ( (self->streamInfo.aacNumChannels == 1)
         && ( (CAN_DO_PS(self->streamInfo.aot) && !(self->flags & AC_MPS_PRESENT))
           || (  IS_USAC(self->streamInfo.aot) &&  (self->flags & AC_MPS_PRESENT)) ) ) )
     {
@@ -196,7 +196,7 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
 
   /* Set SBR to current QMF mode. Error does not matter. */
   sbrDecoder_SetParam(self->hSbrDecoder, SBR_QMF_MODE, (self->qmfModeCurr == MODE_LP));
-  self->psPossible = ((CAN_DO_PS(self->streamInfo.aot) && self->aacChannels == 1 && ! (self->flags & AC_MPS_PRESENT))) && self->qmfModeCurr == MODE_HQ ;
+  self->psPossible = ((CAN_DO_PS(self->streamInfo.aot) && self->streamInfo.aacNumChannels == 1 && ! (self->flags & AC_MPS_PRESENT))) && self->qmfModeCurr == MODE_HQ ;
   FDK_ASSERT( ! ( (self->flags & AC_MPS_PRESENT) && self->psPossible ) );
 }
 
@@ -373,7 +373,7 @@ static AAC_DECODER_ERROR CDataStreamElement_Read (
 
   {
     INT readBits, dataBits = count<<3;
-    
+
     /* Move to the beginning of the data junk */
     FDKpushBack(bs, dataStart-FDKgetValidBits(bs));
 
@@ -394,23 +394,26 @@ static AAC_DECODER_ERROR CDataStreamElement_Read (
   \brief Read Program Config Element
 
   \bs Bitstream Handle
-  \count Pointer to program config element.
+  \pTp Transport decoder handle for CRC handling
+  \pce Pointer to PCE buffer
+  \channelConfig Current channel configuration
+  \alignAnchor Anchor for byte alignment
 
-  \return  Error code
+  \return  PCE status (-1: fail, 0: no new PCE, 1: PCE updated, 2: PCE updated need re-config).
 */
-static AAC_DECODER_ERROR CProgramConfigElement_Read (
+static int CProgramConfigElement_Read (
     HANDLE_FDK_BITSTREAM bs,
     HANDLE_TRANSPORTDEC  pTp,
     CProgramConfig      *pce,
-    UINT                 channelConfig,
-    UINT                 alignAnchor )
+    const UINT           channelConfig,
+    const UINT           alignAnchor )
 {
-  AAC_DECODER_ERROR error = AAC_DEC_OK;
+  int pceStatus = 0;
   int crcReg;
 
   /* read PCE to temporal buffer first */
   C_ALLOC_SCRATCH_START(tmpPce, CProgramConfig, 1);
-  
+
   CProgramConfig_Init(tmpPce);
   CProgramConfig_Reset(tmpPce);
 
@@ -421,22 +424,43 @@ static AAC_DECODER_ERROR CProgramConfigElement_Read (
   transportDec_CrcEndReg(pTp, crcReg);
 
   if (  CProgramConfig_IsValid(tmpPce)
-    && ( (channelConfig == 6 && (tmpPce->NumChannels == 6))
-      || (channelConfig == 5 && (tmpPce->NumChannels == 5))
-      || (channelConfig == 0 && (tmpPce->NumChannels == pce->NumChannels)) )
-    && (tmpPce->NumFrontChannelElements == 2)
-    && (tmpPce->NumSideChannelElements  == 0)
-    && (tmpPce->NumBackChannelElements  == 1)
     && (tmpPce->Profile == 1) )
-  { /* Copy the complete PCE including metadata. */
-    FDKmemcpy(pce, tmpPce, sizeof(CProgramConfig));
+  {
+    if ( !pce->isValid && (channelConfig > 0) ) {
+      /* Create a standard channel config PCE to compare with */
+      CProgramConfig_GetDefault( pce, channelConfig );
+    }
+
+    if (pce->isValid) {
+      /* Compare the new and the old PCE (tags ignored) */
+      switch ( CProgramConfig_Compare( pce, tmpPce ) )
+      {
+      case 1:  /* Channel configuration not changed. Just new metadata. */
+        FDKmemcpy(pce, tmpPce, sizeof(CProgramConfig));    /* Store the complete PCE */
+        pceStatus = 1;                                     /* New PCE but no change of config */
+        break;
+      case 2:  /* The number of channels are identical but not the config */
+        if (channelConfig == 0) {
+          FDKmemcpy(pce, tmpPce, sizeof(CProgramConfig));  /* Store the complete PCE */
+          pceStatus = 2;                                   /* Decoder needs re-configuration */
+        }
+        break;
+      case -1:  /* The channel configuration is completely different */
+        pceStatus = -1;  /* Not supported! */
+        break;
+      case 0:  /* Nothing to do because PCE matches the old one exactly. */
+      default:
+        /* pceStatus = 0; */
+        break;
+      }
+    }
   }
 
   C_ALLOC_SCRATCH_END(tmpPce, CProgramConfig, 1);
 
-  return error;
+  return pceStatus;
 }
-#endif
+#endif /* TP_PCE_ENABLE */
 
 /*!
   \brief Parse Extension Payload
@@ -591,7 +615,7 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
     {                             /* ... created to circumvent the missing length in ER-Syntax. */
       int bitCnt, len = FDKreadBits(hBs, 4);
       *count -= 4;
-      
+
       if (len == 15) {
         int add_len = FDKreadBits(hBs, 8);
         *count -= 8;
@@ -609,9 +633,7 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
         /* Check NOTE 2: The extension_payload() included here must
                          not have extension_type == EXT_DATA_LENGTH. */
         error = AAC_DEC_PARSE_ERROR;
-        goto bail;
-      }
-      else {
+      } else {
         /* rewind and call myself again. */
         FDKpushBack(hBs, 4);
 
@@ -622,7 +644,7 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
                  &bitCnt,
                   previous_element,
                   elIndex,
-                  1 );      /* Treat same as fill element */
+                  0 );
 
         *count -= len - bitCnt;
       }
@@ -754,8 +776,12 @@ LINKSPEC_CPP void CAacDecoder_Close(HANDLE_AACDECODER self)
 
   for (ch=0; ch<(6); ch++) {
     if (self->pAacDecoderStaticChannelInfo[ch] != NULL) {
-      FreeOverlapBuffer (&self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer);
-      FreeAacDecoderStaticChannelInfo (&self->pAacDecoderStaticChannelInfo[ch]);
+      if (self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer != NULL) {
+        FreeOverlapBuffer (&self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer);
+      }
+      if (self->pAacDecoderStaticChannelInfo[ch] != NULL) {
+        FreeAacDecoderStaticChannelInfo (&self->pAacDecoderStaticChannelInfo[ch]);
+      }
     }
     if (self->pAacDecoderChannelInfo[ch] != NULL) {
       FreeAacDecoderChannelInfo (&self->pAacDecoderChannelInfo[ch]);
@@ -768,8 +794,12 @@ LINKSPEC_CPP void CAacDecoder_Close(HANDLE_AACDECODER self)
     FreeDrcInfo(&self->hDrcInfo);
   }
 
-  FreeWorkBufferCore1 (&self->aacCommonData.workBufferCore1);
-  FreeWorkBufferCore2 (&self->aacCommonData.workBufferCore2);
+  if (self->aacCommonData.workBufferCore1 != NULL) {
+    FreeWorkBufferCore1 (&self->aacCommonData.workBufferCore1);
+  }
+  if (self->aacCommonData.workBufferCore2 != NULL) {
+    FreeWorkBufferCore2 (&self->aacCommonData.workBufferCore2);
+  }
 
   FreeAacDecoder ( &self);
 }
@@ -994,12 +1024,14 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
          CPns_InitPns(&self->pAacDecoderChannelInfo[ch]->data.aac.PnsData, &self->aacCommonData.pnsInterChannelData, &self->aacCommonData.pnsCurrentSeed, self->aacCommonData.pnsRandomSeed);
        }
 
+       if (ascChannels > self->aacChannels)
+       {
+         /* Make allocated channel count persistent in decoder context. */
+         self->aacChannels = ascChannels;
+       }
 
        HcrInitRom(&self->aacCommonData.overlay.aac.erHcrInfo);
        setHcrType(&self->aacCommonData.overlay.aac.erHcrInfo, ID_SCE);
-
-       /* Make allocated channel count persistent in decoder context. */
-       self->aacChannels = ascChannels;
     }
 
     /* Make amount of signalled channels persistent in decoder context. */
@@ -1009,8 +1041,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
   /* Update structures */
   if (ascChanged) {
 
-     /* Things to be done for each channel, which do not involved allocating memory. */
-     for (ch = 0; ch < ascChannels; ch++) {
+     /* Things to be done for each channel, which do not involve allocating memory.
+        Doing these things only on the channels needed for the current configuration
+        (ascChannels) could lead to memory access violation later (error concealment). */
+     for (ch = 0; ch < self->aacChannels; ch++) {
        switch (self->streamInfo.aot) {
          case AOT_ER_AAC_ELD:
          case AOT_ER_AAC_LD:
@@ -1241,10 +1275,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           else {
             self->frameOK = 0;
           }
-          /* Create SBR element for SBR for upsampling. */
-          if ( (type == ID_LFE)
-            && ( (self->flags & AC_SBR_PRESENT)
-              || (self->sbrEnabled == 1) ) )
+          /* Create SBR element for SBR for upsampling for LFE elements,
+             and if SBR was explicitly signaled, because the first frame(s)
+             may not contain SBR payload (broken encoder, bit errors). */
+          if ( (self->flags & AC_SBR_PRESENT) || (self->sbrEnabled == 1) )
           {
             SBR_ERROR sbrError;
 
@@ -1254,7 +1288,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                     self->streamInfo.extSamplingRate,
                     self->streamInfo.aacSamplesPerFrame,
                     self->streamInfo.aot,
-                    ID_LFE,
+                    type,
                     previous_element_index
                     );
             if (sbrError != SBRDEC_OK) {
@@ -1394,26 +1428,34 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
 #ifdef TP_PCE_ENABLE
       case ID_PCE:
-
-        if ( CProgramConfigElement_Read( bs,
+        {
+          int result = CProgramConfigElement_Read(
+                                    bs,
                                     self->hInput,
                                     pce,
                                     self->streamInfo.channelConfig,
-                                    auStartAnchor ) )
-        { /* Built element table */
-          int elIdx = CProgramConfig_GetElementTable(pce, self->elements, 7);
-          /* Reset the remaining tabs */
-          for ( ; elIdx<7; elIdx++) {
-            self->elements[elIdx] = ID_NONE;
-          }
-          /* Make new number of channel persistant */
-          self->ascChannels = pce->NumChannels;
-          /* If PCE is not first element conceal this frame to avoid inconsistencies */
-          if ( element_count != 0 ) {
+                                    auStartAnchor );
+          if ( result < 0 ) {
+            /* Something went wrong */
+            ErrorStatus = AAC_DEC_PARSE_ERROR;
             self->frameOK = 0;
           }
+          else if ( result > 1 ) {
+            /* Built element table */
+            int elIdx = CProgramConfig_GetElementTable(pce, self->elements, 7);
+            /* Reset the remaining tabs */
+            for ( ; elIdx<7; elIdx++) {
+              self->elements[elIdx] = ID_NONE;
+            }
+            /* Make new number of channel persistant */
+            self->ascChannels = pce->NumChannels;
+            /* If PCE is not first element conceal this frame to avoid inconsistencies */
+            if ( element_count != 0 ) {
+              self->frameOK = 0;
+            }
+          }
+          pceRead = (result>=0) ? 1 : 0;
         }
-        pceRead = 1;
         break;
 #endif /* TP_PCE_ENABLE */
 
@@ -1573,7 +1615,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
   }
 
   /* Update number of output channels */
-  self->streamInfo.numChannels = aacChannels;
+  self->streamInfo.aacNumChannels = aacChannels;
 
  #ifdef TP_PCE_ENABLE
   if (pceRead == 1 && CProgramConfig_IsValid(pce)) {

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  SBR decoder frontend  
+  \brief  SBR decoder frontend
   This module provides a frontend to the SBR decoder. The function openSBR() is called for
   initialization. The function sbrDecoder_Apply() is called for each frame. sbr_Apply() will call the
   required functions to decode the raw SBR data (provided by env_extr.cpp), to decode the envelope data and noise floor levels [decodeSbrData()],
@@ -136,7 +136,7 @@ amm-info@iis.fraunhofer.de
 
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
-#define SBRDECODER_LIB_VL1 1
+#define SBRDECODER_LIB_VL1 2
 #define SBRDECODER_LIB_VL2 3
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
@@ -217,14 +217,14 @@ SBR_ERROR sbrDecoder_ResetElement (
 
   /* Check in/out samplerates */
   if ( sampleRateIn < 6400
-    || sampleRateIn > 24000
+    || sampleRateIn > 48000
      )
   {
     sbrError = SBRDEC_UNSUPPORTED_CONFIG;
     goto bail;
   }
 
-  if ( sampleRateOut > 48000 )
+  if ( sampleRateOut > 96000 )
   {
     sbrError = SBRDEC_UNSUPPORTED_CONFIG;
     goto bail;
@@ -552,7 +552,7 @@ bail:
       sbrDecoder_DestroyElement( self, elementIndex );
     } else if (self->pSbrElement[elementIndex] != NULL) {
       /* Set error flag to trigger concealment */
-      self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;;
+      self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;
     }
   }
 
@@ -731,6 +731,12 @@ SBR_ERROR sbrDecoder_SetParam (HANDLE_SBRDECODER   self,
   case SBR_BS_INTERRUPTION:
     {
       int elementIndex;
+
+      if (self == NULL) {
+        errorStatus = SBRDEC_NOT_INITIALIZED;
+        break;
+      }
+
       /* Loop over SBR elements */
       for (elementIndex = 0; elementIndex < self->numSbrElements; elementIndex++)
       {
@@ -878,7 +884,7 @@ void sbrDecoder_drcDisable ( HANDLE_SBRDECODER  self,
   pSbrDrcChannelData = sbrDecoder_drcGetChannel( self, ch );
 
   if ( pSbrDrcChannelData != NULL ) {
-    pSbrDrcChannelData->enable = 0;
+    sbrDecoder_drcInitChannel( pSbrDrcChannelData );
   }
 }
 

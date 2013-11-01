@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -624,8 +624,8 @@ timeCompensateFirstEnvelope (HANDLE_SBR_HEADER_DATA hHeaderData, /*!< Static con
 
   deltaExp = FDK_getNumOctavesDiv8(newLen, refLen);
 
-  /* Shift by -3 to rescale ld-table, 1-ampRes to enable coarser steps */
-  shift = (FRACT_BITS - 1 - ENV_EXP_FRACT + 1 - h_sbr_data->ampResolutionCurrentFrame - 3);
+  /* Shift by -3 to rescale ld-table, ampRes-1 to enable coarser steps */
+  shift = (FRACT_BITS - 1 - ENV_EXP_FRACT - 1 + h_sbr_data->ampResolutionCurrentFrame - 3);
   deltaExp = deltaExp >> shift;
   pFrameInfo->borders[0] = estimatedStartPos;
   pFrameInfo->bordersNoise[0] = estimatedStartPos;

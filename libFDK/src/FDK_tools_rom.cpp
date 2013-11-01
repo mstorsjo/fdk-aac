@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1460,6 +1460,26 @@ const FIXP_PFT qmf_64[QMF640_PFT_TABLE_SIZE+QMF_NO_POLY] =
   QFC(0x0050b177), QFC(0x09299ead), QFC(0x6d41d963), QFC(0x08d3e41b), QFC(0x005b5371),
   QFC(0x0055dba1), QFC(0x09015651), QFC(0x6d474e1d), QFC(0x09015651), QFC(0x0055dba1),
   QFC(0xfe4d1be3), QFC(0xd1c58ace), QFC(0x2e3a7532), QFC(0x01b2e41d), QFC(0x00000000),
+};
+
+RAM_ALIGN
+LNK_SECTION_CONSTDATA
+const FIXP_QTW qmf_phaseshift_cos_downsamp32[] =
+{
+  QTC(0x7fd8878e), QTC(0x7e9d55fc), QTC(0x7c29fbee), QTC(0x78848414), QTC(0x73b5ebd1), QTC(0x6dca0d14), QTC(0x66cf8120), QTC(0x5ed77c8a),
+  QTC(0x55f5a4d2), QTC(0x4c3fdff4), QTC(0x41ce1e65), QTC(0x36ba2014), QTC(0x2b1f34eb), QTC(0x1f19f97b), QTC(0x12c8106f), QTC(0x0647d97c),
+  QTC(0xf9b82684), QTC(0xed37ef91), QTC(0xe0e60685), QTC(0xd4e0cb15), QTC(0xc945dfec), QTC(0xbe31e19b), QTC(0xb3c0200c), QTC(0xaa0a5b2e),
+  QTC(0xa1288376), QTC(0x99307ee0), QTC(0x9235f2ec), QTC(0x8c4a142f), QTC(0x877b7bec), QTC(0x83d60412), QTC(0x8162aa04), QTC(0x80277872),
+};
+
+RAM_ALIGN
+LNK_SECTION_CONSTDATA
+const FIXP_QTW qmf_phaseshift_sin_downsamp32[] =
+{
+  QTC(0x0647d97c), QTC(0x12c8106f), QTC(0x1f19f97b), QTC(0x2b1f34eb), QTC(0x36ba2014), QTC(0x41ce1e65), QTC(0x4c3fdff4), QTC(0x55f5a4d2),
+  QTC(0x5ed77c8a), QTC(0x66cf8120), QTC(0x6dca0d14), QTC(0x73b5ebd1), QTC(0x78848414), QTC(0x7c29fbee), QTC(0x7e9d55fc), QTC(0x7fd8878e),
+  QTC(0x7fd8878e), QTC(0x7e9d55fc), QTC(0x7c29fbee), QTC(0x78848414), QTC(0x73b5ebd1), QTC(0x6dca0d14), QTC(0x66cf8120), QTC(0x5ed77c8a),
+  QTC(0x55f5a4d2), QTC(0x4c3fdff4), QTC(0x41ce1e65), QTC(0x36ba2014), QTC(0x2b1f34eb), QTC(0x1f19f97b), QTC(0x12c8106f), QTC(0x0647d97c),
 };
 
 #else /* QMF_NO_POLY == 5 */

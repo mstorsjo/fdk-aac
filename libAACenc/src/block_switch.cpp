@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*****************************  MPEG-4 AAC Encoder  **************************
 
-   Author(s):   M. Werner
+   Author(s):   M. Werner, Tobias Chalupka
    Description: Block switching
 
 ******************************************************************************/
@@ -100,9 +100,11 @@ amm-info@iis.fraunhofer.de
 
 static FIXP_DBL FDKaacEnc_GetWindowEnergy(const FIXP_DBL in[], const INT blSwWndIdx);
 
-static void FDKaacEnc_CalcWindowEnergy( BLOCK_SWITCHING_CONTROL *RESTRICT blockSwitchingControl,
-                              INT                      windowLen);
-
+static void FDKaacEnc_CalcWindowEnergy(
+        BLOCK_SWITCHING_CONTROL *RESTRICT blockSwitchingControl,
+        INT                      windowLen,
+        const INT_PCM           *pTimeSignal
+        );
 
 /****************** Constants *****************************/
 /*                                                LONG         START        SHORT         STOP         LOWOV                  */
@@ -145,20 +147,9 @@ static const FIXP_DBL minAttackNrg = (FL2FXCONST_DBL(1e+6f*NORM_PCM_ENERGY)>>BLO
 
 /**************** internal function prototypes ***********/
 
-static INT FDKaacEnc_GetWindowIndex(INT blockSwWindowIndex);
-
-static FIXP_DBL FDKaacEnc_GetWindowEnergy(const FIXP_DBL in[], const INT shortWndIdx);
-
-static void FDKaacEnc_CalcWindowEnergy( BLOCK_SWITCHING_CONTROL *RESTRICT blockSwitchingControl,
-                                        INT windowLen);
-
-
-
 /****************** Routines ****************************/
 void FDKaacEnc_InitBlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, INT isLowDelay)
 {
-  /* note: the pointer to timeSignal can be zeroed here, because it is initialized for every call
-           to FDKaacEnc_BlockSwitching anew */
   FDKmemclear (blockSwitchingControl, sizeof(BLOCK_SWITCHING_CONTROL));
 
   if (isLowDelay)
@@ -214,7 +205,7 @@ static const INT chgWndSqLkAhd[2][2][N_BLOCKTYPES] =
   /*attack   */   {START_WINDOW,  SHORT_WINDOW,  SHORT_WINDOW,  START_WINDOW, WRONG_WINDOW, WRONG_WINDOW} }  /* attack      */
 };
 
-int FDKaacEnc_BlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, const INT granuleLength, const int isLFE)
+int FDKaacEnc_BlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, const INT granuleLength, const int isLFE, const INT_PCM *pTimeSignal)
 {
     UINT i;
     FIXP_DBL enM1, enMax;
@@ -263,7 +254,7 @@ int FDKaacEnc_BlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, con
 
 
     /* Calculate unfiltered and filtered energies in subwindows and combine to segments */
-    FDKaacEnc_CalcWindowEnergy(blockSwitchingControl, granuleLength>>(nBlockSwitchWindows==4? 2:3 ));
+    FDKaacEnc_CalcWindowEnergy(blockSwitchingControl, granuleLength>>(nBlockSwitchWindows==4? 2:3 ), pTimeSignal);
 
     /* now calculate if there is an attack */
 
@@ -335,16 +326,13 @@ static FIXP_DBL FDKaacEnc_GetWindowEnergy(const FIXP_DBL in[], const INT blSwWnd
 
 }
 
-
-static void FDKaacEnc_CalcWindowEnergy(BLOCK_SWITCHING_CONTROL *RESTRICT blockSwitchingControl, INT windowLen)
+static void FDKaacEnc_CalcWindowEnergy(BLOCK_SWITCHING_CONTROL *RESTRICT blockSwitchingControl, INT windowLen, const INT_PCM *pTimeSignal)
 {
     INT  i;
     UINT w;
 
     FIXP_SGL hiPassCoeff0 = hiPassCoeff[0];
     FIXP_SGL hiPassCoeff1 = hiPassCoeff[1];
-
-    INT_PCM *timeSignal = blockSwitchingControl->timeSignal;
 
     /* sum up scalarproduct of timesignal as windowed Energies */
     for (w=0; w < blockSwitchingControl->nBlockSwitchWindows; w++) {
@@ -361,9 +349,9 @@ static void FDKaacEnc_CalcWindowEnergy(BLOCK_SWITCHING_CONTROL *RESTRICT blockSw
             FIXP_DBL tempUnfiltered, tempFiltred, t1, t2;
             /* tempUnfiltered is scaled with 1 to prevent overflows during calculation of tempFiltred */
 #if SAMPLE_BITS == DFRACT_BITS
-            tempUnfiltered = (FIXP_DBL) *timeSignal++ >> 1;
+            tempUnfiltered = (FIXP_DBL) *pTimeSignal++ >> 1;
 #else
-            tempUnfiltered = (FIXP_DBL) *timeSignal++ << (DFRACT_BITS-SAMPLE_BITS-1);
+            tempUnfiltered = (FIXP_DBL) *pTimeSignal++ << (DFRACT_BITS-SAMPLE_BITS-1);
 #endif
             t1 = fMultDiv2(hiPassCoeff1, tempUnfiltered-temp_iirState0);
             t2 = fMultDiv2(hiPassCoeff0, temp_iirState1);

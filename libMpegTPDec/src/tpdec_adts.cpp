@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -374,12 +374,12 @@ int adtsRead_GetRawDataBlockLength(
       length = -1; /* raw data block length is unknown */
     } else {
       if (blockNum < 0 || blockNum > 3) {
-        return TRANSPORTDEC_INVALID_PARAMETER;
+        length = -1;
       }
       length = (pAdts->rawDataBlockDist[blockNum] << 3) - 16;
     }
   }
-  if (blockNum == 0) {
+  if (blockNum == 0 && length > 0) {
     length -= pAdts->bs.num_pce_bits;
   }
   return length;

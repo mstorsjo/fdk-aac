@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -98,23 +98,28 @@ amm-info@iis.fraunhofer.de
 #include "interface.h"
 
 
-
-void FDKaacEnc_peCalculation(PE_DATA *peData,
-                             PSY_OUT_CHANNEL* psyOutChannel[(2)],
-                             QC_OUT_CHANNEL* qcOutChannel[(2)],
-                             struct TOOLSINFO *toolsInfo,
-                             ATS_ELEMENT* adjThrStateElement,
-                             const INT nChannels);
+void FDKaacEnc_peCalculation(
+        PE_DATA *peData,
+        PSY_OUT_CHANNEL* psyOutChannel[(2)],
+        QC_OUT_CHANNEL* qcOutChannel[(2)],
+        struct TOOLSINFO *toolsInfo,
+        ATS_ELEMENT* adjThrStateElement,
+        const INT nChannels
+        );
 
 INT  FDKaacEnc_AdjThrNew(ADJ_THR_STATE** phAdjThr,
                          INT             nElements);
 
 void FDKaacEnc_AdjThrInit(ADJ_THR_STATE *hAdjThr,
                 const INT peMean,
-                ELEMENT_BITS* elBits[(6)],
+                ELEMENT_BITS* elBits[(8)],
+                INT invQuant,
                 INT nElements,
+                INT nChannelsEff,
+                INT sampleRate,
+                INT advancedBitsToPe,
                 FIXP_DBL vbrQualFactor);
-
+ 
 
 void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     ATS_ELEMENT       *AdjThrStateElement,
@@ -128,12 +133,12 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     const INT         bitresBits,
     const INT         maxBitresBits,
     const FIXP_DBL    maxBitFac,
-    const INT         bitDistributenMode);
+    const INT         bitDistributionMode);
 
-void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(6)],
-    QC_OUT_ELEMENT*   qcElement[(6)],
+void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(8)],
+    QC_OUT_ELEMENT*   qcElement[(8)],
     QC_OUT*           qcOut,
-    PSY_OUT_ELEMENT*  psyOutElement[(6)],
+    PSY_OUT_ELEMENT*  psyOutElement[(8)],
     INT               CBRbitrateMode,
     CHANNEL_MAPPING*  cm);
 

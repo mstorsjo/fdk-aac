@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -124,6 +124,13 @@ getStartBand(UINT   fs,               /*!< Output sampling frequency */
     fsMapped = fs;
 
   switch (fsMapped) {
+    case 96000:
+    case 88200:
+      band = FDK_sbrDecoder_sbr_start_freq_88[startFreq];
+      break;
+    case 64000:
+      band = FDK_sbrDecoder_sbr_start_freq_64[startFreq];
+      break;
     case 48000:
       band = FDK_sbrDecoder_sbr_start_freq_48[startFreq];
       break;

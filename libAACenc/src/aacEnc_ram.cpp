@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -89,7 +89,7 @@ amm-info@iis.fraunhofer.de
 ******************************************************************************/
 /*!
   \file
-  \brief  Memory layout   
+  \brief  Memory layout
   \author Markus Lohwasser
 */
 
@@ -119,12 +119,12 @@ C_ALLOC_MEM (Ram_aacEnc_AacEncoder,           AAC_ENC,          1)
      PsyInputBuffer.
 */
 
-C_ALLOC_MEM2 (Ram_aacEnc_PsyElement, PSY_ELEMENT, 1, (6))
+C_ALLOC_MEM2 (Ram_aacEnc_PsyElement, PSY_ELEMENT, 1, (8))
 
 C_ALLOC_MEM  (Ram_aacEnc_PsyInternal, PSY_INTERNAL, 1)
-C_ALLOC_MEM2 (Ram_aacEnc_PsyStatic,   PSY_STATIC,   1, (6))
+C_ALLOC_MEM2 (Ram_aacEnc_PsyStatic,   PSY_STATIC,   1, (8))
 
-C_ALLOC_MEM2 (Ram_aacEnc_PsyInputBuffer, INT_PCM, MAX_INPUT_BUFFER_SIZE, (6))
+C_ALLOC_MEM2 (Ram_aacEnc_PsyInputBuffer, INT_PCM, MAX_INPUT_BUFFER_SIZE, (8))
 
   PSY_DYNAMIC *GetRam_aacEnc_PsyDynamic (int n, UCHAR* dynamic_RAM) {
       FDK_ASSERT(dynamic_RAM!=0);
@@ -139,8 +139,8 @@ C_ALLOC_MEM2 (Ram_aacEnc_PsyInputBuffer, INT_PCM, MAX_INPUT_BUFFER_SIZE, (6))
 */
 C_ALLOC_MEM2 (Ram_aacEnc_PsyOut,         PSY_OUT, 1, (1))
 
-C_ALLOC_MEM2 (Ram_aacEnc_PsyOutElements, PSY_OUT_ELEMENT, 1, (1)*(6))
-C_ALLOC_MEM2 (Ram_aacEnc_PsyOutChannel,  PSY_OUT_CHANNEL, 1, (1)*(6))
+C_ALLOC_MEM2 (Ram_aacEnc_PsyOutElements, PSY_OUT_ELEMENT, 1, (1)*(8))
+C_ALLOC_MEM2 (Ram_aacEnc_PsyOutChannel,  PSY_OUT_CHANNEL, 1, (1)*(8))
 
 
 /*
@@ -155,8 +155,8 @@ C_ALLOC_MEM2 (Ram_aacEnc_PsyOutChannel,  PSY_OUT_CHANNEL, 1, (1)*(6))
 C_ALLOC_MEM (Ram_aacEnc_QCstate, QC_STATE, 1)
 C_ALLOC_MEM (Ram_aacEnc_AdjustThreshold, ADJ_THR_STATE, 1)
 
-C_ALLOC_MEM2 (Ram_aacEnc_AdjThrStateElement, ATS_ELEMENT, 1, (6))
-C_ALLOC_MEM2 (Ram_aacEnc_ElementBits, ELEMENT_BITS, 1, (6))
+C_ALLOC_MEM2 (Ram_aacEnc_AdjThrStateElement, ATS_ELEMENT, 1, (8))
+C_ALLOC_MEM2 (Ram_aacEnc_ElementBits, ELEMENT_BITS, 1, (8))
 C_ALLOC_MEM (Ram_aacEnc_BitCntrState, BITCNTR_STATE, 1)
 
   INT *GetRam_aacEnc_BitLookUp(int n, UCHAR* dynamic_RAM) {
@@ -175,7 +175,7 @@ C_ALLOC_MEM (Ram_aacEnc_BitCntrState, BITCNTR_STATE, 1)
 */
 
 C_ALLOC_MEM2 (Ram_aacEnc_QCout, QC_OUT, 1, (1))
-C_ALLOC_MEM2 (Ram_aacEnc_QCelement, QC_OUT_ELEMENT, 1, (1)*(6))
+C_ALLOC_MEM2 (Ram_aacEnc_QCelement, QC_OUT_ELEMENT, (1), (8))
   QC_OUT_CHANNEL *GetRam_aacEnc_QCchannel (int n, UCHAR* dynamic_RAM) {
       FDK_ASSERT(dynamic_RAM!=0);
       return ((QC_OUT_CHANNEL*) (dynamic_RAM + P_BUF_0 + n*sizeof(QC_OUT_CHANNEL)));

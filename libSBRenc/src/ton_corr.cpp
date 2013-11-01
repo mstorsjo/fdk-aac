@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -302,8 +302,6 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
       timeIndex++;
     }
   }
-
-  FDK_ASSERT(noEstPerFrame == 2);
 
 
   C_ALLOC_SCRATCH_END(realBuf, FIXP_DBL, 2*BAND_V_SIZE*NUM_V_COMBINE);

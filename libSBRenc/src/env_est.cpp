@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -128,9 +128,6 @@ FDKsbrEnc_getEnergyFromCplxQmfData(FIXP_DBL **RESTRICT energyValues,/*!< the res
 
   /* Get Scratch buffer */
   C_ALLOC_SCRATCH_START(tmpNrg, FIXP_DBL, QMF_CHANNELS*QMF_MAX_TIME_SLOTS/2);
-
-  FDK_ASSERT(numberBands <= QMF_CHANNELS);
-  FDK_ASSERT(numberCols <= QMF_MAX_TIME_SLOTS);
 
   /* Get max possible scaling of QMF data */
   scale = DFRACT_BITS;
@@ -817,22 +814,22 @@ calculateSbrEnvelope (FIXP_DBL **RESTRICT YBufferLeft,  /*! energy buffer left *
       }
 
       /* ld64 to integer conversion */
-      nrgLeft = fixMin(fixMax(nrgLeft,FL2FXCONST_DBL(0.0f)),FL2FXCONST_DBL(0.5f));
+      nrgLeft = fixMin(fixMax(nrgLeft,FL2FXCONST_DBL(0.0f)),(FL2FXCONST_DBL(0.5f)>>oneBitLess));
       nrgLeft = (FIXP_DBL)(LONG)nrgLeft >> (DFRACT_BITS-1-LD_DATA_SHIFT-1-oneBitLess-1);
       sfb_nrgLeft[m] = ((INT)nrgLeft+1)>>1; /* rounding */
 
       if (stereoMode == SBR_COUPLING) {
         FIXP_DBL scaleFract;
+        int sc0, sc1;
 
-        if (nrgRight != FL2FXCONST_DBL(0.0f)) {
-          int sc0 = CountLeadingBits(nrgLeft2);
-          int sc1 = CountLeadingBits(nrgRight);
+        nrgLeft2 = fixMax((FIXP_DBL)0x1, nrgLeft2);
+        nrgRight = fixMax((FIXP_DBL)0x1, nrgRight);
 
-          scaleFract = ((FIXP_DBL)(sc0-sc1)) << (DFRACT_BITS-1-LD_DATA_SHIFT); /* scale value in ld64 representation */
-          nrgRight = CalcLdData(nrgLeft2<<sc0) - CalcLdData(nrgRight<<sc1) - scaleFract;
-        }
-        else
-          nrgRight =  FL2FXCONST_DBL(0.5f);   /* ld64(4294967296.0f) */
+        sc0 = CountLeadingBits(nrgLeft2);
+        sc1 = CountLeadingBits(nrgRight);
+
+        scaleFract = ((FIXP_DBL)(sc0-sc1)) << (DFRACT_BITS-1-LD_DATA_SHIFT); /* scale value in ld64 representation */
+        nrgRight = CalcLdData(nrgLeft2<<sc0) - CalcLdData(nrgRight<<sc1) - scaleFract;
 
         /* ld64 to integer conversion */
         nrgRight = (FIXP_DBL)(LONG)(nrgRight) >> (DFRACT_BITS-1-LD_DATA_SHIFT-1-oneBitLess);

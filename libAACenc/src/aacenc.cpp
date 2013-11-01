@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -393,7 +393,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
   /******************* sanity checks *******************/
 
   /* check config structure */
-  if (config->nChannels  < 1 || config->nChannels > (6)) {
+  if (config->nChannels  < 1 || config->nChannels > (8)) {
     return AAC_ENC_UNSUPPORTED_CHANNELCONFIG;
   }
 
@@ -558,6 +558,13 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
   qcInit.channelMapping      = &hAacEnc->channelMapping;
   qcInit.sceCpe              = 0;
 
+  if ((config->bitrateMode>=1) && (config->bitrateMode<=5)) {
+      qcInit.averageBits     = (averageBitsPerFrame+7)&~7;
+      qcInit.bitRes          = MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff;
+      qcInit.maxBits         = MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff;
+      qcInit.minBits         = 0;
+  }
+  else
   {
       int maxBitres;
       qcInit.averageBits     = (averageBitsPerFrame+7)&~7;
@@ -571,6 +578,8 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
       qcInit.minBits         = (config->minBitsPerFrame!=-1) ? fixMax(qcInit.minBits, config->minBitsPerFrame) : qcInit.minBits;
   }
 
+  qcInit.sampleRate          = config->sampleRate;
+  qcInit.advancedBitsToPe    = isLowDelay(config->audioObjectType) ? 1 : 0 ;
   qcInit.nSubFrames          = config->nSubFrames;
   qcInit.padding.paddingRest = config->sampleRate;
 

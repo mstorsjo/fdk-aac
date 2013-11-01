@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -186,6 +186,27 @@ int  CProgramConfig_IsValid ( const CProgramConfig *pPce );
 void  CProgramConfig_Read ( CProgramConfig       *pPce,
                             HANDLE_FDK_BITSTREAM  bs,
                             UINT                  alignAnchor );
+
+/*!
+  \brief               Compare two Program Config Elements.
+  \param pPce1         Pointer to first Program Config Element structure.
+  \param pPce2         Pointer to second Program Config Element structure.
+  \return              -1 if PCEs are completely different,
+                        0 if PCEs are completely equal,
+                        1 if PCEs are different but have the same channel config,
+                        2 if PCEs have different channel config but same number of channels.
+*/
+int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
+                             const CProgramConfig * const pPce2 );
+
+/*!
+  \brief               Get a Program Config Element that matches the predefined MPEG-4 channel configurations 1-14.
+  \param pPce          Program Config Element structure.
+  \param channelConfig MPEG-4 channel configuration.
+  \return              void
+*/
+void CProgramConfig_GetDefault ( CProgramConfig *pPce,
+                                 const UINT channelConfig );
 #endif /* TP_PCE_ENABLE */
 
 /**
@@ -206,7 +227,7 @@ void  CProgramConfig_Read ( CProgramConfig       *pPce,
  */
 int CProgramConfig_LookupElement(
         CProgramConfig *pPce,
-        const UINT      channelConfig,
+        UINT            channelConfig,
         const UINT      tag,
         const UINT      channelIdx,
         UCHAR           chMapping[],

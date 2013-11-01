@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -506,215 +506,276 @@ const UCHAR bookSbrNoiseBalanceL11T[25] =
 /*
    tuningTable
 */
-const sbrTuningTable_t sbrTuningTable[SBRENC_TUNING_SIZE] =
+const sbrTuningTable_t sbrTuningTable[] =
 {
+  /* Some of the low bitrates are commented out here, this is because the
+     encoder could lose frames at those bitrates and throw an error because
+     it has insufficient bits to encode for some test items.
+  */
 
-  /*** AAC ***/
+  /*** HE-AAC section ***/
   /*                        sf,sfsp,sf,sfsp,nnb,nfo,saml,SM,FS*/
 
   /*** mono ***/
 
   /* 8/16 kHz dual rate */
-  { 8000,  10000,   8000, 1,  7, 6, 11,10, 1, 0, 6, SBR_MONO, 3 },
-  { 10000, 12000,   8000, 1, 11, 7, 13,12, 1, 0, 6, SBR_MONO, 3 },
-  { 12000, 16001,   8000, 1, 14,10, 13,13, 1, 0, 6, SBR_MONO, 3 },
-  { 16000, 24000,   8000, 1, 14,10, 14,14, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 24000, 32000,   8000, 1, 14,10, 14,14, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 32000, 48001,   8000, 1, 14,11, 15,15, 2, 0, 3, SBR_MONO, 2 }, /* placebo */ /* bitrates higher than 48000 not supported by AAC core */
+  { CODEC_AAC,   8000, 10000,   8000, 1,  7, 6, 11,10, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  10000, 12000,   8000, 1, 11, 7, 13,12, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  12000, 16001,   8000, 1, 14,10, 13,13, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  16000, 24000,   8000, 1, 14,10, 14,14, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  24000, 32000,   8000, 1, 14,10, 14,14, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  32000, 48001,   8000, 1, 14,11, 15,15, 2, 0, 3, SBR_MONO, 2 }, /* placebo */ /* bitrates higher than 48000 not supported by AAC core */
 
   /* 11/22 kHz dual rate */
-  {  8000, 10000,  11025, 1,  5, 4,  6, 6, 1, 0, 6, SBR_MONO, 3 },
-  { 10000, 12000,  11025, 1,  8, 5, 12, 9, 1, 0, 6, SBR_MONO, 3 },
-  { 12000, 16000,  11025, 1, 12, 8, 13, 8, 1, 0, 6, SBR_MONO, 3 },
-  { 16000, 20000,  11025, 1, 12, 8, 13, 8, 1, 0, 6, SBR_MONO, 3 }, /* at such "high" bitrates it's better to upsample the input */
-  { 20000, 24001,  11025, 1, 13, 9, 13, 8, 1, 0, 6, SBR_MONO, 3 }, /* signal by a factor of 2 before sending it into the encoder */
-  { 24000, 32000,  11025, 1, 14,10, 14, 9, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 32000, 48000,  11025, 1, 15,11, 15,10, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 48000, 64001,  11025, 1, 15,11, 15,10, 2, 0, 3, SBR_MONO, 1 }, /* placebo */
+  { CODEC_AAC,   8000, 10000,  11025, 1,  5, 4,  6, 6, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  10000, 12000,  11025, 1,  8, 5, 12, 9, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  12000, 16000,  11025, 1, 12, 8, 13, 8, 1, 0, 6, SBR_MONO, 3 },
+  { CODEC_AAC,  16000, 20000,  11025, 1, 12, 8, 13, 8, 1, 0, 6, SBR_MONO, 3 }, /* at such "high" bitrates it's better to upsample the input */
+  { CODEC_AAC,  20000, 24001,  11025, 1, 13, 9, 13, 8, 1, 0, 6, SBR_MONO, 3 }, /* signal by a factor of 2 before sending it into the encoder */
+  { CODEC_AAC,  24000, 32000,  11025, 1, 14,10, 14, 9, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  32000, 48000,  11025, 1, 15,11, 15,10, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  48000, 64001,  11025, 1, 15,11, 15,10, 2, 0, 3, SBR_MONO, 1 }, /* placebo */
 
   /* 12/24 kHz dual rate */
-  {  8000, 10000,  12000, 1,  4, 3,  6, 6, 1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */
-  { 10000, 12000,  12000, 1,  7, 4, 11, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 10 kbit/s */
-  { 12000, 16000,  12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 20000,  12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */ /* at such "high" bitrates it's better to upsample the input */
-  { 20000, 24001,  12000, 1, 12, 8, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 20 kbit/s */ /* signal by a factor of 2 before sending it into the encoder */
-  { 24000, 32000,  12000, 1, 13, 9, 13, 9, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 32000, 48000,  12000, 1, 14,10, 14,10, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
-  { 48000, 64001,  12000, 1, 15,11, 15,11, 2, 0, 3, SBR_MONO, 1 }, /* placebo */
+  { CODEC_AAC,   8000, 10000,  12000, 1,  4, 3,  6, 6, 1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */
+  { CODEC_AAC,  10000, 12000,  12000, 1,  7, 4, 11, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 10 kbit/s */
+  { CODEC_AAC,  12000, 16000,  12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
+  { CODEC_AAC,  16000, 20000,  12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */ /* at such "high" bitrates it's better to upsample the input */
+  { CODEC_AAC,  20000, 24001,  12000, 1, 12, 8, 12, 8, 1, 0, 6, SBR_MONO, 3 }, /* nominal: 20 kbit/s */ /* signal by a factor of 2 before sending it into the encoder */
+  { CODEC_AAC,  24000, 32000,  12000, 1, 13, 9, 13, 9, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  32000, 48000,  12000, 1, 14,10, 14,10, 2, 0, 3, SBR_MONO, 2 }, /* placebo */
+  { CODEC_AAC,  48000, 64001,  12000, 1, 14,11, 15,11, 2, 0, 3, SBR_MONO, 1 }, /* placebo */
 
   /* 16/32 kHz dual rate */
-  {  8000, 10000,  16000, 1,  1, 1, 0, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */
-  { 10000, 12000,  16000, 1,  2, 1, 6, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 10 kbit/s */
-  { 12000, 16000,  16000, 1,  4, 2, 6, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  16000, 1,  4, 2, 8, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  16000, 1,  6, 5,11, 7,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
-  { 22000, 28000,  16000, 1, 10, 9,12, 8,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  16000, 1, 12,12,13,13,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  16000, 1, 14,14,13,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
-  { 44000, 64001,  16000, 1, 15,15,13,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,   8000, 10000,  16000, 1,  1, 1, 0, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */
+  { CODEC_AAC,  10000, 12000,  16000, 1,  2, 1, 6, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 10 kbit/s */
+  { CODEC_AAC,  12000, 16000,  16000, 1,  4, 2, 6, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
+  { CODEC_AAC,  16000, 18000,  16000, 1,  4, 2, 8, 3,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
+  { CODEC_AAC,  18000, 22000,  16000, 1,  6, 5,11, 7,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  22000, 28000,  16000, 1, 10, 9,12, 8,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  16000, 1, 12,12,13,13,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  16000, 1, 14,14,13,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 64001,  16000, 1, 14,14,13,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 22.05/44.1 kHz dual rate */
-  /* {  8000, 11369,  22050, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, */ /* nominal:  8 kbit/s */   /* encoder can not work stable at this extremely low bitrate */
-  { 11369, 16000,  22050, 1,  3, 1, 4, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  22050, 1,  3, 1, 5, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  22050, 1,  4, 4, 8, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
-  { 22000, 28000,  22050, 1,  7, 6, 8, 6,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  22050, 1, 10,10, 9, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  22050, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
-  { 44000, 64001,  22050, 1, 13,13,12,12,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
+  /* { CODEC_AAC,   8000, 11369,  22050, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, */ /* nominal:  8 kbit/s */   /* encoder can not work stable at this extremely low bitrate */
+  { CODEC_AAC,  11369, 16000,  22050, 1,  3, 1, 4, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
+  { CODEC_AAC,  16000, 18000,  22050, 1,  3, 1, 5, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
+  { CODEC_AAC,  18000, 22000,  22050, 1,  4, 4, 8, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  22000, 28000,  22050, 1,  7, 6, 8, 6,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  22050, 1, 10,10, 9, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  22050, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 64001,  22050, 1, 13,13,12,12,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 24/48 kHz dual rate */
-  /* {  8000, 12000,  24000, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, */ /* nominal:  8 kbit/s */   /* encoder can not work stable at this extremely low bitrate */
-  { 12000, 16000,  24000, 1,  3, 1, 4, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
-  { 16000, 18000,  24000, 1,  3, 1, 5, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
-  { 18000, 22000,  24000, 1,  4, 3, 8, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
-  { 22000, 28000,  24000, 1,  7, 6, 8, 6,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  24000, 1, 10,10, 9, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  24000, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
-  { 44000, 64001,  24000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
+  /* { CODEC_AAC,   8000, 12000,  24000, 1,  1, 1, 1, 1,  1, 0, 6, SBR_MONO, 3 }, */ /* nominal:  8 kbit/s */   /* encoder can not work stable at this extremely low bitrate */
+  { CODEC_AAC,  12000, 16000,  24000, 1,  3, 1, 4, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 12 kbit/s */
+  { CODEC_AAC,  16000, 18000,  24000, 1,  3, 1, 5, 4,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s */
+  { CODEC_AAC,  18000, 22000,  24000, 1,  4, 3, 8, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  22000, 28000,  24000, 1,  7, 6, 8, 6,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  24000, 1, 10,10, 9, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  24000, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 64001,  24000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 32/64 kHz dual rate */  /* placebo settings */
-  {  24000, 36000, 32000, 1,  4, 4, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* lowest range  */
-  {  36000, 60000, 32000, 1,  7, 7, 6, 6,  2, 0, 3, SBR_MONO, 2 }, /* lowest range */
-  {  60000, 72000, 32000, 1,  9, 9, 8, 8,  2, 0, 3, SBR_MONO, 1 }, /* low range */
-  {  72000,100000, 32000, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* SBR sweet spot */
-  { 100000,160001, 32000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
+  { CODEC_AAC,   24000, 36000, 32000, 1,  4, 4, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* lowest range  */
+  { CODEC_AAC,   36000, 60000, 32000, 1,  7, 7, 6, 6,  2, 0, 3, SBR_MONO, 2 }, /* lowest range */
+  { CODEC_AAC,   60000, 72000, 32000, 1,  9, 9, 8, 8,  2, 0, 3, SBR_MONO, 1 }, /* low range */
+  { CODEC_AAC,   72000,100000, 32000, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* SBR sweet spot */
+  { CODEC_AAC,  100000,160001, 32000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
 
   /* 44.1/88.2 kHz dual rate */  /* placebo settings */
-  {  24000, 36000, 44100, 1,  4, 4, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
-  {  36000, 60000, 44100, 1,  7, 7, 6, 6,  2, 0, 3, SBR_MONO, 2 }, /* lowest range (multichannel rear) */
-  {  60000, 72000, 44100, 1,  9, 9, 8, 8,  2, 0, 3, SBR_MONO, 1 }, /* low range */
-  {  72000,100000, 44100, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* SBR sweet spot */
-  { 100000,160001, 44100, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
+  { CODEC_AAC,   24000, 36000, 44100, 1,  4, 4, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   36000, 60000, 44100, 1,  7, 7, 6, 6,  2, 0, 3, SBR_MONO, 2 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   60000, 72000, 44100, 1,  9, 9, 8, 8,  2, 0, 3, SBR_MONO, 1 }, /* low range */
+  { CODEC_AAC,   72000,100000, 44100, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* SBR sweet spot */
+  { CODEC_AAC,  100000,160001, 44100, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
 
   /* 48/96 kHz dual rate */  /* not yet finally tuned */
-  {  32000, 36000, 48000, 1,  4, 4, 9, 9,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
-  {  36000, 60000, 48000, 1,  7, 7,10,10,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
-  {  60000, 72000, 48000, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
-  {  72000,100000, 48000, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
-  { 100000,160001, 48000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */
+  { CODEC_AAC,   32000, 36000, 48000, 1,  4, 4, 9, 9,  2, 0, 3, SBR_MONO, 3 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   36000, 60000, 48000, 1,  7, 7,10,10,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
+  { CODEC_AAC,   60000, 72000, 48000, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
+  { CODEC_AAC,   72000,100000, 48000, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
+  { CODEC_AAC,  100000,160001, 48000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */
 
   /*** stereo ***/
   /* 08/16 kHz dual rate */
-  { 16000, 24000,   8000, 2,  6, 6,  9, 7, 1, 0,-3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
-  { 24000, 28000,   8000, 2,  9, 9, 11, 9, 1, 0,-3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,   8000, 2, 11, 9, 11, 9, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,   8000, 2, 13,11, 13,11, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,   8000, 2, 14,12, 13,12, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,   8000, 2, 15,15, 13,13, 3, 0,-3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,   8000, 2, 15,15, 13,13, 3, 0,-3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,   8000, 2, 15,15, 13,13, 3, 0,-3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,   8000, 2,  6, 6,  9, 7, 1, 0,-3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
+  { CODEC_AAC,  24000, 28000,   8000, 2,  9, 9, 11, 9, 1, 0,-3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,   8000, 2, 11, 9, 11, 9, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,   8000, 2, 13,11, 13,11, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,   8000, 2, 14,12, 13,12, 2, 0,-3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,   8000, 2, 14,14, 13,13, 3, 0,-3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,   8000, 2, 14,14, 13,13, 3, 0,-3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,   8000, 2, 14,14, 13,13, 3, 0,-3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 11/22 kHz dual rate */
-  { 16000, 24000,  11025, 2,  7, 5, 9, 7,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
-  { 24000, 28000,  11025, 2, 10, 8,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  11025, 2, 12, 8,12, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  11025, 2, 13, 9,13, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  11025, 2, 14,11,13,11,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,  11025, 2,  7, 5, 9, 7,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
+  { CODEC_AAC,  24000, 28000,  11025, 2, 10, 8,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  11025, 2, 12, 8,12, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  11025, 2, 13, 9,13, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,  11025, 2, 14,11,13,11,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,  11025, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 12/24 kHz dual rate */
-  { 16000, 24000,  12000, 2,  6, 4, 9, 7,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
-  { 24000, 28000,  12000, 2,  9, 7,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  12000, 2, 11, 7,12, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  12000, 2, 12, 9,12, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  12000, 2, 13,12,13,12,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  12000, 2, 14,14,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  12000, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,  12000, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,  12000, 2,  6, 4, 9, 7,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */ /* placebo */
+  { CODEC_AAC,  24000, 28000,  12000, 2,  9, 7,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  12000, 2, 11, 7,12, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  12000, 2, 12, 9,12, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,  12000, 2, 13,12,13,12,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,  12000, 2, 14,14,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,  12000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,  12000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 16/32 kHz dual rate */
-  { 16000, 24000,  16000, 2,  4, 2, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
-  { 24000, 28000,  16000, 2,  8, 7,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  16000, 2, 10, 9,12,11,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  16000, 2, 13,13,13,13,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  16000, 2, 15,15,13,13,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  16000, 2, 15,15,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  16000, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,  16000, 2, 15,15,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,  16000, 2,  4, 2, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  24000, 28000,  16000, 2,  8, 7,10, 8,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  16000, 2, 10, 9,12,11,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  16000, 2, 13,13,13,13,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,  16000, 2, 14,14,13,13,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 22.05/44.1 kHz dual rate */
-  { 16000, 24000,  22050, 2,  2, 1, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
-  { 24000, 28000,  22050, 2,  5, 4, 6, 5,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 32000,  22050, 2,  5, 4, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 28 kbit/s */
-  { 32000, 36000,  22050, 2,  7, 6, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  22050, 2, 10,10, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  22050, 2, 12,12, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  22050, 2, 13,13,10,10,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  22050, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,  22050, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,  22050, 2,  2, 1, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  24000, 28000,  22050, 2,  5, 4, 6, 5,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 32000,  22050, 2,  5, 4, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 28 kbit/s */
+  { CODEC_AAC,  32000, 36000,  22050, 2,  7, 6, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  22050, 2, 10,10, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,  22050, 2, 12,12, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,  22050, 2, 13,13,10,10,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,  22050, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,  22050, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 24/48 kHz dual rate */
-  { 16000, 24000,  24000, 2,  2, 1, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
-  { 24000, 28000,  24000, 2,  5, 5, 6, 6,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  24000, 2,  7, 6, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  24000, 2, 10,10, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  24000, 2, 12,12, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  24000, 2, 13,13,10,10,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  24000, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000,128001,  24000, 2, 15,15,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AAC,  16000, 24000,  24000, 2,  2, 1, 1, 0,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 20 kbit/s */
+  { CODEC_AAC,  24000, 28000,  24000, 2,  5, 5, 6, 6,  1, 0, -3, SBR_SWITCH_LRC, 3 }, /* nominal: 24 kbit/s */
+  { CODEC_AAC,  28000, 36000,  24000, 2,  7, 6, 8, 7,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AAC,  36000, 44000,  24000, 2, 10,10, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AAC,  44000, 52000,  24000, 2, 12,12, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AAC,  52000, 60000,  24000, 2, 13,13,10,10,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AAC,  60000, 76000,  24000, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AAC,  76000,128001,  24000, 2, 14,14,12,12,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
 
   /* 32/64 kHz dual rate */  /* placebo settings */
-  {  32000, 60000, 32000, 2,  4, 4, 4, 4,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
-  {  60000, 80000, 32000, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
-  {  80000,112000, 32000, 2,  9, 9, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* low range */
-  { 112000,144000, 32000, 2, 11,11,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* SBR sweet spot */
-  { 144000,256001, 32000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
+  { CODEC_AAC,   32000, 60000, 32000, 2,  4, 4, 4, 4,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   60000, 80000, 32000, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   80000,112000, 32000, 2,  9, 9, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* low range */
+  { CODEC_AAC,  112000,144000, 32000, 2, 11,11,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* SBR sweet spot */
+  { CODEC_AAC,  144000,256001, 32000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
 
   /* 44.1/88.2 kHz dual rate */  /* placebo settings */
-  {  32000, 60000, 44100, 2,  4, 4, 4, 4,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
-  {  60000, 80000, 44100, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
-  {  80000,112000, 44100, 2,  9, 9, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* low range */
-  { 112000,144000, 44100, 2, 11,11,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* SBR sweet spot */
-  { 144000,256001, 44100, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
+  { CODEC_AAC,   32000, 60000, 44100, 2,  4, 4, 4, 4,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   60000, 80000, 44100, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   80000,112000, 44100, 2,  9, 9, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* low range */
+  { CODEC_AAC,  112000,144000, 44100, 2, 11,11,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* SBR sweet spot */
+  { CODEC_AAC,  144000,256001, 44100, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
 
   /* 48/96 kHz dual rate */  /* not yet finally tuned */
-  {  36000, 60000, 48000, 2,  4, 4, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
-  {  60000, 80000, 48000, 2,  7, 7, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 64 */
-  {  80000,112000, 48000, 2,  9, 9,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 96 */
-  { 112000,144000, 48000, 2, 11,11,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 128 */
-  { 144000,256001, 48000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 192 */
+  { CODEC_AAC,   36000, 60000, 48000, 2,  4, 4, 9, 9,  2, 0, -3, SBR_SWITCH_LRC, 3 }, /* lowest range (multichannel rear) */
+  { CODEC_AAC,   60000, 80000, 48000, 2,  7, 7, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 64 */
+  { CODEC_AAC,   80000,112000, 48000, 2,  9, 9,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 96 */
+  { CODEC_AAC,  112000,144000, 48000, 2, 11,11,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 128 */
+  { CODEC_AAC,  144000,256001, 48000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 192 */
+
 
   /** AAC LOW DELAY SECTION **/
 
-  /* 22.05/44.1 kHz dual rate */
-  { 18000, 22000,  22050, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
-  { 22000, 28000,  22050, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  22050, 1,  7, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  22050, 1,  9, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  22050, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
-  { 52000, 64001,  22050, 1, 12,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 56 kbit/s */
-
-  /* 24/48 kHz dual rate */
-  { 20000, 22000,  24000, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
-  { 22000, 28000,  24000, 1,  4, 4, 6, 5,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
-  { 28000, 36000,  24000, 1,  6, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  24000, 1,  8, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  24000, 1, 12,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
-  { 52000, 64001,  24000, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
+  /*** mono ***/
+  /* 16/32 kHz dual rate not yet tuned ->alb copied from non LD tables*/
+  { CODEC_AACLD,  16000, 18000,  16000, 1,  4, 5, 9, 7,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s wrr: tuned */
+  { CODEC_AACLD,  18000, 22000,  16000, 1,  7, 7,12,12,  1, 6, 9, SBR_MONO, 3 }, /* nominal: 20 kbit/s wrr: tuned */
+  { CODEC_AACLD,  22000, 28000,  16000, 1,  6, 6, 9, 9,  2, 3, 6, SBR_MONO, 3 }, /* nominal: 24 kbit/s wrr: tuned */
+  { CODEC_AACLD,  28000, 36000,  16000, 1,  8, 8,12, 7,  2, 9,12, SBR_MONO, 3 }, /* jgr: special */ /* wrr: tuned */
+  { CODEC_AACLD,  36000, 44000,  16000, 1, 10,14,12,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  44000, 64001,  16000, 1, 11,14,13,13,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
 
   /* 22.05/44.1 kHz dual rate */
-  { 32000, 36000,  22050, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  22050, 2,  5, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  22050, 2,  7,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  22050, 2,  9,11, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  22050, 2, 10,12,10,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000, 82000,  22050, 2, 12,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
-  { 82000,128001,  22050, 2, 13,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AACLD,  18000, 22000,  22050, 1,  4, 4, 5, 5,  2, 0, 6, SBR_MONO, 3 }, /* nominal: 20 kbit/s */
+  { CODEC_AACLD,  22000, 28000,  22050, 1,  5, 5, 6, 6,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
+  { CODEC_AACLD,  28000, 36000,  22050, 1,  7, 8, 8, 8,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AACLD,  36000, 44000,  22050, 1,  9, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  44000, 52000,  22050, 1, 12,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 48 kbit/s */
+  { CODEC_AACLD,  52000, 64001,  22050, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 56 kbit/s */
 
   /* 24/48 kHz dual rate */
-  { 32000, 36000,  24000, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
-  { 36000, 44000,  24000, 2,  4, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
-  { 44000, 52000,  24000, 2,  6,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
-  { 52000, 60000,  24000, 2,  9,11, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
-  { 60000, 76000,  24000, 2, 11,12,10,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
-  { 76000, 88000,  24000, 2, 12,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
-  { 88000,128001,  24000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 92 kbit/s */
+  { CODEC_AACLD,  20000, 22000,  24000, 1,  4, 1, 8, 4,  2, 3, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { CODEC_AACLD,  22000, 28000,  24000, 1,  3, 8, 8, 7,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
+  { CODEC_AACLD,  28000, 36000,  24000, 1,  4, 8, 8, 7,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AACLD,  36000, 56000,  24000, 1,  8, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  56000, 64001,  24000, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 kbit/s */
 
+  /* 32/64 kHz dual rate */  /* placebo settings */  /*jgr: new, copy from CODEC_AAC */
+  { CODEC_AACLD,  24000, 36000,  32000, 1,  4, 4, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* lowest range  */
+  { CODEC_AACLD,  36000, 60000,  32000, 1,  7, 7, 6, 6,  2, 0, 3, SBR_MONO, 2 }, /* lowest range */
+  { CODEC_AACLD,  60000, 72000,  32000, 1,  9, 9, 8, 8,  2, 0, 3, SBR_MONO, 1 }, /* low range */
+  { CODEC_AACLD,  72000,100000,  32000, 1, 11,11,10,10,  2, 0, 3, SBR_MONO, 1 }, /* SBR sweet spot */
+  { CODEC_AACLD, 100000,160001,  32000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* backwards compatible */
+
+  /* 44/88 kHz dual rate */  /* not yet finally tuned */
+  { CODEC_AACLD,  36000, 60000,  44100, 1,  8, 7, 6, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
+  { CODEC_AACLD,  60000, 72000,  44100, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
+  { CODEC_AACLD,  72000,100000,  44100, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
+  { CODEC_AACLD, 100000,160001,  44100, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */
+
+  /* 48/96 kHz dual rate */  /* 32 and 40kbps line tuned for dual-rate SBR */
+  { CODEC_AACLD,  36000, 60000,  48000, 1,  8, 7, 6, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
+  { CODEC_AACLD,  60000, 72000,  48000, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
+  { CODEC_AACLD,  72000,100000,  48000, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
+  { CODEC_AACLD, 100000,160001,  48000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */
+
+  /*** stereo ***/
+  /* 16/32 kHz dual rate not yet tuned ->alb copied from non LD tables*/
+  { CODEC_AACLD,  32000, 36000,  16000, 2, 10, 9,12,11,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AACLD,  36000, 44000,  16000, 2, 13,13,13,13,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  44000, 52000,  16000, 2, 10, 9,11, 9,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* tune12 nominal: 48 kbit/s */
+  { CODEC_AACLD,  52000, 60000,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AACLD,  60000, 76000,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AACLD,  76000,128001,  16000, 2, 14,14,13,13,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+
+  /* 22.05/44.1 kHz dual rate */
+  { CODEC_AACLD,  32000, 36000,  22050, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AACLD,  36000, 44000,  22050, 2,  5, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  44000, 52000,  22050, 2,  7,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AACLD,  52000, 60000,  22050, 2,  9,11, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AACLD,  60000, 76000,  22050, 2, 10,12,10,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AACLD,  76000, 82000,  22050, 2, 12,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AACLD,  82000,128001,  22050, 2, 13,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+
+  /* 24/48 kHz dual rate */
+  { CODEC_AACLD,  32000, 36000,  24000, 2,  5, 4, 7, 6,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 32 kbit/s */
+  { CODEC_AACLD,  36000, 44000,  24000, 2,  4, 8, 8, 8,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  44000, 52000,  24000, 2,  6,10, 8, 8,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 48 kbit/s */
+  { CODEC_AACLD,  52000, 60000,  24000, 2,  9,11, 9, 9,  3, 0, -3, SBR_SWITCH_LRC, 1 }, /* nominal: 56 kbit/s */
+  { CODEC_AACLD,  60000, 76000,  24000, 2, 11,12,10,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 64 kbit/s */
+  { CODEC_AACLD,  76000, 88000,  24000, 2, 12,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 80 kbit/s */
+  { CODEC_AACLD,  88000,128001,  24000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 92 kbit/s */
+
+  /* 32/64 kHz dual rate */  /* placebo settings */ /*jgr: new, copy from CODEC_AAC */
+  { CODEC_AACLD,  60000, 80000,  32000, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
+  { CODEC_AACLD,  80000,112000,  32000, 2,  9, 9, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* low range */
+  { CODEC_AACLD, 112000,144000,  32000, 2, 11,11,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* SBR sweet spot */
+  { CODEC_AACLD, 144000,256001,  32000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
+
+  /* 44.1/88.2 kHz dual rate */  /* placebo settings */ /*wrr: new, copy from CODEC_AAC */
+  { CODEC_AACLD,  60000, 80000,  44100, 2,  7, 7, 6, 6,  3, 0, -3, SBR_SWITCH_LRC, 2 }, /* lowest range (multichannel rear) */
+  { CODEC_AACLD,  80000,112000,  44100, 2, 10,10, 8, 8,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* hlm 11-08-29 */
+  { CODEC_AACLD, 112000,144000,  44100, 2, 12,12,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* hlm 11-08-29 */
+  { CODEC_AACLD, 144000,256001,  44100, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* backwards compatible */
+
+  /* 48/96 kHz dual rate */  /* not yet finally tuned */ /*wrr: new, copy from CODEC_AAC */
+  { CODEC_AACLD,  60000, 80000,  48000, 2,  7, 7,10,10,  2, 0, -3, SBR_SWITCH_LRC, 2 }, /* nominal: 64 */
+  { CODEC_AACLD,  80000,112000,  48000, 2,  9, 9,10,10,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 96 */
+  { CODEC_AACLD, 112000,144000,  48000, 2, 11,11,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* nominal: 128 */
+  { CODEC_AACLD, 144000,176000,  48000, 2, 12,12,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* hlm 09-10-19 */
+  { CODEC_AACLD, 176000,256001,  48000, 2, 13,13,11,11,  3, 0, -3, SBR_LEFT_RIGHT, 1 }, /* hlm 09-10-19 */
 
 };
+
+const int sbrTuningTableSize = sizeof(sbrTuningTable)/sizeof(sbrTuningTable[0]);
 
 const psTuningTable_t psTuningTable[4] =
 {

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -132,8 +132,10 @@ typedef struct
 
 typedef struct
 {
-  FIXP_DBL  cut;
-  FIXP_DBL  boost;
+  FIXP_DBL  cut;       /* The attenuation scale factor currently used.     */
+  FIXP_DBL  usrCut;    /* The latest attenuation scale factor set by user. */
+  FIXP_DBL  boost;     /* The boost scale factor currently used.           */
+  FIXP_DBL  usrBoost;  /* The latest boost scale factor set by user.       */
 
   UINT   expiryFrame;
   SCHAR  targetRefLevel;
@@ -153,6 +155,8 @@ typedef struct
   USHORT numPayloads;                        /* The number of DRC data payload elements found within frame */
   USHORT numThreads;                         /* The number of DRC data threads extracted from the found payload elements */
   SCHAR  progRefLevel;                       /* Program reference level for all channels */
+
+  UINT   prlExpiryCount;                     /* Counter that can be used to monitor the life time of the program reference level. */
 
   UCHAR  dvbAncDataAvailable;                  /* Flag that indicates whether DVB ancillary data is present or not */
   UINT   dvbAncDataPosition;                   /* Used to store the DVB ancillary data payload position in the bitstream (only one per frame) */

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -110,6 +110,8 @@ const UCHAR FDK_sbrDecoder_sbr_start_freq_32[16] = {10, 12, 14, 15, 16, 17, 18, 
 const UCHAR FDK_sbrDecoder_sbr_start_freq_40[16] = {12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 26, 28, 30, 32};
 const UCHAR FDK_sbrDecoder_sbr_start_freq_44[16] = { 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 23, 25, 28, 32};
 const UCHAR FDK_sbrDecoder_sbr_start_freq_48[16] = { 7,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 27, 31};
+const UCHAR FDK_sbrDecoder_sbr_start_freq_64[16] = { 6,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 21, 23, 26, 30};
+const UCHAR FDK_sbrDecoder_sbr_start_freq_88[16] = { 5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 16, 18, 20, 23, 27, 31};
 //@}
 
 

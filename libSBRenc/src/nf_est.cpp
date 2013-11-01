@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -102,7 +102,7 @@ static const FIXP_DBL QuantOffset = (INT)0xfc000000;  /* ld64(0.25) */
 #define max(a,b) ( a > b ? a:b)
 #endif
 
-#define NOISE_FLOOR_OFFSET_SCALING  (3)
+#define NOISE_FLOOR_OFFSET_SCALING  (4)
 
 
 
@@ -484,11 +484,13 @@ FDKsbrEnc_InitSbrNoiseFloorEstimate (HANDLE_SBR_NOISE_FLOOR_ESTIMATE  h_sbrNoise
     tmp = ((FIXP_DBL)MAXVAL_DBL)>>NOISE_FLOOR_OFFSET_SCALING;
   }
   else {
-    FDK_ASSERT(noiseFloorOffset<=8); /* because of NOISE_FLOOR_OFFSET_SCALING */
+    /* noiseFloorOffset has to be smaller than 12, because
+       the result of the calculation below must be smaller than 1:
+       (2^(noiseFloorOffset/3))*2^4<1                                        */
+    FDK_ASSERT(noiseFloorOffset<12);
 
-      /* Assumes the noise floor offset in tuning table are in q31    */
-      /* Currently the table contains only 0 for noise floor offset   */
-      /* Change the qformat here when non-zero values would be filled */
+    /* Assumes the noise floor offset in tuning table are in q31    */
+    /* Change the qformat here when non-zero values would be filled */
     exp = fDivNorm((FIXP_DBL)noiseFloorOffset, 3, &qexp);
     tmp = fPow(2, DFRACT_BITS-1, exp, qexp, &qtmp);
     tmp = scaleValue(tmp, qtmp-NOISE_FLOOR_OFFSET_SCALING);
@@ -527,24 +529,30 @@ FDKsbrEnc_resetSbrNoiseFloorEstimate (HANDLE_SBR_NOISE_FLOOR_ESTIMATE h_sbrNoise
         h_sbrNoiseFloorEstimate->noNoiseBands = 1;
     }
     else{
-    /*
-    * Calculate number of noise bands 1,2 or 3 bands/octave
+        /*
+        * Calculate number of noise bands 1,2 or 3 bands/octave
         ********************************************************/
         FIXP_DBL tmp, ratio, lg2;
-        INT ratio_e, qlg2;
+        INT ratio_e, qlg2, nNoiseBands;
 
         ratio = fDivNorm(k2, kx, &ratio_e);
         lg2 = fLog2(ratio, ratio_e, &qlg2);
         tmp = fMult((FIXP_DBL)(h_sbrNoiseFloorEstimate->noiseBands<<24), lg2);
         tmp = scaleValue(tmp, qlg2-23);
 
-        h_sbrNoiseFloorEstimate->noNoiseBands = (INT)((tmp + (FIXP_DBL)1) >> 1);
+        nNoiseBands = (INT)((tmp + (FIXP_DBL)1) >> 1);
 
-        if (h_sbrNoiseFloorEstimate->noNoiseBands > MAX_NUM_NOISE_COEFFS)
-          h_sbrNoiseFloorEstimate->noNoiseBands = MAX_NUM_NOISE_COEFFS;
 
-        if( h_sbrNoiseFloorEstimate->noNoiseBands==0)
-            h_sbrNoiseFloorEstimate->noNoiseBands=1;
+        if (nNoiseBands > MAX_NUM_NOISE_COEFFS ) {
+          nNoiseBands = MAX_NUM_NOISE_COEFFS;
+        }
+
+        if( nNoiseBands == 0 ) {
+          nNoiseBands = 1;
+        }
+
+        h_sbrNoiseFloorEstimate->noNoiseBands = nNoiseBands;
+
     }
 
 

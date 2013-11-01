@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -123,6 +123,117 @@ static const FIXP_DBL  SnrLdMin4 = (FIXP_DBL)0x02000000; /*FL2FXCONST_DBL(FDKlog
 static const FIXP_DBL  SnrLdMin5 = (FIXP_DBL)0xfc000000; /*FL2FXCONST_DBL(FDKlog(0.25) /FDKlog(2.0)/LD_DATA_SCALING);*/
 
 
+/*
+The bits2Pe factors are choosen for the case that some times
+the crash recovery strategy will be activated once.
+*/
+
+typedef struct {
+  INT                 bitrate;
+  LONG                bits2PeFactor_mono;
+  LONG                bits2PeFactor_mono_slope;
+  LONG                bits2PeFactor_stereo;
+  LONG                bits2PeFactor_stereo_slope;
+  LONG                bits2PeFactor_mono_scfOpt;
+  LONG                bits2PeFactor_mono_scfOpt_slope;
+  LONG                bits2PeFactor_stereo_scfOpt;
+  LONG                bits2PeFactor_stereo_scfOpt_slope;
+
+} BIT_PE_SFAC;
+
+typedef struct {
+  const INT           sampleRate;
+  const BIT_PE_SFAC * pPeTab;
+  const INT           nEntries;
+
+} BITS2PE_CFG_TAB;
+
+static const BIT_PE_SFAC S_Bits2PeTab16000[] = {
+  { 10000, 0x228F5C29, 0x02FEF55D, 0x1D70A3D7, 0x09BC9D6D, 0x228F5C29, 0x02FEF55D, 0x1C28F5C3, 0x0CBB92CA},
+  { 24000, 0x23D70A3D, 0x029F16B1, 0x2199999A, 0x07DD4413, 0x23D70A3D, 0x029F16B1, 0x2199999A, 0x07DD4413},
+  { 32000, 0x247AE148, 0x11B1D92B, 0x23851EB8, 0x01F75105, 0x247AE148, 0x110A137F, 0x23851EB8, 0x01F75105},
+  { 48000, 0x2D1EB852, 0x6833C600, 0x247AE148, 0x014F8B59, 0x2CCCCCCD, 0x68DB8BAC, 0x247AE148, 0x01F75105},
+  { 64000, 0x60000000, 0x00000000, 0x251EB852, 0x154C985F, 0x60000000, 0x00000000, 0x2570A3D7, 0x154C985F},
+  { 96000, 0x60000000, 0x00000000, 0x39EB851F, 0x088509C0, 0x60000000, 0x00000000, 0x3A3D70A4, 0x088509C0},
+  {128000, 0x60000000, 0x00000000, 0x423D70A4, 0x18A43BB4, 0x60000000, 0x00000000, 0x428F5C29, 0x181E03F7},
+  {148000, 0x60000000, 0x00000000, 0x5147AE14, 0x00000000, 0x60000000, 0x00000000, 0x5147AE14, 0x00000000}
+};
+
+static const BIT_PE_SFAC S_Bits2PeTab22050[] = {
+  { 16000, 0x1a8f5c29, 0x1797cc3a, 0x128f5c29, 0x18e75793, 0x175c28f6, 0x221426fe, 0x00000000, 0x5a708ede},
+  { 24000, 0x2051eb85, 0x092ccf6c, 0x18a3d70a, 0x13a92a30, 0x1fae147b, 0xbcbe61d,  0x16147ae1, 0x18e75793},
+  { 32000, 0x228f5c29, 0x029f16b1, 0x1d70a3d7, 0x088509c0, 0x228f5c29, 0x29f16b1,  0x1c28f5c3, 0x0b242071},
+  { 48000, 0x23d70a3d, 0x014f8b59, 0x2199999a, 0x03eea20a, 0x23d70a3d, 0x14f8b59,  0x2199999a, 0x03eea20a},
+  { 64000, 0x247ae148, 0x08d8ec96, 0x23851eb8, 0x00fba882, 0x247ae148, 0x88509c0,  0x23851eb8, 0x00fba882},
+  { 96000, 0x2d1eb852, 0x3419e300, 0x247ae148, 0x00a7c5ac, 0x2ccccccd, 0x346dc5d6, 0x247ae148, 0x00fba882},
+  {128000, 0x60000000, 0x00000000, 0x251eb852, 0x029f16b1, 0x60000000, 0x00000000, 0x2570a3d7, 0x009f16b1},
+  {148000, 0x60000000, 0x00000000, 0x26b851ec, 0x00000000, 0x60000000, 0x00000000, 0x270a3d71, 0x00000000}
+};
+
+static const BIT_PE_SFAC S_Bits2PeTab24000[] = {
+  { 16000, 0x19eb851f, 0x13a92a30, 0x1147ae14, 0x164840e1, 0x1999999a, 0x12599ed8, 0x00000000, 0x46c764ae},
+  { 24000, 0x1eb851ec, 0x0d1b7176, 0x16b851ec, 0x18e75793, 0x1e147ae1, 0x0fba8827, 0x1147ae14, 0x2c9081c3},
+  { 32000, 0x21eb851f, 0x049667b6, 0x1ccccccd, 0x07357e67, 0x21eb851f, 0x03eea20a, 0x1c28f5c3, 0x07357e67},
+  { 48000, 0x2428f5c3, 0x014f8b59, 0x2051eb85, 0x053e2d62, 0x23d70a3d, 0x01f75105, 0x1fae147b, 0x07357e67},
+  { 64000, 0x24cccccd, 0x05e5f30e, 0x22e147ae, 0x01a36e2f, 0x24cccccd, 0x05e5f30e, 0x23333333, 0x014f8b59},
+  { 96000, 0x2a8f5c29, 0x24b33db0, 0x247ae148, 0x00fba882, 0x2a8f5c29, 0x26fe718b, 0x247ae148, 0x00fba882},
+  {128000, 0x4e666666, 0x1cd5f99c, 0x2570a3d7, 0x010c6f7a, 0x50a3d70a, 0x192a7371, 0x2570a3d7, 0x010c6f7a},
+  {148000, 0x60000000, 0x00000000, 0x26147ae1, 0x00000000, 0x60000000, 0x00000000, 0x26147ae1, 0x00000000}
+};
+
+static const BIT_PE_SFAC S_Bits2PeTab32000[] = {
+  { 16000, 0x1199999a, 0x20c49ba6, 0x00000000, 0x4577d955, 0x00000000, 0x60fe4799, 0x00000000, 0x00000000},
+  { 24000, 0x1999999a, 0x0fba8827, 0x10f5c28f, 0x1b866e44, 0x17ae147b, 0x0fba8827, 0x00000000, 0x4d551d69},
+  { 32000, 0x1d70a3d7, 0x07357e67, 0x17ae147b, 0x09d49518, 0x1b851eb8, 0x0a7c5ac4, 0x12e147ae, 0x110a137f},
+  { 48000, 0x20f5c28f, 0x049667b6, 0x1c7ae148, 0x053e2d62, 0x20a3d70a, 0x053e2d62, 0x1b333333, 0x05e5f30e},
+  { 64000, 0x23333333, 0x029f16b1, 0x1f0a3d71, 0x02f2f987, 0x23333333, 0x029f16b1, 0x1e147ae1, 0x03eea20a},
+  { 96000, 0x25c28f5c, 0x2c3c9eed, 0x21eb851f, 0x01f75105, 0x25c28f5c, 0x0a7c5ac4, 0x21eb851f, 0x01a36e2f},
+  {128000, 0x50f5c28f, 0x18a43bb4, 0x23d70a3d, 0x010c6f7a, 0x30000000, 0x168b5cc0, 0x23851eb8, 0x0192a737},
+  {148000, 0x60000000, 0x00000000, 0x247ae148, 0x00dfb23b, 0x3dc28f5c, 0x300f4aaf, 0x247ae148, 0x01bf6476},
+  {160000, 0x60000000, 0xb15b5740, 0x24cccccd, 0x053e2d62, 0x4f5c28f6, 0xbefd0072, 0x251eb852, 0x04fb1184},
+  {200000, 0x00000000, 0x00000000, 0x2b333333, 0x0836be91, 0x00000000, 0x00000000, 0x2b333333, 0x0890390f},
+  {320000, 0x00000000, 0x00000000, 0x4947ae14, 0x00000000, 0x00000000, 0x00000000, 0x4a8f5c29, 0x00000000}
+};
+
+static const BIT_PE_SFAC S_Bits2PeTab44100[] = {
+  { 16000, 0x10a3d70a, 0x1797cc3a, 0x00000000, 0x00000000, 0x00000000, 0x59210386, 0x00000000, 0x00000000},
+  { 24000, 0x16666666, 0x1797cc3a, 0x00000000, 0x639d5e4a, 0x15c28f5c, 0x12599ed8, 0x00000000, 0x5bc01a37},
+  { 32000, 0x1c28f5c3, 0x049667b6, 0x1851eb85, 0x049667b6, 0x1a3d70a4, 0x088509c0, 0x16666666, 0x053e2d62},
+  { 48000, 0x1e666666, 0x05e5f30e, 0x1a8f5c29, 0x049667b6, 0x1e666666, 0x05e5f30e, 0x18f5c28f, 0x05e5f30e},
+  { 64000, 0x2147ae14, 0x0346dc5d, 0x1ccccccd, 0x02f2f987, 0x2147ae14, 0x02f2f987, 0x1bd70a3d, 0x039abf34},
+  { 96000, 0x247ae148, 0x068db8bb, 0x1fae147b, 0x029f16b1, 0x2428f5c3, 0x0639d5e5, 0x1f5c28f6, 0x029f16b1},
+  {128000, 0x2ae147ae, 0x1b435265, 0x223d70a4, 0x0192a737, 0x2a3d70a4, 0x1040bfe4, 0x21eb851f, 0x0192a737},
+  {148000, 0x3b851eb8, 0x2832069c, 0x23333333, 0x00dfb23b, 0x3428f5c3, 0x2054c288, 0x22e147ae, 0x00dfb23b},
+  {160000, 0x4a3d70a4, 0xc32ebe5a, 0x23851eb8, 0x01d5c316, 0x40000000, 0xcb923a2b, 0x23333333, 0x01d5c316},
+  {200000, 0x00000000, 0x00000000, 0x25c28f5c, 0x0713f078, 0x00000000, 0x00000000, 0x2570a3d7, 0x072a4f17},
+  {320000, 0x00000000, 0x00000000, 0x3fae147b, 0x00000000, 0x00000000, 0x00000000, 0x3fae147b, 0x00000000}
+};
+
+static const BIT_PE_SFAC S_Bits2PeTab48000[] = {
+  { 16000, 0x0f5c28f6, 0x31ceaf25, 0x00000000, 0x00000000, 0x00000000, 0x74a771c9, 0x00000000, 0x00000000},
+  { 24000, 0x1b851eb8, 0x029f16b1, 0x00000000, 0x663c74fb, 0x1c7ae148, 0xe47991bd, 0x00000000, 0x49667b5f},
+  { 32000, 0x1c28f5c3, 0x029f16b1, 0x18f5c28f, 0x07357e67, 0x15c28f5c, 0x0f12c27a, 0x11eb851f, 0x13016484},
+  { 48000, 0x1d70a3d7, 0x053e2d62, 0x1c7ae148, 0xfe08aefc, 0x1d1eb852, 0x068db8bb, 0x1b333333, 0xfeb074a8},
+  { 64000, 0x20000000, 0x03eea20a, 0x1b851eb8, 0x0346dc5d, 0x2051eb85, 0x0346dc5d, 0x1a8f5c29, 0x039abf34},
+  { 96000, 0x23d70a3d, 0x053e2d62, 0x1eb851ec, 0x029f16b1, 0x23851eb8, 0x04ea4a8c, 0x1e147ae1, 0x02f2f987},
+  {128000, 0x28f5c28f, 0x14727dcc, 0x2147ae14, 0x0218def4, 0x2851eb85, 0x0e27e0f0, 0x20f5c28f, 0x0218def4},
+  {148000, 0x3570a3d7, 0x1cd5f99c, 0x228f5c29, 0x01bf6476, 0x30f5c28f, 0x18777e75, 0x223d70a4, 0x01bf6476},
+  {160000, 0x40000000, 0xcb923a2b, 0x23333333, 0x0192a737, 0x39eb851f, 0xd08d4bae, 0x22e147ae, 0x0192a737},
+  {200000, 0x00000000, 0x00000000, 0x251eb852, 0x06775a1b, 0x00000000, 0x00000000, 0x24cccccd, 0x06a4175a},
+  {320000, 0x00000000, 0x00000000, 0x3ccccccd, 0x00000000, 0x00000000, 0x00000000, 0x3d1eb852, 0x00000000}
+};
+
+static const BITS2PE_CFG_TAB bits2PeConfigTab[] = {
+  { 16000, S_Bits2PeTab16000, sizeof(S_Bits2PeTab16000)/sizeof(BIT_PE_SFAC) },
+  { 22050, S_Bits2PeTab22050, sizeof(S_Bits2PeTab22050)/sizeof(BIT_PE_SFAC) },
+  { 24000, S_Bits2PeTab24000, sizeof(S_Bits2PeTab24000)/sizeof(BIT_PE_SFAC) },
+  { 32000, S_Bits2PeTab32000, sizeof(S_Bits2PeTab32000)/sizeof(BIT_PE_SFAC) },
+  { 44100, S_Bits2PeTab44100, sizeof(S_Bits2PeTab44100)/sizeof(BIT_PE_SFAC) },
+  { 48000, S_Bits2PeTab48000, sizeof(S_Bits2PeTab48000)/sizeof(BIT_PE_SFAC) }
+};
+
+
+
 /* values for avoid hole flag */
 enum _avoid_hole_state {
     NO_AH              =0,
@@ -135,6 +246,99 @@ enum _avoid_hole_state {
 #define Q_BITFAC    (24)   /* Q scaling used in FDKaacEnc_bitresCalcBitFac() calculation */
 #define Q_AVGBITS   (17)   /* scale bit values */
 
+
+/*****************************************************************************
+    functionname: FDKaacEnc_InitBits2PeFactor
+    description:  retrieve bits2PeFactor from table
+*****************************************************************************/
+static void FDKaacEnc_InitBits2PeFactor(
+        FIXP_DBL *bits2PeFactor_m,
+        INT *bits2PeFactor_e,
+        const INT bitRate,
+        const INT nChannels,
+        const INT sampleRate,
+        const INT advancedBitsToPe,
+        const INT invQuant
+        )
+{
+  /* default bits2pe factor */
+  FIXP_DBL bit2PE_m = FL2FXCONST_DBL(1.18f/(1<<(1)));
+  INT      bit2PE_e = 1;
+
+  /* make use of advanced bits to pe factor table */
+  if (advancedBitsToPe) {
+
+    int i;
+    const BIT_PE_SFAC *peTab = NULL;
+    INT size = 0;
+
+
+    /* Get correct table entry */
+    for (i=0; i<(INT)(sizeof(bits2PeConfigTab)/sizeof(BITS2PE_CFG_TAB)); i++) {
+      if (sampleRate >= bits2PeConfigTab[i].sampleRate) {
+        peTab = bits2PeConfigTab[i].pPeTab;
+        size  = bits2PeConfigTab[i].nEntries;
+      }
+    }
+
+    if ( (peTab!=NULL) && (size!=0) ) {
+
+      INT startB      = -1;
+      LONG startPF    = 0;
+      LONG peSlope    = 0;
+
+      /* stereo or mono mode and invQuant used or not */
+      for (i=0; i<size-1; i++)
+      {
+        if ((peTab[i].bitrate<=bitRate) && ((peTab[i+1].bitrate>bitRate) || ((i==size-2)) ))
+        {
+          if (nChannels==1)
+          {
+            startPF = (!invQuant) ? peTab[i].bits2PeFactor_mono   : peTab[i].bits2PeFactor_mono_scfOpt;
+            peSlope = (!invQuant) ? peTab[i].bits2PeFactor_mono_slope : peTab[i].bits2PeFactor_mono_scfOpt_slope;
+            /*endPF   = (!invQuant) ? peTab[i+1].bits2PeFactor_mono : peTab[i+1].bits2PeFactor_mono_scfOpt;
+            endB=peTab[i+1].bitrate;*/
+            startB=peTab[i].bitrate;
+            break;
+          }
+          else
+          {
+            startPF = (!invQuant) ? peTab[i].bits2PeFactor_stereo   : peTab[i].bits2PeFactor_stereo_scfOpt;
+            peSlope = (!invQuant) ? peTab[i].bits2PeFactor_stereo_slope : peTab[i].bits2PeFactor_stereo_scfOpt_slope;
+            /*endPF   = (!invQuant) ? peTab[i+1].bits2PeFactor_stereo : peTab[i+1].bits2PeFactor_stereo_scfOpt;
+            endB=peTab[i+1].bitrate;*/
+            startB=peTab[i].bitrate;
+            break;
+          }
+        }
+      } /* for i */
+
+      /* if a configuration is available */
+      if (startB!=-1) {
+        /* linear interpolate to actual PEfactor */
+        FIXP_DBL peFac = fMult((FIXP_DBL)(bitRate-startB)<<14, (FIXP_DBL)peSlope) << 2;
+        FIXP_DBL bit2PE = peFac + (FIXP_DBL)startPF; /* startPF_float = startPF << 2 */
+
+        /* sanity check if bits2pe value is high enough */
+        if ( bit2PE >= (FL2FXCONST_DBL(0.35f) >> 2) ) {
+          bit2PE_m = bit2PE;
+          bit2PE_e = 2; /*  table is fixed scaled */
+        }
+      } /* br */
+    } /* sr */
+  } /* advancedBitsToPe */
+
+
+  /* return bits2pe factor */
+  *bits2PeFactor_m = bit2PE_m;
+  *bits2PeFactor_e = bit2PE_e;
+}
+
+
+/*****************************************************************************
+functionname: FDKaacEnc_bits2pe2
+description:  convert from bits to pe
+*****************************************************************************/
 static INT FDKaacEnc_bits2pe2(
         const INT                 bits,
         const FIXP_DBL            factor_m,
@@ -450,22 +654,23 @@ void FDKaacEnc_calcWeighting(PE_DATA *peData,
             FIXP_DBL nrgSum14, nrgSum12, nrgSum34, nrgTotal;
             FIXP_DBL nrgFacLd_14, nrgFacLd_12, nrgFacLd_34;
             INT usePatch, exePatch;
-            int sfb, nLinesSum = 0;
+            int sfb, sfbGrp, nLinesSum = 0;
 
             nrgSum14 = nrgSum12 = nrgSum34 = nrgTotal = FL2FXCONST_DBL(0.f);
 
             /* calculate flatness of audible spectrum, i.e. spectrum above masking threshold. */
-            for (sfb = 0; sfb < psyOutChan->sfbCnt; sfb++) {
-
-                FIXP_DBL nrgFac12 = CalcInvLdData(psyOutChan->sfbEnergyLdData[sfb]>>1);   /* nrg^(1/2) */
-                FIXP_DBL nrgFac14 = CalcInvLdData(psyOutChan->sfbEnergyLdData[sfb]>>2);   /* nrg^(1/4) */
+            for (sfbGrp = 0;sfbGrp < psyOutChannel[ch]->sfbCnt; sfbGrp+=psyOutChannel[ch]->sfbPerGroup) {
+              for (sfb=0; sfb<psyOutChannel[ch]->maxSfbPerGroup; sfb++) {
+                FIXP_DBL nrgFac12 = CalcInvLdData(psyOutChan->sfbEnergyLdData[sfbGrp+sfb]>>1); /* nrg^(1/2) */
+                FIXP_DBL nrgFac14 = CalcInvLdData(psyOutChan->sfbEnergyLdData[sfbGrp+sfb]>>2); /* nrg^(1/4) */
 
                 /* maximal number of bands is 64, results scaling factor 6 */
-                nLinesSum += peData->peChannelData[ch].sfbNLines[sfb];                    /* relevant lines */
-                nrgTotal  += ( psyOutChan->sfbEnergy[sfb] >> 6 );                         /* sum up nrg */
+                nLinesSum += peData->peChannelData[ch].sfbNLines[sfbGrp+sfb];             /* relevant lines */
+                nrgTotal  += ( psyOutChan->sfbEnergy[sfbGrp+sfb] >> 6 );                  /* sum up nrg */
                 nrgSum12  += ( nrgFac12 >> 6 );                                           /* sum up nrg^(2/4) */
                 nrgSum14  += ( nrgFac14 >> 6 );                                           /* sum up nrg^(1/4) */
                 nrgSum34  += ( fMult(nrgFac14, nrgFac12) >> 6 );                          /* sum up nrg^(3/4) */
+              }
             }
 
             nrgTotal = CalcLdData(nrgTotal);                                              /* get ld64 of total nrg */
@@ -479,32 +684,35 @@ void FDKaacEnc_calcWeighting(PE_DATA *peData,
             usePatch = (adjThrStateElement->chaosMeasureEnFac[ch] > FL2FXCONST_DBL(0.78125f));
             exePatch = ((usePatch) && (adjThrStateElement->lastEnFacPatch[ch]));
 
-            for (sfb = 0; sfb < psyOutChan->sfbCnt; sfb++) {
+            for (sfbGrp = 0;sfbGrp < psyOutChannel[ch]->sfbCnt; sfbGrp+=psyOutChannel[ch]->sfbPerGroup) {
+              for (sfb=0; sfb<psyOutChannel[ch]->maxSfbPerGroup; sfb++) {
+
                 INT sfbExePatch;
 
                 /* for MS coupled SFBs, also execute patch in side channel if done in mid channel */
-                if ((ch == 1) && (toolsInfo->msMask[sfb])) {
+                if ((ch == 1) && (toolsInfo->msMask[sfbGrp+sfb])) {
                     sfbExePatch = exePatchM;
                 }
                 else {
                     sfbExePatch = exePatch;
                 }
 
-                if ( (sfbExePatch) && (psyOutChan->sfbEnergy[sfb]>FL2FXCONST_DBL(0.f)) )
+                if ( (sfbExePatch) && (psyOutChan->sfbEnergy[sfbGrp+sfb]>FL2FXCONST_DBL(0.f)) )
                 {
                     /* execute patch based on spectral flatness calculated above */
                     if (adjThrStateElement->chaosMeasureEnFac[ch] > FL2FXCONST_DBL(0.8125f)) {
-                        qcOutChannel[ch]->sfbEnFacLd[sfb] = ( (nrgFacLd_14 + (psyOutChan->sfbEnergyLdData[sfb]+(psyOutChan->sfbEnergyLdData[sfb]>>1)))>>1 ); /* sfbEnergy^(3/4) */
+                        qcOutChannel[ch]->sfbEnFacLd[sfbGrp+sfb] = ( (nrgFacLd_14 + (psyOutChan->sfbEnergyLdData[sfbGrp+sfb]+(psyOutChan->sfbEnergyLdData[sfbGrp+sfb]>>1)))>>1 ); /* sfbEnergy^(3/4) */
                     }
                     else if (adjThrStateElement->chaosMeasureEnFac[ch] > FL2FXCONST_DBL(0.796875f)) {
-                        qcOutChannel[ch]->sfbEnFacLd[sfb] = ( (nrgFacLd_12 + psyOutChan->sfbEnergyLdData[sfb])>>1 );          /* sfbEnergy^(2/4) */
+                        qcOutChannel[ch]->sfbEnFacLd[sfbGrp+sfb] = ( (nrgFacLd_12 + psyOutChan->sfbEnergyLdData[sfbGrp+sfb])>>1 );          /* sfbEnergy^(2/4) */
                     }
                     else {
-                        qcOutChannel[ch]->sfbEnFacLd[sfb] = ( (nrgFacLd_34 + (psyOutChan->sfbEnergyLdData[sfb]>>1))>>1 );     /* sfbEnergy^(1/4) */
+                        qcOutChannel[ch]->sfbEnFacLd[sfbGrp+sfb] = ( (nrgFacLd_34 + (psyOutChan->sfbEnergyLdData[sfbGrp+sfb]>>1))>>1 );     /* sfbEnergy^(1/4) */
                     }
-                    qcOutChannel[ch]->sfbEnFacLd[sfb] = fixMin(qcOutChannel[ch]->sfbEnFacLd[sfb],(FIXP_DBL)0);
+                    qcOutChannel[ch]->sfbEnFacLd[sfbGrp+sfb] = fixMin(qcOutChannel[ch]->sfbEnFacLd[sfbGrp+sfb],(FIXP_DBL)0);
 
                 }
+              }
             } /* sfb loop */
 
             adjThrStateElement->lastEnFacPatch[ch] = usePatch;
@@ -735,7 +943,6 @@ static FIXP_DBL FDKaacEnc_calcChaosMeasure(PSY_OUT_CHANNEL *psyOutChannel,
   return chaosMeasure;
 }
 
-
 /* apply reduction formula for VBR-mode */
 static void FDKaacEnc_reduceThresholdsVBR(QC_OUT_CHANNEL* qcOutChannel[(2)],
                                 PSY_OUT_CHANNEL* psyOutChannel[(2)],
@@ -923,7 +1130,6 @@ static void FDKaacEnc_reduceThresholdsVBR(QC_OUT_CHANNEL* qcOutChannel[(2)],
   }
 }
 
-
 /*****************************************************************************
 functionname: FDKaacEnc_correctThresh
 description:  if pe difference deltaPe between desired pe and real pe is small enough,
@@ -931,12 +1137,12 @@ the difference can be distributed among the scale factor bands.
 New thresholds can be derived from this pe-difference
 *****************************************************************************/
 static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
-                          QC_OUT_ELEMENT*  qcElement[(6)],
-                          PSY_OUT_ELEMENT* psyOutElement[(6)],
-                          UCHAR            ahFlag[(6)][(2)][MAX_GROUPED_SFB],
-                          FIXP_DBL         thrExp[(6)][(2)][MAX_GROUPED_SFB],
-                          const            FIXP_DBL redVal[(6)],
-                          const            SCHAR redValScaling[(6)],
+                          QC_OUT_ELEMENT*  qcElement[(8)],
+                          PSY_OUT_ELEMENT* psyOutElement[(8)],
+                          UCHAR            ahFlag[(8)][(2)][MAX_GROUPED_SFB],
+                          FIXP_DBL         thrExp[(8)][(2)][MAX_GROUPED_SFB],
+                          const            FIXP_DBL redVal[(8)],
+                          const            SCHAR redValScaling[(8)],
                           const            INT deltaPe,
                           const            INT processElements,
                           const            INT elementOffset)
@@ -947,8 +1153,8 @@ static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
    PE_CHANNEL_DATA *peChanData;
    FIXP_DBL thrFactorLdData;
    FIXP_DBL sfbEnLdData, sfbThrLdData, sfbThrReducedLdData;
-   FIXP_DBL *sfbPeFactorsLdData[(6)][(2)];
-   FIXP_DBL sfbNActiveLinesLdData[(2)][MAX_GROUPED_SFB];
+   FIXP_DBL *sfbPeFactorsLdData[(8)][(2)];
+   FIXP_DBL sfbNActiveLinesLdData[(8)][(2)][MAX_GROUPED_SFB];
    INT      normFactorInt;
    FIXP_DBL normFactorLdData;
 
@@ -979,13 +1185,13 @@ static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
             for (sfb=0; sfb<psyOutChan->maxSfbPerGroup; sfb++) {
 
              if ( peChanData->sfbNActiveLines[sfbGrp+sfb] == 0 ) {
-                sfbNActiveLinesLdData[ch][sfbGrp+sfb] = FL2FXCONST_DBL(-1.0f);
+                sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] = FL2FXCONST_DBL(-1.0f);
              }
              else {
                 /* Both CalcLdInt and CalcLdData can be used!
                  * No offset has to be subtracted, because sfbNActiveLinesLdData
                  * is shorted while thrFactor calculation */
-                sfbNActiveLinesLdData[ch][sfbGrp+sfb] = CalcLdInt(peChanData->sfbNActiveLines[sfbGrp+sfb]);
+                sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] = CalcLdInt(peChanData->sfbNActiveLines[sfbGrp+sfb]);
              }
              if ( ((ahFlag[elementId][ch][sfbGrp+sfb] < AH_ACTIVE) || (deltaPe > 0)) &&
                    peChanData->sfbNActiveLines[sfbGrp+sfb] != 0 )
@@ -1002,14 +1208,14 @@ static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
                                                - (FIXP_DBL)(minScale<<(DFRACT_BITS-1-LD_DATA_SHIFT));
 
                    if (sumLd < FL2FXCONST_DBL(0.f)) {
-                      sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[ch][sfbGrp+sfb] - sumLd;
+                      sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] - sumLd;
                    }
                    else {
-                     if ( sfbNActiveLinesLdData[ch][sfbGrp+sfb] > (FL2FXCONST_DBL(-1.f) + sumLd) ) {
-                       sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[ch][sfbGrp+sfb] - sumLd;
+                     if ( sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] > (FL2FXCONST_DBL(-1.f) + sumLd) ) {
+                       sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] - sumLd;
                      }
                      else {
-                      sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[ch][sfbGrp+sfb];
+                      sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] = sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb];
                      }
                    }
 
@@ -1050,7 +1256,7 @@ static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
                  }
                  else {
                    /* new threshold */
-                   FIXP_DBL tmp = CalcInvLdData(sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] + normFactorLdData - sfbNActiveLinesLdData[ch][sfbGrp+sfb] - FL2FXCONST_DBL((float)LD_DATA_SHIFT/LD_DATA_SCALING));
+                   FIXP_DBL tmp = CalcInvLdData(sfbPeFactorsLdData[elementId][ch][sfbGrp+sfb] + normFactorLdData - sfbNActiveLinesLdData[elementId][ch][sfbGrp+sfb] - FL2FXCONST_DBL((float)LD_DATA_SHIFT/LD_DATA_SCALING));
 
                    /* limit thrFactor to 60dB */
                    tmp = (deltaPe<0) ? tmp : (-tmp);
@@ -1102,9 +1308,9 @@ static void FDKaacEnc_correctThresh(CHANNEL_MAPPING* cm,
                   reducing minSnr
 *****************************************************************************/
 void FDKaacEnc_reduceMinSnr(CHANNEL_MAPPING* cm,
-                            QC_OUT_ELEMENT*  qcElement[(6)],
-                            PSY_OUT_ELEMENT* psyOutElement[(6)],
-                            UCHAR            ahFlag[(6)][(2)][MAX_GROUPED_SFB],
+                            QC_OUT_ELEMENT*  qcElement[(8)],
+                            PSY_OUT_ELEMENT* psyOutElement[(8)],
+                            UCHAR            ahFlag[(8)][(2)][MAX_GROUPED_SFB],
                             const            INT desiredPe,
                             INT*             redPeGlobal,
                             const            INT processElements,
@@ -1204,10 +1410,10 @@ bail:
                   bands have to be quantized to zero
 *****************************************************************************/
 static void FDKaacEnc_allowMoreHoles(CHANNEL_MAPPING* cm,
-                           QC_OUT_ELEMENT*  qcElement[(6)],
-                           PSY_OUT_ELEMENT* psyOutElement[(6)],
-                           ATS_ELEMENT*     AdjThrStateElement[(6)],
-                           UCHAR            ahFlag[(6)][(2)][MAX_GROUPED_SFB],
+                           QC_OUT_ELEMENT*  qcElement[(8)],
+                           PSY_OUT_ELEMENT* psyOutElement[(8)],
+                           ATS_ELEMENT*     AdjThrStateElement[(8)],
+                           UCHAR            ahFlag[(8)][(2)][MAX_GROUPED_SFB],
                            const INT        desiredPe,
                            const INT        currentPe,
                            const int        processElements,
@@ -1439,17 +1645,17 @@ functionname: FDKaacEnc_adaptThresholdsToPe
 description:  two guesses for the reduction value and one final correction of the thresholds
 *****************************************************************************/
 static void FDKaacEnc_adaptThresholdsToPe(CHANNEL_MAPPING*  cm,
-                                ATS_ELEMENT*      AdjThrStateElement[(6)],
-                                QC_OUT_ELEMENT*   qcElement[(6)],
-                                PSY_OUT_ELEMENT*  psyOutElement[(6)],
+                                ATS_ELEMENT*      AdjThrStateElement[(8)],
+                                QC_OUT_ELEMENT*   qcElement[(8)],
+                                PSY_OUT_ELEMENT*  psyOutElement[(8)],
                                 const INT         desiredPe,
                                 const INT         processElements,
                                 const INT         elementOffset)
 {
-   FIXP_DBL redValue[(6)];
-   SCHAR    redValScaling[(6)];
-   UCHAR    pAhFlag[(6)][(2)][MAX_GROUPED_SFB];
-   FIXP_DBL pThrExp[(6)][(2)][MAX_GROUPED_SFB];
+   FIXP_DBL redValue[(8)];
+   SCHAR    redValScaling[(8)];
+   UCHAR    pAhFlag[(8)][(2)][MAX_GROUPED_SFB];
+   FIXP_DBL pThrExp[(8)][(2)][MAX_GROUPED_SFB];
    int iter;
 
    INT constPartGlobal, noRedPeGlobal, nActiveLinesGlobal, redPeGlobal;
@@ -1683,7 +1889,6 @@ static void FDKaacEnc_adaptThresholdsToPe(CHANNEL_MAPPING*  cm,
 
 }
 
-
 /* similar to FDKaacEnc_adaptThresholdsToPe(), for  VBR-mode */
 void FDKaacEnc_AdaptThresholdsVBR(QC_OUT_CHANNEL* qcOutChannel[(2)],
                                PSY_OUT_CHANNEL* psyOutChannel[(2)],
@@ -1692,8 +1897,14 @@ void FDKaacEnc_AdaptThresholdsVBR(QC_OUT_CHANNEL* qcOutChannel[(2)],
                                PE_DATA *peData,
                                const INT nChannels)
 {
-   UCHAR    pAhFlag[(2)][MAX_GROUPED_SFB];
-   FIXP_DBL pThrExp[(2)][MAX_GROUPED_SFB];
+   UCHAR    (*pAhFlag)[MAX_GROUPED_SFB];
+   FIXP_DBL (*pThrExp)[MAX_GROUPED_SFB];
+
+   /* allocate scratch memory */
+   C_ALLOC_SCRATCH_START(_pAhFlag, UCHAR, (2)*MAX_GROUPED_SFB)
+   C_ALLOC_SCRATCH_START(_pThrExp, FIXP_DBL, (2)*MAX_GROUPED_SFB)
+   pAhFlag = (UCHAR(*)[MAX_GROUPED_SFB])_pAhFlag;
+   pThrExp = (FIXP_DBL(*)[MAX_GROUPED_SFB])_pThrExp;
 
    /* thresholds to the power of redExp */
    FDKaacEnc_calcThreshExp(pThrExp, qcOutChannel, psyOutChannel, nChannels);
@@ -1711,6 +1922,9 @@ void FDKaacEnc_AdaptThresholdsVBR(QC_OUT_CHANNEL* qcOutChannel[(2)],
                        AdjThrStateElement->vbrQualFactor,
                        &AdjThrStateElement->chaosMeasureOld);
 
+   /* free scratch memory */
+   C_ALLOC_SCRATCH_END(_pThrExp, FIXP_DBL, (2)*MAX_GROUPED_SFB)
+   C_ALLOC_SCRATCH_END(_pAhFlag, UCHAR, (2)*MAX_GROUPED_SFB)
 }
 
 
@@ -2002,95 +2216,112 @@ bail:
 functionname: FDKaacEnc_AdjThrInit
 description:  initialize ADJ_THR_STATE
 *****************************************************************************/
-void FDKaacEnc_AdjThrInit(ADJ_THR_STATE   *hAdjThr,
-    const INT       meanPe,
-    ELEMENT_BITS    *elBits[(6)],
-    INT             nElements,
-    FIXP_DBL        vbrQualFactor)
+void FDKaacEnc_AdjThrInit(
+        ADJ_THR_STATE   *hAdjThr,
+        const INT       meanPe,
+        ELEMENT_BITS    *elBits[(8)],
+        INT             invQuant,
+        INT             nElements,
+        INT             nChannelsEff,
+        INT             sampleRate,
+        INT             advancedBitsToPe,
+        FIXP_DBL        vbrQualFactor
+        )
 {
-    INT i;
+  INT i;
 
-    FIXP_DBL POINT8 = FL2FXCONST_DBL(0.8f);
-    FIXP_DBL POINT6 = FL2FXCONST_DBL(0.6f);
+  FIXP_DBL POINT8 = FL2FXCONST_DBL(0.8f);
+  FIXP_DBL POINT6 = FL2FXCONST_DBL(0.6f);
 
-    /* common for all elements: */
+  /* common for all elements: */
+  /* parameters for bitres control */
+  hAdjThr->bresParamLong.clipSaveLow   = (FIXP_DBL)0x1999999a; /* FL2FXCONST_DBL(0.2f); */
+  hAdjThr->bresParamLong.clipSaveHigh  = (FIXP_DBL)0x7999999a; /* FL2FXCONST_DBL(0.95f); */
+  hAdjThr->bresParamLong.minBitSave    = (FIXP_DBL)0xf999999a; /* FL2FXCONST_DBL(-0.05f); */
+  hAdjThr->bresParamLong.maxBitSave    = (FIXP_DBL)0x26666666; /* FL2FXCONST_DBL(0.3f); */
+  hAdjThr->bresParamLong.clipSpendLow  = (FIXP_DBL)0x1999999a; /* FL2FXCONST_DBL(0.2f); */
+  hAdjThr->bresParamLong.clipSpendHigh = (FIXP_DBL)0x7999999a; /* FL2FXCONST_DBL(0.95f); */
+  hAdjThr->bresParamLong.minBitSpend   = (FIXP_DBL)0xf3333333; /* FL2FXCONST_DBL(-0.10f); */
+  hAdjThr->bresParamLong.maxBitSpend   = (FIXP_DBL)0x33333333; /* FL2FXCONST_DBL(0.4f); */
+
+  hAdjThr->bresParamShort.clipSaveLow   = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
+  hAdjThr->bresParamShort.clipSaveHigh  = (FIXP_DBL)0x5fffffff; /* FL2FXCONST_DBL(0.75f); */
+  hAdjThr->bresParamShort.minBitSave    = (FIXP_DBL)0x00000000; /* FL2FXCONST_DBL(0.0f); */
+  hAdjThr->bresParamShort.maxBitSave    = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
+  hAdjThr->bresParamShort.clipSpendLow  = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
+  hAdjThr->bresParamShort.clipSpendHigh = (FIXP_DBL)0x5fffffff; /* FL2FXCONST_DBL(0.75f); */
+  hAdjThr->bresParamShort.minBitSpend   = (FIXP_DBL)0xf9999998; /* FL2FXCONST_DBL(-0.05f); */
+  hAdjThr->bresParamShort.maxBitSpend   = (FIXP_DBL)0x40000000; /* FL2FXCONST_DBL(0.5f); */
+
+  /* specific for each element: */
+  for (i=0; i<nElements; i++) {
+    ATS_ELEMENT* atsElem = hAdjThr->adjThrStateElem[i];
+    MINSNR_ADAPT_PARAM *msaParam = &atsElem->minSnrAdaptParam;
+    INT chBitrate = elBits[i]->chBitrateEl;
+
     /* parameters for bitres control */
-    hAdjThr->bresParamLong.clipSaveLow   = (FIXP_DBL)0x1999999a; /* FL2FXCONST_DBL(0.2f); */
-    hAdjThr->bresParamLong.clipSaveHigh  = (FIXP_DBL)0x7999999a; /* FL2FXCONST_DBL(0.95f); */
-    hAdjThr->bresParamLong.minBitSave    = (FIXP_DBL)0xf999999a; /* FL2FXCONST_DBL(-0.05f); */
-    hAdjThr->bresParamLong.maxBitSave    = (FIXP_DBL)0x26666666; /* FL2FXCONST_DBL(0.3f); */
-    hAdjThr->bresParamLong.clipSpendLow  = (FIXP_DBL)0x1999999a; /* FL2FXCONST_DBL(0.2f); */
-    hAdjThr->bresParamLong.clipSpendHigh = (FIXP_DBL)0x7999999a; /* FL2FXCONST_DBL(0.95f); */
-    hAdjThr->bresParamLong.minBitSpend   = (FIXP_DBL)0xf3333333; /* FL2FXCONST_DBL(-0.10f); */
-    hAdjThr->bresParamLong.maxBitSpend   = (FIXP_DBL)0x33333333; /* FL2FXCONST_DBL(0.4f); */
+    atsElem->peMin = fMultI(POINT8, meanPe) >> 1;
+    atsElem->peMax = fMultI(POINT6, meanPe);
 
-    hAdjThr->bresParamShort.clipSaveLow   = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
-    hAdjThr->bresParamShort.clipSaveHigh  = (FIXP_DBL)0x5fffffff; /* FL2FXCONST_DBL(0.75f); */
-    hAdjThr->bresParamShort.minBitSave    = (FIXP_DBL)0x00000000; /* FL2FXCONST_DBL(0.0f); */
-    hAdjThr->bresParamShort.maxBitSave    = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
-    hAdjThr->bresParamShort.clipSpendLow  = (FIXP_DBL)0x199999a0; /* FL2FXCONST_DBL(0.2f); */
-    hAdjThr->bresParamShort.clipSpendHigh = (FIXP_DBL)0x5fffffff; /* FL2FXCONST_DBL(0.75f); */
-    hAdjThr->bresParamShort.minBitSpend   = (FIXP_DBL)0xf9999998; /* FL2FXCONST_DBL(-0.05f); */
-    hAdjThr->bresParamShort.maxBitSpend   = (FIXP_DBL)0x40000000; /* FL2FXCONST_DBL(0.5f); */
+    /* for use in FDKaacEnc_reduceThresholdsVBR */
+    atsElem->chaosMeasureOld = FL2FXCONST_DBL(0.3f);
 
-    /* specific for each element: */
-    for (i=0; i<nElements; i++) {
-        ATS_ELEMENT* atsElem = hAdjThr->adjThrStateElem[i];
-        MINSNR_ADAPT_PARAM *msaParam = &atsElem->minSnrAdaptParam;
-        INT chBitrate = elBits[i]->chBitrateEl;
+    /* additional pe offset to correct pe2bits for low bitrates */
+    atsElem->peOffset = 0;
 
-        /* parameters for bitres control */
-        atsElem->peMin = fMultI(POINT8, meanPe) >> 1;
-        atsElem->peMax = fMultI(POINT6, meanPe);
-
-        /* for use in FDKaacEnc_reduceThresholdsVBR */
-        atsElem->chaosMeasureOld = FL2FXCONST_DBL(0.3f);
-
-        /* additional pe offset to correct pe2bits for low bitrates */
-        atsElem->peOffset = 0;
-
-        /* vbr initialisation */
-        atsElem->vbrQualFactor = vbrQualFactor;
-        if (chBitrate < 32000)
-        {
-            atsElem->peOffset = fixMax(50, 100-fMultI((FIXP_DBL)0x666667, chBitrate));
-        }
-
-        /* avoid hole parameters */
-        if (chBitrate > 20000) {
-            atsElem->ahParam.modifyMinSnr = TRUE;
-            atsElem->ahParam.startSfbL = 15;
-            atsElem->ahParam.startSfbS = 3;
-        }
-        else {
-            atsElem->ahParam.modifyMinSnr = FALSE;
-            atsElem->ahParam.startSfbL = 0;
-            atsElem->ahParam.startSfbS = 0;
-        }
-
-    		  /* minSnr adaptation */
-        msaParam->maxRed = FL2FXCONST_DBL(0.00390625f); /* 0.25f/64.0f */
-        /* start adaptation of minSnr for avgEn/sfbEn > startRatio */
-        msaParam->startRatio = FL2FXCONST_DBL(0.05190512648f); /* ld64(10.0f) */
-        /* maximum minSnr reduction to minSnr^maxRed is reached for
-           avgEn/sfbEn >= maxRatio */
-        /* msaParam->maxRatio = 1000.0f; */
-        /*msaParam->redRatioFac = ((float)1.0f - msaParam->maxRed) / ((float)10.0f*log10(msaParam->startRatio/msaParam->maxRatio)/log10(2.0f)*(float)0.3010299956f);*/
-        msaParam->redRatioFac = FL2FXCONST_DBL(-0.375f); /* -0.0375f * 10.0f */
-        /*msaParam->redOffs = (float)1.0f - msaParam->redRatioFac * (float)10.0f * log10(msaParam->startRatio)/log10(2.0f) * (float)0.3010299956f;*/
-        msaParam->redOffs = FL2FXCONST_DBL(0.021484375); /* 1.375f/64.0f */
-
-        /* init pe correction */
-        atsElem->peCorrectionFactor_m = FL2FXCONST_DBL(0.5f); /* 1.0 */
-        atsElem->peCorrectionFactor_e = 1;
-
-        atsElem->dynBitsLast = -1;
-        atsElem->peLast = 0;
-
-        /* init bits to pe factor */
-        atsElem->bits2PeFactor_m = FL2FXCONST_DBL(1.18f/(1<<(1)));
-        atsElem->bits2PeFactor_e = 1;
+    /* vbr initialisation */
+    atsElem->vbrQualFactor = vbrQualFactor;
+    if (chBitrate < 32000)
+    {
+      atsElem->peOffset = fixMax(50, 100-fMultI((FIXP_DBL)0x666667, chBitrate));
     }
+
+    /* avoid hole parameters */
+    if (chBitrate > 20000) {
+      atsElem->ahParam.modifyMinSnr = TRUE;
+      atsElem->ahParam.startSfbL = 15;
+      atsElem->ahParam.startSfbS = 3;
+    }
+    else {
+      atsElem->ahParam.modifyMinSnr = FALSE;
+      atsElem->ahParam.startSfbL = 0;
+      atsElem->ahParam.startSfbS = 0;
+    }
+
+    /* minSnr adaptation */
+    msaParam->maxRed = FL2FXCONST_DBL(0.00390625f); /* 0.25f/64.0f */
+    /* start adaptation of minSnr for avgEn/sfbEn > startRatio */
+    msaParam->startRatio = FL2FXCONST_DBL(0.05190512648f); /* ld64(10.0f) */
+    /* maximum minSnr reduction to minSnr^maxRed is reached for
+       avgEn/sfbEn >= maxRatio */
+    /* msaParam->maxRatio = 1000.0f; */
+    /*msaParam->redRatioFac = ((float)1.0f - msaParam->maxRed) / ((float)10.0f*log10(msaParam->startRatio/msaParam->maxRatio)/log10(2.0f)*(float)0.3010299956f);*/
+    msaParam->redRatioFac = FL2FXCONST_DBL(-0.375f); /* -0.0375f * 10.0f */
+    /*msaParam->redOffs = (float)1.0f - msaParam->redRatioFac * (float)10.0f * log10(msaParam->startRatio)/log10(2.0f) * (float)0.3010299956f;*/
+    msaParam->redOffs = FL2FXCONST_DBL(0.021484375); /* 1.375f/64.0f */
+
+    /* init pe correction */
+    atsElem->peCorrectionFactor_m = FL2FXCONST_DBL(0.5f); /* 1.0 */
+    atsElem->peCorrectionFactor_e = 1;
+
+    atsElem->dynBitsLast = -1;
+    atsElem->peLast = 0;
+
+    /* init bits to pe factor */
+
+    /* init bits2PeFactor */
+    FDKaacEnc_InitBits2PeFactor(
+              &atsElem->bits2PeFactor_m,
+              &atsElem->bits2PeFactor_e,
+              chBitrate,       /* bitrate/channel*/
+              nChannelsEff,    /* number of channels */
+              sampleRate,
+              advancedBitsToPe,
+              invQuant
+              );
+
+  } /* for nElements */
+
 }
 
 
@@ -2154,6 +2385,67 @@ static void FDKaacEnc_FDKaacEnc_calcPeCorrection(
 }
 
 
+static void FDKaacEnc_calcPeCorrectionLowBitRes(
+        FIXP_DBL *const           correctionFac_m,
+        INT *const                correctionFac_e,
+        const INT                 peLast,
+        const INT                 bitsLast,
+        const INT                 bitresLevel,
+        const INT                 nChannels,
+        const FIXP_DBL            bits2PeFactor_m,
+        const INT                 bits2PeFactor_e
+        )
+{
+  /* tuning params */
+  const FIXP_DBL amp     = FL2FXCONST_DBL(0.005);
+  const FIXP_DBL maxDiff = FL2FXCONST_DBL(0.25f);
+
+  if (bitsLast > 0) {
+
+    /* Estimate deviation of granted and used dynamic bits in previous frame, in PE units */
+    const int bitsBalLast = peLast - FDKaacEnc_bits2pe2(
+          bitsLast,
+          bits2PeFactor_m,
+          bits2PeFactor_e);
+
+    /* reserve n bits per channel */
+    int headroom = (bitresLevel>=50*nChannels) ? 0 : (100*nChannels);
+
+    /* in PE units */
+    headroom = FDKaacEnc_bits2pe2(
+          headroom,
+          bits2PeFactor_m,
+          bits2PeFactor_e);
+
+    /*
+     * diff = amp * ((bitsBalLast - headroom) / (bitresLevel + headroom)
+     * diff = max ( min ( diff, maxDiff, -maxDiff)) / 2
+     */
+    FIXP_DBL denominator = (FIXP_DBL)FDKaacEnc_bits2pe2(bitresLevel, bits2PeFactor_m, bits2PeFactor_e) + (FIXP_DBL)headroom;
+
+    int scaling = 0;
+    FIXP_DBL diff = (bitsBalLast>=headroom)
+         ?  fMult(amp, fDivNorm( (FIXP_DBL)(bitsBalLast - headroom), denominator, &scaling))
+         : -fMult(amp, fDivNorm(-(FIXP_DBL)(bitsBalLast - headroom), denominator, &scaling)) ;
+
+    scaling -= 1; /* divide by 2 */
+
+    diff = (scaling<=0) ? FDKmax( FDKmin (diff>>(-scaling), maxDiff>>1), -maxDiff>>1)
+                        : FDKmax( FDKmin (diff, maxDiff>>(1+scaling)), -maxDiff>>(1+scaling)) << scaling;
+
+    /*
+     * corrFac += diff
+     * corrFac = max ( min ( corrFac/2.f, 1.f/2.f, 0.75f/2.f ) )
+     */
+    *correctionFac_m = FDKmax(FDKmin((*correctionFac_m)+diff, FL2FXCONST_DBL(1.0f/2.f)), FL2FXCONST_DBL(0.75f/2.f)) ;
+    *correctionFac_e = 1;
+  }
+  else {
+    *correctionFac_m = FL2FXCONST_DBL(0.75/2.f);
+    *correctionFac_e = 1;
+  }
+}
+
 void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     ATS_ELEMENT       *AdjThrStateElement,
     PSY_OUT_CHANNEL   *psyOutChannel[(2)],
@@ -2166,7 +2458,7 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
     const INT         bitresBits,
     const INT         maxBitresBits,
     const FIXP_DBL    maxBitFac,
-    const INT         bitDistributenMode)
+    const INT         bitDistributionMode)
 {
   FIXP_DBL bitFactor;
   INT noRedPe = peData->pe;
@@ -2184,7 +2476,7 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
   }
 
   if (grantedDynBits >= 1) {
-    if (bitDistributenMode!=0) {
+    if (bitDistributionMode!=0) {
       *grantedPe = FDKaacEnc_bits2pe2(grantedDynBits, AdjThrStateElement->bits2PeFactor_m, AdjThrStateElement->bits2PeFactor_e);
     }
     else
@@ -2208,16 +2500,32 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
   }
 
   /* correction of pe value */
-  {
-    FDKaacEnc_FDKaacEnc_calcPeCorrection(
-       &AdjThrStateElement->peCorrectionFactor_m,
-       &AdjThrStateElement->peCorrectionFactor_e,
-        fixMin(*grantedPe, noRedPe),
-        AdjThrStateElement->peLast,
-        AdjThrStateElement->dynBitsLast,
-        AdjThrStateElement->bits2PeFactor_m,
-        AdjThrStateElement->bits2PeFactor_e
+  switch (bitDistributionMode) {
+  case 2:
+  case 1:
+    FDKaacEnc_calcPeCorrectionLowBitRes(
+           &AdjThrStateElement->peCorrectionFactor_m,
+           &AdjThrStateElement->peCorrectionFactor_e,
+            AdjThrStateElement->peLast,
+            AdjThrStateElement->dynBitsLast,
+            bitresBits,
+            nChannels,
+            AdjThrStateElement->bits2PeFactor_m,
+            AdjThrStateElement->bits2PeFactor_e
         );
+    break;
+  case 0:
+  default:
+      FDKaacEnc_FDKaacEnc_calcPeCorrection(
+           &AdjThrStateElement->peCorrectionFactor_m,
+           &AdjThrStateElement->peCorrectionFactor_e,
+            fixMin(*grantedPe, noRedPe),
+            AdjThrStateElement->peLast,
+            AdjThrStateElement->dynBitsLast,
+            AdjThrStateElement->bits2PeFactor_m,
+            AdjThrStateElement->bits2PeFactor_e
+            );
+    break;
   }
 
   *grantedPeCorr = (INT)(fMult((FIXP_DBL)(*grantedPe<<Q_AVGBITS), AdjThrStateElement->peCorrectionFactor_m) >> (Q_AVGBITS-AdjThrStateElement->peCorrectionFactor_e));
@@ -2232,10 +2540,10 @@ void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
 functionname: FDKaacEnc_AdjustThresholds
 description:  adjust thresholds
 *****************************************************************************/
-void FDKaacEnc_AdjustThresholds(ATS_ELEMENT*        AdjThrStateElement[(6)],
-                                QC_OUT_ELEMENT*     qcElement[(6)],
+void FDKaacEnc_AdjustThresholds(ATS_ELEMENT*        AdjThrStateElement[(8)],
+                                QC_OUT_ELEMENT*     qcElement[(8)],
                                 QC_OUT*             qcOut,
-                                PSY_OUT_ELEMENT*    psyOutElement[(6)],
+                                PSY_OUT_ELEMENT*    psyOutElement[(8)],
                                 INT                 CBRbitrateMode,
                                 CHANNEL_MAPPING*    cm)
 {
@@ -2291,20 +2599,19 @@ void FDKaacEnc_AdjustThresholds(ATS_ELEMENT*        AdjThrStateElement[(6)],
         }  /* -end- element loop */
 
     }
-        for (i=0; i<cm->nElements; i++) {
-            int ch,sfb,sfbGrp;
-            /* no weighting of threholds and energies for mlout */
-            /* weight energies and thresholds */
-            for (ch=0; ch<cm->elInfo[i].nChannelsInEl; ch++) {
-                QC_OUT_CHANNEL* pQcOutCh = qcElement[i]->qcOutChannel[ch];
-                for (sfbGrp = 0;sfbGrp < psyOutElement[i]->psyOutChannel[ch]->sfbCnt; sfbGrp+=psyOutElement[i]->psyOutChannel[ch]->sfbPerGroup) {
-                    for (sfb=0; sfb<psyOutElement[i]->psyOutChannel[ch]->maxSfbPerGroup; sfb++) {
-                        pQcOutCh->sfbThresholdLdData[sfb+sfbGrp] += pQcOutCh->sfbEnFacLd[sfb+sfbGrp];
-                    }
+    for (i=0; i<cm->nElements; i++) {
+        int ch,sfb,sfbGrp;
+        /* no weighting of threholds and energies for mlout */
+        /* weight energies and thresholds */
+        for (ch=0; ch<cm->elInfo[i].nChannelsInEl; ch++) {
+            QC_OUT_CHANNEL* pQcOutCh = qcElement[i]->qcOutChannel[ch];
+            for (sfbGrp = 0;sfbGrp < psyOutElement[i]->psyOutChannel[ch]->sfbCnt; sfbGrp+=psyOutElement[i]->psyOutChannel[ch]->sfbPerGroup) {
+                for (sfb=0; sfb<psyOutElement[i]->psyOutChannel[ch]->maxSfbPerGroup; sfb++) {
+                    pQcOutCh->sfbThresholdLdData[sfb+sfbGrp] += pQcOutCh->sfbEnFacLd[sfb+sfbGrp];
                 }
             }
         }
-
+    }
 }
 
 void FDKaacEnc_AdjThrClose(ADJ_THR_STATE** phAdjThr)
@@ -2313,7 +2620,7 @@ void FDKaacEnc_AdjThrClose(ADJ_THR_STATE** phAdjThr)
     ADJ_THR_STATE* hAdjThr = *phAdjThr;
 
     if (hAdjThr!=NULL) {
-      for (i=0; i<(6); i++) {
+      for (i=0; i<(8); i++) {
         if (hAdjThr->adjThrStateElem[i]!=NULL) {
           FreeRam_aacEnc_AdjThrStateElement(&hAdjThr->adjThrStateElem[i]);
         }

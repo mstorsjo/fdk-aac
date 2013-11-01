@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -205,6 +205,145 @@ void CProgramConfig_Read(
 
   pPce->isValid = 1;
 }
+
+/*
+ * Compare two program configurations.
+ * Returns the result of the comparison:
+ *  -1 - completely different
+ *   0 - completely equal
+ *   1 - different but same channel configuration
+ *   2 - different channel configuration but same number of channels
+ */
+int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
+                             const CProgramConfig * const pPce2 )
+{
+  int result = 0;  /* Innocent until proven false. */
+
+  if (FDKmemcmp(pPce1, pPce2, sizeof(CProgramConfig)) != 0)
+  { /* Configurations are not completely different.
+       So look into details and analyse the channel configurations: */
+    result = -1;
+
+    if (pPce1->NumChannels == pPce2->NumChannels)
+    { /* Now the logic changes. We first assume to have the same channel configuration
+         and then prove if this assumption is true. */
+      result = 1;
+
+      /* Front channels */
+      if (pPce1->NumFrontChannelElements != pPce2->NumFrontChannelElements) {
+        result = 2;  /* different number of front channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumFrontChannelElements; el += 1) {
+          numCh1 += pPce1->FrontElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->FrontElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of front channels */
+        }
+      }
+      /* Side channels */
+      if (pPce1->NumSideChannelElements != pPce2->NumSideChannelElements) {
+        result = 2;  /* different number of side channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumSideChannelElements; el += 1) {
+          numCh1 += pPce1->SideElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->SideElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of side channels */
+        }
+      }
+      /* Back channels */
+      if (pPce1->NumBackChannelElements != pPce2->NumBackChannelElements) {
+        result = 2;  /* different number of back channel elements */
+      } else {
+        int el, numCh1 = 0, numCh2 = 0;
+        for (el = 0; el < pPce1->NumBackChannelElements; el += 1) {
+          numCh1 += pPce1->BackElementIsCpe[el] ? 2 : 1;
+          numCh2 += pPce2->BackElementIsCpe[el] ? 2 : 1;
+        }
+        if (numCh1 != numCh2) {
+          result = 2;  /* different number of back channels */
+        }
+      }
+      /* LFE channels */
+      if (pPce1->NumLfeChannelElements != pPce2->NumLfeChannelElements) {
+        result = 2;  /* different number of lfe channels */
+      }
+      /* LFEs are always SCEs so we don't need to count the channels. */
+    }
+  }
+
+  return result;
+}
+
+void CProgramConfig_GetDefault( CProgramConfig *pPce,
+                                const UINT channelConfig )
+{
+  FDK_ASSERT(pPce != NULL);
+
+  /* Init PCE */
+  CProgramConfig_Init(pPce);
+  pPce->Profile = 1;  /* Set AAC LC because it is the only supported object type. */
+
+  switch (channelConfig) {
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 6:   /* 3/0/2.1ch */
+    pPce->NumLfeChannelElements   += 1;
+    pPce->NumChannels             += 1;
+  case 5:   /* 3/0/2.0ch */
+  case 4:   /* 3/0/1.0ch */
+    pPce->NumBackChannelElements  += 1;
+    pPce->BackElementIsCpe[0]      = (channelConfig>4) ? 1 : 0;
+    pPce->NumChannels             += (channelConfig>4) ? 2 : 1;
+    pPce->NumEffectiveChannels    += (channelConfig>4) ? 2 : 1;
+  case 3:   /* 3/0/0.0ch */
+    pPce->NumFrontChannelElements += 1;
+    pPce->FrontElementIsCpe[1]     = 1;
+    pPce->NumChannels             += 2;
+    pPce->NumEffectiveChannels    += 2;
+  case 1:   /* 1/0/0.0ch */
+    pPce->NumFrontChannelElements += 1;
+    pPce->FrontElementIsCpe[0]     = 0;
+    pPce->NumChannels             += 1;
+    pPce->NumEffectiveChannels    += 1;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 2:   /* 2/0/0.ch */
+    pPce->NumFrontChannelElements  = 1;
+    pPce->FrontElementIsCpe[0]     = 1;
+    pPce->NumChannels             += 2;
+    pPce->NumEffectiveChannels    += 2;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  default:
+    pPce->isValid                  = 0;   /* To be explicit! */
+    break;
+  }
+
+  if (pPce->isValid) {
+    /* Create valid element instance tags */
+    int el, elTagSce = 0, elTagCpe = 0;
+
+    for (el = 0; el < pPce->NumFrontChannelElements; el += 1) {
+      pPce->FrontElementTagSelect[el] = (pPce->FrontElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    for (el = 0; el < pPce->NumSideChannelElements; el += 1) {
+      pPce->SideElementTagSelect[el] = (pPce->SideElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    for (el = 0; el < pPce->NumBackChannelElements; el += 1) {
+      pPce->BackElementTagSelect[el] = (pPce->BackElementIsCpe) ? elTagCpe++ : elTagSce++;
+    }
+    elTagSce = 0;
+    for (el = 0; el < pPce->NumLfeChannelElements; el += 1) {
+      pPce->LfeElementTagSelect[el] = elTagSce++;
+    }
+  }
+}
 #endif /* TP_PCE_ENABLE */
 
 /**
@@ -267,7 +406,7 @@ void getImplicitAudioChannelTypeAndIndex(
 
 int CProgramConfig_LookupElement(
         CProgramConfig *pPce,
-        const UINT      channelConfig,
+        UINT            channelConfig,
         const UINT      tag,
         const UINT      channelIdx,
         UCHAR           chMapping[],
@@ -289,7 +428,13 @@ int CProgramConfig_LookupElement(
       *elMapping = pPce->elCounter;
       if (elList[pPce->elCounter] != elType) {
         /* Not in the list */
-        return 0;
+        if ( (channelConfig == 2) && (elType == ID_SCE) )
+        { /* This scenario occurs with HE-AAC v2 streams of buggy encoders.
+             Due to other decoder implementations decoding of these kind of streams is desired. */
+          channelConfig = 1;
+        } else {
+          return 0;
+        }
       }
       /* Assume all front channels */
       getImplicitAudioChannelTypeAndIndex(&chType[channelIdx], &chIndex[channelIdx], channelConfig, channelIdx);
@@ -583,18 +728,18 @@ static INT ld_sbr_header( const CSAudioSpecificConfig *asc,
   }
 
   switch ( channelConfiguration ) {
+    case 7:
+      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
+    case 6:
     case 5:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 3:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
       break;
 
-    case 7:
-      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_SCE, i++);
-    case 6:
-      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 4:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
+      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_SCE, i++);
       break;
   }
 
@@ -689,6 +834,62 @@ bail:
 #endif /* TP_ELD_ENABLE */
 
 
+static
+TRANSPORTDEC_ERROR AudioSpecificConfig_ExtensionParse(CSAudioSpecificConfig *self, HANDLE_FDK_BITSTREAM bs, CSTpCallBacks *cb)
+{
+  TP_ASC_EXTENSION_ID  lastAscExt, ascExtId = ASCEXT_UNKOWN;
+  INT  bitsAvailable = (INT)FDKgetValidBits(bs);
+
+  while (bitsAvailable >= 11)
+  {
+    lastAscExt = ascExtId;
+    ascExtId   = (TP_ASC_EXTENSION_ID)FDKreadBits(bs, 11);
+    bitsAvailable -= 11;
+
+    switch (ascExtId) {
+    case ASCEXT_SBR:    /* 0x2b7 */
+      if ( (self->m_extensionAudioObjectType != AOT_SBR) && (bitsAvailable >= 5) ) {
+        self->m_extensionAudioObjectType = getAOT(bs);
+
+        if ( (self->m_extensionAudioObjectType == AOT_SBR)
+          || (self->m_extensionAudioObjectType == AOT_ER_BSAC) )
+        { /* Get SBR extension configuration */
+          self->m_sbrPresentFlag = FDKreadBits(bs, 1);
+          bitsAvailable -= 1;
+
+          if ( self->m_sbrPresentFlag == 1 ) {
+            self->m_extensionSamplingFrequency = getSampleRate(bs, &self->m_extensionSamplingFrequencyIndex, 4);
+
+            if ((INT)self->m_extensionSamplingFrequency <= 0) {
+              return TRANSPORTDEC_PARSE_ERROR;
+            }
+          }
+          if ( self->m_extensionAudioObjectType == AOT_ER_BSAC ) {
+            self->m_extensionChannelConfiguration = FDKreadBits(bs, 4);
+            bitsAvailable -= 4;
+          }
+        }
+        /* Update counter because of variable length fields (AOT and sampling rate) */
+        bitsAvailable = (INT)FDKgetValidBits(bs);
+      }
+      break;
+    case ASCEXT_PS:     /* 0x548 */
+      if ( (lastAscExt == ASCEXT_SBR)
+        && (self->m_extensionAudioObjectType == AOT_SBR)
+        && (bitsAvailable > 0) )
+      { /* Get PS extension configuration */
+        self->m_psPresentFlag = FDKreadBits(bs, 1);
+        bitsAvailable -= 1;
+      }
+      break;
+    default:
+      /* Just ignore anything. */
+      return TRANSPORTDEC_OK;
+    }
+  }
+
+  return TRANSPORTDEC_OK;
+}
 
 /*
  * API Functions
@@ -839,6 +1040,9 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
       break;
   }
 
+  if (fExplicitBackwardCompatible) {
+    ErrorStatus = AudioSpecificConfig_ExtensionParse(self, bs, cb);
+  }
 
   return (ErrorStatus);
 }

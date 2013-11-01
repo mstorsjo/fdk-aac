@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -127,10 +127,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      if (totalShift < 32)
-          accu>>=totalShift;
-      else
-          accu = 0;
+      accu >>= fixMin(totalShift,DFRACT_BITS-1);
       quaSpectrum[line] = (SHORT)(-((LONG)(k + accu) >> (DFRACT_BITS-1-16)));
     }
     else if(accu > FL2FXCONST_DBL(0.0f))
@@ -143,10 +140,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu = fMultDiv2(FDKaacEnc_mTab_3_4[tabIndex],FDKaacEnc_quantTableE[totalShift&3]);
       totalShift = (16-4)-(3*(totalShift>>2));
       FDK_ASSERT(totalShift >=0); /* MAX_QUANT_VIOLATION */
-      if (totalShift < 32)
-          accu>>=totalShift;
-      else
-          accu = 0;
+      accu >>= fixMin(totalShift,DFRACT_BITS-1);
       quaSpectrum[line] = (SHORT)((LONG)(k + accu) >> (DFRACT_BITS-1-16));
     }
     else

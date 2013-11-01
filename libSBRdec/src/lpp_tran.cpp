@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -875,22 +875,8 @@ resetLppTransposer (HANDLE_SBR_LPP_TRANS hLppTrans,  /*!< Handle of lpp transpos
   /*
    * Initialize the patching parameter
    */
- desiredBorder = 21;
- if (fs < 92017) {
-    desiredBorder = 23;
-  }
-  if (fs < 75132) {
-    desiredBorder = 32;
-  }
-  if (fs < 55426) {
-    desiredBorder = 43;
-  }
-  if (fs < 46009) {
-    desiredBorder = 46;
-  }
-  if (fs < 35777) {
-    desiredBorder = 64;
-  }
+  /* ISO/IEC 14496-3 (Figure 4.48): goalSb = round( 2.048e6 / fs ) */
+  desiredBorder    = (((2048000*2) / fs) + 1) >> 1;
 
   desiredBorder = findClosestEntry(desiredBorder, v_k_master, numMaster, 1); /* Adapt region to master-table */
 

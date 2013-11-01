@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -504,7 +504,8 @@ typedef struct
   INT               aacSamplesPerFrame;  /*!< Samples per frame for the AAC core (from ASC). \n
                                               1024 or 960 for AAC-LC \n
                                               512 or 480 for AAC-LD and AAC-ELD         */
-
+  INT               aacNumChannels;      /*!< The number of audio channels after AAC core processing (before PS or MPS processing).
+                                              CAUTION: This are not the final number of output channels! */
   AUDIO_OBJECT_TYPE extAot;              /*!< Extension Audio Object Type (from ASC)   */
   INT               extSamplingRate;     /*!< Extension sampling rate in Hz (from ASC) */
 

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -760,6 +760,8 @@ createSbrDec (SBR_CHANNEL * hSbrChannel,
   */
   {
     int qmfErr;
+    /* Adapted QMF analysis post-twiddles for down-sampled HQ SBR */
+    const UINT downSampledFlag = (downsampleFac==2) ? QMF_FLAG_DOWNSAMPLED : 0;
 
     qmfErr = qmfInitAnalysisFilterBank (
                     &hs->AnalysiscQMF,
@@ -768,7 +770,7 @@ createSbrDec (SBR_CHANNEL * hSbrChannel,
                      hHeaderData->freqBandData.lowSubband,
                      hHeaderData->freqBandData.highSubband,
                      hHeaderData->numberOfAnalysisBands,
-                     qmfFlags & (~QMF_FLAG_KEEP_STATES)
+                     (qmfFlags & (~QMF_FLAG_KEEP_STATES)) | downSampledFlag
                      );
     if (qmfErr != 0) {
       return SBRDEC_UNSUPPORTED_CONFIG;

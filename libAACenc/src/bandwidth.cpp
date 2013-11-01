@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -204,7 +204,6 @@ static INT GetBandwidthEntry(
   INT bwTabSize = 0;
 
   switch (frameLength) {
-    case 960:
     case 1024:
       pBwTab = bandWidthTable;
       bwTabSize = sizeof(bandWidthTable)/sizeof(BANDWIDTH_TAB);
@@ -253,7 +252,6 @@ static INT GetBandwidthEntry(
           chanBitRate < pBwTab[i+1].chanBitRate)
       {
         switch (frameLength) {
-          case 960:
           case 1024:
             bandwidth = (entryNo==0)
               ? pBwTab[i].bandWidthMono
@@ -318,6 +316,8 @@ AAC_ENCODER_ERROR FDKaacEnc_DetermineBandWidth(INT* bandWidth,
       case MODE_1_2_2:
       case MODE_1_2_2_1:
       case MODE_1_2_2_2_1:
+      case MODE_7_1_REAR_SURROUND:
+      case MODE_7_1_FRONT_CENTER:
         *bandWidth = bandWidthTableVBR[bitrateMode].bandWidth2AndMoreChan;
         break;
       default:
@@ -348,6 +348,8 @@ AAC_ENCODER_ERROR FDKaacEnc_DetermineBandWidth(INT* bandWidth,
       case MODE_1_2_2:    /* sce + cpe + cpe */
       case MODE_1_2_2_1:  /* (5.1) sce + cpe + cpe + lfe */
       case MODE_1_2_2_2_1: /* (7.1) sce + cpe + cpe + cpe + lfe */
+      case MODE_7_1_REAR_SURROUND:
+      case MODE_7_1_FRONT_CENTER:
         entryNo = 1;      /* use stereo bandwith settings */
         break;
 

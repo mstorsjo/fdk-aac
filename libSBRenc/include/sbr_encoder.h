@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -101,6 +101,14 @@ amm-info@iis.fraunhofer.de
 #define MAX_CODEC_FRAME_RATIO 2
 #define MAX_PAYLOAD_SIZE    256
 
+typedef enum codecType
+{
+  CODEC_AAC=0,
+  CODEC_AACLD=1,
+  CODEC_UNSPECIFIED=99
+} CODEC_TYPE;
+
+
 typedef struct
 {
   INT bitRate;
@@ -129,10 +137,11 @@ enum
 
 typedef struct
 {
+  CODEC_TYPE       coreCoder;        /*!< LC or ELD */
   UINT             bitrateFrom;      /*!< inclusive */
   UINT             bitrateTo;        /*!< exclusive */
 
-  USHORT           sampleRate;       /*!<   */
+  UINT             sampleRate;       /*!<   */
   UCHAR            numChannels;      /*!<   */
 
   UCHAR            startFreq;        /*!< bs_start_freq */
@@ -158,6 +167,7 @@ typedef struct sbrConfiguration
   INT crcSbr;                 /*!< Flag: usage of SBR-CRC. */
   INT dynBwSupported;         /*!< Flag: support for dynamic bandwidth in this combination. */
   INT parametricCoding;       /*!< Flag: usage of parametric coding tool. */
+  INT downSampleFactor;       /*!< Sampling rate relation between the SBR and the core encoder. */
   int freq_res_fixfix[3];     /*!< Frequency resolution of envelopes in frame class FIXFIX
                                  0=1 Env; 1=2 Env; 2=4 Env; */
   /*
@@ -194,7 +204,6 @@ typedef struct sbrConfiguration
   INT useSaPan;               /*!< Flag: usage of SAPAN stereo. */
   INT dynBwEnabled;           /*!< Flag: usage of dynamic bandwidth. */
   INT bParametricStereo;      /*!< Flag: usage of parametric stereo coding tool. */
-  INT bDownSampledSbr;        /*!< Signal downsampled SBR is used. */
 
   /*
      header_extra1 configuration
@@ -214,7 +223,7 @@ typedef struct sbrConfiguration
   UCHAR init_amp_res_FF;
 } sbrConfiguration, *sbrConfigurationPtr ;
 
-typedef struct
+typedef struct SBR_CONFIG_DATA
 {
   UINT sbrSyntaxFlags;                  /**< SBR syntax flags derived from AOT. */
   INT nChannels;                        /**< Number of channels.  */
@@ -240,9 +249,7 @@ typedef struct
   INT xposCtrlSwitch;                   /**< Flag indicates whether to switch xpos ctrl on the fly. */
   INT switchTransposers;                /**< Flag indicates whether to switch xpos on the fly .     */
   UCHAR initAmpResFF;
-} SBR_CONFIG_DATA;
-
-typedef SBR_CONFIG_DATA *HANDLE_SBR_CONFIG_DATA;
+} SBR_CONFIG_DATA, *HANDLE_SBR_CONFIG_DATA;
 
 typedef struct {
   MP4_ELEMENT_ID elType;
@@ -275,14 +282,25 @@ INT sbrEncoder_Open(
         );
 
 /**
- * \brief get closest working bit rate to specified desired bit rate for a single SBR element
- * \param bitRate the desired target bit rate
- * \param numChannels the amount of audio channels
- * \param coreSampleRate the sample rate of the core coder
- * \param the current Audio Object Type
- * \return closest working bit rate to bitRate value
+ * \brief                 Get closest working bitrate to specified desired
+ *                        bitrate for a single SBR element.
+ * \param bitRate         The desired target bit rate
+ * \param numChannels     The amount of audio channels
+ * \param coreSampleRate  The sample rate of the core coder
+ * \param aot             The current Audio Object Type
+ * \return                Closest working bit rate to bitRate value
  */
 UINT sbrEncoder_LimitBitRate(UINT bitRate, UINT numChannels, UINT coreSampleRate, AUDIO_OBJECT_TYPE aot);
+
+
+/**
+ * \brief                Check whether downsampled SBR single rate is possible
+ *                       with given audio object type.
+ * \param aot            The Audio object type.
+ * \return               0 when downsampled SBR is not possible,
+ *                       1 when downsampled SBR is possible.
+ */
+UINT sbrEncoder_IsSingleRatePossible(AUDIO_OBJECT_TYPE aot);
 
 /**
  * \brief                  Initialize SBR Encoder instance.
@@ -294,26 +312,33 @@ UINT sbrEncoder_LimitBitRate(UINT bitRate, UINT numChannels, UINT coreSampleRate
  * \param bufferOffset     Returns the offset for the audio input data in order to do delay balancing.
  * \param numChannels      Input: Encoder input channels. output: core encoder channels.
  * \param sampleRate       Input: Encoder samplerate. output core encoder samplerate.
+ * \param downSampleFactor Input: Relation between SBR and core coder sampling rate;
  * \param frameLength      Input: Encoder frameLength. output core encoder frameLength.
  * \param aot              Input: Desired AOT. output AOT to be used after parameter checking.
  * \param delay            Input: core encoder delay. Output: total delay because of SBR.
  * \param transformFactor  The core encoder transform factor (blockswitching).
+ * \param headerPeriod     Repetition rate of the SBR header:
+ *                           - (-1) means intern configuration.
+ *                           - (1-10) corresponds to header repetition rate in frames.
  * \return                 0 on success, and non-zero if failed.
  */
-INT sbrEncoder_Init( HANDLE_SBR_ENCODER hSbrEncoder,
-                     SBR_ELEMENT_INFO elInfo[(6)],
-                     int              noElements,
-                     INT_PCM *inputBuffer,
-                     INT   *bandwidth,
-                     INT   *bufferOffset,
-                     INT   *numChannels,
-                     INT   *sampleRate,
-                     INT   *frameLength,
-                     AUDIO_OBJECT_TYPE *aot,
-                     int *delay,
-                     int  transformFactor,
-                     ULONG statesInitFlag
-                    );
+INT sbrEncoder_Init(
+        HANDLE_SBR_ENCODER   hSbrEncoder,
+        SBR_ELEMENT_INFO     elInfo[(8)],
+        int                  noElements,
+        INT_PCM             *inputBuffer,
+        INT                 *coreBandwidth,
+        INT                 *inputBufferOffset,
+        INT                 *numChannels,
+        INT                 *sampleRate,
+        UINT                *downSampleFactor,
+        INT                 *frameLength,
+        AUDIO_OBJECT_TYPE    aot,
+        int                 *delay,
+        int                  transformFactor,
+        const int            headerPeriod,
+        ULONG                statesInitFlag
+        );
 
 /**
  * \brief             Do delay line buffers housekeeping. To be called after each encoded audio frame.
@@ -344,8 +369,8 @@ void sbrEncoder_Close(HANDLE_SBR_ENCODER *phEbrEncoder);
 INT sbrEncoder_EncodeFrame(HANDLE_SBR_ENCODER  hEnvEncoder,
                            INT_PCM            *samples,
                            UINT                timeInStride,
-                           UINT                sbrDataBits[(6)],
-                           UCHAR               sbrData[(6)][MAX_PAYLOAD_SIZE]
+                           UINT                sbrDataBits[(8)],
+                           UCHAR               sbrData[(8)][MAX_PAYLOAD_SIZE]
                           );
 
 /**
@@ -356,7 +381,7 @@ INT sbrEncoder_EncodeFrame(HANDLE_SBR_ENCODER  hEnvEncoder,
  * \param fSendHeaders  Flag indicating that the SBR encoder should send more headers in the SBR payload or not.
  * \return              void
  */
-void sbrEncoder_GetHeader(SBR_ENCODER   *sbrEncoder,
+void sbrEncoder_GetHeader(HANDLE_SBR_ENCODER   sbrEncoder,
                           HANDLE_FDK_BITSTREAM hBs,
                           INT            element_index,
                           int            fSendHeaders);

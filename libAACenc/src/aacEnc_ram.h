@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -118,7 +118,7 @@ amm-info@iis.fraunhofer.de
 */
 
 /* define hBitstream size: max AAC framelength is 6144 bits/channel */
-/*#define BUFFER_BITSTR_SIZE ((6400*(6)/bbWordSize)    +((bbWordSize - 1) / bbWordSize))*/
+/*#define BUFFER_BITSTR_SIZE ((6400*(8)/bbWordSize)    +((bbWordSize - 1) / bbWordSize))*/
 
 struct AAC_ENC {
 
@@ -173,7 +173,7 @@ struct AAC_ENC {
  ++++++++++++++++++++++++++++++++++++++++++++
 */
 
-#define BUF_SIZE_0       ( ALIGN_SIZE(sizeof(QC_OUT_CHANNEL)*(6)) )
+#define BUF_SIZE_0       ( ALIGN_SIZE(sizeof(QC_OUT_CHANNEL)*(8)) )
 #define BUF_SIZE_1       ( ALIGN_SIZE(maxSize(sizeof(PSY_DYNAMIC), \
                                       (BIT_LOOK_UP_SIZE+MERGE_GAIN_LOOK_UP_SIZE))) )
 

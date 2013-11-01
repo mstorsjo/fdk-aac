@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -382,10 +382,10 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
   if ( isConstantBitrateMode(hQC->bitrateMode) ) {
     INT bitresPerChannel = (hQC->bitResTotMax / init->channelMapping->nChannelsEff);
     /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
-    hQC->bitDistributenMode = (bitresPerChannel>50) ? 0 : (bitresPerChannel>0) ? 1 : 2;
+    hQC->bitDistributionMode = (bitresPerChannel>100) ? 0 : (bitresPerChannel>0) ? 1 : 2;
   }
   else {
-    hQC->bitDistributenMode = 0; /* full bitreservoir */
+    hQC->bitDistributionMode = 0; /* full bitreservoir */
   }
 
 
@@ -420,11 +420,17 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
       break;
   }
 
-  FDKaacEnc_AdjThrInit(hQC->hAdjThr,
-             init->meanPe,
-             hQC->elementBits,                 /* or channelBitrates, was: channelBitrate */
-             init->channelMapping->nElements,
-             hQC->vbrQualFactor);
+  FDKaacEnc_AdjThrInit(
+        hQC->hAdjThr,
+        init->meanPe,
+        hQC->elementBits,                 /* or channelBitrates, was: channelBitrate */
+        hQC->invQuant,
+        init->channelMapping->nElements,
+        init->channelMapping->nChannelsEff,
+        init->sampleRate,                 /* output sample rate */
+        init->advancedBitsToPe,           /* if set, calc bits2PE factor depending on samplerate */
+        hQC->vbrQualFactor
+        );
 
   return AAC_ENC_OK;
 }
@@ -505,7 +511,7 @@ AAC_ENCODER_ERROR FDKaacEnc_AdjustBitrate(QC_STATE        *RESTRICT hQC,
 }
 
 static AAC_ENCODER_ERROR FDKaacEnc_distributeElementDynBits(QC_STATE*         hQC,
-                                                  QC_OUT_ELEMENT*   qcElement[(6)],
+                                                  QC_OUT_ELEMENT*   qcElement[(8)],
                                                   CHANNEL_MAPPING*  cm,
                                                   INT               codeBits)
 {
@@ -604,7 +610,7 @@ static AAC_ENCODER_ERROR FDKaacEnc_prepareBitDistribution(QC_STATE*            h
                                                 PSY_OUT**            psyOut,
                                                 QC_OUT**             qcOut,
                                                 CHANNEL_MAPPING*     cm,
-                                                QC_OUT_ELEMENT*      qcElement[(1)][(6)],
+                                                QC_OUT_ELEMENT*      qcElement[(1)][(8)],
                                                 INT                  avgTotalBits,
                                                 INT                 *totalAvailableBits,
                                                 INT                 *avgTotalDynBits)
@@ -655,7 +661,7 @@ static AAC_ENCODER_ERROR FDKaacEnc_prepareBitDistribution(QC_STATE*            h
                                          hQC->elementBits[i]->bitResLevelEl,
                                          hQC->elementBits[i]->maxBitResBitsEl,
                                          hQC->maxBitFac,
-                                         hQC->bitDistributenMode);
+                                         hQC->bitDistributionMode);
 
                 *totalAvailableBits += hQC->elementBits[i]->bitResLevelEl;
         /* get total corrected granted PE */
@@ -671,7 +677,7 @@ static AAC_ENCODER_ERROR FDKaacEnc_prepareBitDistribution(QC_STATE*            h
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static AAC_ENCODER_ERROR FDKaacEnc_updateUsedDynBits(INT*               sumDynBitsConsumed,
-                                            QC_OUT_ELEMENT*    qcElement[(6)],
+                                            QC_OUT_ELEMENT*    qcElement[(8)],
                                             CHANNEL_MAPPING*   cm)
 {
   INT i;
@@ -714,7 +720,7 @@ static INT FDKaacEnc_getTotalConsumedDynBits(QC_OUT** qcOut,
 }
 
 static INT FDKaacEnc_getTotalConsumedBits(QC_OUT**          qcOut,
-                                QC_OUT_ELEMENT*   qcElement[(1)][(6)],
+                                QC_OUT_ELEMENT*   qcElement[(1)][(8)],
                                 CHANNEL_MAPPING*  cm,
                                 INT               globHdrBits,
                                 INT               nSubFrames)
@@ -814,7 +820,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
 
       /*-------------------------------------------- */
       /* helper pointer */
-      QC_OUT_ELEMENT*  qcElement[(1)][(6)];
+      QC_OUT_ELEMENT*  qcElement[(1)][(8)];
 
       /* work on a copy of qcChannel and qcElement */
       for (i=0; i<cm->nElements; i++)
@@ -891,10 +897,10 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
       } /* -end- sub frame counter */
 
       /*-------------------------------------------- */
-      INT iterations[(1)][(6)];
-      INT chConstraintsFulfilled[(1)][(6)][(2)];
-      INT calculateQuant[(1)][(6)][(2)];
-      INT constraintsFulfilled[(1)][(6)];
+      INT iterations[(1)][(8)];
+      INT chConstraintsFulfilled[(1)][(8)][(2)];
+      INT calculateQuant[(1)][(8)][(2)];
+      INT constraintsFulfilled[(1)][(8)];
       /*-------------------------------------------- */
 
 
@@ -1241,7 +1247,7 @@ static AAC_ENCODER_ERROR FDKaacEnc_reduceBitConsumption(int*             iterati
 
 AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
                                            QC_STATE*                 qcKernel,
-                                           ELEMENT_BITS* RESTRICT    elBits[(6)],
+                                           ELEMENT_BITS* RESTRICT    elBits[(8)],
                                            QC_OUT**                  qcOut)
 {
   switch (qcKernel->bitrateMode) {
@@ -1597,10 +1603,10 @@ void  FDKaacEnc_QCClose (QC_STATE  **phQCstate, QC_OUT **phQC)
     for (n=0;n<(1);n++) {
       if (phQC[n] != NULL) {
         QC_OUT    *hQC      = phQC[n];
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
         }
 
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
           if (hQC->qcElement[i])
             FreeRam_aacEnc_QCelement(&hQC->qcElement[i]);
         }
@@ -1620,7 +1626,7 @@ void  FDKaacEnc_QCClose (QC_STATE  **phQCstate, QC_OUT **phQC)
       if (hQCstate->hBitCounter != NULL)
         FDKaacEnc_BCClose(&hQCstate->hBitCounter);
 
-      for (i=0; i<(6); i++) {
+      for (i=0; i<(8); i++) {
         if (hQCstate->elementBits[i]!=NULL) {
           FreeRam_aacEnc_ElementBits(&hQCstate->elementBits[i]);
         }

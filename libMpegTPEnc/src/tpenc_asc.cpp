@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -127,8 +127,7 @@ typedef struct {
  *
  * The number of channel element parameter describes the kind of consecutively elements.
  * E.g. MODE_1_2_2_2_1 means:
- *                          - First 2 elements (SCE,CPE) are front channel elements.
- *                          - Following element (CPE) is a side channel element.
+ *                          - First 3 elements (SCE,CPE,CPE) are front channel elements.
  *                          - Next element (CPE) is a back channel element.
  *                          - Last element (LFE) is a lfe channel element.
  */
@@ -140,7 +139,8 @@ static const CHANNEL_CONFIGURATION pceConfigTab[] =
   { MODE_1_2_1,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_2_2,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_2_2_1,                  {  2, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_LFE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_2_2_1,                {  2, 1, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE, ID_NONE, ID_NONE, ID_NONE } } },
+  { MODE_1_2_2_2_1,                {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+
 
   { MODE_1_1,                      {  2, 0, 0, 0, { ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_1_1_1_1,                  {  2, 2, 0, 0, { ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
@@ -151,7 +151,11 @@ static const CHANNEL_CONFIGURATION pceConfigTab[] =
   { MODE_2_2_2,                    {  1, 1, 1, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
   { MODE_2_2_2_2,                  {  4, 0, 0, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
 
-  { MODE_2_1,                      {  1, 0, 1, 0, { ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } }
+  { MODE_2_1,                      {  1, 0, 1, 0, { ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
+
+  { MODE_7_1_REAR_SURROUND,        {  2, 0, 2, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+  { MODE_7_1_FRONT_CENTER,         {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+
 };
 
 
@@ -255,7 +259,7 @@ int transportEnc_writePCE(HANDLE_FDK_BITSTREAM hBs,
   if ( matrixMixdownA!=0 && ((channelMode==MODE_1_2_2)||(channelMode==MODE_1_2_2_1)) ) {
       FDKwriteBits(hBs, 1, 1);                                  /* Matrix mixdown present */
       FDKwriteBits(hBs, (matrixMixdownA-1)&0x3, 2);             /* matrix_mixdown_idx */
-      FDKwriteBits(hBs, pseudoSurroundEnable&0x1, 1);           /* pseudo_surround_enable */
+      FDKwriteBits(hBs, (pseudoSurroundEnable)?1:0, 1);         /* pseudo_surround_enable */
   }
   else {
       FDKwriteBits(hBs, 0, 1);                                  /* Matrix mixdown not present */
@@ -379,7 +383,7 @@ int transportEnc_writeGASpecificConfig(
 
   /* Write PCE if channel config is not 1-7 */
   if (getChannelConfig(config->channelMode) == 0) {
-      transportEnc_writePCE(asc, config->channelMode, config->samplingRate, 0, 1, 0, 0, alignAnchor);
+      transportEnc_writePCE(asc, config->channelMode, config->samplingRate, 0, 1, config->matrixMixdownA, (config->flags&CC_PSEUDO_SURROUND)?1:0, alignAnchor);
   }
   if (extFlg) {
     if (aot == AOT_ER_BSAC) {
@@ -474,7 +478,7 @@ int transportEnc_writeASC (
         break;
   }
 
-  if (config->extAOT == AOT_SBR || config->extAOT == AOT_PS)
+  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent)
     writeAot(asc, config->extAOT);
   else
     writeAot(asc, config->aot);
@@ -492,7 +496,7 @@ int transportEnc_writeASC (
 
   FDKwriteBits( asc, getChannelConfig(config->channelMode), 4 );
 
-  if (config->extAOT == AOT_SBR || config->extAOT == AOT_PS) {
+  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent) {
     writeSampleRate(asc, config->extSamplingRate);
     writeAot(asc, config->aot);
   }
@@ -543,6 +547,26 @@ int transportEnc_writeASC (
       break;
     default:
       break;
+  }
+
+  /* backward compatible explicit signaling of extension AOT */
+  if (config->sbrSignaling==SIG_EXPLICIT_BW_COMPATIBLE)
+  {
+    TP_ASC_EXTENSION_ID ascExtId = ASCEXT_UNKOWN;
+
+    if (config->sbrPresent) {
+      ascExtId=ASCEXT_SBR;
+      FDKwriteBits( asc, ascExtId, 11 );
+      writeAot(asc, config->extAOT);
+      FDKwriteBits( asc, 1, 1 ); /* sbrPresentFlag=1 */
+      writeSampleRate(asc, config->extSamplingRate);
+      if (config->psPresent) {
+        ascExtId=ASCEXT_PS;
+        FDKwriteBits( asc, ascExtId, 11 );
+        FDKwriteBits( asc, 1, 1 ); /* psPresentFlag=1 */
+      }
+    }
+
   }
 
   /* Make sure all bits are sync'ed */

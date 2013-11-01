@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -465,7 +465,7 @@ INT CheckArg(TEXTCHAR* arg, TEXTCHAR* str, UINT numArgs, TEXTCHAR type, TEXTCHAR
 
   for ( i = 0; i < _tcslen(arg); ++i )
     {
-      if ( (type == 'd') && !_istdigit(arg[i]) && arg[i] != 'x' )
+      if ( (type == 'd') && !_istdigit(arg[i]) && arg[i] != 'x' && arg[i] != '-')
         {
 #ifdef _UNICODE
           _ftprintf(stderr, _TEXT("\n\nError: Argument '%ls' for switch '%ls' is not a valid number.\n" ), arg, cur_str);
@@ -549,7 +549,7 @@ int IIS_ProcessCmdlList(const char* param_filename, int (*pFunction)(int, TEXTCH
       /* Skip consecutive blanks. */
       while (*line_ptr == ' ' && line_ptr < line+CMDL_MAX_STRLEN)
         line_ptr++;
-      /* Assign argument. TODO: maybe handle quotes */
+      /* Assign argument. */
       argv_ptr[argc] = line_ptr;
       /* Get pointer to next blank. */
       line_ptr = (char*)FDKstrchr(line_ptr, ' ');

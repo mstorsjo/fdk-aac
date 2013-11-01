@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1360,7 +1360,7 @@ AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
 
   if ( (syntaxFlags & AC_ER) && !(syntaxFlags & AC_DRM) )
   {
-    UCHAR channelElementExtensionWritten[(6)][(1)]; /* 0: extension not touched, 1: extension already written */
+    UCHAR channelElementExtensionWritten[(8)][(1)]; /* 0: extension not touched, 1: extension already written */
 
     FDKmemclear(channelElementExtensionWritten, sizeof(channelElementExtensionWritten));
 

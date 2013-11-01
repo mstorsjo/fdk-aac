@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -113,7 +113,7 @@ typedef enum {
   /* initialization errors */
   aac_enc_init_error_start      = 0x2000,
   AAC_ENC_INVALID_HANDLE        = 0x2020,             /*!< The handle passed to the function call was invalid (probably NULL).        */
-  AAC_ENC_INVALID_FRAME_LENGTH  = 0x2080,             /*!< Invalid frame length (must be 1024 or 960).                                */
+  AAC_ENC_INVALID_FRAME_LENGTH  = 0x2080,             /*!< Invalid frame length.                                                      */
   AAC_ENC_INVALID_N_CHANNELS    = 0x20e0,             /*!< Invalid amount of audio input channels.                                    */
   AAC_ENC_INVALID_SFB_TABLE     = 0x2140,             /*!< Internal encoder error.                                                    */
 
@@ -154,7 +154,7 @@ typedef enum {
 
 #define ANC_DATA_BUFFERSIZE 1024      /* ancBuffer size */
 
-#define MAX_TOTAL_EXT_PAYLOADS  (((6) * (1)) + (2+2))
+#define MAX_TOTAL_EXT_PAYLOADS  (((8) * (1)) + (2+2))
 
 
 typedef enum {
@@ -204,6 +204,8 @@ struct AACENC_CONFIG {
   INT   minBitsPerFrame;        /* minimum number of bits in AU */
   INT   maxBitsPerFrame;        /* maximum number of bits in AU */
   INT   bitreservoir;           /* size of bitreservoir */
+
+  UINT  sbrRatio;               /* sbr sampling rate ratio: dual- or single-rate */
 
   UCHAR useTns;                 /* flag: use temporal noise shaping */
   UCHAR usePns;                 /* flag: use perceptual noise substitution */

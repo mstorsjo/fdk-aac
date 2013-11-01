@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -135,10 +135,13 @@ void aacDecoder_drcInit (
   /* init params */
   pParams = &self->params;
   pParams->bsDelayEnable = 0;
-  pParams->cut   = FL2FXCONST_DBL(0.0f);
-  pParams->boost = FL2FXCONST_DBL(0.0f);
+  pParams->cut      = FL2FXCONST_DBL(0.0f);
+  pParams->usrCut   = FL2FXCONST_DBL(0.0f);
+  pParams->boost    = FL2FXCONST_DBL(0.0f);
+  pParams->usrBoost = FL2FXCONST_DBL(0.0f);
   pParams->targetRefLevel = AACDEC_DRC_DEFAULT_REF_LEVEL;
   pParams->expiryFrame = AACDEC_DRC_DFLT_EXPIRY_FRAMES;
+  pParams->applyHeavyCompression = 0;
 
   /* initial program ref level = target ref level */
   self->progRefLevel = pParams->targetRefLevel;
@@ -193,7 +196,9 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-    self->params.cut = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
+    self->params.usrCut = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
+    if (self->params.applyHeavyCompression == 0)
+      self->params.cut = self->params.usrCut;
     break;
   case DRC_BOOST_SCALE:
     /* set boost factor */
@@ -204,7 +209,9 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-    self->params.boost = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
+    self->params.usrBoost = (FIXP_DBL)((INT)(DRC_PARAM_QUANT_STEP>>DRC_PARAM_SCALE) * (INT)value);
+    if (self->params.applyHeavyCompression == 0)
+      self->params.boost = self->params.usrBoost;
     break;
   case TARGET_REF_LEVEL:
     if ( value >  MAX_REFERENCE_LEVEL
@@ -220,9 +227,11 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     else {
       /* ref_level must be between 0 and MAX_REFERENCE_LEVEL, inclusive */
       self->digitalNorm    = 1;
-      self->params.targetRefLevel = value;
-      self->progRefLevel = (SCHAR)value;  /* Set the program reference level equal to the target
-                                               level according to 4.5.2.7.3 of ISO/IEC 14496-3. */
+      if (self->params.targetRefLevel != (SCHAR)value) {
+        self->params.targetRefLevel = (SCHAR)value;
+        self->progRefLevel = (SCHAR)value;  /* Always set the program reference level equal to the
+                                               target level according to 4.5.2.7.3 of ISO/IEC 14496-3. */
+      }
     }
     break;
   case APPLY_HEAVY_COMPRESSION:
@@ -232,7 +241,19 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-    self->params.applyHeavyCompression = (UCHAR)value;
+    if (self->params.applyHeavyCompression != (UCHAR)value) {
+      if (value == 1) {
+        /* Disable scaling of DRC values by setting the max values */
+        self->params.boost = FL2FXCONST_DBL(1.0f/(float)(1<<DRC_PARAM_SCALE));
+        self->params.cut   = FL2FXCONST_DBL(1.0f/(float)(1<<DRC_PARAM_SCALE));
+      } else {
+        /* Restore the user params */
+        self->params.boost = self->params.usrBoost;
+        self->params.cut   = self->params.usrCut;
+      }
+      /* Store new parameter value */
+      self->params.applyHeavyCompression = (UCHAR)value;
+    }
     break;
   case DRC_BS_DELAY:
     if (value < 0 || value > 1) {
@@ -473,7 +494,7 @@ static int aacDecoder_drcParse (
     }
   }
   else {
-    pDrcBs->channelData.bandTop[0] = 255;
+    pDrcBs->channelData.bandTop[0] = (1024 >> 2) - 1;  /* ... comprising the whole spectrum. */;
   }
 
   pDrcBs->channelData.numBands = numBands;
@@ -627,9 +648,16 @@ static int aacDecoder_drcExtractAndMap (
 {
   CDrcPayload  threadBs[MAX_DRC_THREADS];
   CDrcPayload *validThreadBs[MAX_DRC_THREADS];
+  CDrcParams  *pParams;
   UINT backupBsPosition;
   int  i, thread, validThreads = 0;
   int  numExcludedChns[MAX_DRC_THREADS];
+
+  FDK_ASSERT(self != NULL);
+  FDK_ASSERT(hBs != NULL);
+  FDK_ASSERT(pAacDecoderStaticChannelInfo != NULL);
+
+  pParams = &self->params;
 
   self->numThreads = 0;
   backupBsPosition = FDKgetValidBits(hBs);
@@ -752,6 +780,7 @@ static int aacDecoder_drcExtractAndMap (
      */
     if (pThreadBs->progRefLevel >= 0) {
       self->progRefLevel = pThreadBs->progRefLevel;
+      self->prlExpiryCount = 0;  /* Got a new value -> Reset counter */
     }
 
     /* SCE, CPE and LFE */
@@ -767,6 +796,14 @@ static int aacDecoder_drcExtractAndMap (
       }
     }
     /* CCEs not supported by now */
+  }
+
+  /* Increment and check expiry counter for the program reference level: */
+  if ( (pParams->expiryFrame > 0)
+    && (self->prlExpiryCount++ > pParams->expiryFrame) )
+  { /* The program reference level is too old, so set it back to the target level. */
+    self->progRefLevel = pParams->targetRefLevel;
+    self->prlExpiryCount = 0;
   }
 
   return 0;

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -84,6 +84,7 @@ amm-info@iis.fraunhofer.de
 /*!
   \file
   \brief  frequency scale  
+  \author Tobias Chalupka
 */
 
 #include "sbrenc_freq_sca.h"
@@ -92,10 +93,10 @@ amm-info@iis.fraunhofer.de
 #include "genericStds.h"
 
 /*  StartFreq */
-static INT getStartFreq(INT fs, const INT start_freq);
+static INT getStartFreq(INT fsCore, const INT start_freq);
 
 /* StopFreq */
-static INT getStopFreq(INT fs, const INT stop_freq, const INT noChannels);
+static INT getStopFreq(INT fsCore, const INT stop_freq);
 
 static INT  numberOfBands(INT b_p_o, INT start, INT stop, FIXP_DBL warp_factor);
 static void CalcBands(INT * diff, INT start , INT stop , INT num_bands);
@@ -115,7 +116,7 @@ static void cumSum(INT start_value, INT* diff, INT length, UCHAR  *start_adress)
  *******************************************************************************/
 
 INT
-FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT QMFbands, INT fs)
+FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT fsCore)
 {
   INT result;
 
@@ -123,9 +124,9 @@ FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT QMFbands, INT fs)
     return -1;
   }
   /* Update startFreq struct */
-  result = getStartFreq(fs, startFreq);
+  result = getStartFreq(fsCore, startFreq);
 
-  result = (result*fs/QMFbands+1)>>1;
+  result = (result*(fsCore>>5)+1)>>1; /* (result*fsSBR/QMFbands+1)>>1; */
 
   return (result);
 
@@ -141,17 +142,16 @@ FDKsbrEnc_getSbrStartFreqRAW (INT startFreq, INT QMFbands, INT fs)
 
  Return:
  *******************************************************************************/
-INT FDKsbrEnc_getSbrStopFreqRAW  (INT stopFreq, INT QMFbands, INT fs)
+INT FDKsbrEnc_getSbrStopFreqRAW  (INT stopFreq, INT fsCore)
 {
   INT result;
 
   if ( stopFreq < 0 || stopFreq > 13)
     return -1;
 
-
   /* Uppdate stopFreq struct */
-  result = getStopFreq( fs, stopFreq, QMFbands);
-  result =   (result*fs/QMFbands+1)>>1;
+  result = getStopFreq(fsCore, stopFreq);
+  result = (result*(fsCore>>5)+1)>>1; /* (result*fsSBR/QMFbands+1)>>1; */
 
   return (result);
 } /* End getSbrStopFreq */
@@ -162,69 +162,73 @@ INT FDKsbrEnc_getSbrStopFreqRAW  (INT stopFreq, INT QMFbands, INT fs)
  *******************************************************************************
  Description:
 
- Arguments:
+ Arguments:  fsCore - core sampling rate
+
 
  Return:
  *******************************************************************************/
 static INT
-getStartFreq(INT fs, const INT start_freq)
+getStartFreq(INT fsCore, const INT start_freq)
 {
   INT k0_min;
 
-  switch(fs){
-  case 16000: k0_min = 24;
+  switch(fsCore){
+  case  8000: k0_min = 24; /* (3000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 22050: k0_min = 17;
+  case 11025: k0_min = 17; /* (3000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 24000: k0_min = 16;
+  case 12000: k0_min = 16; /* (3000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 32000: k0_min = 16;
+  case 16000: k0_min = 16; /* (4000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 44100: k0_min = 12;
+  case 22050: k0_min = 12; /* (4000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 48000: k0_min = 11;
+  case 24000: k0_min = 11; /* (4000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 64000: k0_min = 10;
+  case 32000: k0_min = 10; /* (5000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 88200: k0_min = 7;
+  case 44100: k0_min = 7;  /* (5000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
-  case 96000: k0_min = 7;
+  case 48000: k0_min = 7;  /* (5000 * nQmfChannels / fsSBR ) + 0.5 */
+    break;
+  case 96000: k0_min = 3;  /* (5000 * nQmfChannels / fsSBR ) + 0.5 */
     break;
   default:
     k0_min=11; /* illegal fs */
   }
 
 
-  switch (fs) {
+  switch (fsCore) {
 
-  case 16000:
+  case  8000:
     {
       INT v_offset[]= {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
       return (k0_min + v_offset[start_freq]);
     }
-  case 22050:
+  case 11025:
     {
       INT v_offset[]= {-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13};
       return (k0_min + v_offset[start_freq]);
     }
-  case 24000:
+  case 12000:
     {
       INT v_offset[]= {-5, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16};
       return (k0_min + v_offset[start_freq]);
     }
-  case 32000:
+  case 16000:
     {
       INT v_offset[]= {-6, -4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16};
       return (k0_min + v_offset[start_freq]);
     }
-  case 44100:
-  case 48000:
-  case 64000:
+  case 22050:
+  case 24000:
+  case 32000:
     {
       INT v_offset[]= {-4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20};
       return (k0_min + v_offset[start_freq]);
     }
-  case 88200:
+  case 44100:
+  case 48000:
   case 96000:
     {
       INT v_offset[]= {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24};
@@ -249,12 +253,11 @@ getStartFreq(INT fs, const INT start_freq)
  Return:
  *******************************************************************************/
  static INT
-getStopFreq(INT fs, const INT stop_freq, const INT noChannels)
+getStopFreq(INT fsCore, const INT stop_freq)
 {
   INT result,i;
   INT k1_min;
   INT v_dstop[13];
-
 
   INT *v_stop_freq = NULL;
   INT v_stop_freq_16[14] = {48,49,50,51,52,54,55,56,57,59,60,61,63,64};
@@ -266,40 +269,45 @@ getStopFreq(INT fs, const INT stop_freq, const INT noChannels)
   INT v_stop_freq_64[14] = {20,22,24,26,29,31,34,37,41,45,49,54,59,64};
   INT v_stop_freq_88[14] = {15,17,19,21,23,26,29,33,37,41,46,51,57,64};
   INT v_stop_freq_96[14] = {13,15,17,19,21,24,27,31,35,39,44,50,57,64};
+  INT v_stop_freq_192[14] = {7, 8,10,12,14,16,19,23,27,32,38,46,54,64};
 
-  switch(fs){
-  case 16000: k1_min = 48;
+  switch(fsCore){
+  case  8000: k1_min = 48;
               v_stop_freq =v_stop_freq_16;
     break;
-  case 22050: k1_min = 35;
+  case 11025: k1_min = 35;
               v_stop_freq =v_stop_freq_22;
     break;
-  case 24000: k1_min = 32;
+  case 12000: k1_min = 32;
               v_stop_freq =v_stop_freq_24;
     break;
-  case 32000: k1_min = 32;
+  case 16000: k1_min = 32;
               v_stop_freq =v_stop_freq_32;
     break;
-  case 44100: k1_min = 23;
+  case 22050: k1_min = 23;
               v_stop_freq =v_stop_freq_44;
     break;
-  case 48000: k1_min = 21;
+  case 24000: k1_min = 21;
               v_stop_freq =v_stop_freq_48;
     break;
-  case 64000: k1_min = 20;
+  case 32000: k1_min = 20;
               v_stop_freq =v_stop_freq_64;
     break;
-  case 88200: k1_min = 15;
+  case 44100: k1_min = 15;
               v_stop_freq =v_stop_freq_88;
     break;
-  case 96000: k1_min = 13;
+  case 48000: k1_min = 13;
               v_stop_freq =v_stop_freq_96;
+    break;
+  case 96000: k1_min =  7;
+              v_stop_freq =v_stop_freq_192;
     break;
   default:
     k1_min = 21; /* illegal fs  */
   }
 
-
+  /* if no valid core samplingrate is used this loop produces
+     a segfault, because v_stop_freq is not initialized */
   /* Ensure increasing bandwidth */
   for(i = 0; i <= 12; i++) {
     v_dstop[i] = v_stop_freq[i+1] - v_stop_freq[i];
@@ -322,34 +330,41 @@ getStopFreq(INT fs, const INT stop_freq, const INT noChannels)
  *******************************************************************************
  Description:
 
- Arguments:
+ Arguments:     srSbr            SBR sampling freqency
+                srCore           AAC core sampling freqency
+                noChannels       Number of QMF channels
+                startFreq        SBR start frequency in QMF bands
+                stopFreq         SBR start frequency in QMF bands
 
- Return:
+               *k0               Output parameter
+               *k2               Output parameter
+
+ Return:       Error code (0 is OK)
  *******************************************************************************/
 INT
-FDKsbrEnc_FindStartAndStopBand(const INT samplingFreq,
-                     const INT noChannels,
-                     const INT startFreq,
-                     const INT stopFreq,
-                     const SR_MODE sampleRateMode,
-                     INT *k0,
-                     INT *k2)
+FDKsbrEnc_FindStartAndStopBand(
+        const INT srSbr,
+        const INT srCore,
+        const INT noChannels,
+        const INT startFreq,
+        const INT stopFreq,
+        INT *k0,
+        INT *k2
+        )
 {
 
   /* Update startFreq struct */
-  *k0 = getStartFreq(samplingFreq, startFreq);
+  *k0 = getStartFreq(srCore, startFreq);
 
   /* Test if start freq is outside corecoder range */
-  if( ( sampleRateMode == 1 ) &&
-      ( samplingFreq*noChannels  <
-        2**k0 * samplingFreq) ) {
+  if( srSbr*noChannels < *k0 * srCore ) {
     return (1); /* raise the cross-over frequency and/or lower the number
                    of target bands per octave (or lower the sampling frequency) */
   }
 
   /*Update stopFreq struct */
   if ( stopFreq < 14 ) {
-    *k2 = getStopFreq(samplingFreq, stopFreq, noChannels);
+    *k2 = getStopFreq(srCore, stopFreq);
   } else if( stopFreq == 14 ) {
     *k2 = 2 * *k0;
   } else {
@@ -364,10 +379,10 @@ FDKsbrEnc_FindStartAndStopBand(const INT samplingFreq,
 
 
   /* Test for invalid  k0 k2 combinations */
-  if ( (samplingFreq == 44100) && ( (*k2 - *k0) > MAX_FREQ_COEFFS_FS44100 ) )
+  if ( (srCore == 22050) && ( (*k2 - *k0) > MAX_FREQ_COEFFS_FS44100 ) )
     return (1); /* Number of bands exceeds valid range of MAX_FREQ_COEFFS for fs=44.1kHz */
 
-  if ( (samplingFreq >= 48000) && ( (*k2 - *k0) > MAX_FREQ_COEFFS_FS48000 ) )
+  if ( (srCore >= 24000) && ( (*k2 - *k0) > MAX_FREQ_COEFFS_FS48000 ) )
     return (1); /* Number of bands exceeds valid range of MAX_FREQ_COEFFS for fs>=48kHz */
 
   if ((*k2 - *k0) > MAX_FREQ_COEFFS)
@@ -390,15 +405,19 @@ FDKsbrEnc_FindStartAndStopBand(const INT samplingFreq,
  Return:
  *******************************************************************************/
 INT
-FDKsbrEnc_UpdateFreqScale(UCHAR  *v_k_master, INT *h_num_bands,
-                const INT k0, const INT k2,
-                const INT freqScale,
-                const INT alterScale)
+FDKsbrEnc_UpdateFreqScale(
+        UCHAR     *v_k_master,
+        INT       *h_num_bands,
+        const INT  k0,
+        const INT  k2,
+        const INT  freqScale,
+        const INT  alterScale
+        )
 
 {
 
   INT     b_p_o = 0;        /* bands_per_octave */
-  FIXP_DBL   warp = FL2FXCONST_DBL(0.0f);
+  FIXP_DBL warp = FL2FXCONST_DBL(0.0f);
   INT     dk = 0;
 
   /* Internal variables */
@@ -426,7 +445,7 @@ FDKsbrEnc_UpdateFreqScale(UCHAR  *v_k_master, INT *h_num_bands,
         warp = FL2FXCONST_DBL(1.0f/2.6f);   /* 1.0/(1.3*2.0); */
 
 
-      if(4*k2 >= 9*k0)  /*two or more regions*/
+      if(4*k2 >= 9*k0)  /*two or more regions (how many times the basis band is copied)*/
         {
           k1=2*k0;
 
@@ -592,30 +611,31 @@ modifyBands(INT max_band_previous, INT * diff, INT length)
  *******************************************************************************
  Description:
 
+
  Arguments:
 
  Return:
  *******************************************************************************/
 INT
-FDKsbrEnc_UpdateHiRes(UCHAR *h_hires, INT *num_hires,UCHAR * v_k_master,
-            INT num_master , INT *xover_band, SR_MODE drOrSr,
-            INT noQMFChannels)
+FDKsbrEnc_UpdateHiRes(
+        UCHAR   *h_hires,
+        INT     *num_hires,
+        UCHAR   *v_k_master,
+        INT      num_master,
+        INT     *xover_band
+        )
 {
   INT i;
-  INT divider;
   INT max1,max2;
 
-  /* Check if we use a Dual rate => diver=2 else 1 */
-  divider = (drOrSr == DUAL_RATE) ? 2 : 1;
-
-  if( (v_k_master[*xover_band] > (noQMFChannels/divider) ) ||
+  if( (v_k_master[*xover_band] > 32 ) || /* v_k_master[*xover_band] > noQMFChannels(dualRate)/divider */
       ( *xover_band > num_master ) )  {
       /* xover_band error, too big for this startFreq. Will be clipped */
 
     /* Calculate maximum value for xover_band */
     max1=0;
     max2=num_master;
-    while( (v_k_master[max1+1] < (noQMFChannels/divider)) &&
+    while( (v_k_master[max1+1] < 32 ) && /* noQMFChannels(dualRate)/divider */
            ( (max1+1) < max2) )
       {
         max1++;

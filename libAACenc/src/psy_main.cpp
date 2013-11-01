@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -115,11 +115,6 @@ static const FIXP_DBL fadeOutFactor[FADE_OUT_LEN] = {1840644096, 1533870080, 122
 
 /* forward definitions */
 
-
-static inline int isLowDelay( AUDIO_OBJECT_TYPE aot )
-{
-  return (aot==AOT_ER_AAC_LD || aot==AOT_ER_AAC_ELD);
-}
 
 /*****************************************************************************
 
@@ -513,28 +508,28 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
 
       for(ch = 0; ch < channels; ch++)
       {
-          C_ALLOC_SCRATCH_START(timeSignal, INT_PCM, (1024));
-          psyStatic[ch]->blockSwitchingControl.timeSignal = timeSignal;
+          C_ALLOC_SCRATCH_START(pTimeSignal, INT_PCM, (1024))
 
           /* deinterleave input data and use for block switching */
-          FDKaacEnc_deinterleaveInputBuffer( psyStatic[ch]->blockSwitchingControl.timeSignal,
+          FDKaacEnc_deinterleaveInputBuffer( pTimeSignal,
                                             &pInput[chIdx[ch]],
                                              psyConf->granuleLength,
                                              totalChannels);
 
 
           FDKaacEnc_BlockSwitching (&psyStatic[ch]->blockSwitchingControl,
-                                     psyConf->granuleLength
-                                    ,psyStatic[ch]->isLFE
+                                     psyConf->granuleLength,
+                                     psyStatic[ch]->isLFE,
+                                     pTimeSignal
                                    );
 
 
             /* fill up internal input buffer, to 2xframelength samples */
             FDKmemcpy(psyStatic[ch]->psyInputBuffer+blockSwitchingOffset,
-                      psyStatic[ch]->blockSwitchingControl.timeSignal,
+                      pTimeSignal,
                       (2*psyConf->granuleLength-blockSwitchingOffset)*sizeof(INT_PCM));
 
-            C_ALLOC_SCRATCH_END(timeSignal, INT_PCM, (1024));
+            C_ALLOC_SCRATCH_END(pTimeSignal, INT_PCM, (1024))
       }
 
       /* synch left and right block type */
@@ -1345,7 +1340,7 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
 
       if (hPsyInternal)
       {
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
           if (hPsyInternal->pStaticChannels[i]) {
             if (hPsyInternal->pStaticChannels[i]->psyInputBuffer)
               FreeRam_aacEnc_PsyInputBuffer(&hPsyInternal->pStaticChannels[i]->psyInputBuffer);  /* AUDIO INPUT BUFFER */
@@ -1354,7 +1349,7 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
           }
         }
 
-        for (i=0; i<(6); i++) {
+        for (i=0; i<(8); i++) {
           if (hPsyInternal->psyElement[i])
             FreeRam_aacEnc_PsyElement(&hPsyInternal->psyElement[i]);                             /* PSY_ELEMENT */
         }
@@ -1368,12 +1363,12 @@ void FDKaacEnc_PsyClose(PSY_INTERNAL   **phPsyInternal,
       for (n=0; n<(1); n++) {
         if (phPsyOut[n])
         {
-          for (i=0; i<(6); i++) {
+          for (i=0; i<(8); i++) {
             if (phPsyOut[n]->pPsyOutChannels[i])
               FreeRam_aacEnc_PsyOutChannel(&phPsyOut[n]->pPsyOutChannels[i]);                  /* PSY_OUT_CHANNEL */
           }
 
-          for (i=0; i<(6); i++) {
+          for (i=0; i<(8); i++) {
             if (phPsyOut[n]->psyOutElement[i])
               FreeRam_aacEnc_PsyOutElements(&phPsyOut[n]->psyOutElement[i]);                   /* PSY_OUT_ELEMENTS */
           }

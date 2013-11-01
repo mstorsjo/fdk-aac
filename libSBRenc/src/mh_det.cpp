@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1244,25 +1244,38 @@ FDKsbrEnc_InitSbrMissingHarmonicsDetector (
 
   FDK_ASSERT(totNoEst <= MAX_NO_OF_ESTIMATES);
 
-  switch(frameSize){
-  case 2048:
-      hs->transientPosOffset = FRAME_MIDDLE_SLOT_2048;
-      hs->timeSlots          = NUMBER_TIME_SLOTS_2048;
-      break;
-  case 1920:
-      hs->transientPosOffset = FRAME_MIDDLE_SLOT_1920;
-      hs->timeSlots          = NUMBER_TIME_SLOTS_1920;
-      break;
-  case 1024:
-      hs->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
-      hs->timeSlots          = 16;
-      break;
-  case 960:
-      hs->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
-      hs->timeSlots          = 15;
-      break;
-  default:
-      return -1;
+  if (sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY)
+  {
+    switch(frameSize){
+    case 1024:
+    case 512:
+        hs->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
+        hs->timeSlots          = 16;
+        break;
+    case 960:
+    case 480:
+        hs->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
+        hs->timeSlots          = 15;
+        break;
+    default:
+        return -1;
+    }
+  } else
+  {
+    switch(frameSize){
+    case 2048:
+    case 1024:
+        hs->transientPosOffset = FRAME_MIDDLE_SLOT_2048;
+        hs->timeSlots          = NUMBER_TIME_SLOTS_2048;
+        break;
+    case 1920:
+    case 960:
+        hs->transientPosOffset = FRAME_MIDDLE_SLOT_1920;
+        hs->timeSlots          = NUMBER_TIME_SLOTS_1920;
+        break;
+    default:
+        return -1;
+    }
   }
 
   if (sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) {

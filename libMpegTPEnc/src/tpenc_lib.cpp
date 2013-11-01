@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -150,10 +150,16 @@ C_ALLOC_MEM(Ram_TransportEncoder, TRANSPORTENC, 1)
 
 TRANSPORTENC_ERROR transportEnc_Open( HANDLE_TRANSPORTENC *phTpEnc )
 {
-  HANDLE_TRANSPORTENC hTpEnc = GetRam_TransportEncoder(0);
+  HANDLE_TRANSPORTENC hTpEnc;
+
+  if ( phTpEnc == NULL ){
+    return TRANSPORTENC_INVALID_PARAMETER;
+  }
+
+  hTpEnc = GetRam_TransportEncoder(0);
 
   if ( hTpEnc == NULL ) {
-    return TRANSPORTENC_INVALID_PARAMETER;
+    return TRANSPORTENC_NO_MEM;
   }
 
   *phTpEnc = hTpEnc;
@@ -417,7 +423,7 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(
     }
 
     /* Write PCE as first raw_data_block element */
-    transportEnc_writePCE(&hTp->bitStream, hTp->config.channelMode, hTp->config.samplingRate, 0, 1, hTp->config.matrixMixdownA, hTp->config.flags & CC_PSEUDO_SURROUND, alignAnchor);
+    transportEnc_writePCE(&hTp->bitStream, hTp->config.channelMode, hTp->config.samplingRate, 0, 1, hTp->config.matrixMixdownA, (hTp->config.flags&CC_PSEUDO_SURROUND)?1:0, alignAnchor);
 
     if ( (hTp->transportFmt==TT_MP4_ADTS) && !hTp->writer.adts.protection_absent) {
       adtsWrite_CrcEndReg(&hTp->writer.adts, &hTp->bitStream, crcIndex);

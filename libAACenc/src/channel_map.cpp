@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -124,7 +124,7 @@ amm-info@iis.fraunhofer.de
 typedef struct {
 
   CHANNEL_MODE  encoderMode;
-  INT           channel_assignment[/*(6)*/12];
+  INT           channel_assignment[/*(8)*/12];
 
 } CHANNEL_ASSIGNMENT_INFO_TAB;
 
@@ -139,6 +139,8 @@ static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabMpeg[] =
      { MODE_1_2_2,                   { 0, 1, 2, 3, 4,-1,-1,-1,-1,-1,-1,-1} },  /*  5ch       */
      { MODE_1_2_2_1,                 { 0, 1, 2, 3, 4, 5,-1,-1,-1,-1,-1,-1} },  /*  5.1ch     */
      { MODE_1_2_2_2_1,               { 0, 1, 2, 3, 4, 5, 6, 7,-1,-1,-1,-1} },  /*  7.1ch     */
+     { MODE_7_1_REAR_SURROUND,       { 0, 1, 2, 3, 4, 5, 6, 7,-1,-1,-1,-1} },  /*  7.1ch     */
+     { MODE_7_1_FRONT_CENTER,        { 0, 1, 2, 3, 4, 5, 6, 7,-1,-1,-1,-1} }   /*  7.1ch     */
 };
 
 static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabWav[] =
@@ -150,7 +152,9 @@ static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabWav[] =
      { MODE_1_2_1,                   { 2, 0, 1, 3,-1,-1,-1,-1,-1,-1,-1,-1} },  /*  4ch       */
      { MODE_1_2_2,                   { 2, 0, 1, 3, 4,-1,-1,-1,-1,-1,-1,-1} },  /*  5ch       */
      { MODE_1_2_2_1,                 { 2, 0, 1, 4, 5, 3,-1,-1,-1,-1,-1,-1} },  /*  5.1ch     */
-     { MODE_1_2_2_2_1,               { 2, 0, 1, 6, 7, 4, 5, 3,-1,-1,-1,-1} },  /*  7.1ch     */
+     { MODE_1_2_2_2_1,               { 2, 6, 7, 0, 1, 4, 5, 3,-1,-1,-1,-1} },  /*  7.1ch     */
+     { MODE_7_1_REAR_SURROUND,       { 2, 0, 1, 6, 7, 4, 5, 3,-1,-1,-1,-1} },  /*  7.1ch     */
+     { MODE_7_1_FRONT_CENTER,        { 2, 6, 7, 0, 1, 4, 5, 3,-1,-1,-1,-1} },  /*  7.1ch     */
 };
 
 static const CHANNEL_ASSIGNMENT_INFO_TAB assignmentInfoTabWg4[] =
@@ -177,6 +181,8 @@ static const CHANNEL_MODE_CONFIG_TAB channelModeConfig[] =
    { MODE_1_2_2,                    5,  5,  3 },   /* SCE,CPE,CPE         */
    { MODE_1_2_2_1,                  6,  5,  4 },   /* SCE,CPE,CPE,LFE     */
    { MODE_1_2_2_2_1,                8,  7,  5 },   /* SCE,CPE,CPE,CPE,LFE */
+   { MODE_7_1_REAR_SURROUND,        8,  7,  5 },
+   { MODE_7_1_FRONT_CENTER,         8,  7,  5 },
 };
 
 #define MAX_MODES (sizeof(assignmentInfoTabWav)/sizeof(CHANNEL_ASSIGNMENT_INFO_TAB))
@@ -329,6 +335,8 @@ AAC_ENCODER_ERROR FDKaacEnc_InitChannelMapping(CHANNEL_MODE mode, CHANNEL_ORDER 
       break;
 
     case MODE_1_2_2_2_1:
+    case MODE_7_1_REAR_SURROUND:
+    case MODE_7_1_FRONT_CENTER:
       /* (7.1) sce + cpe + cpe + cpe + lfe */
       FDKaacEnc_initElement(&cm->elInfo[0], ID_SCE, &count, mode, co, it_cnt, FL2FXCONST_DBL(0.18f));
       FDKaacEnc_initElement(&cm->elInfo[1], ID_CPE, &count, mode, co, it_cnt, FL2FXCONST_DBL(0.26f));
@@ -336,14 +344,13 @@ AAC_ENCODER_ERROR FDKaacEnc_InitChannelMapping(CHANNEL_MODE mode, CHANNEL_ORDER 
       FDKaacEnc_initElement(&cm->elInfo[3], ID_CPE, &count, mode, co, it_cnt, FL2FXCONST_DBL(0.26f));
       FDKaacEnc_initElement(&cm->elInfo[4], ID_LFE, &count, mode, co, it_cnt, FL2FXCONST_DBL(0.04f));
       break;
-
     default:
       //*chMap=0;
       return AAC_ENC_UNSUPPORTED_CHANNELCONFIG;
   };
 
 
-  FDK_ASSERT(cm->nElements<=(6));
+  FDK_ASSERT(cm->nElements<=(8));
 
 
   return AAC_ENC_OK;
@@ -456,19 +463,18 @@ AAC_ENCODER_ERROR FDKaacEnc_InitElementBits(QC_STATE *hQC,
 
     break;
   }
+  case MODE_7_1_REAR_SURROUND:
+  case MODE_7_1_FRONT_CENTER:
+  case MODE_1_2_2_2_1: {
+    int cpe3Idx = 3;
+    int lfeIdx  = 4;
 
-  case MODE_1_2_2_2_1:{
-      /* (7.1) sce + cpe + cpe + cpe + lfe */
-    hQC->elementBits[0]->relativeBitsEl = cm->elInfo[0].relativeBits;
-    hQC->elementBits[1]->relativeBitsEl = cm->elInfo[1].relativeBits;
-    hQC->elementBits[2]->relativeBitsEl = cm->elInfo[2].relativeBits;
-    hQC->elementBits[3]->relativeBitsEl = cm->elInfo[3].relativeBits;
-    hQC->elementBits[4]->relativeBitsEl = cm->elInfo[4].relativeBits;
-    FIXP_DBL sceRate  = cm->elInfo[0].relativeBits;
-    FIXP_DBL cpe1Rate = cm->elInfo[1].relativeBits;
-    FIXP_DBL cpe2Rate = cm->elInfo[2].relativeBits;
-    FIXP_DBL cpe3Rate = cm->elInfo[3].relativeBits;
-    FIXP_DBL lfeRate  = cm->elInfo[4].relativeBits;
+    /* (7.1) sce + cpe + cpe + cpe + lfe */
+    FIXP_DBL sceRate  = hQC->elementBits[0]->relativeBitsEl = cm->elInfo[0].relativeBits;
+    FIXP_DBL cpe1Rate = hQC->elementBits[1]->relativeBitsEl = cm->elInfo[1].relativeBits;
+    FIXP_DBL cpe2Rate = hQC->elementBits[2]->relativeBitsEl = cm->elInfo[2].relativeBits;
+    FIXP_DBL cpe3Rate = hQC->elementBits[cpe3Idx]->relativeBitsEl = cm->elInfo[cpe3Idx].relativeBits;
+    FIXP_DBL lfeRate  = hQC->elementBits[lfeIdx]->relativeBitsEl = cm->elInfo[lfeIdx].relativeBits;
 
     int maxBitsTot = maxChannelBits * 7; /* LFE does not add to bit reservoir */
     int sc = CountLeadingBits(fixMax(maxChannelBits,averageBitsTot));
@@ -480,17 +486,16 @@ AAC_ENCODER_ERROR FDKaacEnc_InitElementBits(QC_STATE *hQC,
     hQC->elementBits[0]->chBitrateEl = fMult(sceRate,  (FIXP_DBL)(bitrateTot<<sc_brTot))>>sc_brTot;
     hQC->elementBits[1]->chBitrateEl = fMult(cpe1Rate, (FIXP_DBL)(bitrateTot<<sc_brTot))>>(sc_brTot+1);
     hQC->elementBits[2]->chBitrateEl = fMult(cpe2Rate, (FIXP_DBL)(bitrateTot<<sc_brTot))>>(sc_brTot+1);
-    hQC->elementBits[3]->chBitrateEl = fMult(cpe3Rate, (FIXP_DBL)(bitrateTot<<sc_brTot))>>(sc_brTot+1);
-    hQC->elementBits[4]->chBitrateEl = fMult(lfeRate,  (FIXP_DBL)(bitrateTot<<sc_brTot))>>sc_brTot;
+    hQC->elementBits[cpe3Idx]->chBitrateEl = fMult(cpe3Rate, (FIXP_DBL)(bitrateTot<<sc_brTot))>>(sc_brTot+1);
+    hQC->elementBits[lfeIdx]->chBitrateEl = fMult(lfeRate,  (FIXP_DBL)(bitrateTot<<sc_brTot))>>sc_brTot;
 
     hQC->elementBits[0]->maxBitsEl = maxChannelBits;
     hQC->elementBits[1]->maxBitsEl = 2*maxChannelBits;
     hQC->elementBits[2]->maxBitsEl = 2*maxChannelBits;
-    hQC->elementBits[3]->maxBitsEl = 2*maxChannelBits;
-    hQC->elementBits[4]->maxBitsEl = maxLfeBits;
+    hQC->elementBits[cpe3Idx]->maxBitsEl = 2*maxChannelBits;
+    hQC->elementBits[lfeIdx]->maxBitsEl = maxLfeBits;
     break;
   }
-
   default:
     return AAC_ENC_UNSUPPORTED_CHANNELCONFIG;
   }
@@ -532,6 +537,8 @@ ELEMENT_MODE FDKaacEnc_GetMonoStereoMode(const CHANNEL_MODE mode){
   case MODE_1_2_2:
   case MODE_1_2_2_1:
   case MODE_1_2_2_2_1:
+  case MODE_7_1_REAR_SURROUND:
+  case MODE_7_1_FRONT_CENTER:
     monoStereoSetting = EL_MODE_STEREO;
     break;
   default:            /* error */

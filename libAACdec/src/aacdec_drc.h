@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -143,6 +143,16 @@ int aacDecoder_drcProlog (
         UCHAR  channelMapping[],
         int    numChannels );
 
+/**
+ * \brief Apply DRC. If SBR is present, DRC data is handed over to the SBR decoder.
+ * \param self AAC decoder instance
+ * \param pSbrDec pointer to SBR decoder instance
+ * \param pAacDecoderChannelInfo AAC decoder channel instance to be processed
+ * \param pDrcDat DRC channel data
+ * \param ch channel index
+ * \param aacFrameSize AAC frame size
+ * \param bSbrPresent flag indicating that SBR is present, in which case DRC is handed over to the SBR instance pSbrDec
+ */
 void aacDecoder_drcApply (
         HANDLE_AAC_DRC          self,
         void                   *pSbrDec,

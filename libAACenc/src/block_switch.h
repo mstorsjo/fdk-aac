@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -107,7 +107,6 @@ amm-info@iis.fraunhofer.de
 
 /****************** Structures ***************************/
 typedef struct{
-  INT_PCM *timeSignal;
   INT   lastWindowSequence;
   INT   windowShape;
   INT   lastWindowShape;
@@ -136,7 +135,7 @@ typedef struct{
 
 void FDKaacEnc_InitBlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, INT isLowDelay);
 
-int FDKaacEnc_BlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, const INT granuleLength, const int isLFE);
+int FDKaacEnc_BlockSwitching(BLOCK_SWITCHING_CONTROL *blockSwitchingControl, const INT granuleLength, const int isLFE, const INT_PCM *pTimeSignal);
 
 int FDKaacEnc_SyncBlockSwitching(
       BLOCK_SWITCHING_CONTROL *blockSwitchingControlLeft,

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -92,6 +92,7 @@ amm-info@iis.fraunhofer.de
 #define _INTERFACE_H
 
 #include "common_fix.h"
+#include "FDK_audio.h"
 
 #include "psy_data.h"
 #include "aacenc_tns.h"
@@ -155,9 +156,14 @@ typedef struct {
 
 typedef struct {
 
-  PSY_OUT_ELEMENT* psyOutElement[(6)];
-  PSY_OUT_CHANNEL* pPsyOutChannels[(6)];
+  PSY_OUT_ELEMENT* psyOutElement[(8)];
+  PSY_OUT_CHANNEL* pPsyOutChannels[(8)];
 
 }PSY_OUT;
+
+inline int isLowDelay( AUDIO_OBJECT_TYPE aot )
+{
+  return (aot==AOT_ER_AAC_LD || aot==AOT_ER_AAC_ELD);
+}
 
 #endif /* _INTERFACE_H */

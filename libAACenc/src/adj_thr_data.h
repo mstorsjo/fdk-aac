@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -144,7 +144,7 @@ typedef struct {
 
 typedef struct {
   BRES_PARAM bresParamLong, bresParamShort;
-  ATS_ELEMENT* adjThrStateElem[(6)];
+  ATS_ELEMENT* adjThrStateElem[(8)];
 } ADJ_THR_STATE;
 
 #endif

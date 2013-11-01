@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -107,39 +107,39 @@ C_ALLOC_MEM (Ram_SbrDynamic_RAM, FIXP_DBL, ((SBR_ENC_DYN_RAM_SIZE)/sizeof(FIXP_D
   in module sbr_ram and sbr rom
 */
 C_ALLOC_MEM (Ram_SbrEncoder, SBR_ENCODER, 1)
-C_ALLOC_MEM2(Ram_SbrChannel, SBR_CHANNEL, 1, (6))
-C_ALLOC_MEM2(Ram_SbrElement, SBR_ELEMENT, 1, (6))
+C_ALLOC_MEM2(Ram_SbrChannel, SBR_CHANNEL, 1, (8))
+C_ALLOC_MEM2(Ram_SbrElement, SBR_ELEMENT, 1, (8))
 
 /*! Filter states for QMF-analysis. <br>
   Dimension: #MAXNRSBRCHANNELS * #SBR_QMF_FILTER_LENGTH
 */
-C_AALLOC_MEM2_L (Ram_Sbr_QmfStatesAnalysis, FIXP_QAS, QMF_FILTER_LENGTH, (6), SECT_DATA_L1)
+C_AALLOC_MEM2_L (Ram_Sbr_QmfStatesAnalysis, FIXP_QAS, QMF_FILTER_LENGTH, (8), SECT_DATA_L1)
 
 
 /*! Matrix holding the quota values for all estimates, all channels
   Dimension #MAXNRSBRCHANNELS * +#SBR_QMF_CHANNELS* #MAX_NO_OF_ESTIMATES
 */
-C_ALLOC_MEM2_L (Ram_Sbr_quotaMatrix, FIXP_DBL, (MAX_NO_OF_ESTIMATES*QMF_CHANNELS), (6), SECT_DATA_L1)
+C_ALLOC_MEM2_L (Ram_Sbr_quotaMatrix, FIXP_DBL, (MAX_NO_OF_ESTIMATES*QMF_CHANNELS), (8), SECT_DATA_L1)
 
 /*! Matrix holding the sign values for all estimates, all channels
   Dimension #MAXNRSBRCHANNELS * +#SBR_QMF_CHANNELS* #MAX_NO_OF_ESTIMATES
 */
-C_ALLOC_MEM2 (Ram_Sbr_signMatrix, INT, (MAX_NO_OF_ESTIMATES*QMF_CHANNELS), (6))
+C_ALLOC_MEM2 (Ram_Sbr_signMatrix, INT, (MAX_NO_OF_ESTIMATES*QMF_CHANNELS), (8))
 
 /*! Frequency band table (low res) <br>
   Dimension #MAX_FREQ_COEFFS/2+1
 */
-C_ALLOC_MEM2 (Ram_Sbr_freqBandTableLO, UCHAR, (MAX_FREQ_COEFFS/2+1), (6))
+C_ALLOC_MEM2 (Ram_Sbr_freqBandTableLO, UCHAR, (MAX_FREQ_COEFFS/2+1), (8))
 
 /*! Frequency band table (high res) <br>
   Dimension #MAX_FREQ_COEFFS +1
 */
-C_ALLOC_MEM2 (Ram_Sbr_freqBandTableHI, UCHAR, (MAX_FREQ_COEFFS+1), (6))
+C_ALLOC_MEM2 (Ram_Sbr_freqBandTableHI, UCHAR, (MAX_FREQ_COEFFS+1), (8))
 
 /*! vk matser table <br>
   Dimension #MAX_FREQ_COEFFS +1
 */
-C_ALLOC_MEM2 (Ram_Sbr_v_k_master, UCHAR, (MAX_FREQ_COEFFS+1), (6))
+C_ALLOC_MEM2 (Ram_Sbr_v_k_master, UCHAR, (MAX_FREQ_COEFFS+1), (8))
 
 
 /*
@@ -149,23 +149,23 @@ C_ALLOC_MEM2 (Ram_Sbr_v_k_master, UCHAR, (MAX_FREQ_COEFFS+1), (6))
 /*! sbr_detectionVectors <br>
   Dimension #MAX_NUM_CHANNELS*#MAX_NO_OF_ESTIMATES*#MAX_FREQ_COEFFS]
 */
-C_ALLOC_MEM2 (Ram_Sbr_detectionVectors, UCHAR, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (6))
+C_ALLOC_MEM2 (Ram_Sbr_detectionVectors, UCHAR, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (8))
 
 /*! sbr_prevCompVec[ <br>
   Dimension #MAX_NUM_CHANNELS*#MAX_FREQ_COEFFS]
 */
-C_ALLOC_MEM2 (Ram_Sbr_prevEnvelopeCompensation, UCHAR, MAX_FREQ_COEFFS, (6))
+C_ALLOC_MEM2 (Ram_Sbr_prevEnvelopeCompensation, UCHAR, MAX_FREQ_COEFFS, (8))
 /*! sbr_guideScfb[ <br>
   Dimension #MAX_NUM_CHANNELS*#MAX_FREQ_COEFFS]
 */
-C_ALLOC_MEM2 (Ram_Sbr_guideScfb, UCHAR, MAX_FREQ_COEFFS, (6))
+C_ALLOC_MEM2 (Ram_Sbr_guideScfb, UCHAR, MAX_FREQ_COEFFS, (8))
 
 /*! sbr_guideVectorDetected <br>
   Dimension #MAX_NUM_CHANNELS*#MAX_NO_OF_ESTIMATES*#MAX_FREQ_COEFFS]
 */
-C_ALLOC_MEM2 (Ram_Sbr_guideVectorDetected, UCHAR, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (6))
-C_ALLOC_MEM2 (Ram_Sbr_guideVectorDiff, FIXP_DBL, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (6))
-C_ALLOC_MEM2 (Ram_Sbr_guideVectorOrig, FIXP_DBL, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (6))
+C_ALLOC_MEM2 (Ram_Sbr_guideVectorDetected, UCHAR, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (8))
+C_ALLOC_MEM2 (Ram_Sbr_guideVectorDiff, FIXP_DBL, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (8))
+C_ALLOC_MEM2 (Ram_Sbr_guideVectorOrig, FIXP_DBL, (MAX_NO_OF_ESTIMATES*MAX_FREQ_COEFFS), (8))
 
 /*
   Static Parametric Stereo memory
@@ -191,7 +191,7 @@ C_ALLOC_MEM   (Ram_ParamStereo, PARAMETRIC_STEREO, 1)
   /*! Energy buffer for envelope extraction <br>
     Dimension #MAXNRSBRCHANNELS * +#SBR_QMF_SLOTS *  #SBR_QMF_CHANNELS
   */
-  C_ALLOC_MEM2 (Ram_Sbr_envYBuffer, FIXP_DBL, (QMF_MAX_TIME_SLOTS/2 * QMF_CHANNELS), (6))
+  C_ALLOC_MEM2 (Ram_Sbr_envYBuffer, FIXP_DBL, (QMF_MAX_TIME_SLOTS/2 * QMF_CHANNELS), (8))
 
   FIXP_DBL* GetRam_Sbr_envYBuffer (int n, UCHAR* dynamic_RAM) {
     FDK_ASSERT(dynamic_RAM!=0);

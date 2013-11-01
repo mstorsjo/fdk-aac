@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -589,7 +589,6 @@ AAC_DECODER_ERROR  CBlock_ReadSpectralData(HANDLE_FDK_BITSTREAM bs,
   {
     H_HCR_INFO hHcr = &pAacDecoderChannelInfo->pComData->overlay.aac.erHcrInfo;
     int hcrStatus = 0;
-    int hcrConcealWholeFrame = 0;
 
     /* advanced Huffman decoding starts here (HCR decoding :) */
     if ( pAacDecoderChannelInfo->pDynData->specificTo.aac.lenOfReorderedSpectralData != 0 ) {
@@ -598,24 +597,19 @@ AAC_DECODER_ERROR  CBlock_ReadSpectralData(HANDLE_FDK_BITSTREAM bs,
       hcrStatus = HcrInit(hHcr, pAacDecoderChannelInfo, pSamplingRateInfo, bs);
 
       if (hcrStatus != 0) {
-#if HCR_ERROR_CONCEALMENT
-        hcrConcealWholeFrame = 1;
-        return AAC_DEC_DECODE_FRAME_ERROR;  /* concealment is muting in the first step, therefore return now */
-        // hcr decoding is not skipped because of returning above
-#else
         return AAC_DEC_DECODE_FRAME_ERROR;
-#endif
       }
 
       /* HCR decoding short */
       hcrStatus = HcrDecoder(hHcr, pAacDecoderChannelInfo, pSamplingRateInfo, bs);
 
-
+      if (hcrStatus != 0) {
 #if HCR_ERROR_CONCEALMENT
-      HcrMuteErroneousLines(hHcr);
+        HcrMuteErroneousLines(hHcr);
 #else
-      return AAC_DEC_DECODE_FRAME_ERROR;
+        return AAC_DEC_DECODE_FRAME_ERROR;
 #endif /* HCR_ERROR_CONCEALMENT */
+      }
 
       FDKpushFor (bs, pAacDecoderChannelInfo->pDynData->specificTo.aac.lenOfReorderedSpectralData);
     }

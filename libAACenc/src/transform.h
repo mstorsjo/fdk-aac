@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -105,7 +105,7 @@ amm-info@iis.fraunhofer.de
  *        LONG_WINDOW, START_WINDOW, SHORT_WINDOW or STOP_WINDOW.
  * \param windowShape index indicating the window slope type to be used.
  *        Values allowed are either SINE_WINDOW or KBD_WINDOW.
- * \param frameLength length of the block. Either 1024 or 960.
+ * \param frameLength length of the block.
  * \param mdctData_e pointer to an INT where the exponent of the frequency
  *        domain output data is stored into.
  * \return 0 in case of success, non-zero in case of error (inconsistent parameters).

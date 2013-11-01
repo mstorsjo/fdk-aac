@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /******************************** MPEG Audio Encoder **************************
 
-   Initial author:       Alex Groeschel
+   Initial author:       Alex Groeschel, Tobias Chalupka
    contents/description: Temporal noise shaping
 
 ******************************************************************************/
@@ -281,7 +281,6 @@ static INT getTnsMaxBands(
   int maxBandsTabSize = 0;
 
   switch (granuleLength) {
-    case 960:
     case 1024:
       pMaxBandsTab = tnsMaxBandsTab1024;
       maxBandsTabSize = sizeof(tnsMaxBandsTab1024)/sizeof(TNS_MAX_TAB_ENTRY);
@@ -404,7 +403,6 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
   tC->lpcStopLine    = pC->sfbOffset[tC->lpcStopBand];
 
   switch (granuleLength) {
-    case 960:
     case 1024:
       /* TNS start line: skip lower MDCT lines to prevent artifacts due to filter mismatch */
       tC->lpcStartBand[LOFILT]   = (blockType == SHORT_WINDOW) ? 0 : ((sampleRate < 18783) ? 4 : 8);
