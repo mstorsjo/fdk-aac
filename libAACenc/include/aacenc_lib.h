@@ -705,6 +705,9 @@ the encoder deactivates PNS calculation internally.
 #include "machine_type.h"
 #include "FDK_audio.h"
 
+#define AACENCODER_LIB_VL0 3
+#define AACENCODER_LIB_VL1 4
+#define AACENCODER_LIB_VL2 12
 
 /**
  *  AAC encoder error codes.
