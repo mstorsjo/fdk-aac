@@ -1,3 +1,7 @@
+0.1.3
+ - Updated upstream sources, with a number of crash fixes and new features
+   (including support for encoding 7.1)
+
 0.1.2
  - Fix a few more crashes
  - Include dependency libs (such as -lm) in the pkg-config file
