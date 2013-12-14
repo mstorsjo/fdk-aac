@@ -87,7 +87,7 @@ amm-info@iis.fraunhofer.de
    contents/description: fast aac coder functions
 
 ******************************************************************************/
-
+#include <stdio.h>
 #include "aacenc.h"
 
 #include "bitenc.h"
@@ -170,6 +170,7 @@ INT FDKaacEnc_LimitBitrate(
   do {
     prevBitRate = bitRate;
      averageBitsPerFrame = (bitRate*(frameLength>>shift)) / (coreSamplingRate>>shift) / nSubFrames;
+     //fprintf(stderr, "FDKaacEnc_LimitBitrate(): averageBitsPerFrame=%d, prevBitRate=%d, nSubFrames=%d\n", averageBitsPerFrame, prevBitRate, bitRate);
 
     if (pAverageBitsPerFrame != NULL) {
       *pAverageBitsPerFrame = averageBitsPerFrame;
@@ -182,14 +183,18 @@ INT FDKaacEnc_LimitBitrate(
       transportBits = 208;
     }
 
+    //fprintf(stderr, "FDKaacEnc_LimitBitrate(): transportBits=%d, FDKmax(%d, %d)\n", transportBits, bitRate,
+    //        ((((40 * nChannels) + transportBits) * (coreSamplingRate)) / frameLength));
     bitRate = FDKmax(bitRate, ((((40 * nChannels) + transportBits) * (coreSamplingRate)) / frameLength) );
     FDK_ASSERT(bitRate >= 0);
 
+    //fprintf(stderr, "FDKaacEnc_LimitBitrate(): FDKmin(%d, %d)\n", bitRate, ((nChannelsEff * MIN_BUFSIZE_PER_EFF_CHAN)*(coreSamplingRate>>shift)) / (frameLength>>shift));
     bitRate = FDKmin(bitRate, ((nChannelsEff * MIN_BUFSIZE_PER_EFF_CHAN)*(coreSamplingRate>>shift)) / (frameLength>>shift)) ;
     FDK_ASSERT(bitRate >= 0);
 
   } while (prevBitRate != bitRate && iter++ < 3) ;
 
+  //fprintf(stderr, "FDKaacEnc_LimitBitrate(): bitRate=%d\n", bitRate);
   return bitRate;
 }
 
@@ -458,6 +463,36 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
       return AAC_ENC_UNSUPPORTED_BITRATE;
   }
 
+  INT superframe_size = 110*8*(config->bitRate/8000);
+  INT frames_per_superframe = 6;
+  INT staticBits = 0;
+  if((config->syntaxFlags & AC_DAB) && hTpEnc) {
+     staticBits = transportEnc_GetStaticBits(hTpEnc, 0);
+     switch(config->sampleRate) {
+     case 48000:
+    	 frames_per_superframe=6;
+    	 break;
+     case 32000:
+    	 frames_per_superframe=4;
+    	 break;
+     case 24000:
+    	 frames_per_superframe=3;
+    	 break;
+     case 16000:
+    	 frames_per_superframe=2;
+    	 break;
+     }
+
+     //config->nSubFrames = frames_per_superframe;
+     //fprintf(stderr, "DAB+ superframe size=%d\n", superframe_size);
+     config->bitRate = (superframe_size - 16*(frames_per_superframe-1) - staticBits) * 1000/120;
+     //fprintf(stderr, "DAB+ tuned bitrate=%d\n", config->bitRate);
+     config->maxBitsPerFrame  = (superframe_size - 16*(frames_per_superframe-1) - staticBits) / frames_per_superframe;
+     config->maxBitsPerFrame += 7; /*padding*/
+     //config->bitreservoir=(superframe_size - 16*(frames_per_superframe-1) - staticBits - 2*8)/frames_per_superframe;
+     //fprintf(stderr, "DAB+ tuned maxBitsPerFrame=%d\n", (superframe_size - 16*(frames_per_superframe-1) - staticBits)/frames_per_superframe);
+  }
+
   /* check bit rate */
 
   if (FDKaacEnc_LimitBitrate(
@@ -489,6 +524,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
   switch (config->framelength)
   {
     case 1024:
+    case 960: //TODO: DRM
       if ( config->audioObjectType == AOT_ER_AAC_LD
         || config->audioObjectType == AOT_ER_AAC_ELD )
       {
@@ -611,6 +647,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
       qcInit.averageBits     = (averageBitsPerFrame+7)&~7;
       maxBitres              = (MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff) - qcInit.averageBits;
       qcInit.bitRes          = (config->bitreservoir!=-1) ? FDKmin(config->bitreservoir, maxBitres) : maxBitres;
+      //fprintf(stderr, "qcInit.bitRes=%d\n", qcInit.bitRes);
 
       qcInit.maxBits         = fixMin(MIN_BUFSIZE_PER_EFF_CHAN*cm->nChannelsEff, ((averageBitsPerFrame+7)&~7)+qcInit.bitRes);
       qcInit.maxBits         = (config->maxBitsPerFrame!=-1) ? fixMin(qcInit.maxBits, config->maxBitsPerFrame) : qcInit.maxBits;
@@ -736,6 +773,7 @@ AAC_ENCODER_ERROR FDKaacEnc_EncodeFrame( HANDLE_AAC_ENC       hAacEnc,          
     /* advance psychoacoustics */
     for (el=0; el<cm->nElements; el++) {
         ELEMENT_INFO elInfo = cm->elInfo[el];
+        //fprintf(stderr, "elInfo.elType=%d\n", elInfo.elType);
 
         if ( (elInfo.elType == ID_SCE)
           || (elInfo.elType == ID_CPE)
@@ -896,10 +934,13 @@ AAC_ENCODER_ERROR FDKaacEnc_EncodeFrame( HANDLE_AAC_ENC       hAacEnc,          
 
             /* adjust super frame bitrate */
             avgTotalBits *= hAacEnc->config->nSubFrames;
+            //fprintf(stderr, "avgTotalBits=%d x %d\n", avgTotalBits, hAacEnc->config->nSubFrames);
         }
 
         /* Make first estimate of transport header overhead.
            Take maximum possible frame size into account to prevent bitreservoir underrun. */
+
+        //fprintf(stderr, "avgTotalBits=%d, bitResTot=%d\n", avgTotalBits, hAacEnc->qcKernel->bitResTot);
         hAacEnc->qcKernel->globHdrBits = transportEnc_GetStaticBits(hTpEnc, avgTotalBits + hAacEnc->qcKernel->bitResTot);
 
 
@@ -951,6 +992,7 @@ AAC_ENCODER_ERROR FDKaacEnc_EncodeFrame( HANDLE_AAC_ENC       hAacEnc,          
         /*-------------------------------------------- */
 
         /* for ( all sub frames ) ... */
+        //fprintf(stderr, "totalBits=%d, qcOut->totalBits=%d, qcOut->totFillBits=%d\n", totalBits, qcOut->totalBits, qcOut->totFillBits);
               /* write bitstream header */
               transportEnc_WriteAccessUnit(
                     hTpEnc,

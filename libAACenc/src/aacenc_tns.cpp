@@ -166,6 +166,22 @@ static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab1024[] =
   { 8000,  { 39, 14}}
 };
 
+static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab960[] =
+{
+  { 96000, { 31,  9}},
+  { 88200, { 31,  9}},
+  { 64000, { 34, 10}},
+  { 48000, { 49, 14}},
+  { 44100, { 49, 14}},
+  { 32000, { 49, 14}},
+  { 24000, { 46, 15}},
+  { 22050, { 46, 14}},
+  { 16000, { 46, 15}},
+  { 12000, { 42, 15}},
+  { 11025, { 42, 15}},
+  { 8000,  { 40, 15}}
+};
+
 static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab480[] =
 {
   { 48000, { 31, -1}},
@@ -261,6 +277,10 @@ static INT getTnsMaxBands(
   int maxBandsTabSize = 0;
 
   switch (granuleLength) {
+    case 960:
+      pMaxBandsTab = tnsMaxBandsTab960;
+      maxBandsTabSize = sizeof(tnsMaxBandsTab960)/sizeof(TNS_MAX_TAB_ENTRY);
+      break;
     case 1024:
       pMaxBandsTab = tnsMaxBandsTab1024;
       maxBandsTabSize = sizeof(tnsMaxBandsTab1024)/sizeof(TNS_MAX_TAB_ENTRY);
@@ -386,6 +406,7 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
   tC->lpcStopLine    = pC->sfbOffset[tC->lpcStopBand];
 
   switch (granuleLength) {
+    case 960:
     case 1024:
       /* TNS start line: skip lower MDCT lines to prevent artifacts due to filter mismatch */
       tC->lpcStartBand[LOFILT]   = (blockType == SHORT_WINDOW) ? 0 : ((sampleRate < 18783) ? 4 : 8);

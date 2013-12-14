@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+ï¿½ Copyright  1995 - 2012 Fraunhofer-Gesellschaft zur Fï¿½rderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,79 +83,135 @@ amm-info@iis.fraunhofer.de
 
 /******************************** MPEG Audio Encoder **************************
 
-   Initial author:       M.Werner
-   contents/description: Global psychoaccoustic constants
+   Initial author:       serge
+   contents/description: DAB Transport writer
 
 ******************************************************************************/
-#ifndef _PSYCONST_H
-#define _PSYCONST_H
+
+#ifndef TPENC_DAB_H
+#define TPENC_DAB_H
 
 
-#define TRUE  1
-#define FALSE 0
 
-  #define TRANS_FAC         8  /* encoder short long ratio */
+#include "tp_data.h"
 
-#define FRAME_LEN_LONG_960    (960)
-#define FRAME_MAXLEN_SHORT    ((1024)/TRANS_FAC)
-#define FRAME_LEN_SHORT_128   ((1024)/TRANS_FAC)
+#include "FDK_crc.h"
 
-/* Filterbank type*/
-enum FB_TYPE {
-  FB_LC  = 0,
-  FB_LD  = 1,
-  FB_ELD = 2
-};
+typedef struct {
+  USHORT frame_length;
+  UCHAR dac_rate;
+  UCHAR aac_channel_mode;
+  UCHAR sbr_flag;
+  UCHAR ps_flag;
+  UCHAR mpeg_surround_config;
+  UCHAR num_raw_blocks;
+  UCHAR BufferFullnesStartFlag;
+  int subchannels_num;
+  int headerBits;                /*!< Header bit demand for the current raw data block */
+  int currentBlock;              /*!< Index of current raw data block */
+  int subFrameStartBit;          /*!< Bit position where the current raw data block begins */
+  //int subFrameStartPrev;         /*!< Bit position where the previous raw data block begins */
+  int crcIndex;
+  FDK_CRCINFO crcInfo;
+  FDK_CRCINFO crcFire;
+  FDK_CRCINFO crcInfo2;
+  USHORT tab[256];
+} STRUCT_DAB;
 
-/* Block types */
-#define N_BLOCKTYPES 6
-enum
-{
-  LONG_WINDOW = 0,
-  START_WINDOW,
-  SHORT_WINDOW,
-  STOP_WINDOW,
-  _LOWOV_WINDOW, /* Do not use this block type out side of block_switch.cpp */
-  WRONG_WINDOW
-};
+typedef STRUCT_DAB *HANDLE_DAB;
 
-/* Window shapes */
-enum
-{
-  SINE_WINDOW = 0,
-  KBD_WINDOW  = 1,
-  LOL_WINDOW = 2 /* Low OverLap window shape for AAC-LD */
-};
+/**
+ * \brief Initialize DAB data structure
+ *
+ * \param hDab DAB data handle
+ * \param config a valid CODER_CONFIG struct from where the required
+ *        information for the DAB header is extrated from
+ *
+ * \return 0 in case of success.
+ */
+INT dabWrite_Init(
+        HANDLE_DAB   hDab,
+        CODER_CONFIG *config
+        );
 
-/*
-  MS stuff
-*/
-enum
-{
-  SI_MS_MASK_NONE = 0,
-  SI_MS_MASK_SOME = 1,
-  SI_MS_MASK_ALL  = 2
-};
+/**
+ * \brief Get the total bit overhead caused by DAB
+ *
+ * \hDab handle to DAB data
+ *
+ * \return Amount of additional bits required for the current raw data block
+ */
+int dabWrite_GetHeaderBits( HANDLE_DAB hDab );
+int dabWrite_CountTotalBitDemandHeader( HANDLE_DAB hDab, unsigned int streamDataLength );
+
+/**
+ * \brief Write an DAB header into the given bitstream. May not write a header
+ *        in case of multiple raw data blocks.
+ *
+ * \param hDab DAB data handle
+ * \param hBitStream bitstream handle into which the DAB may be written into
+ * \param buffer_fullness the buffer fullness value for the DAB header
+ * \param the current raw data block length
+ *
+ * \return 0 in case of success.
+ */
+INT dabWrite_EncodeHeader(
+        HANDLE_DAB          hDab,
+        HANDLE_FDK_BITSTREAM hBitStream,
+        int                  bufferFullness,
+        int                  frame_length
+        );
+/**
+ * \brief Finish a DAB raw data block
+ *
+ * \param hDab DAB data handle
+ * \param hBs bitstream handle into which the DAB may be written into
+ * \param pBits a pointer to a integer holding the current bitstream buffer bit count,
+ *              which is corrected to the current raw data block boundary.
+ *
+ */
+void dabWrite_EndRawDataBlock(
+        HANDLE_DAB          hDab,
+        HANDLE_FDK_BITSTREAM hBs,
+        int                 *bits
+        );
 
 
-  #define MAX_NO_OF_GROUPS   4
-  #define MAX_SFB_LONG       51  /* 51 for a memory optimized implementation, maybe 64 for convenient debugging */
-  #define MAX_SFB_SHORT      15  /* 15 for a memory optimized implementation, maybe 16 for convenient debugging */
+/**
+ * \brief Start CRC region with a maximum number of bits
+ *        If mBits is positive zero padding will be used for CRC calculation, if there
+ *        are less than mBits bits available.
+ *        If mBits is negative no zero padding is done.
+ *        If mBits is zero the memory for the buffer is allocated dynamically, the
+ *        number of bits is not limited.
+ *
+ * \param pDab DAB data handle
+ * \param hBs bitstream handle of which the CRC region ends
+ * \param mBits limit of number of bits to be considered for the requested CRC region
+ *
+ * \return ID for the created region, -1 in case of an error
+ */
+int dabWrite_CrcStartReg(
+        HANDLE_DAB          pDab,
+        HANDLE_FDK_BITSTREAM hBs,
+        int                  mBits
+        );
 
-#define MAX_SFB         (MAX_SFB_SHORT > MAX_SFB_LONG ? MAX_SFB_SHORT : MAX_SFB_LONG)   /* = 51 */
-#define MAX_GROUPED_SFB (MAX_NO_OF_GROUPS*MAX_SFB_SHORT > MAX_SFB_LONG ? \
-                         MAX_NO_OF_GROUPS*MAX_SFB_SHORT : MAX_SFB_LONG) /* = 60 */
+/**
+ * \brief Ends CRC region identified by reg
+ *
+ * \param pDab DAB data handle
+ * \param hBs bitstream handle of which the CRC region ends
+ * \param reg a CRC region ID returned previously by dabWrite_CrcStartReg()
+ */
+void dabWrite_CrcEndReg(
+        HANDLE_DAB          pDab,
+        HANDLE_FDK_BITSTREAM hBs,
+        int                  reg
+        );
 
-#define MAX_INPUT_BUFFER_SIZE  (2*(1024))   /* 2048 */
 
 
-#define PCM_LEVEL             1.0f
-#define NORM_PCM              (PCM_LEVEL/32768.0f)
-#define NORM_PCM_ENERGY       (NORM_PCM*NORM_PCM)
-#define LOG_NORM_PCM          -15
 
-#define TNS_PREDGAIN_SCALE    (1000)
+#endif /* TPENC_DAB_H */
 
-#define LFE_LOWPASS_LINE      12
-
-#endif /* _PSYCONST_H */

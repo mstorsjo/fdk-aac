@@ -90,7 +90,7 @@ amm-info@iis.fraunhofer.de
  * \file   aacenc_lib.h
  * \brief  FDK AAC Encoder library interface header file.
  *
-\mainpage  Introduction
+\page  FDK AAC Encoder Library Introduction
 
 \section Scope
 
@@ -923,6 +923,7 @@ typedef enum
 
   AACENC_GRANULE_LENGTH           = 0x0105,  /*!< Core encoder (AAC) audio frame length in samples:
                                                   - 1024: Default configuration.
+                                                  - 960: DRM/DAB+.
                                                   - 512: Default LD/ELD configuration.
                                                   - 480: Optional length in LD/ELD configuration. */
 
@@ -1028,8 +1029,9 @@ typedef enum
                                                    For AAC-ELD, the SBR information is transmitted in the ELDSpecific Config, which is part of the
                                                    AudioSpecificConfig. Therefore, the settings here will have no effect on AAC-ELD.*/
 
-  AACENC_TPSUBFRAMES              = 0x0303,  /*!< Number of sub frames in a transport frame for LOAS/LATM or ADTS (default 1).
+  AACENC_TPSUBFRAMES              = 0x0303,  /*!< Number of sub frames in a transport frame for LOAS/LATM, DAB+ or ADTS (default 1).
                                                   - ADTS: Maximum number of sub frames restricted to 4.
+                                                  - DAB+: Maximum number of sub frames restricted to 6.
                                                   - LOAS/LATM: Maximum number of sub frames restricted to 2.*/
 
   AACENC_AUDIOMUXVER              = 0x0304,  /*!< AudioMuxVersion to be used for LATM. (AudioMuxVersionA, currently not implemented):

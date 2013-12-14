@@ -1078,7 +1078,8 @@ static inline void fft_apply_rot_vector(FIXP_DBL *RESTRICT pData, const int cl, 
   }
 }
 
-#define FFT_TWO_STAGE_MACRO_ENABLE
+//FIXME:buggy for fft480
+//#define FFT_TWO_STAGE_MACRO_ENABLE
 
 
 #ifdef FFT_TWO_STAGE_MACRO_ENABLE
@@ -1154,7 +1155,7 @@ static inline void fft_apply_rot_vector(FIXP_DBL *RESTRICT pData, const int cl, 
 #else /* FFT_TWO_STAGE_MACRO_ENABLE */
 
 /* select either switch case of function pointer. */
-//#define FFT_TWO_STAGE_SWITCH_CASE
+#define FFT_TWO_STAGE_SWITCH_CASE
 
 static inline void fftN2(
         FIXP_DBL *pInput,
@@ -1206,7 +1207,7 @@ static inline void fftN2(
       case 16: fft_16(pDst); break;
       case 32: fft_32(pDst); break;
       /*case 64: fft_64(pDst); break;*/
-      case 128: fft_128(pDst); break;
+      /*case 128: fft_128(pDst); break;*/
     }
 #endif
     pSrc += 2;
@@ -1245,7 +1246,7 @@ static inline void fftN2(
       case 16: fft_16(pDst); break;
       case 32: fft_32(pDst); break;
       /*case 64: fft_64(pDst); break;*/
-      case 128: fft_128(pDst); break;
+      /*case 128: fft_128(pDst); break;*/
     }
 #endif
 

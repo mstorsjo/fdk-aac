@@ -416,6 +416,8 @@ static void FDKaacEnc_noiselessCounter(
     break;
   }
 
+  FDK_ASSERT(sideInfoTab != NULL);
+
   sectionData->noOfSections = 0;
   sectionData->huffmanBits = 0;
   sectionData->sideInfoBits = 0;

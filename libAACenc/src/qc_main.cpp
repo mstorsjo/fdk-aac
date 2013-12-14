@@ -87,7 +87,7 @@ amm-info@iis.fraunhofer.de
    contents/description: Quantizing & coding
 
 ******************************************************************************/
-
+#include <stdio.h>
 #include "qc_main.h"
 #include "quantize.h"
 #include "interface.h"
@@ -487,19 +487,23 @@ AAC_ENCODER_ERROR FDKaacEnc_AdjustBitrate(QC_STATE        *RESTRICT hQC,
                                           INT              sampleRate,    /* output sampling rate */
                                           INT              granuleLength) /* frame length */
 {
-  INT paddingOn;
+  INT paddingOn=0;
   INT frameLen;
+  //fprintf(stderr, "hQC->padding.paddingRest=%d bytes! (before)\n", hQC->padding.paddingRest);
 
   /* Do we need an extra padding byte? */
   paddingOn = FDKaacEnc_framePadding(bitRate,
                            sampleRate,
                            granuleLength,
                           &hQC->padding.paddingRest);
+  //fprintf(stderr, "hQC->padding.paddingRest=%d bytes! (after)\n", hQC->padding.paddingRest);
 
   frameLen = paddingOn + FDKaacEnc_calcFrameLen(bitRate,
                                       sampleRate,
                                       granuleLength,
                                       FRAME_LEN_BYTES_INT);
+
+  //fprintf(stderr, "frameLen=%d bytes!\n", frameLen);
 
   *avgTotalBits = frameLen<<3;
 
@@ -1377,7 +1381,7 @@ AAC_ENCODER_ERROR FDKaacEnc_FinalizeBitConsumption(CHANNEL_MAPPING *cm,
   /* Get total consumed bits in AU */
   qcOut->totalBits = qcOut->staticBits + qcOut->usedDynBits  + qcOut->totFillBits +
                      qcOut->elementExtBits + qcOut->globalExtBits;
-
+#if 1
   if (qcKernel->bitrateMode==QCDATA_BR_MODE_CBR) {
 
     /* Now we can get the exact transport bit amount, and hopefully it is equal to the estimated value */
@@ -1419,7 +1423,7 @@ AAC_ENCODER_ERROR FDKaacEnc_FinalizeBitConsumption(CHANNEL_MAPPING *cm,
     }
 
   } /* MODE_CBR */
-
+#endif
   /* Update exact number of consumed header bits. */
   qcKernel->globHdrBits = transportEnc_GetStaticBits(hTpEnc, qcOut->totalBits);
 
@@ -1439,6 +1443,8 @@ AAC_ENCODER_ERROR FDKaacEnc_FinalizeBitConsumption(CHANNEL_MAPPING *cm,
                                                      syntaxFlags,
                                                      aot,
                                                      epConfig );
+
+  //fprintf(stderr, "FinalizeBitConsumption():  totFillBits=%d, qcOut->totFillBits=%d \n", totFillBits, qcOut->totFillBits);
 
   /* now distribute extra fillbits and alignbits */
   alignBits = 7 - (qcOut->staticBits + qcOut->usedDynBits + qcOut->elementExtBits

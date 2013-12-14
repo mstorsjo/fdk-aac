@@ -818,7 +818,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                       &hThisPsyConf[1]->tnsConf);
             }
 
-            FDK_ASSERT(1==commonWindow); /* all checks for TNS do only work for common windows (which is always set)*/
+            FDK_ASSERT(commonWindow==1); /* all checks for TNS do only work for common windows (which is always set)*/
             for(w = 0; w < nWindows[0]; w++)
             {
                 if (isShortWindow[0])

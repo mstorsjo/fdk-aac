@@ -119,6 +119,161 @@ static const SFB_INFO_TAB sfbInfoTab[] = {
 
 };
 
+
+
+const SFB_PARAM_LONG p_FDKaacEnc_8000_long_960 = {
+    40,
+    { 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 16,
+      16, 16, 16, 16, 16, 16, 20, 20, 20, 20, 24, 24, 24, 28,
+      28, 32, 36, 36, 40, 44, 48, 52, 56, 60, 64, 16 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_8000_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8, 12, 16, 20, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_11025_long_960 = {
+    42,
+    {  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8, 12, 12, 12,
+      12, 12, 12, 12, 12, 12, 16, 16, 16, 16, 20, 20, 20, 24,
+      24, 28, 28, 32, 36, 40, 40, 44, 48, 52, 56, 60, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_11025_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  8,  8, 12, 12, 16, 20, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_12000_long_960 = {
+    42,
+    {  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8, 12, 12, 12,
+      12, 12, 12, 12, 12, 12, 16, 16, 16, 16, 20, 20, 20, 24,
+      24, 28, 28, 32, 36, 40, 40, 44, 48, 52, 56, 60, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_12000_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  8,  8, 12, 12, 16, 20, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_16000_long_960 = {
+    42,
+    {  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8, 12, 12, 12,
+      12, 12, 12, 12, 12, 12, 16, 16, 16, 16, 20, 20, 20, 24,
+      24, 28, 28, 32, 36, 40, 40, 44, 48, 52, 56, 60, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_16000_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  8,  8, 12, 12, 16, 20, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_22050_long_960 = {
+    46,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,
+       8,  8,  8,  8,  8,  8,  8, 12, 12, 12, 12, 16, 16, 16,
+      20, 20, 24, 24, 28, 28, 32, 36, 36, 40, 44, 48, 52, 52,
+      64, 64, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_22050_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  8,  8,  8, 12, 12, 16, 16, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_24000_long_960 = {
+    46,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,
+       8,  8,  8,  8,  8,  8,  8, 12, 12, 12, 12, 16, 16, 16,
+      20, 20, 24, 24, 28, 28, 32, 36, 36, 40, 44, 48, 52, 52,
+      64, 64, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_24000_short_120 = {
+    15,
+    {  4,  4,  4,  4,  4,  4,  4,  8,  8,  8, 12, 12, 16, 16, 12 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_32000_long_960 = {
+    49,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8,  8,  8,  8, 12, 12, 12,
+      12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+      32, 32, 32, 32, 32, 32, 32, 32, 32 }
+};
+
+const SFB_PARAM_SHORT p_FDKaacEnc_32000_short_120 = {
+    14,
+    {  4,  4,  4,  4,  4,  8,  8,  8,  12, 12, 12, 16, 16, 8 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_44100_long_960 = {
+    49,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8,
+       8,  8,  8, 12, 12, 12, 12, 16, 16, 20, 20, 24, 24, 28,
+      28, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+      32, 32, 32, 32, 32, 32, 32 }
+};
+
+const SFB_PARAM_SHORT p_FDKaacEnc_44100_short_120 = {
+    14,
+    {  4,  4,  4,  4,  4,  8,  8,  8, 12, 12, 12, 16, 16,  8 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_48000_long_960 = {
+    49,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8,
+       8,  8,  8, 12, 12, 12, 12, 16, 16, 20, 20, 24, 24, 28,
+      28, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+      32, 32, 32, 32, 32, 32, 32 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_48000_short_120 = {
+    14,
+    {  4,  4,  4,  4,  4,  8,  8,  8, 12, 12, 12, 16, 16,  8 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_64000_long_960 = {
+    46,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8, 12, 12,
+      12, 16, 16, 16, 20, 24, 24, 28, 36, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+      40, 40, 40, 40, 40, 16 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_64000_short_120 = {
+    12,
+    {  4,  4,  4,  4,  4,  4,  8,  8,  8, 16, 28, 28 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_88200_long_960 = {
+    40,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8,  8, 12,
+      12, 12, 12, 12, 16, 16, 24, 28, 36, 44, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_88200_short_120 = {
+    12,
+    {  4,  4,  4,  4,  4,  4,  8,  8,  8, 16, 28, 28 }
+};
+
+const SFB_PARAM_LONG p_FDKaacEnc_96000_long_960 = {
+    40,
+    {  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  8,  8,  8,  8,  8, 12,
+      12, 12, 12, 12, 16, 16, 24, 28, 36, 44, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64 }
+};
+const SFB_PARAM_SHORT p_FDKaacEnc_96000_short_120 = {
+    12,
+    {  4,  4,  4,  4,  4,  4,  8,  8,  8, 16, 28, 28 }
+};
+
+
+static const SFB_INFO_TAB sfbInfoTab960[] = {
+	{ 8000,  &p_FDKaacEnc_8000_long_960,  &p_FDKaacEnc_8000_short_120},
+	{11025, &p_FDKaacEnc_11025_long_960, &p_FDKaacEnc_11025_short_120},
+	{12000, &p_FDKaacEnc_12000_long_960, &p_FDKaacEnc_12000_short_120},
+	{16000, &p_FDKaacEnc_16000_long_960, &p_FDKaacEnc_16000_short_120},
+	{22050, &p_FDKaacEnc_22050_long_960, &p_FDKaacEnc_22050_short_120},
+	{24000, &p_FDKaacEnc_24000_long_960, &p_FDKaacEnc_24000_short_120},
+	{32000, &p_FDKaacEnc_32000_long_960, &p_FDKaacEnc_32000_short_120},
+	{44100, &p_FDKaacEnc_44100_long_960, &p_FDKaacEnc_44100_short_120},
+	{48000, &p_FDKaacEnc_48000_long_960, &p_FDKaacEnc_48000_short_120},
+	{64000, &p_FDKaacEnc_64000_long_960, &p_FDKaacEnc_64000_short_120},
+	{88200, &p_FDKaacEnc_88200_long_960, &p_FDKaacEnc_88200_short_120},
+	{96000, &p_FDKaacEnc_96000_long_960, &p_FDKaacEnc_96000_short_120},
+};
+
+
 /* 22050 and 24000 Hz */
 static const SFB_PARAM_LONG p_22050_long_512 = {
     31,
@@ -220,9 +375,12 @@ static AAC_ENCODER_ERROR FDKaacEnc_initSfbTable(LONG sampleRate, INT blockType, 
   */
   switch(granuleLength) {
     case 1024:
-    case  960:
       sfbInfo = sfbInfoTab;
       size = (INT)(sizeof(sfbInfoTab)/sizeof(SFB_INFO_TAB));
+      break;
+    case 960:
+      sfbInfo = sfbInfoTab960;
+      size = (INT)(sizeof(sfbInfoTab960)/sizeof(SFB_INFO_TAB));
       break;
     case 512:
       sfbInfo = sfbInfoTabLD512;
@@ -307,8 +465,14 @@ static FIXP_DBL FDKaacEnc_BarcLineValue(INT noOfLines, INT fftLine, LONG samplin
       case 1024:
         center_freq = center_freq << 2; /* q13 */
         break;
+      case 960:
+        center_freq = fMult(center_freq, INV480) << 3;
+       break;
       case 128:
         center_freq = center_freq << 5; /* q13 */
+        break;
+      case 120:
+	center_freq = fMult(center_freq, INV480) << 6;
         break;
       case 512:
         center_freq = (fftLine * samplingFreq) << 3;   // q13
@@ -504,6 +668,14 @@ static void FDKaacEnc_initMinSnr(const LONG   bitrate,
       case 480:
         qperwin = qperwin - 9;
         pePerWindow = fMult(pePerWindow, FL2FXCONST_DBL(480.f/512.f));
+        break;
+      case 960:
+        pePerWindow = fMult(pePerWindow, FL2FXCONST_DBL(960.f/1024.f)); 
+        qperwin = qperwin - 10;
+        break;
+      case 120:
+        pePerWindow = fMult(pePerWindow, FL2FXCONST_DBL(120.f/128.f));
+        qperwin = qperwin - 7;
         break;
     }
 

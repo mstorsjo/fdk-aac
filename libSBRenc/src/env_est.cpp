@@ -1147,6 +1147,7 @@ FDKsbrEnc_extractSbrEnvelope2 (
 
   SBR_STEREO_MODE stereoMode = h_con->stereoMode;
   int nChannels = h_con->nChannels;
+  FDK_ASSERT(nChannels <= MAX_NUM_CHANNELS);
   const int *v_tuning;
   static const int v_tuningHEAAC[6] = { 0, 2, 4, 0, 0, 0 };
 
