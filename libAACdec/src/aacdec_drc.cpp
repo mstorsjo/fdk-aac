@@ -539,7 +539,7 @@ static int aacDecoder_drcReadCompression (
     UINT                  payloadPosition )
 {
   int  bitCnt = 0;
-  int  dmxLevelsPresent, compressionPresent;
+  int  dmxLevelsPresent, extensionPresent, compressionPresent;
   int  coarseGrainTcPresent, fineGrainTcPresent;
 
   /* Move to the beginning of the DRC payload field */
@@ -562,7 +562,8 @@ static int aacDecoder_drcReadCompression (
   }
   FDKreadBits(bs, 2);                          /* dolby_surround_mode */
   FDKreadBits(bs, 2);                          /* presentation_mode */
-  if (FDKreadBits(bs, 2) != 0) {               /* reserved, set to 0 */
+  FDKreadBits(bs, 1);                          /* stereo_downmix_mode */
+  if (FDKreadBits(bs, 1) != 0) {               /* reserved, set to 0 */
     return 0;
   }
 
@@ -571,9 +572,7 @@ static int aacDecoder_drcReadCompression (
     return 0;
   }
   dmxLevelsPresent = FDKreadBits(bs, 1);       /* downmixing_levels_MPEG4_status */
-  if (FDKreadBits(bs, 1) != 0) {               /* reserved, set to 0 */
-    return 0;
-  }
+  extensionPresent = FDKreadBits(bs, 1);       /* ancillary_data_extension_status; */
   compressionPresent   = FDKreadBits(bs, 1);   /* audio_coding_mode_and_compression status */
   coarseGrainTcPresent = FDKreadBits(bs, 1);   /* coarse_grain_timecode_status */
   fineGrainTcPresent   = FDKreadBits(bs, 1);   /* fine_grain_timecode_status */
@@ -629,6 +628,19 @@ static int aacDecoder_drcReadCompression (
   if (fineGrainTcPresent) {
     FDKreadBits(bs, 16);      /* fine_grain_timecode */
     bitCnt += 16;
+  }
+
+  /* Read extension just to get the right amount of bits. */
+  if (extensionPresent) {
+    int  extBits = 8;
+
+    FDKreadBits(bs, 1);                     /* reserved, set to 0 */
+    if (FDKreadBits(bs, 1)) extBits += 8;   /* ext_downmixing_levels_status */
+    if (FDKreadBits(bs, 1)) extBits += 16;  /* ext_downmixing_global_gains_status */
+    if (FDKreadBits(bs, 1)) extBits += 8;   /* ext_downmixing_lfe_level_status */
+
+    FDKpushFor(bs, extBits - 4);            /* skip the extension payload remainder. */
+    bitCnt += extBits;
   }
 
   return (bitCnt);

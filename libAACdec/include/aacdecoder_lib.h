@@ -430,21 +430,58 @@ typedef enum {
 typedef enum
 {
   AAC_PCM_OUTPUT_INTERLEAVED              = 0x0000,  /*!< PCM output mode (1: interleaved (default); 0: not interleaved). */
-  AAC_PCM_OUTPUT_CHANNELS                 = 0x0001,  /*!< Number of PCM output channels (if different from encoded audio channels, downmixing or
-                                                          upmixing is applied). \n
-                                                          -1: Disable up-/downmixing. The decoder output contains the same number of channels as the
-                                                              encoded bitstream. \n
-                                                           1: The decoder performs a mono matrix mix-down if the encoded audio channels are greater
-                                                              than one. Thus it ouputs always exact one channel. \n
-                                                           2: The decoder performs a stereo matrix mix-down if the encoded audio channels are greater
-                                                              than two. If the encoded audio channels are smaller than two the decoder duplicates the
-                                                              output. Thus it ouputs always exact two channels. \n */
-  AAC_PCM_DUAL_CHANNEL_OUTPUT_MODE        = 0x0002,  /*!< Defines how the decoder processes two channel signals:
-                                                          0: Leave both signals as they are (default).
-                                                          1: Create a dual mono output signal from channel 1.
-                                                          2: Create a dual mono output signal from channel 2.
+  AAC_PCM_DUAL_CHANNEL_OUTPUT_MODE        = 0x0002,  /*!< Defines how the decoder processes two channel signals: \n
+                                                          0: Leave both signals as they are (default). \n
+                                                          1: Create a dual mono output signal from channel 1. \n
+                                                          2: Create a dual mono output signal from channel 2. \n
                                                           3: Create a dual mono output signal by mixing both channels (L' = R' = 0.5*Ch1 + 0.5*Ch2). */
   AAC_PCM_OUTPUT_CHANNEL_MAPPING          = 0x0003,  /*!< Output buffer channel ordering. 0: MPEG PCE style order, 1: WAV file channel order (default). */
+  AAC_PCM_MIN_OUTPUT_CHANNELS             = 0x0011,  /*!< Minimum number of PCM output channels. If higher than the number of encoded audio channels,
+                                                          a simple channel extension is applied. \n
+                                                          -1, 0: Disable channel extenstion feature. The decoder output contains the same number of
+                                                                 channels as the encoded bitstream. \n
+                                                           1:    This value is currently needed only together with the mix-down feature. See
+                                                                 ::AAC_PCM_MAX_OUTPUT_CHANNELS and note 2 below. \n
+                                                           2:    Encoded mono signals will be duplicated to achieve a 2/0/0.0 channel output
+                                                                 configuration. \n
+                                                           6:    The decoder trys to reorder encoded signals with less than six channels to achieve
+                                                                 a 3/0/2.1 channel output signal. Missing channels will be filled with a zero signal.
+                                                                 If reordering is not possible the empty channels will simply be appended. Only
+                                                                 available if instance is configured to support multichannel output. \n
+                                                           8:    The decoder trys to reorder encoded signals with less than eight channels to
+                                                                 achieve a 3/0/4.1 channel output signal. Missing channels will be filled with a
+                                                                 zero signal. If reordering is not possible the empty channels will simply be
+                                                                 appended. Only available if instance is configured to support multichannel output.\n
+                                                          NOTE: \n
+                                                            1. The channel signalling (CStreamInfo::pChannelType and CStreamInfo::pChannelIndices)
+                                                               will not be modified. Added empty channels will be signalled with channel type
+                                                               AUDIO_CHANNEL_TYPE::ACT_NONE. \n
+                                                            2. If the parameter value is greater than that of ::AAC_PCM_MAX_OUTPUT_CHANNELS both will
+                                                               be set to the same value. \n
+                                                            3. This parameter does not affect MPEG Surround processing. */
+  AAC_PCM_MAX_OUTPUT_CHANNELS             = 0x0012,  /*!< Maximum number of PCM output channels. If lower than the number of encoded audio channels,
+                                                          downmixing is applied accordingly. If dedicated metadata is available in the stream it
+                                                          will be used to achieve better mixing results. \n
+                                                          -1, 0: Disable downmixing feature. The decoder output contains the same number of channels
+                                                                 as the encoded bitstream. \n
+                                                           1:    All encoded audio configurations with more than one channel will be mixed down to
+                                                                 one mono output signal. \n
+                                                           2:    The decoder performs a stereo mix-down if the number encoded audio channels is
+                                                                 greater than two. \n
+                                                           6:    If the number of encoded audio channels is greater than six the decoder performs a
+                                                                 mix-down to meet the target output configuration of 3/0/2.1 channels. Only
+                                                                 available if instance is configured to support multichannel output. \n
+                                                           8:    This value is currently needed only together with the channel extension feature.
+                                                                 See ::AAC_PCM_MIN_OUTPUT_CHANNELS and note 2 below. Only available if instance is
+                                                                 configured to support multichannel output. \n
+                                                          NOTE: \n
+                                                            1. Down-mixing of any seven or eight channel configuration not defined in ISO/IEC 14496-3
+                                                               PDAM 4 is not supported by this software version. \n
+                                                            2. If the parameter value is greater than zero but smaller than ::AAC_PCM_MIN_OUTPUT_CHANNELS
+                                                               both will be set to same value. \n
+                                                            3. The operating mode of the MPEG Surround module will be set accordingly. \n
+                                                            4. Setting this param with any value will disable the binaural processing of the MPEG
+                                                               Surround module (::AAC_MPEGS_BINAURAL_ENABLE=0). */
 
   AAC_CONCEAL_METHOD                      = 0x0100,  /*!< Error concealment: Processing method. \n
                                                           0: Spectral muting. \n

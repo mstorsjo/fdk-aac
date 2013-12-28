@@ -146,12 +146,15 @@ typedef struct
 
   UCHAR FrontElementIsCpe[PC_FSB_CHANNELS_MAX];
   UCHAR FrontElementTagSelect[PC_FSB_CHANNELS_MAX];
+  UCHAR FrontElementHeightInfo[PC_FSB_CHANNELS_MAX];
 
   UCHAR SideElementIsCpe[PC_FSB_CHANNELS_MAX];
   UCHAR SideElementTagSelect[PC_FSB_CHANNELS_MAX];
+  UCHAR SideElementHeightInfo[PC_FSB_CHANNELS_MAX];
 
   UCHAR BackElementIsCpe[PC_FSB_CHANNELS_MAX];
   UCHAR BackElementTagSelect[PC_FSB_CHANNELS_MAX];
+  UCHAR BackElementHeightInfo[PC_FSB_CHANNELS_MAX];
 
   UCHAR LfeElementTagSelect[PC_LFE_CHANNELS_MAX];
 
@@ -324,16 +327,23 @@ int getSamplingRateIndex( UINT samplingRate )
  */
 static inline int getNumberOfTotalChannels(int channelConfig)
 {
-  if (channelConfig > 0 && channelConfig < 8)
-    return (channelConfig == 7)?8:channelConfig;
-  else
+  switch (channelConfig) {
+  case 1: case 2: case 3:
+  case 4: case 5: case 6:
+    return channelConfig;
+  case 7: case 12: case 14:
+    return 8;
+  case 11:
+    return 7;
+  default:
     return 0;
+  }
 }
 
 static inline
 int getNumberOfEffectiveChannels(const int channelConfig)
-{
-  const int n[] = {0,1,2,3,4,5,5,7};
+{        /* index: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 */
+  const int n[] = {0,1,2,3,4,5,5,7,0,0, 0, 6, 7, 0, 7, 0};
   return n[channelConfig];
 }
 

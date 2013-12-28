@@ -308,7 +308,7 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER    self,
                              INT_PCM             *timeData,
                              int                 *numChannels,
                              int                 *sampleRate,
-                             const UCHAR          channelMapping[(6)],
+                             const UCHAR          channelMapping[(8)],
                              const int            interleaved,
                              const int            coreDecodedOk,
                              UCHAR               *psDecoded );

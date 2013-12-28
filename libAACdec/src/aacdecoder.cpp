@@ -338,16 +338,21 @@ AAC_DECODER_ERROR CAacDecoder_AncDataParse (
   \return  Error code
 */
 static AAC_DECODER_ERROR CDataStreamElement_Read (
+                                                  HANDLE_AACDECODER    self,
                                                   HANDLE_FDK_BITSTREAM bs,
-                                                  CAncData *ancData,
-                                                  HANDLE_AAC_DRC hDrcInfo,
-                                                  HANDLE_TRANSPORTDEC pTp,
                                                   UCHAR    *elementInstanceTag,
                                                   UINT      alignmentAnchor )
 {
+  HANDLE_TRANSPORTDEC  pTp;
+  CAncData *ancData;
   AAC_DECODER_ERROR error = AAC_DEC_OK;
-  UINT dataStart;
+  UINT dataStart, dseBits;
   int dataByteAlignFlag, count;
+
+  FDK_ASSERT(self != NULL);
+
+  ancData = &self->ancData;
+  pTp = self->hInput;
 
   int crcReg = transportDec_CrcStartReg(pTp, 0);
 
@@ -361,6 +366,7 @@ static AAC_DECODER_ERROR CDataStreamElement_Read (
   if (count == 255) {
     count += FDKreadBits(bs,8); /* EscCount */
   }
+  dseBits = count*8;
 
   if (dataByteAlignFlag) {
     FDKbyteAlign(bs, alignmentAnchor);
@@ -372,19 +378,29 @@ static AAC_DECODER_ERROR CDataStreamElement_Read (
   transportDec_CrcEndReg(pTp, crcReg);
 
   {
-    INT readBits, dataBits = count<<3;
-
     /* Move to the beginning of the data junk */
     FDKpushBack(bs, dataStart-FDKgetValidBits(bs));
 
     /* Read Anc data if available */
-    readBits = aacDecoder_drcMarkPayload( hDrcInfo, bs, DVB_DRC_ANC_DATA );
-
-    if (readBits != dataBits) {
-      /* Move to the end again. */
-      FDKpushBiDirectional(bs, FDKgetValidBits(bs)-dataStart+dataBits);
-    }
+    aacDecoder_drcMarkPayload( self->hDrcInfo, bs, DVB_DRC_ANC_DATA );
   }
+
+  {
+    PCMDMX_ERROR dmxErr = PCMDMX_OK;
+
+    /* Move to the beginning of the data junk */
+    FDKpushBack(bs, dataStart-FDKgetValidBits(bs));
+
+    /* Read DMX meta-data */
+    dmxErr = pcmDmx_Parse (
+                     self->hPcmUtils,
+                     bs,
+                     dseBits,
+                     0 /* not mpeg2 */ );
+    }
+
+  /* Move to the very end of the element. */
+  FDKpushBiDirectional(bs, FDKgetValidBits(bs)-dataStart+dseBits);
 
   return error;
 }
@@ -774,7 +790,7 @@ LINKSPEC_CPP void CAacDecoder_Close(HANDLE_AACDECODER self)
   if (self == NULL)
     return;
 
-  for (ch=0; ch<(6); ch++) {
+  for (ch=0; ch<(8); ch++) {
     if (self->pAacDecoderStaticChannelInfo[ch] != NULL) {
       if (self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer != NULL) {
         FreeOverlapBuffer (&self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer);
@@ -851,18 +867,19 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
         /* valid number of channels -> copy program config element (PCE) from ASC */
         FDKmemcpy(&self->pce, &asc->m_progrConfigElement, sizeof(CProgramConfig));
         /* Built element table */
-        el = CProgramConfig_GetElementTable(&asc->m_progrConfigElement, self->elements, 7);
-        for (; el<7; el++) {
+        el = CProgramConfig_GetElementTable(&asc->m_progrConfigElement, self->elements, (8), &self->chMapIndex);
+        for (; el<(8); el++) {
           self->elements[el] = ID_NONE;
         }
       } else {
         return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
       }
     } else {
+      self->chMapIndex = 0;
       if (transportDec_GetFormat(self->hInput) == TT_MP4_ADTS) {
         /* set default max_channels for memory allocation because in implicit channel mapping mode
            we don't know the actual number of channels until we processed at least one raw_data_block(). */
-        ascChannels = (6);
+        ascChannels = (8);
       } else {
         return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
       }
@@ -874,26 +891,34 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
   case 1: case 2: case 3: case 4: case 5: case 6:
     ascChannels = asc->m_channelConfiguration;
     break;
-  case 7:
+  case 11:
+    ascChannels = 7;
+    break;
+  case 7: case 12: case 14:
     ascChannels = 8;
     break;
   default:
     return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
   }
 
+  if (ascChannels > (8)) {
+    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+  }
+
   /* Initialize constant mappings for channel config 1-7 */
   if (asc->m_channelConfiguration > 0) {
     int el;
-    FDKmemcpy(self->elements, elementsTab[asc->m_channelConfiguration-1], sizeof(MP4_ELEMENT_ID)*FDKmin(7,7));
-    for (el=7; el<7; el++) {
+    FDKmemcpy(self->elements, elementsTab[asc->m_channelConfiguration-1], sizeof(MP4_ELEMENT_ID)*FDKmin(7,(8)));
+    for (el=7; el<(8); el++) {
       self->elements[el] = ID_NONE;
     }
     for (ch=0; ch<ascChannels; ch++) {
       self->chMapping[ch] = ch;
     }
-    for (; ch<(6); ch++) {
+    for (; ch<(8); ch++) {
       self->chMapping[ch] = 255;
     }
+    self->chMapIndex = asc->m_channelConfiguration;
   }
  #ifdef TP_PCE_ENABLE
   else {
@@ -909,9 +934,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
 
   self->streamInfo.channelConfig = asc->m_channelConfiguration;
 
-  if (ascChannels > (6)) {
-    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-  }
   if (self->streamInfo.aot != asc->m_aot) {
     self->streamInfo.aot = asc->m_aot;
     ascChanged = 1;
@@ -1096,6 +1118,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
   MP4_ELEMENT_ID type = ID_NONE;            /* Current element type */
   INT aacChannels=0;                        /* Channel counter for channels found in the bitstream */
+  int chOutMapIdx;                          /* Output channel mapping index (see comment below) */
 
   INT auStartAnchor = (INT)FDKgetValidBits(bs);  /* AU start bit buffer position for AU byte alignment */
 
@@ -1119,12 +1142,12 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
     if (self->streamInfo.channelConfig == 0) {
       /* Init Channel/Element mapping table */
-      for (ch=0; ch<(6); ch++) {
+      for (ch=0; ch<(8); ch++) {
         self->chMapping[ch] = 255;
       }
       if (!CProgramConfig_IsValid(pce)) {
         int el;
-        for (el=0; el<7; el++) {
+        for (el=0; el<(8); el++) {
           self->elements[el] = ID_NONE;
         }
       }
@@ -1378,10 +1401,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
         {
           UCHAR element_instance_tag;
 
-          CDataStreamElement_Read( bs,
-                                  &self->ancData,
-                                   self->hDrcInfo,
-                                   self->hInput,
+          CDataStreamElement_Read( self,
+                                   bs,
                                   &element_instance_tag,
                                    auStartAnchor );
 
@@ -1399,29 +1420,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           {
             /* most likely an error in bitstream occured */
             //self->frameOK = 0;
-          }
-        }
-
-        {
-          UCHAR *pDvbAncData = NULL;
-          AAC_DECODER_ERROR ancErr;
-          int ancIndex;
-          int dvbAncDataSize = 0;
-
-          /* Ask how many anc data elements are in buffer */
-          ancIndex = self->ancData.nrElements - 1;
-          /* Get the last one (if available) */
-          ancErr   = CAacDecoder_AncDataGet( &self->ancData,
-                                              ancIndex,
-                                             &pDvbAncData,
-                                             &dvbAncDataSize );
-
-          if (ancErr == AAC_DEC_OK) {
-            pcmDmx_ReadDvbAncData (
-                  self->hPcmUtils,
-                  pDvbAncData,
-                  dvbAncDataSize,
-                  0 /* not mpeg2 */ );
           }
         }
         break;
@@ -1442,9 +1440,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           }
           else if ( result > 1 ) {
             /* Built element table */
-            int elIdx = CProgramConfig_GetElementTable(pce, self->elements, 7);
+            int elIdx = CProgramConfig_GetElementTable(pce, self->elements, (8), &self->chMapIndex);
             /* Reset the remaining tabs */
-            for ( ; elIdx<7; elIdx++) {
+            for ( ; elIdx<(8); elIdx++) {
               self->elements[elIdx] = ID_NONE;
             }
             /* Make new number of channel persistant */
@@ -1632,6 +1630,23 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     return ErrorStatus;
   }
 
+  /* Setup the output channel mapping. The table below shows the four possibilities:
+   *   # | chCfg | PCE | cChCfg | chOutMapIdx
+   *  ---+-------+-----+--------+------------------
+   *   1 |  > 0  |  no |    -   | chCfg
+   *   2 |   0   | yes |  > 0   | cChCfg
+   *   3 |   0   | yes |    0   | aacChannels || 0
+   *   4 |   0   |  no |    -   | aacChannels || 0
+   *  ---+-------+-----+--------+------------------
+   *  Where chCfg is the channel configuration index from ASC and cChCfg is a corresponding chCfg
+   *  derived from a given PCE. The variable aacChannels represents the number of channel found
+   *  during bitstream decoding. Due to the structure of the mapping table it can only be used for
+   *  mapping if its value is smaller than 7. Otherwise we use the fallback (0) which is a simple
+   *  pass-through. The possibility #4 should appear only with MPEG-2 (ADTS) streams. This is
+   *  mode is called "implicit channel mapping".
+   */
+  chOutMapIdx = ((self->chMapIndex==0) && (aacChannels<7)) ? aacChannels : self->chMapIndex;
+
   /*
     Inverse transform
   */
@@ -1663,10 +1678,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       /* Setup offset and stride for time buffer traversal. */
       if (interleaved) {
         stride = aacChannels;
-        offset = self->channelOutputMapping[aacChannels-1][c];
+        offset = self->channelOutputMapping[chOutMapIdx][c];
       } else {
         stride = 1;
-        offset = self->channelOutputMapping[aacChannels-1][c] * self->streamInfo.aacSamplesPerFrame;
+        offset = self->channelOutputMapping[chOutMapIdx][c] * self->streamInfo.aacSamplesPerFrame;
       }
 
 
@@ -1746,8 +1761,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
   /* Reorder channel type information tables.  */
   {
-    AUDIO_CHANNEL_TYPE types[(6)];
-    UCHAR idx[(6)];
+    AUDIO_CHANNEL_TYPE types[(8)];
+    UCHAR idx[(8)];
     int c;
 
     FDK_ASSERT(sizeof(self->channelType) == sizeof(types));
@@ -1757,8 +1772,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     FDKmemcpy(idx, self->channelIndices, sizeof(idx));
 
     for (c=0; c<aacChannels; c++) {
-      self->channelType[self->channelOutputMapping[aacChannels-1][c]] = types[c];
-      self->channelIndices[self->channelOutputMapping[aacChannels-1][c]] = idx[c];
+      self->channelType[self->channelOutputMapping[chOutMapIdx][c]] = types[c];
+      self->channelIndices[self->channelOutputMapping[chOutMapIdx][c]] = idx[c];
     }
   }
 

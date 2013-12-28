@@ -176,22 +176,23 @@ struct AAC_DECODER_INSTANCE {
 
   UINT                  flags;                       /*!< Flags for internal decoder use. DO NOT USE self::streaminfo::flags ! */
 
-  MP4_ELEMENT_ID        elements[7]; /*!< Table where the element Id's are listed          */
-  UCHAR                 elTags[7];   /*!< Table where the elements id Tags are listed      */
-  UCHAR                 chMapping[(6)];   /*!< Table of MPEG canonical order to bitstream channel order mapping. */
+  MP4_ELEMENT_ID        elements[(8)]; /*!< Table where the element Id's are listed          */
+  UCHAR                 elTags[(8)];   /*!< Table where the elements id Tags are listed      */
+  UCHAR                 chMapping[(8)];   /*!< Table of MPEG canonical order to bitstream channel order mapping. */
 
-  AUDIO_CHANNEL_TYPE    channelType[(6)];    /*!< Audio channel type of each output audio channel (from 0 upto numChannels).           */
-  UCHAR                 channelIndices[(6)]; /*!< Audio channel index for each output audio channel (from 0 upto numChannels).         */
+  AUDIO_CHANNEL_TYPE    channelType[(8)];    /*!< Audio channel type of each output audio channel (from 0 upto numChannels).           */
+  UCHAR                 channelIndices[(8)]; /*!< Audio channel index for each output audio channel (from 0 upto numChannels).         */
                                                              /* See ISO/IEC 13818-7:2005(E), 8.5.3.2 Explicit channel mapping using a program_config_element() */
 
 
   const UCHAR         (*channelOutputMapping)[8];    /*!< Table for MPEG canonical order to output channel order mapping. */
-
+  UCHAR                 chMapIndex;                  /*!< Index to access one line of the channelOutputMapping table. This is required
+                                                          because not all 8 channel configurations have the same output mapping. */
 
   CProgramConfig                pce;
   CStreamInfo                   streamInfo;         /*!< pointer to StreamInfo data (read from the bitstream) */
-  CAacDecoderChannelInfo       *pAacDecoderChannelInfo[(6)];       /*!< Temporal channel memory */
-  CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo[(6)]; /*!< Persistent channel memory */
+  CAacDecoderChannelInfo       *pAacDecoderChannelInfo[(8)];       /*!< Temporal channel memory */
+  CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo[(8)]; /*!< Persistent channel memory */
 
   CAacDecoderCommonData         aacCommonData;             /*!< Temporal shared data for all channels hooked into pAacDecoderChannelInfo */
 

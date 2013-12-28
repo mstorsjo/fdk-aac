@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 5
+#define AACDECODER_LIB_VL2 6
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -420,8 +420,8 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
     self->outputInterleaved = value;
     break;
 
-  case AAC_PCM_OUTPUT_CHANNELS:
-    if (value < -1 || value > (6)) {
+  case AAC_PCM_MIN_OUTPUT_CHANNELS:
+    if (value < -1 || value > (8)) {
       return AAC_DEC_SET_PARAM_FAIL;
     }
     {
@@ -429,7 +429,30 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
 
       err = pcmDmx_SetParam (
               hPcmDmx,
-              NUMBER_OF_OUTPUT_CHANNELS,
+              MIN_NUMBER_OF_OUTPUT_CHANNELS,
+              value );
+
+      switch (err) {
+      case PCMDMX_OK:
+        break;
+      case PCMDMX_INVALID_HANDLE:
+        return AAC_DEC_INVALID_HANDLE;
+      default:
+        return AAC_DEC_SET_PARAM_FAIL;
+      }
+    }
+    break;
+
+  case AAC_PCM_MAX_OUTPUT_CHANNELS:
+    if (value < -1 || value > (8)) {
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    {
+      PCMDMX_ERROR err;
+
+      err = pcmDmx_SetParam (
+              hPcmDmx,
+              MAX_NUMBER_OF_OUTPUT_CHANNELS,
               value );
 
       switch (err) {
@@ -449,7 +472,7 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
 
       err = pcmDmx_SetParam (
               hPcmDmx,
-              DUAL_CHANNEL_DOWNMIX_MODE,
+              DMX_DUAL_CHANNEL_MODE,
               value );
 
       switch (err) {
@@ -825,6 +848,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
     if (self->sbrEnabled)
     {
       SBR_ERROR sbrError = SBRDEC_OK;
+      int chOutMapIdx = ((self->chMapIndex==0) && (self->streamInfo.numChannels<7)) ? self->streamInfo.numChannels : self->chMapIndex;
 
       /* set params */
       sbrDecoder_SetParam ( self->hSbrDecoder,
@@ -838,7 +862,16 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
                               (self->flags & AC_LD_MPS) ? 1 : 0 );
       }
 
+      {
+        PCMDMX_ERROR dmxErr;
+        INT  maxOutCh = 0;
 
+        dmxErr = pcmDmx_GetParam(self->hPcmUtils, MAX_NUMBER_OF_OUTPUT_CHANNELS, &maxOutCh);
+        if ( (dmxErr == PCMDMX_OK) && (maxOutCh == 1) ) {
+          /* Disable PS processing if we have to create a mono output signal. */
+          self->psPossible = 0;
+        }
+      }
 
 
       /* apply SBR processing */
@@ -846,7 +879,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
                                     pTimeData,
                                    &self->streamInfo.numChannels,
                                    &self->streamInfo.sampleRate,
-                                    self->channelOutputMapping[self->streamInfo.numChannels-1],
+                                    self->channelOutputMapping[chOutMapIdx],
                                     interleaved,
                                     self->frameOK,
                                    &self->psPossible);
@@ -870,19 +903,19 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
          self->channelType[1] = ACT_FRONT;
          self->channelIndices[0] = 0;
          self->channelIndices[1] = 1;
-       } else {
-         self->flags &= ~AC_PS_PRESENT;
        }
      }
    }
 
 
+    {
+    PCMDMX_ERROR dmxErr = PCMDMX_OK;
     if ( flags & (AACDEC_INTR | AACDEC_CLRHIST) ) {
       /* delete data from the past (e.g. mixdown coeficients) */
       pcmDmx_Reset( self->hPcmUtils, PCMDMX_RESET_BS_DATA );
     }
     /* do PCM post processing */
-    pcmDmx_ApplyFrame (
+    dmxErr = pcmDmx_ApplyFrame (
             self->hPcmUtils,
             pTimeData,
             self->streamInfo.frameSize,
@@ -890,9 +923,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
             interleaved,
             self->channelType,
             self->channelIndices,
-            self->channelOutputMapping
+            self->channelOutputMapping,
+            NULL
       );
-
+    if (dmxErr == PCMDMX_INVALID_MODE) {
+      /* Announce the framework that the current combination of channel configuration and downmix
+       * settings are not know to produce a predictable behavior and thus maybe produce strange output. */
+      ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
+    }
+    }
 
 
     /* Signal interruption to take effect in next frame. */

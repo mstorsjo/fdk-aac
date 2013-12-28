@@ -2,7 +2,7 @@
 /* library info */
 #define TP_LIB_VL0 2
 #define TP_LIB_VL1 3
-#define TP_LIB_VL2 3
+#define TP_LIB_VL2 4
 #define TP_LIB_TITLE "MPEG Transport"
 #define TP_LIB_BUILD_DATE __DATE__
 #define TP_LIB_BUILD_TIME __TIME__

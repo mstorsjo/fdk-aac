@@ -95,7 +95,7 @@ amm-info@iis.fraunhofer.de
 
 
 
-#define SBRDEC_MAX_DRC_CHANNELS  (6)
+#define SBRDEC_MAX_DRC_CHANNELS  (8)
 #define SBRDEC_MAX_DRC_BANDS     ( 16 )
 
 typedef struct

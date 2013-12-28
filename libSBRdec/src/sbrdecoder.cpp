@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 3
+#define SBRDECODER_LIB_VL2 4
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -428,7 +428,7 @@ SBR_ERROR sbrDecoder_InitElement (
   int nSbrElementsStart = self->numSbrElements;
 
   /* Check core codec AOT */
-  if (! sbrDecoder_isCoreCodecValid(coreCodec) || elementIndex >= (4)) {
+  if (! sbrDecoder_isCoreCodecValid(coreCodec) || elementIndex >= (8)) {
     sbrError = SBRDEC_UNSUPPORTED_CONFIG;
     goto bail;
   }
@@ -615,7 +615,7 @@ INT sbrDecoder_Header (
   SBR_ERROR sbrError = SBRDEC_OK;
   int headerIndex;
 
-  if ( self == NULL || elementIndex > (4) )
+  if ( self == NULL || elementIndex > (8) )
   {
     return SBRDEC_UNSUPPORTED_CONFIG;
   }
@@ -767,7 +767,7 @@ SBRDEC_DRC_CHANNEL * sbrDecoder_drcGetChannel( const HANDLE_SBRDECODER self, con
   SBRDEC_DRC_CHANNEL *pSbrDrcChannelData = NULL;
   int elementIndex, elChanIdx=0, numCh=0;
 
-  for (elementIndex = 0; (elementIndex < (4)) && (numCh <= channel); elementIndex++)
+  for (elementIndex = 0; (elementIndex < (8)) && (numCh <= channel); elementIndex++)
   {
     SBR_DECODER_ELEMENT *pSbrElement = self->pSbrElement[elementIndex];
     int c, elChannels;
@@ -829,7 +829,7 @@ SBR_ERROR sbrDecoder_drcFeedChannel ( HANDLE_SBRDECODER  self,
   if (self == NULL) {
     return SBRDEC_NOT_INITIALIZED;
   }
-  if (ch > (6) || pNextFact_mag == NULL) {
+  if (ch > (8) || pNextFact_mag == NULL) {
     return SBRDEC_SET_PARAM_FAIL;
   }
 
@@ -874,7 +874,7 @@ void sbrDecoder_drcDisable ( HANDLE_SBRDECODER  self,
   SBRDEC_DRC_CHANNEL *pSbrDrcChannelData = NULL;
 
   if ( (self == NULL)
-    || (ch > (6))
+    || (ch > (8))
     || (self->numSbrElements == 0)
     || (self->numSbrChannels == 0) ) {
     return;
@@ -1375,7 +1375,7 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER   self,
                              INT_PCM            *timeData,
                              int                *numChannels,
                              int                *sampleRate,
-                             const UCHAR         channelMapping[(6)],
+                             const UCHAR         channelMapping[(8)],
                              const int           interleaved,
                              const int           coreDecodedOk,
                              UCHAR              *psDecoded )
@@ -1496,7 +1496,7 @@ SBR_ERROR sbrDecoder_Close ( HANDLE_SBRDECODER *pSelf )
       FreeRam_SbrDecWorkBuffer2(&self->workBuffer2);
     }
 
-    for (i = 0; i < (4); i++) {
+    for (i = 0; i < (8); i++) {
       sbrDecoder_DestroyElement( self, i );
     }
 
