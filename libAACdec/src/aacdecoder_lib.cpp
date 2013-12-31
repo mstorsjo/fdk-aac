@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 6
+#define AACDECODER_LIB_VL2 7
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -397,12 +397,14 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
   CConcealParams  *pConcealData = NULL;
   HANDLE_AAC_DRC hDrcInfo = NULL;
   HANDLE_PCM_DOWNMIX hPcmDmx = NULL;
+  TDLimiterPtr hPcmTdl = NULL;
 
   /* check decoder handle */
   if (self != NULL) {
     pConcealData = &self->concealCommonData;
     hDrcInfo = self->hDrcInfo;
     hPcmDmx = self->hPcmUtils;
+    hPcmTdl = self->hLimiter;
   } else {
     errorStatus = AAC_DEC_INVALID_HANDLE;
   }
@@ -483,6 +485,47 @@ aacDecoder_SetParam ( const HANDLE_AACDECODER  self,   /*!< Handle of the decode
       default:
         return AAC_DEC_SET_PARAM_FAIL;
       }
+    }
+    break;
+
+
+  case AAC_PCM_LIMITER_ENABLE:
+    if (value < -1 || value > 1) {
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    if (self == NULL) {
+      return AAC_DEC_INVALID_HANDLE;
+    }
+    self->limiterEnableUser = value;
+    break;
+
+  case AAC_PCM_LIMITER_ATTACK_TIME:
+    if (value <= 0) {  /* module function converts value to unsigned */
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    switch (setLimiterAttack(hPcmTdl, value)) {
+    case TDLIMIT_OK:
+      break;
+    case TDLIMIT_INVALID_HANDLE:
+      return AAC_DEC_INVALID_HANDLE;
+    case TDLIMIT_INVALID_PARAMETER:
+    default:
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    break;
+
+  case AAC_PCM_LIMITER_RELEAS_TIME:
+    if (value <= 0) {  /* module function converts value to unsigned */
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    switch (setLimiterRelease(hPcmTdl, value)) {
+    case TDLIMIT_OK:
+      break;
+    case TDLIMIT_INVALID_HANDLE:
+      return AAC_DEC_INVALID_HANDLE;
+    case TDLIMIT_INVALID_PARAMETER:
+    default:
+      return AAC_DEC_SET_PARAM_FAIL;
     }
     break;
 
@@ -631,6 +674,14 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt, UINT
     err = -1;
     goto bail;
   }
+
+  aacDec->hLimiter = createLimiter(TDL_ATTACK_DEFAULT_MS, TDL_RELEASE_DEFAULT_MS, SAMPLE_MAX, (8), 96000);
+  if (NULL == aacDec->hLimiter) {
+    err = -1;
+    goto bail;
+  }
+  aacDec->limiterEnableUser = (UCHAR)-1;
+  aacDec->limiterEnableCurr = 0;
 
 
 
@@ -807,6 +858,17 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
       self->streamInfo.numTotalBytes = 0;
     }
 
+    if (self->limiterEnableUser==(UCHAR)-1) {
+      /* Enbale limiter for all non-lowdelay AOT's. */
+      self->limiterEnableCurr = ( self->flags & (AC_LD|AC_ELD) ) ? 0 : 1;
+    }
+    else {
+      /* Use limiter configuration as requested. */
+      self->limiterEnableCurr = self->limiterEnableUser;
+    }
+    /* reset limiter gain on a per frame basis */
+    self->extGain[0] = FL2FXCONST_DBL(1.0f/(float)(1<<TDL_GAIN_SCALING));
+
 
     ErrorStatus = CAacDecoder_DecodeFrame(self,
                                           flags | (fTpConceal ? AACDEC_CONCEAL : 0),
@@ -909,6 +971,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
 
 
     {
+    INT pcmLimiterScale = 0;
     PCMDMX_ERROR dmxErr = PCMDMX_OK;
     if ( flags & (AACDEC_INTR | AACDEC_CLRHIST) ) {
       /* delete data from the past (e.g. mixdown coeficients) */
@@ -924,12 +987,33 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
             self->channelType,
             self->channelIndices,
             self->channelOutputMapping,
-            NULL
+            (self->limiterEnableCurr) ? &pcmLimiterScale : NULL
       );
     if (dmxErr == PCMDMX_INVALID_MODE) {
       /* Announce the framework that the current combination of channel configuration and downmix
        * settings are not know to produce a predictable behavior and thus maybe produce strange output. */
       ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
+    }
+
+    if ( flags & AACDEC_CLRHIST ) {
+      /* Delete the delayed signal. */
+      resetLimiter(self->hLimiter);
+    }
+    if (self->limiterEnableCurr)
+    {
+      /* Set actual signal parameters */
+      setLimiterNChannels(self->hLimiter, self->streamInfo.numChannels);
+      setLimiterSampleRate(self->hLimiter, self->streamInfo.sampleRate);
+
+      applyLimiter(
+              self->hLimiter,
+              pTimeData,
+              self->extGain,
+             &pcmLimiterScale,
+              1,
+              self->extGainDelay,
+              self->streamInfo.frameSize
+              );
     }
     }
 
@@ -956,6 +1040,9 @@ LINKSPEC_CPP void aacDecoder_Close ( HANDLE_AACDECODER self )
     return;
 
 
+  if (self->hLimiter != NULL) {
+    destroyLimiter(self->hLimiter);
+  }
 
   if (self->hPcmUtils != NULL) {
     pcmDmx_Close( &self->hPcmUtils );

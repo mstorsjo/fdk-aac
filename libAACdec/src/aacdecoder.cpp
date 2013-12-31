@@ -1653,6 +1653,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
   {
     int stride, offset, c;
 
+    /* Turn on/off DRC modules level normalization in digital domain depending on the limiter status. */
+    aacDecoder_drcSetParam( self->hDrcInfo, APPLY_NORMALIZATION, (self->limiterEnableCurr) ? 0 : 1 );
     /* Extract DRC control data and map it to channels (without bitstream delay) */
     aacDecoder_drcProlog (
             self->hDrcInfo,
@@ -1703,12 +1705,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
         /* Reset DRC control data for this channel */
         aacDecoder_drcInitChannelData ( &self->pAacDecoderStaticChannelInfo[c]->drcData );
       }
+      /* The DRC module demands to be called with the gain field holding the gain scale. */
+      self->extGain[0] = (FIXP_DBL)TDL_GAIN_SCALING;
       /* DRC processing */
       aacDecoder_drcApply (
               self->hDrcInfo,
               self->hSbrDecoder,
               pAacDecoderChannelInfo,
              &self->pAacDecoderStaticChannelInfo[c]->drcData,
+              self->extGain,
               c,
               self->streamInfo.aacSamplesPerFrame,
               self->sbrEnabled
@@ -1726,6 +1731,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                   (self->frameOK && !(flags&AACDEC_CONCEAL)),
                   self->aacCommonData.workBufferCore1->mdctOutTemp
                   );
+          self->extGainDelay = self->streamInfo.aacSamplesPerFrame;
           break;
         case AACDEC_RENDER_ELDFB:
           CBlock_FrequencyToTimeLowDelay(
@@ -1735,6 +1741,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                   self->streamInfo.aacSamplesPerFrame,
                   stride
                   );
+          self->extGainDelay = (self->streamInfo.aacSamplesPerFrame*2 -  self->streamInfo.aacSamplesPerFrame/2 - 1)/2;
           break;
         default:
           ErrorStatus = AAC_DEC_UNKNOWN;

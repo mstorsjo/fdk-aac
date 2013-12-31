@@ -436,6 +436,16 @@ typedef enum
                                                           2: Create a dual mono output signal from channel 2. \n
                                                           3: Create a dual mono output signal by mixing both channels (L' = R' = 0.5*Ch1 + 0.5*Ch2). */
   AAC_PCM_OUTPUT_CHANNEL_MAPPING          = 0x0003,  /*!< Output buffer channel ordering. 0: MPEG PCE style order, 1: WAV file channel order (default). */
+  AAC_PCM_LIMITER_ENABLE                  = 0x0004,  /*!< Enable signal level limiting. \n
+                                                          -1: Auto-config. Enable limiter for all non-lowdelay configurations by default. \n
+                                                           0: Disable limiter in general. \n
+                                                           1: Enable limiter always.
+                                                          It is recommended to call the decoder with a AACDEC_CLRHIST flag to reset all states when
+                                                          the limiter switch is changed explicitly. */
+  AAC_PCM_LIMITER_ATTACK_TIME             = 0x0005,  /*!< Signal level limiting attack time in ms.
+                                                          Default confguration is 15 ms. Adjustable range from 1 ms to 15 ms. */
+  AAC_PCM_LIMITER_RELEAS_TIME             = 0x0006,  /*!< Signal level limiting release time in ms.
+                                                          Default configuration is 50 ms. Adjustable time must be larger than 0 ms. */
   AAC_PCM_MIN_OUTPUT_CHANNELS             = 0x0011,  /*!< Minimum number of PCM output channels. If higher than the number of encoded audio channels,
                                                           a simple channel extension is applied. \n
                                                           -1, 0: Disable channel extenstion feature. The decoder output contains the same number of

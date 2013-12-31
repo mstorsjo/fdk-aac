@@ -111,6 +111,7 @@ amm-info@iis.fraunhofer.de
 #include "aacdec_drc.h"
 
  #include "pcmutils_lib.h"
+ #include "limiter.h"
 
 
 /* Capabilities flags */
@@ -215,6 +216,12 @@ struct AAC_DECODER_INSTANCE {
   CAncData      ancData;                             /*!< structure to handle ancillary data         */
 
   HANDLE_PCM_DOWNMIX  hPcmUtils;                     /*!< privat data for the PCM utils.             */
+  TDLimiterPtr hLimiter;                             /*!< Handle of time domain limiter.             */
+  UCHAR        limiterEnableUser;                    /*!< The limiter configuration requested by the library user */
+  UCHAR        limiterEnableCurr;                    /*!< The current limiter configuration.         */
+
+  FIXP_DBL     extGain[1];                           /*!< Gain that must be applied to the output signal. */
+  UINT         extGainDelay;                         /*!< Delay that must be accounted for extGain. */
 
 };
 

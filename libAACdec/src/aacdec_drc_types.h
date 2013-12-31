@@ -140,6 +140,7 @@ typedef struct
   UINT   expiryFrame;
   SCHAR  targetRefLevel;
   UCHAR  bsDelayEnable;
+  UCHAR  applyDigitalNorm;
   UCHAR  applyHeavyCompression;
 
 } CDrcParams;

@@ -148,7 +148,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define PCMDMX_LIB_VL0 2
 #define PCMDMX_LIB_VL1 4
-#define PCMDMX_LIB_VL2 1
+#define PCMDMX_LIB_VL2 2
 #define PCMDMX_LIB_TITLE "PCM Downmix Lib"
 #define PCMDMX_LIB_BUILD_DATE __DATE__
 #define PCMDMX_LIB_BUILD_TIME __TIME__

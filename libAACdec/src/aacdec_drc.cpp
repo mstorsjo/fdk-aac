@@ -130,7 +130,6 @@ void aacDecoder_drcInit (
   /* init control fields */
   self->enable = 0;
   self->numThreads = 0;
-  self->digitalNorm = 0;
 
   /* init params */
   pParams = &self->params;
@@ -139,8 +138,9 @@ void aacDecoder_drcInit (
   pParams->usrCut   = FL2FXCONST_DBL(0.0f);
   pParams->boost    = FL2FXCONST_DBL(0.0f);
   pParams->usrBoost = FL2FXCONST_DBL(0.0f);
-  pParams->targetRefLevel = AACDEC_DRC_DEFAULT_REF_LEVEL;
+  pParams->targetRefLevel = -1;
   pParams->expiryFrame = AACDEC_DRC_DFLT_EXPIRY_FRAMES;
+  pParams->applyDigitalNorm = 0;
   pParams->applyHeavyCompression = 0;
 
   /* initial program ref level = target ref level */
@@ -222,17 +222,28 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
       return AAC_DEC_INVALID_HANDLE;
     }
     if (value < 0) {
-      self->digitalNorm = 0;
+      self->params.applyDigitalNorm = 0;
+      self->params.targetRefLevel = -1;
     }
     else {
       /* ref_level must be between 0 and MAX_REFERENCE_LEVEL, inclusive */
-      self->digitalNorm    = 1;
+      self->params.applyDigitalNorm = 1;
       if (self->params.targetRefLevel != (SCHAR)value) {
         self->params.targetRefLevel = (SCHAR)value;
         self->progRefLevel = (SCHAR)value;  /* Always set the program reference level equal to the
                                                target level according to 4.5.2.7.3 of ISO/IEC 14496-3. */
       }
     }
+    break;
+  case APPLY_NORMALIZATION:
+    if (value < 0 || value > 1) {
+      return AAC_DEC_SET_PARAM_FAIL;
+    }
+    if (self == NULL) {
+      return AAC_DEC_INVALID_HANDLE;
+    }
+    /* Store new parameter value */
+    self->params.applyDigitalNorm = (UCHAR)value;
     break;
   case APPLY_HEAVY_COMPRESSION:
     if (value < 0 || value > 1) {
@@ -278,7 +289,7 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam (
   self->enable = ( (self->params.boost > (FIXP_DBL)0)
                 || (self->params.cut   > (FIXP_DBL)0)
                 || (self->params.applyHeavyCompression != 0)
-                || (self->digitalNorm == 1) );
+                || (self->params.targetRefLevel >= 0) );
 
 
   return ErrorStatus;
@@ -827,6 +838,7 @@ void aacDecoder_drcApply (
         void                   *pSbrDec,
         CAacDecoderChannelInfo *pAacDecoderChannelInfo,
         CDrcChannelData        *pDrcChData,
+        FIXP_DBL               *extGain,
         int  ch,   /* needed only for SBR */
         int  aacFrameSize,
         int  bSbrPresent )
@@ -838,8 +850,8 @@ void aacDecoder_drcApply (
   FIXP_DBL max_mantissa;
   INT max_exponent;
 
-  FIXP_DBL norm_mantissa = FL2FXCONST_DBL(0.0f);
-  INT  norm_exponent = 0;
+  FIXP_DBL norm_mantissa = FL2FXCONST_DBL(0.5f);
+  INT  norm_exponent = 1;
 
   FIXP_DBL fact_mantissa[MAX_DRC_BANDS];
   INT  fact_exponent[MAX_DRC_BANDS];
@@ -861,6 +873,15 @@ void aacDecoder_drcApply (
 
   if (!self->enable) {
     sbrDecoder_drcDisable( (HANDLE_SBRDECODER)pSbrDec, ch );
+    if (extGain != NULL) {
+      INT gainScale = (INT)*extGain;
+      /* The gain scaling must be passed to the function in the buffer pointed on by extGain. */
+      if (gainScale >= 0 && gainScale <= DFRACT_BITS) {
+        *extGain = scaleValue(norm_mantissa, norm_exponent-gainScale);
+      } else {
+        FDK_ASSERT(0);
+      }
+    }
     return;
   }
 
@@ -876,7 +897,7 @@ void aacDecoder_drcApply (
   reduced DAC SNR (if signal is attenuated) or clipping (if signal is
   boosted) */
 
-  if (self->digitalNorm == 1)
+  if (pParams->targetRefLevel >= 0)
   {
     /* 0.5^((targetRefLevel - progRefLevel)/24) */
     norm_mantissa = fLdPow(
@@ -886,7 +907,18 @@ void aacDecoder_drcApply (
             3,
            &norm_exponent );
   }
-  else {
+  /* Always export the normalization gain (if possible). */
+  if (extGain != NULL) {
+    INT gainScale = (INT)*extGain;
+    /* The gain scaling must be passed to the function in the buffer pointed on by extGain. */
+    if (gainScale >= 0 && gainScale <= DFRACT_BITS) {
+      *extGain = scaleValue(norm_mantissa, norm_exponent-gainScale);
+    } else {
+      FDK_ASSERT(0);
+    }
+  }
+  if (self->params.applyDigitalNorm == 0) {
+    /* Reset normalization gain since this module must not apply it */
     norm_mantissa = FL2FXCONST_DBL(0.5f);
     norm_exponent = 1;
   }

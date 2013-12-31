@@ -98,7 +98,6 @@ amm-info@iis.fraunhofer.de
 #include "channel.h"
 #include "FDK_bitstream.h"
 
-#define AACDEC_DRC_DEFAULT_REF_LEVEL  ( 108 )   /* -27 dB below full scale (typical for movies) */
 #define AACDEC_DRC_DFLT_EXPIRY_FRAMES (  50 )   /* Default DRC data expiry time in AAC frames   */
 
 /**
@@ -111,6 +110,7 @@ typedef enum
   TARGET_REF_LEVEL,
   DRC_BS_DELAY,
   DRC_DATA_EXPIRY_FRAME,
+  APPLY_NORMALIZATION,
   APPLY_HEAVY_COMPRESSION
 
 } AACDEC_DRC_PARAM;
@@ -149,6 +149,8 @@ int aacDecoder_drcProlog (
  * \param pSbrDec pointer to SBR decoder instance
  * \param pAacDecoderChannelInfo AAC decoder channel instance to be processed
  * \param pDrcDat DRC channel data
+ * \param extGain Pointer to a FIXP_DBL where a externally applyable gain will be stored into (independently on whether it will be apply internally or not).
+ *                At function call the buffer must hold the scale (0 >= scale < DFRACT_BITS) to be applied on the gain value.
  * \param ch channel index
  * \param aacFrameSize AAC frame size
  * \param bSbrPresent flag indicating that SBR is present, in which case DRC is handed over to the SBR instance pSbrDec
@@ -158,6 +160,7 @@ void aacDecoder_drcApply (
         void                   *pSbrDec,
         CAacDecoderChannelInfo *pAacDecoderChannelInfo,
         CDrcChannelData        *pDrcDat,
+        FIXP_DBL               *extGain,
         int  ch,
         int  aacFrameSize,
         int  bSbrPresent );
