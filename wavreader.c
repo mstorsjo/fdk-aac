@@ -68,7 +68,10 @@ void* wav_read_open(const char *filename) {
 	long data_pos = 0;
 	memset(wr, 0, sizeof(*wr));
 
-	wr->wav = fopen(filename, "rb");
+	if (!strcmp(filename, "-"))
+		wr->wav = stdin;
+	else
+		wr->wav = fopen(filename, "rb");
 	if (wr->wav == NULL) {
 		free(wr);
 		return NULL;
@@ -136,7 +139,8 @@ void* wav_read_open(const char *filename) {
 
 void wav_read_close(void* obj) {
 	struct wav_reader* wr = (struct wav_reader*) obj;
-	fclose(wr->wav);
+	if (wr->wav != stdin)
+		fclose(wr->wav);
 	free(wr);
 }
 
