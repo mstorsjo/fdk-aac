@@ -63,6 +63,12 @@ static uint16_t read_int16(struct wav_reader* wr) {
 	return value;
 }
 
+static void skip(FILE *f, int n) {
+	int i;
+	for (i = 0; i < n; i++)
+		fgetc(f);
+}
+
 void* wav_read_open(const char *filename) {
 	struct wav_reader* wr = (struct wav_reader*) malloc(sizeof(*wr));
 	long data_pos = 0;
@@ -118,7 +124,7 @@ void* wav_read_open(const char *filename) {
 				wr->byte_rate       = read_int32(wr);
 				wr->block_align     = read_int16(wr);
 				wr->bits_per_sample = read_int16(wr);
-				fseek(wr->wav, sublength - 16, SEEK_CUR);
+				skip(wr->wav, sublength - 16);
 			} else if (subtag == TAG('d', 'a', 't', 'a')) {
 				data_pos = ftell(wr->wav);
 				wr->data_length = sublength;
@@ -128,7 +134,7 @@ void* wav_read_open(const char *filename) {
 				}
 				fseek(wr->wav, sublength, SEEK_CUR);
 			} else {
-				fseek(wr->wav, sublength, SEEK_CUR);
+				skip(wr->wav, sublength);
 			}
 			length -= sublength;
 		}
