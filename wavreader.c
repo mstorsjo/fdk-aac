@@ -34,6 +34,8 @@ struct wav_reader {
 	int channels;
 	int byte_rate;
 	int block_align;
+
+	int streamed;
 };
 
 static uint32_t read_tag(struct wav_reader* wr) {
@@ -113,6 +115,10 @@ void* wav_read_open(const char *filename) {
 			} else if (subtag == TAG('d', 'a', 't', 'a')) {
 				data_pos = ftell(wr->wav);
 				wr->data_length = sublength;
+				if (!wr->data_length) {
+					wr->streamed = 1;
+					return wr;
+				}
 				fseek(wr->wav, sublength, SEEK_CUR);
 			} else {
 				fseek(wr->wav, sublength, SEEK_CUR);
@@ -154,7 +160,7 @@ int wav_read_data(void* obj, unsigned char* data, unsigned int length) {
 	int n;
 	if (wr->wav == NULL)
 		return -1;
-	if (length > wr->data_length)
+	if (length > wr->data_length && !wr->streamed)
 		length = wr->data_length;
 	n = fread(data, 1, length, wr->wav);
 	wr->data_length -= length;
