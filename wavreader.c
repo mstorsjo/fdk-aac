@@ -83,6 +83,10 @@ void* wav_read_open(const char *filename) {
 		if (feof(wr->wav))
 			break;
 		length = read_int32(wr);
+		if (!length) {
+			wr->streamed = 1;
+			length = ~0;
+		}
 		if (tag != TAG('R', 'I', 'F', 'F') || length < 4) {
 			fseek(wr->wav, length, SEEK_CUR);
 			continue;
@@ -118,7 +122,7 @@ void* wav_read_open(const char *filename) {
 			} else if (subtag == TAG('d', 'a', 't', 'a')) {
 				data_pos = ftell(wr->wav);
 				wr->data_length = sublength;
-				if (!wr->data_length) {
+				if (!wr->data_length || wr->streamed) {
 					wr->streamed = 1;
 					return wr;
 				}
