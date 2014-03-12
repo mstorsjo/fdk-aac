@@ -89,7 +89,7 @@ void* wav_read_open(const char *filename) {
 		if (feof(wr->wav))
 			break;
 		length = read_int32(wr);
-		if (!length) {
+		if (!length || length >= 0x7fff0000) {
 			wr->streamed = 1;
 			length = ~0;
 		}
