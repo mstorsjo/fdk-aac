@@ -124,7 +124,17 @@ void* wav_read_open(const char *filename) {
 				wr->byte_rate       = read_int32(wr);
 				wr->block_align     = read_int16(wr);
 				wr->bits_per_sample = read_int16(wr);
-				skip(wr->wav, sublength - 16);
+				if (wr->format == 0xfffe) {
+					if (sublength < 28) {
+						// Insufficient data for waveformatex
+						break;
+					}
+					skip(wr->wav, 8);
+					wr->format = read_int32(wr);
+					skip(wr->wav, sublength - 28);
+				} else {
+					skip(wr->wav, sublength - 16);
+				}
 			} else if (subtag == TAG('d', 'a', 't', 'a')) {
 				data_pos = ftell(wr->wav);
 				wr->data_length = sublength;
