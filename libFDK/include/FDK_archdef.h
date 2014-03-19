@@ -203,7 +203,7 @@ amm-info@iis.fraunhofer.de
 
 #else
 
-  #error  >>>> Please set architecture characterization defines for your platform (FDK_HIGH_PERFORMANCE)! <<<<
+  #warning  >>>> Please set architecture characterization defines for your platform (FDK_HIGH_PERFORMANCE)! <<<<
 
 #endif /* Architecture switches */
 
