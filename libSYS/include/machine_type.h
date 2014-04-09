@@ -154,15 +154,15 @@ amm-info@iis.fraunhofer.de
 
   typedef signed int INT;
   typedef unsigned int UINT;
-#ifdef __x86_64__
+#ifdef __LP64__
   /* force FDK long-datatypes to 4 byte  */
   /* jdr: Use defines to avoid type alias problems on 64 bit machines. */
   #define LONG INT
   #define ULONG UINT
-#else /* __x86_64__ */
+#else /* __LP64__ */
   typedef signed long LONG;
   typedef unsigned long ULONG;
-#endif	/* __x86_64__ */
+#endif	/* __LP64__ */
   typedef signed short SHORT;
   typedef unsigned short USHORT;
   typedef signed char SCHAR;
