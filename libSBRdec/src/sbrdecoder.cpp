@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 5
+#define SBRDECODER_LIB_VL2 6
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -251,8 +251,10 @@ SBR_ERROR sbrDecoder_ResetElement (
 
   if ( sampleRateIn == sampleRateOut ) {
     synDownsampleFac = 2;
+    self->flags |=  SBRDEC_DOWNSAMPLE;
   } else {
     synDownsampleFac = 1;
+    self->flags &= ~SBRDEC_DOWNSAMPLE;
   }
 
   self->synDownsampleFac = synDownsampleFac;
@@ -1582,3 +1584,34 @@ INT sbrDecoder_GetLibInfo( LIB_INFO *info )
   return 0;
 }
 
+
+UINT sbrDecoder_GetDelay( const HANDLE_SBRDECODER self )
+{
+  UINT outputDelay = 0;
+
+  if ( self != NULL) {
+    UINT flags = self->flags;
+
+    /* See chapter 1.6.7.2 of ISO/IEC 14496-3 for the GA-SBR figures below. */
+
+    /* Are we initialized? */
+    if ( (self->numSbrChannels > 0)
+      && (self->numSbrElements > 0) )
+    {
+      /* Add QMF synthesis delay */
+      if ( (flags & SBRDEC_ELD_GRID)
+        && IS_LOWDELAY(self->coreCodec) ) {
+        /* Low delay SBR: */
+        {
+          outputDelay += (flags & SBRDEC_DOWNSAMPLE) ? 32 : 64;   /* QMF synthesis */
+        }
+      }
+      else if (!IS_USAC(self->coreCodec)) {
+        /* By the method of elimination this is the GA (AAC-LC, HE-AAC, ...) branch: */
+        outputDelay += (flags & SBRDEC_DOWNSAMPLE) ? 481 : 962;
+      }
+    }
+  }
+
+  return (outputDelay);
+}

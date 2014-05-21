@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 9
+#define AACDECODER_LIB_VL2 10
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -954,19 +954,22 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
 
 
      if (sbrError == SBRDEC_OK) {
+       #define UPS_SCALE  2  /* Maximum upsampling factor is 4 (CELP+SBR) */
+       FIXP_DBL  upsampleFactor = FL2FXCONST_DBL(1.0f/(1<<UPS_SCALE));
 
        /* Update data in streaminfo structure. Assume that the SBR upsampling factor is either 1 or 2 */
        self->flags |= AC_SBR_PRESENT;
        if (self->streamInfo.aacSampleRate != self->streamInfo.sampleRate) {
          if (self->streamInfo.frameSize == 768) {
-           self->streamInfo.frameSize =  (self->streamInfo.aacSamplesPerFrame * 8) / 3;
+           upsampleFactor = FL2FXCONST_DBL(8.0f/(3<<UPS_SCALE));
          } else {
-           self->streamInfo.frameSize =  self->streamInfo.aacSamplesPerFrame << 1;
+           upsampleFactor = FL2FXCONST_DBL(2.0f/(1<<UPS_SCALE));
          }
        }
-       /* Correct the additional concealment delay figures */
-       self->streamInfo.outputDelay -= self->sbrParams.bsDelay * self->streamInfo.aacSamplesPerFrame;
-       self->streamInfo.outputDelay += self->sbrParams.bsDelay * self->streamInfo.frameSize;
+       /* Apply upsampling factor to both the core frame length and the core delay */
+       self->streamInfo.frameSize    =       (INT)fMult((FIXP_DBL)self->streamInfo.aacSamplesPerFrame<<UPS_SCALE, upsampleFactor);
+       self->streamInfo.outputDelay  = (UINT)(INT)fMult((FIXP_DBL)self->streamInfo.outputDelay<<UPS_SCALE, upsampleFactor);
+       self->streamInfo.outputDelay += sbrDecoder_GetDelay( self->hSbrDecoder );
 
        if (self->psPossible) {
          self->flags |= AC_PS_PRESENT;

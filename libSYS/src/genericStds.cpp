@@ -99,7 +99,7 @@ amm-info@iis.fraunhofer.de
 /* library info */
 #define SYS_LIB_VL0 1
 #define SYS_LIB_VL1 3
-#define SYS_LIB_VL2 5
+#define SYS_LIB_VL2 6
 #define SYS_LIB_TITLE "System Integration Library"
 #define SYS_LIB_BUILD_DATE __DATE__
 #define SYS_LIB_BUILD_TIME __TIME__

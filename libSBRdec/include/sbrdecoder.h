@@ -331,6 +331,13 @@ SBR_ERROR sbrDecoder_Close ( HANDLE_SBRDECODER *self );
  */
 INT sbrDecoder_GetLibInfo( LIB_INFO *info );    
 
+/**
+ * \brief       Determine the modules output signal delay in samples.
+ * \param self  SBR decoder handle.
+ * \return      The number of samples signal delay added by the module.
+ */
+UINT sbrDecoder_GetDelay( const HANDLE_SBRDECODER self );
+
 
 #ifdef __cplusplus
 }

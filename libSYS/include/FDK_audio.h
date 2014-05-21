@@ -232,6 +232,14 @@ typedef enum
 
 } AUDIO_OBJECT_TYPE;
 
+#define IS_USAC(aot) \
+  ((aot) == AOT_USAC \
+|| (aot) == AOT_RSVD50)
+
+#define IS_LOWDELAY(aot) \
+  ((aot) == AOT_ER_AAC_LD \
+|| (aot) == AOT_ER_AAC_ELD)
+
 /** Channel Mode ( 1-7 equals MPEG channel configurations, others are arbitrary). */
 typedef enum {
   MODE_INVALID                  = -1,
