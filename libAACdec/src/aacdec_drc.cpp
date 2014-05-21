@@ -145,6 +145,8 @@ void aacDecoder_drcInit (
 
   /* initial program ref level = target ref level */
   self->progRefLevel = pParams->targetRefLevel;
+  self->progRefLevelPresent = 0;
+  self->presMode = -1;
 }
 
 
@@ -572,7 +574,7 @@ static int aacDecoder_drcReadCompression (
     return 0;
   }
   FDKreadBits(bs, 2);                          /* dolby_surround_mode */
-  FDKreadBits(bs, 2);                          /* presentation_mode */
+  pDrcBs->presMode = FDKreadBits(bs, 2);       /* presentation_mode */
   FDKreadBits(bs, 1);                          /* stereo_downmix_mode */
   if (FDKreadBits(bs, 1) != 0) {               /* reserved, set to 0 */
     return 0;
@@ -803,7 +805,13 @@ static int aacDecoder_drcExtractAndMap (
      */
     if (pThreadBs->progRefLevel >= 0) {
       self->progRefLevel = pThreadBs->progRefLevel;
+      self->progRefLevelPresent = 1;
       self->prlExpiryCount = 0;  /* Got a new value -> Reset counter */
+    }
+
+    if (drcPayloadType == DVB_DRC_ANC_DATA) {
+      /* Announce the presentation mode of this valid thread. */
+      self->presMode = pThreadBs->presMode;
     }
 
     /* SCE, CPE and LFE */
@@ -825,6 +833,7 @@ static int aacDecoder_drcExtractAndMap (
   if ( (pParams->expiryFrame > 0)
     && (self->prlExpiryCount++ > pParams->expiryFrame) )
   { /* The program reference level is too old, so set it back to the target level. */
+    self->progRefLevelPresent = 0;
     self->progRefLevel = pParams->targetRefLevel;
     self->prlExpiryCount = 0;
   }
@@ -1156,3 +1165,24 @@ int aacDecoder_drcEpilog (
   return err;
 }
 
+/*
+ * Export relevant metadata info from bitstream payload.
+ */
+void aacDecoder_drcGetInfo (
+        HANDLE_AAC_DRC  self,
+        SCHAR          *pPresMode,
+        SCHAR          *pProgRefLevel )
+{
+  if (self != NULL) {
+    if (pPresMode != NULL) {
+      *pPresMode = self->presMode;
+    }
+    if (pProgRefLevel != NULL) {
+      if (self->progRefLevelPresent) {
+        *pProgRefLevel = self->progRefLevel;
+      } else {
+        *pProgRefLevel = -1;
+      }
+    }
+  }
+}

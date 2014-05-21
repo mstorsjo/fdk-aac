@@ -719,6 +719,10 @@ void CStreamInfoInit(CStreamInfo *pStreamInfo)
   pStreamInfo->frameSize = 0;
 
   pStreamInfo->outputDelay = 0;
+
+  /* DRC */
+  pStreamInfo->drcProgRefLev = -1;                           /* set program reference level to not indicated */
+  pStreamInfo->drcPresMode = -1;                             /* default: presentation mode not indicated */
 }
 
 /*!
@@ -1784,6 +1788,13 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
   /* Add additional concealment delay */
   self->streamInfo.outputDelay += CConcealment_GetDelay(&self->concealCommonData) * self->streamInfo.aacSamplesPerFrame;
+
+  /* Map DRC data to StreamInfo structure */
+  aacDecoder_drcGetInfo (
+            self->hDrcInfo,
+           &self->streamInfo.drcPresMode,
+           &self->streamInfo.drcProgRefLev
+          );
 
   /* Reorder channel type information tables.  */
   {

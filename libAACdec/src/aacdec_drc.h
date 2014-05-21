@@ -173,5 +173,17 @@ int aacDecoder_drcEpilog (
         UCHAR  channelMapping[],
         int    validChannels );
 
+/**
+ * \brief Get metadata information found in bitstream.
+ * \param self DRC module instance handle.
+ * \param pPresMode Pointer to field where the presentation mode will be written to.
+ * \param pProgRefLevel Pointer to field where the program reference level will be written to.
+ * \return Nothing.
+ */
+void aacDecoder_drcGetInfo (
+        HANDLE_AAC_DRC  self,
+        SCHAR  *pPresMode,
+        SCHAR  *pProgRefLevel );
+
 
 #endif  /* AACDEC_DRC_H */

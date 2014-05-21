@@ -144,10 +144,9 @@ to allocate memory for the required structures, and the corresponding mpegFileRe
 files and to de-allocate associated structures. mpegFileRead_Open() tries to detect the bitstream format and
 in case of MPEG-4 file format or Raw Packets file format (a Fraunhofer IIS proprietary format) reads the Audio
 Specific Config data (ASC). An unsuccessful attempt to recognize the bitstream format requires the user to
-provide this information manually (see \ref CommandLineUsage). For any other bitstream formats that are
-usually applicable in streaming applications, the decoder itself will try to synchronize and parse the given
-bitstream fragment using the FDK transport library. Hence, for streaming applications (without file access)
-this step is not necessary.
+provide this information manually. For any other bitstream formats that are usually applicable in streaming
+applications, the decoder itself will try to synchronize and parse the given bitstream fragment using the
+FDK transport library. Hence, for streaming applications (without file access) this step is not necessary.
 
 -# Call aacDecoder_Open() to open and retrieve a handle to a new AAC decoder instance.
 \dontinclude main.cpp
@@ -571,10 +570,25 @@ typedef struct
   UINT              numTotalAccessUnits; /*!< This is the number of total access units that have passed through the decoder. */
   UINT              numBadAccessUnits;   /*!< This is the number of total access units that were considered with errors from numTotalBytes. */
 
+  /* Metadata */
+  SCHAR             drcProgRefLev;       /*!< DRC program reference level. Defines the reference level below full-scale.
+                                              It is quantized in steps of 0.25dB. The valid values range from 0 (0 dBFS) to 127 (-31.75 dBFS).
+                                              It is used to reflect the average loudness of the audio in LKFS accoring to ITU-R BS 1770.
+                                              If no level has been found in the bitstream the value is -1. */
+  SCHAR             drcPresMode;         /*!< DRC presentation mode. According to ETSI TS 101 154, this field indicates whether
+                                              light (MPEG-4 Dynamic Range Control tool) or heavy compression (DVB heavy compression)
+                                              dynamic range control shall take priority on the outputs.
+                                              For details, see ETSI TS 101 154, table C.33. Possible values are: \n
+                                              -1: No corresponding metadata found in the bitstream \n
+                                               0: DRC presentation mode not indicated \n
+                                               1: DRC presentation mode 1 \n
+                                               2: DRC presentation mode 2 \n
+                                               3: Reserved */
+
 } CStreamInfo;
 
 
-typedef struct AAC_DECODER_INSTANCE *HANDLE_AACDECODER;
+typedef struct AAC_DECODER_INSTANCE *HANDLE_AACDECODER;  /*!< Pointer to a AAC decoder instance. */
 
 #ifdef __cplusplus
 extern "C"
