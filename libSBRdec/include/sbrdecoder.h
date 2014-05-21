@@ -145,6 +145,8 @@ typedef enum
   SBR_SYSTEM_BITSTREAM_DELAY,          /*!< System: Switch to enable an additional SBR bitstream delay of one frame. */
   SBR_QMF_MODE,                        /*!< Set QMF mode, either complex or low power. */
   SBR_LD_QMF_TIME_ALIGN,               /*!< Set QMF type, either LD-MPS or CLDFB. Relevant for ELD streams only. */
+  SBR_FLUSH_DATA,                      /*!< Set internal state to flush the decoder with the next process call. */
+  SBR_CLEAR_HISTORY,                   /*!< Clear all internal states (delay lines, QMF states, ...). */
   SBR_BS_INTERRUPTION                  /*!< Signal bit stream interruption. Value is ignored. */
 } SBRDEC_PARAM;
 

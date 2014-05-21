@@ -532,18 +532,18 @@ typedef enum
  */
 typedef struct
 {
-  /* These three members are the only really relevant ones for the user.                                                           */
+  /* These five members are the only really relevant ones for the user.                                                            */
   INT               sampleRate;          /*!< The samplerate in Hz of the fully decoded PCM audio signal (after SBR processing).   */
   INT               frameSize;           /*!< The frame size of the decoded PCM audio signal. \n
                                               1024 or 960 for AAC-LC \n
                                               2048 or 1920 for HE-AAC (v2) \n
                                               512 or 480 for AAC-LD and AAC-ELD                                                    */
   INT               numChannels;         /*!< The number of output audio channels in the decoded and interleaved PCM audio signal. */
-  AUDIO_CHANNEL_TYPE *pChannelType;       /*!< Audio channel type of each output audio channel.           */
-  UCHAR             *pChannelIndices;     /*!< Audio channel index for each output audio channel.
+  AUDIO_CHANNEL_TYPE *pChannelType;      /*!< Audio channel type of each output audio channel.                                     */
+  UCHAR             *pChannelIndices;    /*!< Audio channel index for each output audio channel.
                                                See ISO/IEC 13818-7:2005(E), 8.5.3.2 Explicit channel mapping using a program_config_element() */
   /* Decoder internal members. */
-  INT               aacSampleRate;       /*!< sampling rate in Hz without SBR (from configuration info).                           */
+  INT               aacSampleRate;       /*!< Sampling rate in Hz without SBR (from configuration info).                           */
   INT               profile;             /*!< MPEG-2 profile (from file header) (-1: not applicable (e. g. MPEG-4)).               */
   AUDIO_OBJECT_TYPE aot;                 /*!< Audio Object Type (from ASC): is set to the appropriate value for MPEG-2 bitstreams (e. g. 2 for AAC-LC). */
   INT               channelConfig;       /*!< Channel configuration (0: PCE defined, 1: mono, 2: stereo, ...                       */
@@ -556,7 +556,9 @@ typedef struct
   AUDIO_OBJECT_TYPE extAot;              /*!< Extension Audio Object Type (from ASC)   */
   INT               extSamplingRate;     /*!< Extension sampling rate in Hz (from ASC) */
 
-  UINT              flags;               /*!< Copy if internal flags. Only to be written by the decoder, and only to be read externally. */
+  UINT              outputDelay;         /*!< The number of samples the output is additionally delayed by the decoder. */
+
+  UINT              flags;               /*!< Copy of internal flags. Only to be written by the decoder, and only to be read externally. */
 
   SCHAR             epConfig;            /*!< epConfig level (from ASC): only level 0 supported, -1 means no ER (e. g. AOT=2, MPEG-2 AAC, etc.)  */
 
@@ -681,11 +683,15 @@ aacDecoder_Fill ( HANDLE_AACDECODER  self,
                   const UINT         bufferSize[],
                   UINT              *bytesValid );
 
-#define AACDEC_CONCEAL  1 /*!< Flag for aacDecoder_DecodeFrame(): do not consider new input data. Do concealment. */
-#define AACDEC_FLUSH    2 /*!< Flag for aacDecoder_DecodeFrame(): Do not consider new input data. Flush filterbanks (output delayed audio). */
-#define AACDEC_INTR     4 /*!< Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data discontinuity. Resync any internals as necessary. */
-#define AACDEC_CLRHIST  8 /*!< Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and history buffers.
-                               Caution: This can cause discontinuities in the output signal. */
+#define AACDEC_CONCEAL  1 /*!< Flag for aacDecoder_DecodeFrame(): Trigger the built-in error concealment module \
+                                 to generate a substitute signal for one lost frame. New input data will not be
+                                 considered. */
+#define AACDEC_FLUSH    2 /*!< Flag for aacDecoder_DecodeFrame(): Flush all filterbanks to get all delayed audio \
+                                 without having new input data. Thus new input data will not be considered.*/
+#define AACDEC_INTR     4 /*!< Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data discontinuity. \
+                                 Resync any internals as necessary. */
+#define AACDEC_CLRHIST  8 /*!< Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and history buffers.\
+                                 CAUTION: This can cause discontinuities in the output signal. */
 
 /**
  * \brief            Decode one audio frame

@@ -198,7 +198,10 @@ struct AAC_DECODER_INSTANCE {
   CAacDecoderCommonData         aacCommonData;             /*!< Temporal shared data for all channels hooked into pAacDecoderChannelInfo */
 
   CConcealParams                concealCommonData;
-  INT   concealChannels;
+
+  INT                   aacChannelsPrev;                          /*!< The amount of AAC core channels of the last successful decode call.         */
+  AUDIO_CHANNEL_TYPE    channelTypePrev[(8)];     /*!< Array holding the channelType values of the last successful decode call.    */
+  UCHAR                 channelIndicesPrev[(8)];  /*!< Array holding the channelIndices values of the last successful decode call. */
 
 
   HANDLE_SBRDECODER   hSbrDecoder;                   /*!< SBR decoder handle.                        */

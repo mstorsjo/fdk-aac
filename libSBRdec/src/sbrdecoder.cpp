@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 4
+#define SBRDECODER_LIB_VL2 5
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #define SBRDECODER_LIB_BUILD_DATE __DATE__
 #define SBRDECODER_LIB_BUILD_TIME __TIME__
@@ -444,6 +444,7 @@ SBR_ERROR sbrDecoder_InitElement (
      && self->coreCodec == coreCodec
      && self->pSbrElement[elementIndex] != NULL
      && self->pSbrElement[elementIndex]->elementID == elementID
+     && !(self->flags & SBRDEC_FORCE_RESET)
      )
   {
      /* Nothing to do */
@@ -550,8 +551,9 @@ bail:
     if (nSbrElementsStart < self->numSbrElements) {
       /* Free the memory allocated for this element */
       sbrDecoder_DestroyElement( self, elementIndex );
-    } else if (self->pSbrElement[elementIndex] != NULL) {
-      /* Set error flag to trigger concealment */
+    } else if ( (self->pSbrElement[elementIndex] != NULL)
+             && (elementIndex < (8)))
+    { /* Set error flag to trigger concealment */
       self->pSbrElement[elementIndex]->frameErrorFlag[self->pSbrElement[elementIndex]->useFrameSlot] = 1;
     }
   }
@@ -728,6 +730,24 @@ SBR_ERROR sbrDecoder_SetParam (HANDLE_SBRDECODER   self,
       }
     }
     break;
+  case SBR_FLUSH_DATA:
+    if (value != 0) {
+      if (self == NULL) {
+        errorStatus = SBRDEC_NOT_INITIALIZED;
+      } else {
+        self->flags |= SBRDEC_FLUSH;
+      }
+    }
+    break;
+  case SBR_CLEAR_HISTORY:
+    if (value != 0) {
+      if (self == NULL) {
+        errorStatus = SBRDEC_NOT_INITIALIZED;
+      } else {
+        self->flags |= SBRDEC_FORCE_RESET;
+      }
+    }
+    break;
   case SBR_BS_INTERRUPTION:
     {
       int elementIndex;
@@ -738,7 +758,8 @@ SBR_ERROR sbrDecoder_SetParam (HANDLE_SBRDECODER   self,
       }
 
       /* Loop over SBR elements */
-      for (elementIndex = 0; elementIndex < self->numSbrElements; elementIndex++)
+      for (elementIndex = 0; elementIndex < self->numSbrElements; elementIndex++) {
+      if (self->pSbrElement[elementIndex] != NULL)
       {
         HANDLE_SBR_HEADER_DATA hSbrHeader;
         int headerIndex = getHeaderSlot(self->pSbrElement[elementIndex]->useFrameSlot,
@@ -750,7 +771,7 @@ SBR_ERROR sbrDecoder_SetParam (HANDLE_SBRDECODER   self,
            This switches off bitstream parsing until a new header arrives. */
         hSbrHeader->syncState = UPSAMPLING;
         hSbrHeader->status   |= SBRDEC_HDR_STAT_UPDATE;
-      }
+      } }
     }
     break;
   default:
@@ -1119,6 +1140,10 @@ SBR_ERROR sbrDecoder_Parse(
         }
       }
     }
+  } else {
+    /* The returned bit count will not be the actual payload size since we did not
+       parse the frame data. Return an error so that the caller can react respectively. */
+    errorStatus = SBRDEC_PARSE_ERROR;
   }
 
   if (!fDoDecodeSbrData) {
@@ -1197,6 +1222,15 @@ sbrDecoder_DecodeElement (
 
   int  stereo = (hSbrElement->elementID == ID_CPE) ? 1 : 0;
   int  numElementChannels = hSbrElement->nChannels; /* Number of channels of the current SBR element */
+
+  if (self->flags & SBRDEC_FLUSH) {
+    /* Move frame pointer to the next slot which is up to be decoded/applied next */
+    hSbrElement->useFrameSlot = (hSbrElement->useFrameSlot+1) % (self->numDelayFrames+1);
+    /* Update header and frame data pointer because they have already been set */
+    hSbrHeader = &self->sbrHeader[elementIndex][hSbrElement->useHeaderSlot[hSbrElement->useFrameSlot]];
+    hFrameDataLeft  = &hSbrElement->pSbrChannel[0]->frameData[hSbrElement->useFrameSlot];
+    hFrameDataRight = &hSbrElement->pSbrChannel[1]->frameData[hSbrElement->useFrameSlot];
+  }
 
   /* Update the header error flag */
   hSbrHeader->frameErrorFlag = hSbrElement->frameErrorFlag[hSbrElement->useFrameSlot];
@@ -1471,6 +1505,10 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER   self,
   *psDecoded = (self->flags & SBRDEC_PS_DECODED) ? 1 : 0;
 
 
+
+  /* Clear reset and flush flag because everything seems to be done successfully. */
+  self->flags &= ~SBRDEC_FORCE_RESET;
+  self->flags &= ~SBRDEC_FLUSH;
 
 bail:
 

@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 7
+#define AACDECODER_LIB_VL2 8
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
@@ -842,6 +842,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
     /* Signal bit stream interruption to other modules if required. */
     if ( fTpInterruption || (flags & (AACDEC_INTR|AACDEC_CLRHIST)) )
     {
+      sbrDecoder_SetParam(self->hSbrDecoder, SBR_CLEAR_HISTORY, (flags&AACDEC_CLRHIST));
       aacDecoder_SignalInterruption(self);
       if ( ! (flags & AACDEC_INTR) ) {
         ErrorStatus = AAC_DEC_TRANSPORT_SYNC_ERROR;
@@ -857,6 +858,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
       self->streamInfo.numBadBytes = 0;
       self->streamInfo.numTotalBytes = 0;
     }
+    /* Reset the output delay field. The modules will add their figures one after another. */
+    self->streamInfo.outputDelay = 0;
 
     if (self->limiterEnableUser==(UCHAR)-1) {
       /* Enbale limiter for all non-lowdelay AOT's. */
@@ -916,6 +919,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
       sbrDecoder_SetParam ( self->hSbrDecoder,
                             SBR_SYSTEM_BITSTREAM_DELAY,
                             self->sbrParams.bsDelay);
+      sbrDecoder_SetParam ( self->hSbrDecoder,
+                            SBR_FLUSH_DATA,
+                            (flags & AACDEC_FLUSH) );
 
       if ( self->streamInfo.aot == AOT_ER_AAC_ELD ) {
         /* Configure QMF */
@@ -958,6 +964,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
            self->streamInfo.frameSize =  self->streamInfo.aacSamplesPerFrame << 1;
          }
        }
+       /* Correct the additional concealment delay figures */
+       self->streamInfo.outputDelay -= self->sbrParams.bsDelay * self->streamInfo.aacSamplesPerFrame;
+       self->streamInfo.outputDelay += self->sbrParams.bsDelay * self->streamInfo.frameSize;
 
        if (self->psPossible) {
          self->flags |= AC_PS_PRESENT;
@@ -1014,6 +1023,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
               self->extGainDelay,
               self->streamInfo.frameSize
               );
+
+      /* Announce the additional limiter output delay */
+      self->streamInfo.outputDelay += getLimiterDelay(self->hLimiter);
     }
     }
 

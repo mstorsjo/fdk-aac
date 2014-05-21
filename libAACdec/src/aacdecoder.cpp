@@ -717,6 +717,8 @@ void CStreamInfoInit(CStreamInfo *pStreamInfo)
   pStreamInfo->numChannels = 0;
   pStreamInfo->sampleRate = 0;
   pStreamInfo->frameSize = 0;
+
+  pStreamInfo->outputDelay = 0;
 }
 
 /*!
@@ -1184,11 +1186,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       CConcealment_InitChannelData(&self->pAacDecoderStaticChannelInfo[ch]->concealmentInfo,
                                    &self->concealCommonData,
                                     self->streamInfo.aacSamplesPerFrame );
-      /* Clear concealment buffers to get rid of the complete history */
-      FDKmemclear(self->pAacDecoderStaticChannelInfo[ch]->concealmentInfo.spectralCoefficient, 1024 * sizeof(FIXP_CNCL));
-      FDKmemclear(self->pAacDecoderStaticChannelInfo[ch]->concealmentInfo.specScale, 8 * sizeof(SHORT));
       /* Clear overlap-add buffers to avoid clicks. */
-      FDKmemclear(self->pAacDecoderStaticChannelInfo[ch]->IMdct.overlap.freq, OverlapBufferSize*sizeof(FIXP_DBL));
+      FDKmemclear(self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer, OverlapBufferSize*sizeof(FIXP_DBL));
      }
   }
 
@@ -1508,10 +1507,19 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
                 break;
               }
             }
-            if (err == SBRDEC_OK) {
+            switch (err) {
+            case SBRDEC_PARSE_ERROR:
+              /* Can not go on parsing because we do not
+                 know the length of the SBR extension data. */
+              FDKpushFor(bs, bitCnt);
+              bitCnt = 0;
+              break;
+            case SBRDEC_OK:
               self->sbrEnabled = 1;
-            } else {
+              break;
+            default:
               self->frameOK = 0;
+              break;
             }
           }
 
@@ -1601,13 +1609,17 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     self->frameOK=0;
   }
 
-  /* store or restore the number of channels */
+  /* store or restore the number of channels and the corresponding info */
   if ( self->frameOK && !(flags &(AACDEC_CONCEAL|AACDEC_FLUSH)) ) {
-    self->concealChannels = aacChannels;  /* store */
+    self->aacChannelsPrev = aacChannels;  /* store */
+    FDKmemcpy(self->channelTypePrev, self->channelType, (8)*sizeof(AUDIO_CHANNEL_TYPE));  /* store */
+    FDKmemcpy(self->channelIndicesPrev, self->channelIndices, (8)*sizeof(UCHAR));         /* store */
     self->sbrEnabledPrev = self->sbrEnabled;
   } else {
     if (self->aacChannels > 0) {
-      aacChannels = self->concealChannels;  /* restore */
+      aacChannels = self->aacChannelsPrev;  /* restore */
+      FDKmemcpy(self->channelType, self->channelTypePrev, (8)*sizeof(AUDIO_CHANNEL_TYPE));  /* restore */
+      FDKmemcpy(self->channelIndices, self->channelIndicesPrev, (8)*sizeof(UCHAR));         /* restore */
       self->sbrEnabled = self->sbrEnabledPrev;
      }
   }
@@ -1687,6 +1699,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       }
 
 
+      if ( flags&AACDEC_FLUSH ) {
+        /* Clear pAacDecoderChannelInfo->pSpectralCoefficient because with AACDEC_FLUSH set it contains undefined data. */
+        FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, sizeof(FIXP_DBL)*self->streamInfo.aacSamplesPerFrame);
+      }
+
       /*
         Conceal defective spectral data
       */
@@ -1765,6 +1782,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           );
   }
 
+  /* Add additional concealment delay */
+  self->streamInfo.outputDelay += CConcealment_GetDelay(&self->concealCommonData) * self->streamInfo.aacSamplesPerFrame;
 
   /* Reorder channel type information tables.  */
   {
