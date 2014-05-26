@@ -115,6 +115,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__x86__)
 #include "x86/clz_x86.h"
 
+#elif defined(__powerpc__)
+#include "ppc/clz_ppc.h"
+
 #endif /* all cores */
 
 /*************************************************************************

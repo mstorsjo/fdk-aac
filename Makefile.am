@@ -642,6 +642,7 @@ EXTRA_DIST = \
     $(top_srcdir)/cpp/libFDK/include/*.h \
     $(top_srcdir)/cpp/libFDK/include/arm/*.h \
     $(top_srcdir)/cpp/libFDK/include/mips/*.h \
+    $(top_srcdir)/cpp/libFDK/include/ppc/*.h \
     $(top_srcdir)/cpp/libFDK/include/x86/*.h \
     $(top_srcdir)/cpp/libFDK/src/arm/*.cpp \
     $(top_srcdir)/cpp/libFDK/src/mips/*.cpp \
