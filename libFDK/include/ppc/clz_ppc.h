@@ -83,113 +83,20 @@ amm-info@iis.fraunhofer.de
 
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   Marc Gayer
+   Author(s):
    Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#if !defined(__CLZ_H__)
-#define __CLZ_H__
+#if defined(__powerpc__) && (defined(__GNUC__) || defined(__xlC__))
 
-#include "FDK_archdef.h"
-#include "machine_type.h"
+#define FUNCTION_fixnormz_D
 
-#if defined(__arm__)
-#include "arm/clz_arm.h"
-
-#elif defined(__mips__)	/* cppp replaced: elif */
-#include "mips/clz_mips.h"
-
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/clz_x86.h"
-
-#elif defined(__powerpc__)
-#include "ppc/clz_ppc.h"
-
-#endif /* all cores */
-
-
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions.
-**************************************************************************
-**************************************************************************/
-
-#if !defined(FUNCTION_fixnormz_S)
-#ifdef FUNCTION_fixnormz_D
-inline INT fixnormz_S (SHORT a)
+inline INT fixnormz_D(LONG value)
 {
-  return fixnormz_D((INT)(a));
+  INT result;
+  __asm__ ("cntlzw %0, %1" : "=r" (result) : "r" (value));
+  return result;
 }
-#else
-inline INT fixnormz_S (SHORT a)
-{
-    int leadingBits = 0;
-    a = ~a;
-    while(a & 0x8000) {
-      leadingBits++;
-      a <<= 1;
-    }
 
-    return (leadingBits);
-}
-#endif
-#endif
-
-#if !defined(FUNCTION_fixnormz_D)
-inline INT fixnormz_D (LONG a)
-{
-    INT leadingBits = 0;
-    a = ~a;
-    while(a & 0x80000000) {
-      leadingBits++;
-      a <<= 1;
-    }
-
-    return (leadingBits);
-}
-#endif
-
-
-/*****************************************************************************
-
-    functionname: fixnorm_D
-    description:  Count leading ones or zeros of operand val for dfract/LONG INT values.
-                  Return this value minus 1. Return 0 if operand==0.
-*****************************************************************************/
-#if !defined(FUNCTION_fixnorm_S)
-#ifdef FUNCTION_fixnorm_D
-inline INT fixnorm_S(FIXP_SGL val)
-{
-  return fixnorm_D((INT)(val));
-}
-#else
-inline INT fixnorm_S(FIXP_SGL val)
-{
-    INT leadingBits = 0;
-    if ( val != (FIXP_SGL)0 ) {
-        if ( val < (FIXP_SGL)0 ) {
-            val = ~val;
-        }
-        leadingBits = fixnormz_S(val) - 1;
-    }
-    return (leadingBits);
-}
-#endif
-#endif
-
-#if !defined(FUNCTION_fixnorm_D)
-inline INT fixnorm_D(FIXP_DBL val)
-{
-    INT leadingBits = 0;
-    if ( val != (FIXP_DBL)0 ) {
-        if ( val < (FIXP_DBL)0 ) {
-            val = ~val;
-        }
-        leadingBits = fixnormz_D(val) - 1;
-    }
-    return (leadingBits);
-}
-#endif
-
-#endif /* __CLZ_H__ */
+#endif /* __powerpc__ && (__GNUC__ || __xlC__) */
