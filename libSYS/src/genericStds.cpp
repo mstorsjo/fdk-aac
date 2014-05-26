@@ -92,9 +92,9 @@ amm-info@iis.fraunhofer.de
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "genericStds.h"
-
 #include <math.h>
+
+#include "genericStds.h"
 
 /* library info */
 #define SYS_LIB_VL0 1
