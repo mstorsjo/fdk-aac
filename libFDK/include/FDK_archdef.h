@@ -107,6 +107,10 @@ amm-info@iis.fraunhofer.de
 #define __arm__
 #endif
 
+#if defined(_ARCH_PPC) && !defined(__powerpc__)
+#define __powerpc__ 1
+#endif
+
 
 
 /* Define __ARM_ARCH_5TE__ if armv5te features are supported  */
