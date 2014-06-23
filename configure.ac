@@ -21,7 +21,7 @@ AC_PROG_CC
 AC_PROG_CXX
 LT_INIT
 
-AC_CHECK_LIB([m], [sin])
+AC_SEARCH_LIBS([sin], [m])
 
 dnl soname version to use
 dnl goes by ‘current[:revision[:age]]’ with the soname ending up as
