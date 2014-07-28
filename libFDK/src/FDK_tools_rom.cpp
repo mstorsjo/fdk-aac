@@ -1902,7 +1902,7 @@ const USHORT sqrt_tab[49]={
 0xb504};
 
 LNK_SECTION_CONSTDATA_L1
-const FIXP_DBL invCount[50]=  /* This could be 16-bit wide */
+const FIXP_DBL invCount[55]=  /* This could be 16-bit wide */
 {
     0x00000000, 0x7fffffff, 0x40000000, 0x2aaaaaab, 0x20000000,
     0x1999999a, 0x15555555, 0x12492492, 0x10000000, 0x0e38e38e,
@@ -1913,7 +1913,8 @@ const FIXP_DBL invCount[50]=  /* This could be 16-bit wide */
     0x04444444, 0x04210842, 0x04000000, 0x03e0f83e, 0x03c3c3c4,
     0x03a83a84, 0x038e38e4, 0x03759f23, 0x035e50d8, 0x03483483,
     0x03333333, 0x031f3832, 0x030c30c3, 0x02fa0be8, 0x02e8ba2f,
-    0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab, 0x029cbc15
+    0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab, 0x029cbc15,
+    0x028f5c29, 0x02828283, 0x02762763, 0x026a43a0, 0x025ed098
 };
 
 

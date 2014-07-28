@@ -438,11 +438,11 @@ inline FIXP_DBL fAddSaturate(const FIXP_DBL a, const FIXP_DBL b)
 
 /*****************************************************************************
 
- array for 1/n, n=1..50
+ array for 1/n, n=1..55
 
 ****************************************************************************/
 
-  extern const FIXP_DBL invCount[50];
+  extern const FIXP_DBL invCount[55];
 
   LNK_SECTION_INITCODE
   inline void InitInvInt(void) {}
@@ -456,8 +456,8 @@ inline FIXP_DBL fAddSaturate(const FIXP_DBL a, const FIXP_DBL b)
  */
 inline FIXP_DBL GetInvInt(int intValue)
 {
-  FDK_ASSERT((intValue > 0) && (intValue < 50));
-  FDK_ASSERT(intValue<50);
+  FDK_ASSERT((intValue > 0) && (intValue < 55));
+  FDK_ASSERT(intValue<55);
 	return invCount[intValue];
 }
 
