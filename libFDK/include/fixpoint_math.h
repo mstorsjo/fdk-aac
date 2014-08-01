@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2014 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -438,11 +438,11 @@ inline FIXP_DBL fAddSaturate(const FIXP_DBL a, const FIXP_DBL b)
 
 /*****************************************************************************
 
- array for 1/n, n=1..50
+ array for 1/n, n=1..80
 
 ****************************************************************************/
 
-  extern const FIXP_DBL invCount[50];
+  extern const FIXP_DBL invCount[80];
 
   LNK_SECTION_INITCODE
   inline void InitInvInt(void) {}
@@ -450,14 +450,14 @@ inline FIXP_DBL fAddSaturate(const FIXP_DBL a, const FIXP_DBL b)
 
 /**
  * \brief Calculate the value of 1/i where i is a integer value. It supports
- *        input values from 1 upto 50.
+ *        input values from 1 upto 80.
  * \param intValue Integer input value.
  * \param FIXP_DBL representation of 1/intValue
  */
 inline FIXP_DBL GetInvInt(int intValue)
 {
-  FDK_ASSERT((intValue > 0) && (intValue < 50));
-  FDK_ASSERT(intValue<50);
+  FDK_ASSERT((intValue > 0) && (intValue < 80));
+  FDK_ASSERT(intValue<80);
 	return invCount[intValue];
 }
 

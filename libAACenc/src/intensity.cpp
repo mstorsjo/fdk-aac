@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2014 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -325,7 +325,6 @@ FDKaacEnc_prepareIntensityDecision(const FIXP_DBL    *sfbEnergyLeft,
 
       channelCorr[sfb + sfboffs] = FL2FXCONST_DBL(0.0f);
 
-      FDK_ASSERT(50 >= 49);
       /* max width of scalefactorband is 96; width's are always even */
       /* inv_n is scaled with factor 2 to compensate fMultDiv2() in subsequent loops */
       inv_n = GetInvInt((sfbOffset[sfb + sfboffs + 1] - sfbOffset[sfb + sfboffs])>>1);
