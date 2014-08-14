@@ -96,7 +96,7 @@ amm-info@iis.fraunhofer.de
 #if defined(__CC_ARM) || defined(__arm__) || defined(_M_ARM)	/* cppp replaced: elif */
 #include "arm/cplx_mul.h"
 
-#elif defined(__GNUC__) && defined(__mips__)	/* cppp replaced: elif */
+#elif defined(__GNUC__) && defined(__mips__) && __mips_isa_rev < 6
 #include "mips/cplx_mul.h"
 
 #endif /* #if defined all cores: bfin, arm, etc. */
