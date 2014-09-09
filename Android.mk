@@ -53,6 +53,11 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/libSBRdec/include \
         $(LOCAL_PATH)/libSBRenc/include
 
+# In tpdec_asc.cpp: address of array 'pPce->FrontElementIsCpe'
+# will always evaluate to 'true'.
+LOCAL_CPPFLAGS += \
+        -Wno-pointer-bool-conversion
+
 LOCAL_MODULE:= libFraunhoferAAC
 
 include $(BUILD_STATIC_LIBRARY)
