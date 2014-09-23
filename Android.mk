@@ -55,7 +55,7 @@ LOCAL_C_INCLUDES := \
 
 # In tpdec_asc.cpp: address of array 'pPce->FrontElementIsCpe'
 # will always evaluate to 'true'.
-LOCAL_CPPFLAGS += \
+LOCAL_CLANG_CPPFLAGS += \
         -Wno-pointer-bool-conversion
 
 LOCAL_MODULE:= libFraunhoferAAC
