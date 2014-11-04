@@ -130,6 +130,7 @@ MPEGTPENC_SRC = \
     libMpegTPEnc/src/tpenc_lib.cpp
 
 PCMUTILS_SRC = \
+    libPCMutils/src/limiter.cpp \
     libPCMutils/src/pcmutils_lib.cpp
 
 SBRDEC_SRC = \
