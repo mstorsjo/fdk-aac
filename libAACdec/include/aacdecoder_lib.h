@@ -348,6 +348,10 @@ Where N equals to CStreamInfo::frameSize .
 
 #include "genericStds.h"
 
+#define AACDECODER_LIB_VL0 2
+#define AACDECODER_LIB_VL1 5
+#define AACDECODER_LIB_VL2 10
+
 /**
  * \brief  AAC decoder error codes.
  */
