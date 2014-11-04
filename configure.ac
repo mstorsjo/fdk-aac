@@ -26,7 +26,7 @@ AC_SEARCH_LIBS([sin], [m])
 dnl soname version to use
 dnl goes by ‘current[:revision[:age]]’ with the soname ending up as
 dnl current.age.revision
-FDK_AAC_VERSION=0:4:0
+FDK_AAC_VERSION=1:0:0
 
 AS_IF([test x$enable_shared = xyes], [LIBS_PRIVATE=$LIBS], [LIBS_PUBLIC=$LIBS])
 AC_SUBST(FDK_AAC_VERSION)
