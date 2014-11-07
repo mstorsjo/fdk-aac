@@ -144,10 +144,9 @@ to allocate memory for the required structures, and the corresponding mpegFileRe
 files and to de-allocate associated structures. mpegFileRead_Open() tries to detect the bitstream format and
 in case of MPEG-4 file format or Raw Packets file format (a Fraunhofer IIS proprietary format) reads the Audio
 Specific Config data (ASC). An unsuccessful attempt to recognize the bitstream format requires the user to
-provide this information manually (see \ref CommandLineUsage). For any other bitstream formats that are
-usually applicable in streaming applications, the decoder itself will try to synchronize and parse the given
-bitstream fragment using the FDK transport library. Hence, for streaming applications (without file access)
-this step is not necessary.
+provide this information manually. For any other bitstream formats that are usually applicable in streaming
+applications, the decoder itself will try to synchronize and parse the given bitstream fragment using the
+FDK transport library. Hence, for streaming applications (without file access) this step is not necessary.
 
 -# Call aacDecoder_Open() to open and retrieve a handle to a new AAC decoder instance.
 \dontinclude main.cpp
@@ -430,21 +429,68 @@ typedef enum {
 typedef enum
 {
   AAC_PCM_OUTPUT_INTERLEAVED              = 0x0000,  /*!< PCM output mode (1: interleaved (default); 0: not interleaved). */
-  AAC_PCM_OUTPUT_CHANNELS                 = 0x0001,  /*!< Number of PCM output channels (if different from encoded audio channels, downmixing or
-                                                          upmixing is applied). \n
-                                                          -1: Disable up-/downmixing. The decoder output contains the same number of channels as the
-                                                              encoded bitstream. \n
-                                                           1: The decoder performs a mono matrix mix-down if the encoded audio channels are greater
-                                                              than one. Thus it ouputs always exact one channel. \n
-                                                           2: The decoder performs a stereo matrix mix-down if the encoded audio channels are greater
-                                                              than two. If the encoded audio channels are smaller than two the decoder duplicates the
-                                                              output. Thus it ouputs always exact two channels. \n */
-  AAC_PCM_DUAL_CHANNEL_OUTPUT_MODE        = 0x0002,  /*!< Defines how the decoder processes two channel signals:
-                                                          0: Leave both signals as they are (default).
-                                                          1: Create a dual mono output signal from channel 1.
-                                                          2: Create a dual mono output signal from channel 2.
+  AAC_PCM_DUAL_CHANNEL_OUTPUT_MODE        = 0x0002,  /*!< Defines how the decoder processes two channel signals: \n
+                                                          0: Leave both signals as they are (default). \n
+                                                          1: Create a dual mono output signal from channel 1. \n
+                                                          2: Create a dual mono output signal from channel 2. \n
                                                           3: Create a dual mono output signal by mixing both channels (L' = R' = 0.5*Ch1 + 0.5*Ch2). */
   AAC_PCM_OUTPUT_CHANNEL_MAPPING          = 0x0003,  /*!< Output buffer channel ordering. 0: MPEG PCE style order, 1: WAV file channel order (default). */
+  AAC_PCM_LIMITER_ENABLE                  = 0x0004,  /*!< Enable signal level limiting. \n
+                                                          -1: Auto-config. Enable limiter for all non-lowdelay configurations by default. \n
+                                                           0: Disable limiter in general. \n
+                                                           1: Enable limiter always.
+                                                          It is recommended to call the decoder with a AACDEC_CLRHIST flag to reset all states when
+                                                          the limiter switch is changed explicitly. */
+  AAC_PCM_LIMITER_ATTACK_TIME             = 0x0005,  /*!< Signal level limiting attack time in ms.
+                                                          Default confguration is 15 ms. Adjustable range from 1 ms to 15 ms. */
+  AAC_PCM_LIMITER_RELEAS_TIME             = 0x0006,  /*!< Signal level limiting release time in ms.
+                                                          Default configuration is 50 ms. Adjustable time must be larger than 0 ms. */
+  AAC_PCM_MIN_OUTPUT_CHANNELS             = 0x0011,  /*!< Minimum number of PCM output channels. If higher than the number of encoded audio channels,
+                                                          a simple channel extension is applied. \n
+                                                          -1, 0: Disable channel extenstion feature. The decoder output contains the same number of
+                                                                 channels as the encoded bitstream. \n
+                                                           1:    This value is currently needed only together with the mix-down feature. See
+                                                                 ::AAC_PCM_MAX_OUTPUT_CHANNELS and note 2 below. \n
+                                                           2:    Encoded mono signals will be duplicated to achieve a 2/0/0.0 channel output
+                                                                 configuration. \n
+                                                           6:    The decoder trys to reorder encoded signals with less than six channels to achieve
+                                                                 a 3/0/2.1 channel output signal. Missing channels will be filled with a zero signal.
+                                                                 If reordering is not possible the empty channels will simply be appended. Only
+                                                                 available if instance is configured to support multichannel output. \n
+                                                           8:    The decoder trys to reorder encoded signals with less than eight channels to
+                                                                 achieve a 3/0/4.1 channel output signal. Missing channels will be filled with a
+                                                                 zero signal. If reordering is not possible the empty channels will simply be
+                                                                 appended. Only available if instance is configured to support multichannel output.\n
+                                                          NOTE: \n
+                                                            1. The channel signalling (CStreamInfo::pChannelType and CStreamInfo::pChannelIndices)
+                                                               will not be modified. Added empty channels will be signalled with channel type
+                                                               AUDIO_CHANNEL_TYPE::ACT_NONE. \n
+                                                            2. If the parameter value is greater than that of ::AAC_PCM_MAX_OUTPUT_CHANNELS both will
+                                                               be set to the same value. \n
+                                                            3. This parameter does not affect MPEG Surround processing. */
+  AAC_PCM_MAX_OUTPUT_CHANNELS             = 0x0012,  /*!< Maximum number of PCM output channels. If lower than the number of encoded audio channels,
+                                                          downmixing is applied accordingly. If dedicated metadata is available in the stream it
+                                                          will be used to achieve better mixing results. \n
+                                                          -1, 0: Disable downmixing feature. The decoder output contains the same number of channels
+                                                                 as the encoded bitstream. \n
+                                                           1:    All encoded audio configurations with more than one channel will be mixed down to
+                                                                 one mono output signal. \n
+                                                           2:    The decoder performs a stereo mix-down if the number encoded audio channels is
+                                                                 greater than two. \n
+                                                           6:    If the number of encoded audio channels is greater than six the decoder performs a
+                                                                 mix-down to meet the target output configuration of 3/0/2.1 channels. Only
+                                                                 available if instance is configured to support multichannel output. \n
+                                                           8:    This value is currently needed only together with the channel extension feature.
+                                                                 See ::AAC_PCM_MIN_OUTPUT_CHANNELS and note 2 below. Only available if instance is
+                                                                 configured to support multichannel output. \n
+                                                          NOTE: \n
+                                                            1. Down-mixing of any seven or eight channel configuration not defined in ISO/IEC 14496-3
+                                                               PDAM 4 is not supported by this software version. \n
+                                                            2. If the parameter value is greater than zero but smaller than ::AAC_PCM_MIN_OUTPUT_CHANNELS
+                                                               both will be set to same value. \n
+                                                            3. The operating mode of the MPEG Surround module will be set accordingly. \n
+                                                            4. Setting this param with any value will disable the binaural processing of the MPEG
+                                                               Surround module (::AAC_MPEGS_BINAURAL_ENABLE=0). */
 
   AAC_CONCEAL_METHOD                      = 0x0100,  /*!< Error concealment: Processing method. \n
                                                           0: Spectral muting. \n
@@ -485,18 +531,18 @@ typedef enum
  */
 typedef struct
 {
-  /* These three members are the only really relevant ones for the user.                                                           */
+  /* These five members are the only really relevant ones for the user.                                                            */
   INT               sampleRate;          /*!< The samplerate in Hz of the fully decoded PCM audio signal (after SBR processing).   */
   INT               frameSize;           /*!< The frame size of the decoded PCM audio signal. \n
                                               1024 or 960 for AAC-LC \n
                                               2048 or 1920 for HE-AAC (v2) \n
                                               512 or 480 for AAC-LD and AAC-ELD                                                    */
   INT               numChannels;         /*!< The number of output audio channels in the decoded and interleaved PCM audio signal. */
-  AUDIO_CHANNEL_TYPE *pChannelType;       /*!< Audio channel type of each output audio channel.           */
-  UCHAR             *pChannelIndices;     /*!< Audio channel index for each output audio channel.
+  AUDIO_CHANNEL_TYPE *pChannelType;      /*!< Audio channel type of each output audio channel.                                     */
+  UCHAR             *pChannelIndices;    /*!< Audio channel index for each output audio channel.
                                                See ISO/IEC 13818-7:2005(E), 8.5.3.2 Explicit channel mapping using a program_config_element() */
   /* Decoder internal members. */
-  INT               aacSampleRate;       /*!< sampling rate in Hz without SBR (from configuration info).                           */
+  INT               aacSampleRate;       /*!< Sampling rate in Hz without SBR (from configuration info).                           */
   INT               profile;             /*!< MPEG-2 profile (from file header) (-1: not applicable (e. g. MPEG-4)).               */
   AUDIO_OBJECT_TYPE aot;                 /*!< Audio Object Type (from ASC): is set to the appropriate value for MPEG-2 bitstreams (e. g. 2 for AAC-LC). */
   INT               channelConfig;       /*!< Channel configuration (0: PCE defined, 1: mono, 2: stereo, ...                       */
@@ -509,7 +555,9 @@ typedef struct
   AUDIO_OBJECT_TYPE extAot;              /*!< Extension Audio Object Type (from ASC)   */
   INT               extSamplingRate;     /*!< Extension sampling rate in Hz (from ASC) */
 
-  UINT              flags;               /*!< Copy if internal flags. Only to be written by the decoder, and only to be read externally. */
+  UINT              outputDelay;         /*!< The number of samples the output is additionally delayed by the decoder. */
+
+  UINT              flags;               /*!< Copy of internal flags. Only to be written by the decoder, and only to be read externally. */
 
   SCHAR             epConfig;            /*!< epConfig level (from ASC): only level 0 supported, -1 means no ER (e. g. AOT=2, MPEG-2 AAC, etc.)  */
 
@@ -522,10 +570,25 @@ typedef struct
   UINT              numTotalAccessUnits; /*!< This is the number of total access units that have passed through the decoder. */
   UINT              numBadAccessUnits;   /*!< This is the number of total access units that were considered with errors from numTotalBytes. */
 
+  /* Metadata */
+  SCHAR             drcProgRefLev;       /*!< DRC program reference level. Defines the reference level below full-scale.
+                                              It is quantized in steps of 0.25dB. The valid values range from 0 (0 dBFS) to 127 (-31.75 dBFS).
+                                              It is used to reflect the average loudness of the audio in LKFS accoring to ITU-R BS 1770.
+                                              If no level has been found in the bitstream the value is -1. */
+  SCHAR             drcPresMode;         /*!< DRC presentation mode. According to ETSI TS 101 154, this field indicates whether
+                                              light (MPEG-4 Dynamic Range Control tool) or heavy compression (DVB heavy compression)
+                                              dynamic range control shall take priority on the outputs.
+                                              For details, see ETSI TS 101 154, table C.33. Possible values are: \n
+                                              -1: No corresponding metadata found in the bitstream \n
+                                               0: DRC presentation mode not indicated \n
+                                               1: DRC presentation mode 1 \n
+                                               2: DRC presentation mode 2 \n
+                                               3: Reserved */
+
 } CStreamInfo;
 
 
-typedef struct AAC_DECODER_INSTANCE *HANDLE_AACDECODER;
+typedef struct AAC_DECODER_INSTANCE *HANDLE_AACDECODER;  /*!< Pointer to a AAC decoder instance. */
 
 #ifdef __cplusplus
 extern "C"
@@ -634,11 +697,15 @@ aacDecoder_Fill ( HANDLE_AACDECODER  self,
                   const UINT         bufferSize[],
                   UINT              *bytesValid );
 
-#define AACDEC_CONCEAL  1 /*!< Flag for aacDecoder_DecodeFrame(): do not consider new input data. Do concealment. */
-#define AACDEC_FLUSH    2 /*!< Flag for aacDecoder_DecodeFrame(): Do not consider new input data. Flush filterbanks (output delayed audio). */
-#define AACDEC_INTR     4 /*!< Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data discontinuity. Resync any internals as necessary. */
-#define AACDEC_CLRHIST  8 /*!< Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and history buffers.
-                               Caution: This can cause discontinuities in the output signal. */
+#define AACDEC_CONCEAL  1 /*!< Flag for aacDecoder_DecodeFrame(): Trigger the built-in error concealment module \
+                                 to generate a substitute signal for one lost frame. New input data will not be
+                                 considered. */
+#define AACDEC_FLUSH    2 /*!< Flag for aacDecoder_DecodeFrame(): Flush all filterbanks to get all delayed audio \
+                                 without having new input data. Thus new input data will not be considered.*/
+#define AACDEC_INTR     4 /*!< Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data discontinuity. \
+                                 Resync any internals as necessary. */
+#define AACDEC_CLRHIST  8 /*!< Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and history buffers.\
+                                 CAUTION: This can cause discontinuities in the output signal. */
 
 /**
  * \brief            Decode one audio frame

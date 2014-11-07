@@ -90,6 +90,9 @@ amm-info@iis.fraunhofer.de
 
 #include "tpdec_lib.h"
 #include "tp_data.h"
+#ifdef TP_PCE_ENABLE
+#include "FDK_crc.h"
+#endif
 
 
 void CProgramConfig_Reset(CProgramConfig *pPce)
@@ -111,13 +114,75 @@ int  CProgramConfig_IsValid ( const CProgramConfig *pPce )
 }
 
 #ifdef TP_PCE_ENABLE
+#define PCE_HEIGHT_EXT_SYNC  ( 0xAC )
+
+/*
+ * Read the extension for height info.
+ * return 0 if successfull or -1 if the CRC failed.
+ */
+static
+int CProgramConfig_ReadHeightExt(
+                                  CProgramConfig *pPce,
+                                  HANDLE_FDK_BITSTREAM bs,
+                                  int * const bytesAvailable,
+                                  const UINT alignmentAnchor
+                                )
+{
+  int err = 0;
+  FDK_CRCINFO crcInfo;    /* CRC state info */
+  INT crcReg;
+  FDKcrcInit(&crcInfo, 0x07, 0xFF, 8);
+  crcReg = FDKcrcStartReg(&crcInfo, bs, 0);
+  UINT startAnchor = FDKgetValidBits(bs);
+
+  FDK_ASSERT(pPce != NULL);
+  FDK_ASSERT(bs != NULL);
+  FDK_ASSERT(bytesAvailable != NULL);
+
+  if ( (startAnchor >= 24) && (*bytesAvailable >= 3)
+    && (FDKreadBits(bs,8) == PCE_HEIGHT_EXT_SYNC) )
+  {
+    int i;
+
+    for (i=0; i < pPce->NumFrontChannelElements; i++)
+    {
+      pPce->FrontElementHeightInfo[i] = (UCHAR) FDKreadBits(bs,2);
+    }
+    for (i=0; i < pPce->NumSideChannelElements; i++)
+    {
+      pPce->SideElementHeightInfo[i] = (UCHAR) FDKreadBits(bs,2);
+    }
+    for (i=0; i < pPce->NumBackChannelElements; i++)
+    {
+      pPce->BackElementHeightInfo[i] = (UCHAR) FDKreadBits(bs,2);
+    }
+    FDKbyteAlign(bs, alignmentAnchor);
+
+    FDKcrcEndReg(&crcInfo, bs, crcReg);
+    if ((USHORT)FDKreadBits(bs,8) != FDKcrcGetCRC(&crcInfo)) {
+      /* CRC failed */
+      err = -1;
+    }
+  }
+  else {
+    /* No valid extension data found -> restore the initial bitbuffer state */
+    FDKpushBack(bs, startAnchor - FDKgetValidBits(bs));
+  }
+
+  /* Always report the bytes read. */
+  *bytesAvailable -= (startAnchor - FDKgetValidBits(bs)) >> 3;
+
+  return (err);
+}
+
 void CProgramConfig_Read(
                           CProgramConfig *pPce,
                           HANDLE_FDK_BITSTREAM bs,
                           UINT alignmentAnchor
                         )
 {
-  int i;
+  int i, err = 0;
+  int commentBytes;
 
   pPce->NumEffectiveChannels = 0;
   pPce->NumChannels = 0;
@@ -190,8 +255,12 @@ void CProgramConfig_Read(
   FDKbyteAlign(bs, alignmentAnchor);
 
   pPce->CommentFieldBytes = (UCHAR) FDKreadBits(bs,8);
+  commentBytes = pPce->CommentFieldBytes;
 
-  for (i=0; i < pPce->CommentFieldBytes; i++)
+  /* Search for height info extension and read it if available */
+  err = CProgramConfig_ReadHeightExt( pPce, bs, &commentBytes, alignmentAnchor );
+
+  for (i=0; i < commentBytes; i++)
   {
     UCHAR text;
 
@@ -203,7 +272,7 @@ void CProgramConfig_Read(
     }
   }
 
-  pPce->isValid = 1;
+  pPce->isValid = (err) ? 0 : 1;
 }
 
 /*
@@ -235,6 +304,10 @@ int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
       } else {
         int el, numCh1 = 0, numCh2 = 0;
         for (el = 0; el < pPce1->NumFrontChannelElements; el += 1) {
+          if (pPce1->FrontElementHeightInfo[el] != pPce2->FrontElementHeightInfo[el]) {
+            result = 2; /* different height info */
+            break;
+          }
           numCh1 += pPce1->FrontElementIsCpe[el] ? 2 : 1;
           numCh2 += pPce2->FrontElementIsCpe[el] ? 2 : 1;
         }
@@ -248,6 +321,10 @@ int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
       } else {
         int el, numCh1 = 0, numCh2 = 0;
         for (el = 0; el < pPce1->NumSideChannelElements; el += 1) {
+          if (pPce1->SideElementHeightInfo[el] != pPce2->SideElementHeightInfo[el]) {
+            result = 2; /* different height info */
+            break;
+          }
           numCh1 += pPce1->SideElementIsCpe[el] ? 2 : 1;
           numCh2 += pPce2->SideElementIsCpe[el] ? 2 : 1;
         }
@@ -261,6 +338,10 @@ int CProgramConfig_Compare ( const CProgramConfig * const pPce1,
       } else {
         int el, numCh1 = 0, numCh2 = 0;
         for (el = 0; el < pPce1->NumBackChannelElements; el += 1) {
+          if (pPce1->BackElementHeightInfo[el] != pPce2->BackElementHeightInfo[el]) {
+            result = 2; /* different height info */
+            break;
+          }
           numCh1 += pPce1->BackElementIsCpe[el] ? 2 : 1;
           numCh2 += pPce2->BackElementIsCpe[el] ? 2 : 1;
         }
@@ -290,6 +371,44 @@ void CProgramConfig_GetDefault( CProgramConfig *pPce,
 
   switch (channelConfig) {
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 32: /* 7.1 side channel configuration as defined in FDK_audio.h */
+    pPce->NumFrontChannelElements  = 2;
+    pPce->FrontElementIsCpe[0]     = 0;
+    pPce->FrontElementIsCpe[1]     = 1;
+    pPce->NumSideChannelElements   = 1;
+    pPce->SideElementIsCpe[0]      = 1;
+    pPce->NumBackChannelElements   = 1;
+    pPce->BackElementIsCpe[0]      = 1;
+    pPce->NumLfeChannelElements    = 1;
+    pPce->NumChannels              = 8;
+    pPce->NumEffectiveChannels     = 7;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 12:  /* 3/0/4.1ch surround back */
+    pPce->BackElementIsCpe[1]      = 1;
+    pPce->NumChannels             += 1;
+    pPce->NumEffectiveChannels    += 1;
+  case 11:  /* 3/0/3.1ch */
+    pPce->NumFrontChannelElements += 2;
+    pPce->FrontElementIsCpe[0]     = 0;
+    pPce->FrontElementIsCpe[1]     = 1;
+    pPce->NumBackChannelElements  += 2;
+    pPce->BackElementIsCpe[0]      = 1;
+    pPce->BackElementIsCpe[1]     += 0;
+    pPce->NumLfeChannelElements   += 1;
+    pPce->NumChannels             += 7;
+    pPce->NumEffectiveChannels    += 6;
+    pPce->isValid                  = 1;
+    break;
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  case 14:  /* 2/0/0-3/0/2-0.1ch front height */
+    pPce->FrontElementHeightInfo[2] = 1;      /* Top speaker */
+  case 7:   /* 5/0/2.1ch front */
+    pPce->NumFrontChannelElements += 1;
+    pPce->FrontElementIsCpe[2]     = 1;
+    pPce->NumChannels             += 2;
+    pPce->NumEffectiveChannels    += 2;
   case 6:   /* 3/0/2.1ch */
     pPce->NumLfeChannelElements   += 1;
     pPce->NumChannels             += 1;
@@ -348,10 +467,11 @@ void CProgramConfig_GetDefault( CProgramConfig *pPce,
 
 /**
  * \brief get implicit audio channel type for given channelConfig and MPEG ordered channel index
- * \param channelConfig MPEG channelConfiguration from 1 upto 7
+ * \param channelConfig MPEG channelConfiguration from 1 upto 14
  * \param index MPEG channel order index
  * \return audio channel type.
  */
+static
 void getImplicitAudioChannelTypeAndIndex(
         AUDIO_CHANNEL_TYPE *chType,
         UCHAR *chIndex,
@@ -364,9 +484,9 @@ void getImplicitAudioChannelTypeAndIndex(
     *chIndex = index;
   } else {
     switch (channelConfig) {
-      case MODE_1_2_1:
-      case MODE_1_2_2:
-      case MODE_1_2_2_1:
+      case 4:  /* SCE, CPE, SCE */
+      case 5:  /* SCE, CPE, CPE */
+      case 6:  /* SCE, CPE, CPE, LFE */
         switch (index) {
           case 3:
           case 4:
@@ -379,12 +499,12 @@ void getImplicitAudioChannelTypeAndIndex(
             break;
         }
         break;
-      case MODE_1_2_2_2_1:
+      case 7:  /* SCE,CPE,CPE,CPE,LFE */
         switch (index) {
           case 3:
           case 4:
-            *chType = ACT_SIDE;
-            *chIndex = index - 3;
+            *chType = ACT_FRONT;
+            *chIndex = index;
             break;
           case 5:
           case 6:
@@ -394,6 +514,42 @@ void getImplicitAudioChannelTypeAndIndex(
           case 7:
             *chType = ACT_LFE;
             *chIndex = 0;
+            break;
+        }
+        break;
+      case 11:  /* SCE,CPE,CPE,SCE,LFE */
+        if (index < 6) {
+          *chType = ACT_BACK;
+          *chIndex = index - 3;
+        } else {
+          *chType = ACT_LFE;
+          *chIndex = 0;
+        }
+        break;
+      case 12:  /* SCE,CPE,CPE,CPE,LFE */
+        if (index < 7) {
+          *chType = ACT_BACK;
+          *chIndex = index - 3;
+        } else {
+          *chType = ACT_LFE;
+          *chIndex = 0;
+        }
+        break;
+      case 14:  /* SCE,CPE,CPE,LFE,CPE */
+        switch (index) {
+          case 3:
+          case 4:
+            *chType = ACT_BACK;
+            *chIndex = index - 3;
+            break;
+          case 5:
+            *chType = ACT_LFE;
+            *chIndex = 0;
+            break;
+          case 6:
+          case 7:
+            *chType = ACT_FRONT_TOP;
+            *chIndex = index - 6;  /* handle the top layer independently */
             break;
         }
         break;
@@ -467,7 +623,24 @@ int CProgramConfig_LookupElement(
     else {
       /* Accept the additional channel(s), only if the tag is in the lists */
       int isCpe = 0, i;
-      int cc = 0, fc = 0, sc = 0, bc = 0, lc = 0, ec = 0; /* Channel and element counters */
+      /* Element counter */
+      int ec[PC_NUM_HEIGHT_LAYER] = {0};
+      /* Channel counters */
+      int cc[PC_NUM_HEIGHT_LAYER] = {0};
+      int fc[PC_NUM_HEIGHT_LAYER] = {0};
+      int sc[PC_NUM_HEIGHT_LAYER] = {0};
+      int bc[PC_NUM_HEIGHT_LAYER] = {0};
+      int lc = 0;;
+
+      /* General MPEG (PCE) composition rules:
+         - Over all:
+             <normal height channels><top height channels><bottom height channels>
+         - Within each height layer:
+             <front channels><side channels><back channels>
+         - Exception:
+             The LFE channels have no height info and thus they are arranged at the very
+             end of the normal height layer channels.
+       */
 
       switch (elType)
       {
@@ -476,87 +649,206 @@ int CProgramConfig_LookupElement(
       case ID_SCE:
         /* search in front channels */
         for (i = 0; i < pPce->NumFrontChannelElements; i++) {
+          int heightLayer = pPce->FrontElementHeightInfo[i];
           if (isCpe == pPce->FrontElementIsCpe[i] && pPce->FrontElementTagSelect[i] == tag) {
-            chMapping[cc] = channelIdx;
-            chType[cc] = ACT_FRONT;
-            chIndex[cc] = fc;
-            if (isCpe) {
-              chMapping[cc+1] = channelIdx+1;
-              chType[cc+1] = ACT_FRONT;
-              chIndex[cc+1] = fc+1;
+            int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
+            AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_FRONT);
+            for (h = heightLayer-1; h >= 0; h-=1) {
+              int el;
+              /* Count front channels/elements */
+              for (el = 0; el < pPce->NumFrontChannelElements; el+=1) {
+                if (pPce->FrontElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->FrontElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count side channels/elements */
+              for (el = 0; el < pPce->NumSideChannelElements; el+=1) {
+                if (pPce->SideElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->SideElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count back channels/elements */
+              for (el = 0; el < pPce->NumBackChannelElements; el+=1) {
+                if (pPce->BackElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->BackElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              if (h == 0) {  /* normal height */
+                elIdx += pPce->NumLfeChannelElements;
+                chIdx += pPce->NumLfeChannelElements;
+              }
             }
-            *elMapping = ec;
+            chMapping[chIdx] = channelIdx;
+            chType[chIdx] = aChType;
+            chIndex[chIdx] = fc[heightLayer];
+            if (isCpe) {
+              chMapping[chIdx+1] = channelIdx+1;
+              chType[chIdx+1] = aChType;
+              chIndex[chIdx+1] = fc[heightLayer]+1;
+            }
+            *elMapping = elIdx;
             return 1;
           }
-          ec++;
+          ec[heightLayer] += 1;
           if (pPce->FrontElementIsCpe[i]) {
-            cc+=2; fc+=2;
+            cc[heightLayer] += 2;
+            fc[heightLayer] += 2;
           } else {
-            cc++; fc++;
+            cc[heightLayer] += 1;
+            fc[heightLayer] += 1;
           }
         }
         /* search in side channels */
         for (i = 0; i < pPce->NumSideChannelElements; i++) {
+          int heightLayer = pPce->SideElementHeightInfo[i];
           if (isCpe == pPce->SideElementIsCpe[i] && pPce->SideElementTagSelect[i] == tag) {
-            chMapping[cc] = channelIdx;
-            chType[cc] = ACT_SIDE;
-            chIndex[cc] = sc;
-            if (isCpe) {
-              chMapping[cc+1] = channelIdx+1;
-              chType[cc+1] = ACT_SIDE;
-              chIndex[cc+1] = sc+1;
+            int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
+            AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_SIDE);
+            for (h = heightLayer-1; h >= 0; h-=1) {
+              int el;
+              /* Count front channels/elements */
+              for (el = 0; el < pPce->NumFrontChannelElements; el+=1) {
+                if (pPce->FrontElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->FrontElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count side channels/elements */
+              for (el = 0; el < pPce->NumSideChannelElements; el+=1) {
+                if (pPce->SideElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->SideElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count back channels/elements */
+              for (el = 0; el < pPce->NumBackChannelElements; el+=1) {
+                if (pPce->BackElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->BackElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              if (h == 0) {  /* LFE channels belong to the normal height layer */
+                elIdx += pPce->NumLfeChannelElements;
+                chIdx += pPce->NumLfeChannelElements;
+              }
             }
-            *elMapping = ec;
+            chMapping[chIdx] = channelIdx;
+            chType[chIdx] = aChType;
+            chIndex[chIdx] = sc[heightLayer];
+            if (isCpe) {
+              chMapping[chIdx+1] = channelIdx+1;
+              chType[chIdx+1] = aChType;
+              chIndex[chIdx+1] = sc[heightLayer]+1;
+            }
+            *elMapping = elIdx;
             return 1;
           }
-          ec++;
+          ec[heightLayer] += 1;
           if (pPce->SideElementIsCpe[i]) {
-            cc+=2; sc+=2;
+            cc[heightLayer] += 2;
+            sc[heightLayer] += 2;
           } else {
-            cc++; sc++;
+            cc[heightLayer] += 1;
+            sc[heightLayer] += 1;
           }
         }
         /* search in back channels */
         for (i = 0; i < pPce->NumBackChannelElements; i++) {
+          int heightLayer = pPce->BackElementHeightInfo[i];
           if (isCpe == pPce->BackElementIsCpe[i] && pPce->BackElementTagSelect[i] == tag) {
-            chMapping[cc] = channelIdx;
-            chType[cc] = ACT_BACK;
-            chIndex[cc] = bc;
-            if (isCpe) {
-              chMapping[cc+1] = channelIdx+1;
-              chType[cc+1] = ACT_BACK;
-              chIndex[cc+1] = bc+1;
+            int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
+            AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_BACK);
+            for (h = heightLayer-1; h >= 0; h-=1) {
+              int el;
+              /* Count front channels/elements */
+              for (el = 0; el < pPce->NumFrontChannelElements; el+=1) {
+                if (pPce->FrontElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->FrontElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count side channels/elements */
+              for (el = 0; el < pPce->NumSideChannelElements; el+=1) {
+                if (pPce->SideElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->SideElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              /* Count back channels/elements */
+              for (el = 0; el < pPce->NumBackChannelElements; el+=1) {
+                if (pPce->BackElementHeightInfo[el] == h) {
+                  elIdx += 1;
+                  chIdx += (pPce->BackElementIsCpe[el]) ? 2 : 1;
+                }
+              }
+              if (h == 0) {  /* normal height */
+                elIdx += pPce->NumLfeChannelElements;
+                chIdx += pPce->NumLfeChannelElements;
+              }
             }
-            *elMapping = ec;
+            chMapping[chIdx] = channelIdx;
+            chType[chIdx] = aChType;
+            chIndex[chIdx] = bc[heightLayer];
+            if (isCpe) {
+              chMapping[chIdx+1] = channelIdx+1;
+              chType[chIdx+1] = aChType;
+              chIndex[chIdx+1] = bc[heightLayer]+1;
+            }
+            *elMapping = elIdx;
             return 1;
           }
-          ec++;
+          ec[heightLayer] += 1;
           if (pPce->BackElementIsCpe[i]) {
-            cc+=2; bc+=2;
+            cc[heightLayer] += 2;
+            bc[heightLayer] += 2;
           } else {
-            cc++; bc++;
+            cc[heightLayer] += 1;
+            bc[heightLayer] += 1;
           }
         }
         break;
 
       case ID_LFE:
-        /* Initialize channel counter and element counter */
-        cc = pPce->NumEffectiveChannels;
-        ec = pPce->NumFrontChannelElements+ pPce->NumSideChannelElements + pPce->NumBackChannelElements;
+      { /* Unfortunately we have to go through all normal height
+           layer elements to get the position of the LFE channels.
+           Start with counting the front channels/elements at normal height */
+        for (i = 0; i < pPce->NumFrontChannelElements; i+=1) {
+          int heightLayer = pPce->FrontElementHeightInfo[i];
+          ec[heightLayer] += 1;
+          cc[heightLayer] += (pPce->FrontElementIsCpe[i]) ? 2 : 1;
+        }
+        /* Count side channels/elements at normal height */
+        for (i = 0; i < pPce->NumSideChannelElements; i+=1) {
+          int heightLayer = pPce->SideElementHeightInfo[i];
+          ec[heightLayer] += 1;
+          cc[heightLayer] += (pPce->SideElementIsCpe[i]) ? 2 : 1;
+        }
+        /* Count back channels/elements at normal height */
+        for (i = 0; i < pPce->NumBackChannelElements; i+=1) {
+          int heightLayer = pPce->BackElementHeightInfo[i];
+          ec[heightLayer] += 1;
+          cc[heightLayer] += (pPce->BackElementIsCpe[i]) ? 2 : 1;
+        }
+
         /* search in lfe channels */
         for (i = 0; i < pPce->NumLfeChannelElements; i++) {
+          int elIdx = ec[0];  /* LFE channels belong to the normal height layer */
+          int chIdx = cc[0];
           if ( pPce->LfeElementTagSelect[i] == tag ) {
-            chMapping[cc] = channelIdx;
-            *elMapping = ec;
-            chType[cc] = ACT_LFE;
-            chIndex[cc] = lc;
+            chMapping[chIdx] = channelIdx;
+            *elMapping = elIdx;
+            chType[chIdx] = ACT_LFE;
+            chIndex[chIdx] = lc;
             return 1;
           }
-          ec++;
-          cc++;
-          lc++;
+          ec[0] += 1;
+          cc[0] += 1;
+          lc += 1;
         }
-        break;
+      } break;
 
       /* Non audio elements */
       case ID_CCE:
@@ -590,13 +882,19 @@ int CProgramConfig_LookupElement(
 int CProgramConfig_GetElementTable(
         const CProgramConfig *pPce,
         MP4_ELEMENT_ID  elList[],
-        const INT elListSize
+        const INT elListSize,
+        UCHAR *pChMapIdx
        )
 {
   int i, el = 0;
 
-  if ( elListSize 
-    < pPce->NumFrontChannelElements + pPce->NumSideChannelElements + pPce->NumBackChannelElements + pPce->NumLfeChannelElements 
+  FDK_ASSERT(elList != NULL);
+  FDK_ASSERT(pChMapIdx != NULL);
+
+  *pChMapIdx = 0;
+
+  if ( elListSize
+    < pPce->NumFrontChannelElements + pPce->NumSideChannelElements + pPce->NumBackChannelElements + pPce->NumLfeChannelElements
     )
   {
     return 0;
@@ -622,6 +920,47 @@ int CProgramConfig_GetElementTable(
     elList[el++] = ID_LFE;
   }
 
+
+  /* Find an corresponding channel configuration if possible */
+  switch (pPce->NumChannels) {
+  case 1: case 2: case 3: case 4: case 5: case 6:
+    /* One and two channels have no alternatives. The other ones are mapped directly to the
+       corresponding channel config. Because of legacy reasons or for lack of alternative mappings. */
+    *pChMapIdx = pPce->NumChannels;
+    break;
+  case 7:
+    {
+      C_ALLOC_SCRATCH_START(tmpPce, CProgramConfig, 1);
+      /* Create a PCE for the config to test ... */
+      CProgramConfig_GetDefault(tmpPce, 11);
+      /* ... and compare it with the given one. */
+      *pChMapIdx = (!(CProgramConfig_Compare(pPce, tmpPce)&0xE)) ? 11 : 0;
+      /* If compare result is 0 or 1 we can be sure that it is channel config 11. */
+      C_ALLOC_SCRATCH_END(tmpPce, CProgramConfig, 1);
+    }
+    break;
+  case 8:
+    { /* Try the four possible 7.1ch configurations. One after the other. */
+      UCHAR testCfg[4] = { 32, 14, 12, 7};
+      C_ALLOC_SCRATCH_START(tmpPce, CProgramConfig, 1);
+      for (i=0; i<4; i+=1) {
+        /* Create a PCE for the config to test ... */
+        CProgramConfig_GetDefault(tmpPce, testCfg[i]);
+        /* ... and compare it with the given one. */
+        if (!(CProgramConfig_Compare(pPce, tmpPce)&0xE)) {
+          /* If the compare result is 0 or 1 than the two channel configurations match. */
+          /* Explicit mapping of 7.1 side channel configuration to 7.1 rear channel mapping. */
+          *pChMapIdx = (testCfg[i]==32) ? 12 : testCfg[i];
+        }
+      }
+      C_ALLOC_SCRATCH_END(tmpPce, CProgramConfig, 1);
+    }
+    break;
+  default:
+    /* The PCE does not match any predefined channel configuration. */
+    *pChMapIdx = 0;
+    break;
+  }
 
   return el;
 }
@@ -714,7 +1053,7 @@ TRANSPORTDEC_ERROR GaSpecificConfig_Parse( CSGaSpecificConfig    *self,
 #ifdef TP_ELD_ENABLE
 
 static INT ld_sbr_header( const CSAudioSpecificConfig *asc,
-                           HANDLE_FDK_BITSTREAM hBs, 
+                           HANDLE_FDK_BITSTREAM hBs,
                            CSTpCallBacks *cb )
 {
   const int channelConfiguration = asc->m_channelConfiguration;
@@ -728,6 +1067,8 @@ static INT ld_sbr_header( const CSAudioSpecificConfig *asc,
   }
 
   switch ( channelConfiguration ) {
+    case 14:
+    case 12:
     case 7:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 6:
@@ -737,6 +1078,8 @@ static INT ld_sbr_header( const CSAudioSpecificConfig *asc,
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
       break;
 
+    case 11:
+      error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
     case 4:
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_CPE, i++);
       error |= cb->cbSbr(cb->cbSbrData, hBs, asc->m_samplingFrequency, asc->m_extensionSamplingFrequency, asc->m_samplesPerFrame, AOT_ER_AAC_ELD, ID_SCE, i++);
@@ -802,24 +1145,6 @@ TRANSPORTDEC_ERROR EldSpecificConfig_Parse(
     }
 
     switch (eldExtType) {
-      case ELDEXT_LDSAC:
-        esc->m_useLdQmfTimeAlign = 1;
-        if (cb->cbSsc != NULL) {
-          ErrorStatus = (TRANSPORTDEC_ERROR)cb->cbSsc(
-                  cb->cbSscData,
-                  hBs,
-                  asc->m_aot,
-                  asc->m_samplingFrequency,
-                  1,  /* muxMode */
-                  len
-                  );
-        } else {
-          ErrorStatus = TRANSPORTDEC_UNSUPPORTED_FORMAT;
-        }
-        if (ErrorStatus != TRANSPORTDEC_OK) {
-          goto bail;
-        }
-        break;
       default:
         for(cnt=0; cnt<len; cnt++) {
           FDKreadBits(hBs, 8 );

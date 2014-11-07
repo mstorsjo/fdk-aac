@@ -177,11 +177,12 @@ extern const USHORT randomSign[AAC_NF_NO_RANDOM_VAL/16];
 extern const FIXP_DBL pow2_div24minus1[47];
 extern const int offsetTab[2][16];
 
-/* Channel mapping indices for time domain I/O. First dimension is channel count-1. */
-extern const UCHAR channelMappingTablePassthrough[8][8];
-extern const UCHAR channelMappingTableWAV[8][8];
+/* Channel mapping indices for time domain I/O.
+   The first dimension is the channel configuration index. */
+extern const UCHAR channelMappingTablePassthrough[15][8];
+extern const UCHAR channelMappingTableWAV[15][8];
 
 /* Lookup tables for elements in ER bitstream */
-extern const MP4_ELEMENT_ID elementsTab[8][7];
+extern const MP4_ELEMENT_ID elementsTab[15][7];
 
 #endif /* #ifndef AAC_ROM_H */

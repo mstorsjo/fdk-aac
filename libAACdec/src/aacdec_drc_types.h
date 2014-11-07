@@ -124,6 +124,7 @@ typedef struct
 {
   UINT   excludedChnsMask;
   SCHAR  progRefLevel;
+  SCHAR  presMode;     /* Presentation mode: 0 (not indicated), 1, 2, and 3 (reserved). */
   SCHAR  pceInstanceTag;
 
   CDrcChannelData channelData;
@@ -140,6 +141,7 @@ typedef struct
   UINT   expiryFrame;
   SCHAR  targetRefLevel;
   UCHAR  bsDelayEnable;
+  UCHAR  applyDigitalNorm;
   UCHAR  applyHeavyCompression;
 
 } CDrcParams;
@@ -155,9 +157,11 @@ typedef struct
   USHORT numPayloads;                        /* The number of DRC data payload elements found within frame */
   USHORT numThreads;                         /* The number of DRC data threads extracted from the found payload elements */
   SCHAR  progRefLevel;                       /* Program reference level for all channels */
+  UCHAR  progRefLevelPresent;                /* Program reference level found in bitstream */
 
   UINT   prlExpiryCount;                     /* Counter that can be used to monitor the life time of the program reference level. */
 
+  SCHAR  presMode;                            /* Presentation mode as defined in ETSI TS 101 154 */
   UCHAR  dvbAncDataAvailable;                  /* Flag that indicates whether DVB ancillary data is present or not */
   UINT   dvbAncDataPosition;                   /* Used to store the DVB ancillary data payload position in the bitstream (only one per frame) */
   UINT   drcPayloadPosition[MAX_DRC_THREADS];  /* Used to store the DRC payload positions in the bitstream */

@@ -762,7 +762,6 @@ int
   CConcealment_UpdateState( hConcealmentInfo,
                             frameOk );
 
-  if ( !frameOk )
   {
     /* Create data for signal rendering according to the selected concealment method and decoder operating mode. */
 
@@ -775,11 +774,13 @@ int
       {
       default:
       case ConcealMethodMute:
-        /* Mute spectral data in case of errors */
-        FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, samplesPerFrame * sizeof(FIXP_DBL));
-        /* Set last window shape */
-        pAacDecoderChannelInfo->icsInfo.WindowShape = hConcealmentInfo->windowShape;
-        appliedProcessing = 1;
+        if (!frameOk) {
+          /* Mute spectral data in case of errors */
+          FDKmemclear(pAacDecoderChannelInfo->pSpectralCoefficient, samplesPerFrame * sizeof(FIXP_DBL));
+          /* Set last window shape */
+          pAacDecoderChannelInfo->icsInfo.WindowShape = hConcealmentInfo->windowShape;
+          appliedProcessing = 1;
+        }
         break;
 
       case ConcealMethodNoise:
@@ -801,7 +802,7 @@ int
                                    pSamplingRateInfo,
                                    samplesPerFrame,
                                    0,  /* don't use tonal improvement */
-                                   0);
+                                   frameOk);
         break;
 
       }

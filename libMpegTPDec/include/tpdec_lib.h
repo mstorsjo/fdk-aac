@@ -151,6 +151,7 @@ typedef enum {
 #define PC_ASSOCDATA_MAX    8
 #define PC_CCEL_MAX         16 /* CC elements */
 #define PC_COMMENTLENGTH    256
+#define PC_NUM_HEIGHT_LAYER 3
 
 
 /*!
@@ -239,14 +240,20 @@ int CProgramConfig_LookupElement(
         );
 
 /**
- * \brief        Get table of elements in canonical order.
- * \param pPce   A valid program config structure.
- * \param table  An array where the element IDs are stored.
- * \return       Total element count including all SCE, CPE and LFE.
+ * \brief             Get table of elements in canonical order from a
+ *                    give program config field.
+ * \param pPce        A valid program config structure.
+ * \param table       An array where the element IDs are stored.
+ * \param elListSize  The length of the table array.
+ * \param pChMapIdx   Pointer to a field receiving the corresponding
+ *                    implicit channel configuration index of the given
+ *                    PCE. If none can be found it receives the value 0.
+ * \return            Total element count including all SCE, CPE and LFE.
  */
 int CProgramConfig_GetElementTable( const CProgramConfig *pPce,
                                     MP4_ELEMENT_ID  table[],
-                                    const INT elListSize );
+                                    const INT elListSize,
+                                    UCHAR *pChMapIdx );
 
 /**
  * \brief       Initialize a given AudioSpecificConfig structure.

@@ -1777,42 +1777,62 @@ const FIXP_TCC FDKaacDec_tnsCoeff4 [16] =
 };
 
 /* MPEG like mapping (no change). */
-const UCHAR channelMappingTablePassthrough[8][8] =
+const UCHAR channelMappingTablePassthrough[15][8] =
 {
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  fallback  */
      { 0,  1,255,255,255,255,255,255},  /*  mono / PS */
      { 0,  1,255,255,255,255,255,255},  /*  stereo    */
      { 0,  1,  2,255,255,255,255,255},  /*  3ch       */
      { 0,  1,  2,  3,255,255,255,255},  /*  4ch       */
      { 0,  1,  2,  3,  4,255,255,255},  /*  5ch       */
      { 0,  1,  2,  3,  4,  5,255,255},  /*  5.1ch     */
-     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  7ch       */
-     { 0,  1,  2,  3,  4,  5,  6,  7}   /*  7.1ch     */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  7.1 front */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,255},  /*  6.1ch     */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  7.1 rear  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,  7}   /*  7.1 top   */
 };
 
 /* WAV file like mapping (from MPEG mapping). */
-const UCHAR channelMappingTableWAV[8][8] =
+const UCHAR channelMappingTableWAV[15][8] =
 {
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  fallback  */
      { 0,  1,255,255,255,255,255,255},  /*  mono / PS */
      { 0,  1,255,255,255,255,255,255},  /*  stereo    */
      { 2,  0,  1,255,255,255,255,255},  /*  3ch       */
      { 2,  0,  1,  3,255,255,255,255},  /*  4ch       */
      { 2,  0,  1,  3,  4,255,255,255},  /*  5ch       */
      { 2,  0,  1,  4,  5,  3,255,255},  /*  5.1ch     */
-     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  7ch       */
-     { 2,  0,  1,  6,  7,  4,  5,  3}   /*  7.1ch     */
+     { 2,  6,  7,  0,  1,  4,  5,  3},  /*  7.1 front */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 2,  0,  1,  4,  5,  6,  3,255},  /*  6.1ch     */
+     { 2,  0,  1,  6,  7,  4,  5,  3},  /*  7.1 rear  */
+     { 0,  1,  2,  3,  4,  5,  6,  7},  /*  reserved  */
+     { 2,  0,  1,  4,  5,  3,  6,  7}   /*  7.1 top   */
 };
 
 /* Lookup tables for elements in ER bitstream */
-const MP4_ELEMENT_ID elementsTab[8][7] =
+const MP4_ELEMENT_ID elementsTab[15][7] =
 {
-  {ID_SCE, ID_EXT, ID_END, ID_NONE, ID_NONE,ID_NONE,ID_NONE }, /* 1 channel  */
-  {ID_CPE, ID_EXT, ID_END, ID_NONE, ID_NONE,ID_NONE,ID_NONE }  /* 2 channels */
-  ,
-  {ID_SCE, ID_CPE, ID_EXT, ID_END, ID_NONE,ID_NONE,ID_NONE }, /* 3 channels */
-  {ID_SCE, ID_CPE, ID_SCE, ID_EXT, ID_END, ID_NONE,ID_NONE }, /* 4 channels */
-  {ID_SCE, ID_CPE, ID_CPE, ID_EXT, ID_END, ID_NONE,ID_NONE }, /* 5 channels */
-  {ID_SCE, ID_CPE, ID_CPE, ID_LFE, ID_EXT, ID_END, ID_NONE }, /* 6 channels */
-  {ID_SCE, ID_CPE, ID_CPE, ID_CPE, ID_LFE, ID_EXT, ID_END}    /* 8 channels */
+ /*  1 */  { ID_SCE,  ID_EXT,  ID_END,  ID_NONE, ID_NONE, ID_NONE, ID_NONE }, /* 1 channel  */
+ /*  2 */  { ID_CPE,  ID_EXT,  ID_END,  ID_NONE, ID_NONE, ID_NONE, ID_NONE }  /* 2 channels */
+ /*  3 */ ,{ ID_SCE,  ID_CPE,  ID_EXT,  ID_END,  ID_NONE, ID_NONE, ID_NONE }, /* 3 channels */
+ /*  4 */  { ID_SCE,  ID_CPE,  ID_SCE,  ID_EXT,  ID_END,  ID_NONE, ID_NONE }, /* 4 channels */
+ /*  5 */  { ID_SCE,  ID_CPE,  ID_CPE,  ID_EXT,  ID_END,  ID_NONE, ID_NONE }, /* 5 channels */
+ /*  6 */  { ID_SCE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_EXT,  ID_END,  ID_NONE }  /* 6 channels */
+ /*  7 */ ,{ ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_EXT,  ID_END  },  /* 8 channels */
+ /*  8 */  { ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE },  /* reserved   */
+ /*  9 */  { ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE },  /* reserved   */
+ /* 10 */  { ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE },  /* reserved   */
+ /* 11 */  { ID_SCE,  ID_CPE,  ID_CPE,  ID_SCE,  ID_LFE,  ID_EXT,  ID_END  },  /* 7 channels */
+ /* 12 */  { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_EXT,  ID_END  },  /* 8 channels */
+ /* 13 */  { ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE },  /* reserved   */
+ /* 14 */  { ID_SCE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_CPE,  ID_EXT,  ID_END  }   /* 8 channels */
 };
 
 /*! Random sign bit used for concealment

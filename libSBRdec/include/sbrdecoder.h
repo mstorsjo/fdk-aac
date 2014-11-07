@@ -145,6 +145,8 @@ typedef enum
   SBR_SYSTEM_BITSTREAM_DELAY,          /*!< System: Switch to enable an additional SBR bitstream delay of one frame. */
   SBR_QMF_MODE,                        /*!< Set QMF mode, either complex or low power. */
   SBR_LD_QMF_TIME_ALIGN,               /*!< Set QMF type, either LD-MPS or CLDFB. Relevant for ELD streams only. */
+  SBR_FLUSH_DATA,                      /*!< Set internal state to flush the decoder with the next process call. */
+  SBR_CLEAR_HISTORY,                   /*!< Clear all internal states (delay lines, QMF states, ...). */
   SBR_BS_INTERRUPTION                  /*!< Signal bit stream interruption. Value is ignored. */
 } SBRDEC_PARAM;
 
@@ -308,7 +310,7 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER    self,
                              INT_PCM             *timeData,
                              int                 *numChannels,
                              int                 *sampleRate,
-                             const UCHAR          channelMapping[(6)],
+                             const UCHAR          channelMapping[(8)],
                              const int            interleaved,
                              const int            coreDecodedOk,
                              UCHAR               *psDecoded );
@@ -328,6 +330,13 @@ SBR_ERROR sbrDecoder_Close ( HANDLE_SBRDECODER *self );
  * \return      0 on success, -1 if invalid handle or if no free element is available to write information to.
  */
 INT sbrDecoder_GetLibInfo( LIB_INFO *info );    
+
+/**
+ * \brief       Determine the modules output signal delay in samples.
+ * \param self  SBR decoder handle.
+ * \return      The number of samples signal delay added by the module.
+ */
+UINT sbrDecoder_GetDelay( const HANDLE_SBRDECODER self );
 
 
 #ifdef __cplusplus

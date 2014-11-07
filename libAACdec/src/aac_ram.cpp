@@ -108,15 +108,15 @@ C_ALLOC_MEM(AacDecoder, AAC_DECODER_INSTANCE, 1)
 /*! The structure CAacDecoderStaticChannelInfo contains the static sideinfo which is needed
     for the decoding of one aac channel. <br>
     Dimension: #AacDecoderChannels                                                      */
-C_ALLOC_MEM2(AacDecoderStaticChannelInfo, CAacDecoderStaticChannelInfo, 1, (6))
+C_ALLOC_MEM2(AacDecoderStaticChannelInfo, CAacDecoderStaticChannelInfo, 1, (8))
 
 /*! The structure CAacDecoderChannelInfo contains the dynamic sideinfo which is needed
     for the decoding of one aac channel. <br>
     Dimension: #AacDecoderChannels                                                      */
-C_ALLOC_MEM2(AacDecoderChannelInfo, CAacDecoderChannelInfo, 1, (6))
+C_AALLOC_MEM2(AacDecoderChannelInfo, CAacDecoderChannelInfo, 1, (8))
 
 /*! Overlap buffer */
-C_ALLOC_MEM2(OverlapBuffer, FIXP_DBL, OverlapBufferSize, (6))
+C_ALLOC_MEM2(OverlapBuffer, FIXP_DBL, OverlapBufferSize, (8))
 
 C_ALLOC_MEM(DrcInfo, CDrcInfo, 1)
 
@@ -128,7 +128,7 @@ C_ALLOC_MEM(DrcInfo, CDrcInfo, 1)
   Dynamic memory areas, might be reused in other algorithm sections,
   e.g. the sbr decoder
 */
-C_ALLOC_MEM_OVERLAY(WorkBufferCore2, FIXP_DBL, ((6)*1024), SECT_DATA_L2, WORKBUFFER2_TAG)
+C_ALLOC_MEM_OVERLAY(WorkBufferCore2, FIXP_DBL, ((8)*1024), SECT_DATA_L2, WORKBUFFER2_TAG)
 
 
 C_ALLOC_MEM_OVERLAY(WorkBufferCore1, CWorkBufferCore1, 1, SECT_DATA_L1, WORKBUFFER1_TAG)

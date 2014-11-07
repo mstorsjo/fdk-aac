@@ -179,6 +179,9 @@ typedef FREQ_BAND_DATA *HANDLE_FREQ_BAND_DATA;
 #define SBRDEC_LOW_POWER      16  /* Flag indicating that Low Power QMF mode shall be used. */
 #define SBRDEC_PS_DECODED     32  /* Flag indicating that PS was decoded and rendered. */
 #define SBRDEC_LD_MPS_QMF    512  /* Flag indicating that the LD-MPS QMF shall be used. */
+#define SBRDEC_DOWNSAMPLE   8192  /* Flag indicating that the downsampling mode is used. */
+#define SBRDEC_FLUSH       16384  /* Flag is used to flush all elements in use. */
+#define SBRDEC_FORCE_RESET 32768  /* Flag is used to force a reset of all elements in use. */
 
 #define SBRDEC_HDR_STAT_RESET  1
 #define SBRDEC_HDR_STAT_UPDATE 2

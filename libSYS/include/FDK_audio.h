@@ -232,6 +232,14 @@ typedef enum
 
 } AUDIO_OBJECT_TYPE;
 
+#define IS_USAC(aot) \
+  ((aot) == AOT_USAC \
+|| (aot) == AOT_RSVD50)
+
+#define IS_LOWDELAY(aot) \
+  ((aot) == AOT_ER_AAC_LD \
+|| (aot) == AOT_ER_AAC_ELD)
+
 /** Channel Mode ( 1-7 equals MPEG channel configurations, others are arbitrary). */
 typedef enum {
   MODE_INVALID                  = -1,
@@ -263,17 +271,29 @@ typedef enum {
 
 } CHANNEL_MODE;
 
-/** Speaker description tags */
+/**
+ * Speaker description tags.
+ * Do not change the enumeration values unless it keeps the following segmentation:
+ * - Bit 0-3: Horizontal postion (0: none, 1: front, 2: side, 3: back, 4: lfe)
+ * - Bit 4-7: Vertical position (0: normal, 1: top, 2: bottom)
+ */
 typedef enum {
-  ACT_NONE,
-  ACT_FRONT,
-  ACT_SIDE,
-  ACT_BACK,
-  ACT_LFE,
-  ACT_FRONT_TOP,
-  ACT_SIDE_TOP,
-  ACT_BACK_TOP,
-  ACT_TOP /* Ts */
+  ACT_NONE         = 0x00,
+  ACT_FRONT        = 0x01,  /*!< Front speaker position (at normal height) */
+  ACT_SIDE         = 0x02,  /*!< Side speaker position (at normal height) */
+  ACT_BACK         = 0x03,  /*!< Back speaker position (at normal height) */
+  ACT_LFE          = 0x04,  /*!< Low frequency effect speaker postion (front) */
+
+  ACT_TOP          = 0x10,  /*!< Top speaker area (for combination with speaker positions) */
+  ACT_FRONT_TOP    = 0x11,  /*!< Top front speaker = (ACT_FRONT|ACT_TOP) */
+  ACT_SIDE_TOP     = 0x12,  /*!< Top side speaker  = (ACT_SIDE |ACT_TOP) */
+  ACT_BACK_TOP     = 0x13,  /*!< Top back speaker  = (ACT_BACK |ACT_TOP) */
+
+  ACT_BOTTOM       = 0x20,  /*!< Bottom speaker area (for combination with speaker positions) */
+  ACT_FRONT_BOTTOM = 0x21,  /*!< Bottom front speaker = (ACT_FRONT|ACT_BOTTOM) */
+  ACT_SIDE_BOTTOM  = 0x22,  /*!< Bottom side speaker  = (ACT_SIDE |ACT_BOTTOM) */
+  ACT_BACK_BOTTOM  = 0x23   /*!< Bottom back speaker  = (ACT_BACK |ACT_BOTTOM) */
+
 } AUDIO_CHANNEL_TYPE;
 
 typedef enum

@@ -107,19 +107,19 @@ amm-info@iis.fraunhofer.de
 /*! SBR Decoder main structure */
 C_ALLOC_MEM(Ram_SbrDecoder, struct SBR_DECODER_INSTANCE, 1)
 /*! SBR Decoder element data  <br>
-  Dimension: (4) */
-C_ALLOC_MEM2(Ram_SbrDecElement, SBR_DECODER_ELEMENT, 1, (4))
+  Dimension: (8) */
+C_ALLOC_MEM2(Ram_SbrDecElement, SBR_DECODER_ELEMENT, 1, (8))
 /*! SBR Decoder individual channel data  <br>
-  Dimension: (6) */
-C_ALLOC_MEM2(Ram_SbrDecChannel, SBR_CHANNEL, 1, (6)+1)
+  Dimension: (8) */
+C_ALLOC_MEM2(Ram_SbrDecChannel, SBR_CHANNEL, 1, (8)+1)
 
 /*! Filter states for QMF-synthesis.  <br>
-  Dimension: #(6) * (#QMF_FILTER_STATE_SYN_SIZE-#(64)) */
-C_AALLOC_MEM2_L(Ram_sbr_QmfStatesSynthesis, FIXP_QSS, (640)-(64), (6)+1, SECT_DATA_L1)
+  Dimension: #(8) * (#QMF_FILTER_STATE_SYN_SIZE-#(64)) */
+C_AALLOC_MEM2_L(Ram_sbr_QmfStatesSynthesis, FIXP_QSS, (640)-(64), (8)+1, SECT_DATA_L1)
 
 /*! Delayed spectral data needed for the dynamic framing of SBR.
   For mp3PRO, 1/3 of a frame is buffered (#(6) 6) */
-C_AALLOC_MEM2(Ram_sbr_OverlapBuffer, FIXP_DBL, 2 * (6) * (64), (6)+1)
+C_AALLOC_MEM2(Ram_sbr_OverlapBuffer, FIXP_DBL, 2 * (6) * (64), (8)+1)
 
 /*! Static Data of PS */
 
