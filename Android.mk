@@ -39,7 +39,6 @@ LOCAL_SRC_FILES := \
         $(sbrdec_sources:%=libSBRdec/src/%) \
         $(sbrenc_sources:%=libSBRenc/src/%)
 
-LOCAL_CFLAGS := -DANDROID
 LOCAL_CFLAGS += -Wno-sequence-point -Wno-extra
 
 LOCAL_C_INCLUDES := \
@@ -57,6 +56,8 @@ LOCAL_C_INCLUDES := \
 # will always evaluate to 'true'.
 LOCAL_CLANG_CPPFLAGS += \
         -Wno-pointer-bool-conversion
+
+LOCAL_CPPFLAGS += -std=c++98
 
 LOCAL_MODULE:= libFraunhoferAAC
 
