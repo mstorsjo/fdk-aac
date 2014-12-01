@@ -449,13 +449,13 @@ void CProgramConfig_GetDefault( CProgramConfig *pPce,
     int el, elTagSce = 0, elTagCpe = 0;
 
     for (el = 0; el < pPce->NumFrontChannelElements; el += 1) {
-      pPce->FrontElementTagSelect[el] = (pPce->FrontElementIsCpe) ? elTagCpe++ : elTagSce++;
+      pPce->FrontElementTagSelect[el] = (pPce->FrontElementIsCpe[el]) ? elTagCpe++ : elTagSce++;
     }
     for (el = 0; el < pPce->NumSideChannelElements; el += 1) {
-      pPce->SideElementTagSelect[el] = (pPce->SideElementIsCpe) ? elTagCpe++ : elTagSce++;
+      pPce->SideElementTagSelect[el] = (pPce->SideElementIsCpe[el]) ? elTagCpe++ : elTagSce++;
     }
     for (el = 0; el < pPce->NumBackChannelElements; el += 1) {
-      pPce->BackElementTagSelect[el] = (pPce->BackElementIsCpe) ? elTagCpe++ : elTagSce++;
+      pPce->BackElementTagSelect[el] = (pPce->BackElementIsCpe[el]) ? elTagCpe++ : elTagSce++;
     }
     elTagSce = 0;
     for (el = 0; el < pPce->NumLfeChannelElements; el += 1) {
