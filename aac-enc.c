@@ -24,7 +24,7 @@
 #include "wavreader.h"
 
 void usage(const char* name) {
-	fprintf(stderr, "%s [-r bitrate] [-t aot] [-a afterburner] [-s sbr] [-v vbr] in.wav out.aac\n", name);
+	fprintf(stderr, "%s [-r bitrate] [-t aot] [-a afterburner] [-s sbr] [-v vbr] [-d drop] in.wav out.aac\n", name);
 	fprintf(stderr, "Supported AOTs:\n");
 	fprintf(stderr, "\t2\tAAC-LC\n");
 	fprintf(stderr, "\t5\tHE-AAC\n");
@@ -47,10 +47,11 @@ int main(int argc, char *argv[]) {
 	int afterburner = 1;
 	int eld_sbr = 0;
 	int vbr = 0;
+	int drop = 0;
 	HANDLE_AACENCODER handle;
 	CHANNEL_MODE mode;
 	AACENC_InfoStruct info = { 0 };
-	while ((ch = getopt(argc, argv, "r:t:a:s:v:")) != -1) {
+	while ((ch = getopt(argc, argv, "r:t:a:s:v:d:")) != -1) {
 		switch (ch) {
 		case 'r':
 			bitrate = atoi(optarg);
@@ -66,6 +67,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'v':
 			vbr = atoi(optarg);
+			break;
+		case 'd':
+			drop = atoi(optarg);
 			break;
 		case '?':
 		default:
@@ -171,6 +175,14 @@ int main(int argc, char *argv[]) {
 	input_size = channels*2*info.frameLength;
 	input_buf = (uint8_t*) malloc(input_size);
 	convert_buf = (int16_t*) malloc(input_size);
+
+	while (drop > 0) {
+		int n = drop;
+		if (n > info.frameLength)
+			n = info.frameLength;
+		wav_read_data(wav, input_buf, channels * 2 * n);
+		drop -= n;
+	}
 
 	while (1) {
 		AACENC_BufDesc in_buf = { 0 }, out_buf = { 0 };
