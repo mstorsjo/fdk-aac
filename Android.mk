@@ -57,4 +57,6 @@ LOCAL_CPPFLAGS += -std=c++98
 
 LOCAL_MODULE:= libFraunhoferAAC
 
+LOCAL_CLANG:= false
+
 include $(BUILD_STATIC_LIBRARY)
