@@ -116,7 +116,7 @@ amm-info@iis.fraunhofer.de
 
 
 /* Include OS/System specific implementations. */
-#if defined(__linux__)	/* cppp replaced: elif */
+#if defined(__linux__) && !defined(__ANDROID__) /* cppp replaced: elif */
   #include "linux/genericStds_linux.cpp"
 #endif
 
