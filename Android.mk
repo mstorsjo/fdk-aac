@@ -1,31 +1,31 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-aacdec_sources := $(wildcard $(LOCAL_PATH)/libAACdec/src/*.cpp)
+aacdec_sources := $(sort $(wildcard $(LOCAL_PATH)/libAACdec/src/*.cpp))
 aacdec_sources := $(aacdec_sources:$(LOCAL_PATH)/libAACdec/src/%=%)
 
-aacenc_sources := $(wildcard $(LOCAL_PATH)/libAACenc/src/*.cpp)
+aacenc_sources := $(sort $(wildcard $(LOCAL_PATH)/libAACenc/src/*.cpp))
 aacenc_sources := $(aacenc_sources:$(LOCAL_PATH)/libAACenc/src/%=%)
 
-pcmutils_sources := $(wildcard $(LOCAL_PATH)/libPCMutils/src/*.cpp)
+pcmutils_sources := $(sort $(wildcard $(LOCAL_PATH)/libPCMutils/src/*.cpp))
 pcmutils_sources := $(pcmutils_sources:$(LOCAL_PATH)/libPCMutils/src/%=%)
 
-fdk_sources := $(wildcard $(LOCAL_PATH)/libFDK/src/*.cpp)
+fdk_sources := $(sort $(wildcard $(LOCAL_PATH)/libFDK/src/*.cpp))
 fdk_sources := $(fdk_sources:$(LOCAL_PATH)/libFDK/src/%=%)
 
-sys_sources := $(wildcard $(LOCAL_PATH)/libSYS/src/*.cpp)
+sys_sources := $(sort $(wildcard $(LOCAL_PATH)/libSYS/src/*.cpp))
 sys_sources := $(sys_sources:$(LOCAL_PATH)/libSYS/src/%=%)
 
-mpegtpdec_sources := $(wildcard $(LOCAL_PATH)/libMpegTPDec/src/*.cpp)
+mpegtpdec_sources := $(sort $(wildcard $(LOCAL_PATH)/libMpegTPDec/src/*.cpp))
 mpegtpdec_sources := $(mpegtpdec_sources:$(LOCAL_PATH)/libMpegTPDec/src/%=%)
 
-mpegtpenc_sources := $(wildcard $(LOCAL_PATH)/libMpegTPEnc/src/*.cpp)
+mpegtpenc_sources := $(sort $(wildcard $(LOCAL_PATH)/libMpegTPEnc/src/*.cpp))
 mpegtpenc_sources := $(mpegtpenc_sources:$(LOCAL_PATH)/libMpegTPEnc/src/%=%)
 
-sbrdec_sources := $(wildcard $(LOCAL_PATH)/libSBRdec/src/*.cpp)
+sbrdec_sources := $(sort $(wildcard $(LOCAL_PATH)/libSBRdec/src/*.cpp))
 sbrdec_sources := $(sbrdec_sources:$(LOCAL_PATH)/libSBRdec/src/%=%)
 
-sbrenc_sources := $(wildcard $(LOCAL_PATH)/libSBRenc/src/*.cpp)
+sbrenc_sources := $(sort $(wildcard $(LOCAL_PATH)/libSBRenc/src/*.cpp))
 sbrenc_sources := $(sbrenc_sources:$(LOCAL_PATH)/libSBRenc/src/%=%)
 
 LOCAL_SRC_FILES := \
