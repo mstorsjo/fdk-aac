@@ -89,7 +89,7 @@ amm-info@iis.fraunhofer.de
 ******************************************************************************/
 
 
-#if defined(__GNUC__) && defined(__mips__) && __mips_isa_rev < 6
+#if defined(__GNUC__) && defined(__mips_isa_rev) && __mips_isa_rev < 6
 
 
 //#define FUNCTION_cplxMultDiv2_32x16
