@@ -112,8 +112,13 @@ amm-info@iis.fraunhofer.de
 #define AACDECODER_LIB_VL1 5
 #define AACDECODER_LIB_VL2 10
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
+#ifdef __ANDROID__
+#define AACDECODER_LIB_BUILD_DATE ""
+#define AACDECODER_LIB_BUILD_TIME ""
+#else
 #define AACDECODER_LIB_BUILD_DATE __DATE__
 #define AACDECODER_LIB_BUILD_TIME __TIME__
+#endif
 
 static AAC_DECODER_ERROR
 setConcealMethod ( const HANDLE_AACDECODER  self,
