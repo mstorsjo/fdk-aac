@@ -1268,8 +1268,13 @@ TRANSPORTDEC_ERROR transportDec_GetLibInfo( LIB_INFO *info )
   info += i;
 
   info->module_id  = FDK_TPDEC;
+#ifdef __ANDROID__
+  info->build_date = "";
+  info->build_time = "";
+#else
   info->build_date = __DATE__;
   info->build_time = __TIME__;
+#endif
   info->title      = TP_LIB_TITLE;
   info->version    = LIB_VERSION(TP_LIB_VL0, TP_LIB_VL1, TP_LIB_VL2);
   LIB_VERSION_STRING(info);
