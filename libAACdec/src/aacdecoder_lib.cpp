@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+Â© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur FÃ¶rderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1002,8 +1002,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
             (self->limiterEnableCurr) ? &pcmLimiterScale : NULL
       );
     if (dmxErr == PCMDMX_INVALID_MODE) {
-      /* Announce the framework that the current combination of channel configuration and downmix
-       * settings are not know to produce a predictable behavior and thus maybe produce strange output. */
+      /* Tell the framework that the current combination of channel configuration and downmix
+       * settings are not known to produce a predictable behavior and thus may produce strange output. */
       ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
     }
 
