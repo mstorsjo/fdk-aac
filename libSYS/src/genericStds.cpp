@@ -101,8 +101,13 @@ amm-info@iis.fraunhofer.de
 #define SYS_LIB_VL1 3
 #define SYS_LIB_VL2 6
 #define SYS_LIB_TITLE "System Integration Library"
+#ifdef __ANDROID__
+#define SYS_LIB_BUILD_DATE ""
+#define SYS_LIB_BUILD_TIME ""
+#else
 #define SYS_LIB_BUILD_DATE __DATE__
 #define SYS_LIB_BUILD_TIME __TIME__
+#endif
 
   #include <stdlib.h>
   #include <stdio.h>

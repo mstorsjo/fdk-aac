@@ -88,7 +88,7 @@ amm-info@iis.fraunhofer.de
                 expansion in the PCM time domain.
 
 *******************************************************************************/
-
+#include <log/log.h>
 #include "pcmutils_lib.h"
 
 #include "genericStds.h"
@@ -150,8 +150,13 @@ amm-info@iis.fraunhofer.de
 #define PCMDMX_LIB_VL1 4
 #define PCMDMX_LIB_VL2 2
 #define PCMDMX_LIB_TITLE "PCM Downmix Lib"
+#ifdef __ANDROID__
+#define PCMDMX_LIB_BUILD_DATE ""
+#define PCMDMX_LIB_BUILD_TIME ""
+#else
 #define PCMDMX_LIB_BUILD_DATE __DATE__
 #define PCMDMX_LIB_BUILD_TIME __TIME__
+#endif
 
 
 /* Fixed and unique channel group indices.
@@ -2073,7 +2078,10 @@ PCMDMX_ERROR pcmDmx_ApplyFrame (
           map[ch++]  = inCh;
         }
       }
-      FDK_ASSERT(ch == numInChannels);
+      if (ch != numInChannels) {
+          ALOGE("b/23876444");
+          return PCMDMX_INVALID_ARGUMENT;
+      }
 
       /* Remove unused cols from factor matrix */
       for (inCh=0; inCh < numInChannels; inCh+=1) {
