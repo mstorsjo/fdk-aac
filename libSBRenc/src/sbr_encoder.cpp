@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 3
-#define SBRENCODER_LIB_VL2 4
+#define SBRENCODER_LIB_VL2 6
 
 
 
@@ -170,7 +170,6 @@ getSbrTuningTableIndex(UINT bitrate,    /*! the total bitrate in bits/sec */
 {
   int i, bitRateClosestLowerIndex=-1, bitRateClosestUpperIndex=-1, found = 0;
   UINT bitRateClosestUpper = 0, bitRateClosestLower=DISTANCE_CEIL_VALUE;
-  int isforThisCodec=0;
 
   #define isForThisCore(i) \
     ( ( sbrTuningTable[i].coreCoder == CODEC_AACLD && core == AOT_ER_AAC_ELD ) || \
@@ -854,7 +853,7 @@ FDKsbrEnc_EnvEncodeFrame(HANDLE_SBR_ENCODER   hEnvEncoder,
                          int                  clearOutput              /*!< Do not consider any input signal */
                         )
 {
-  HANDLE_SBR_ELEMENT hSbrElement = hEnvEncoder->sbrElement[iElement];
+  HANDLE_SBR_ELEMENT hSbrElement = NULL;
   FDK_CRCINFO  crcInfo;
   INT    crcReg;
   INT    ch;

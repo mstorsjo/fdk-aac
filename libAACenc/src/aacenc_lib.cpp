@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 12
+#define AACENCODER_LIB_VL2 14
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #ifdef __ANDROID__
 #define AACENCODER_LIB_BUILD_DATE ""
@@ -303,7 +303,7 @@ static AACENC_ERROR eldSbrConfigurator(
     int i, cfgIdx = -1;
     const ULONG channelBitrate = totalBitrate / FDKaacEnc_GetChannelModeConfiguration(channelMode)->nChannelsEff;
 
-    for (i=0; i<(sizeof(eldSbrAutoConfigTab)/sizeof(ELD_SBR_CONFIGURATOR)); i++) {
+    for (i=0; i<(int)(sizeof(eldSbrAutoConfigTab)/sizeof(ELD_SBR_CONFIGURATOR)); i++) {
       if ( (samplingRate <= eldSbrAutoConfigTab[i].samplingRate)
         && (channelBitrate >= eldSbrAutoConfigTab[i].bitrateRange) )
       {
@@ -914,7 +914,7 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     }
     else {
       /* SBR ratio has been set by the user, so use it. */
-      hAacConfig->sbrRatio = config->userSbrRatio;
+      hAacConfig->sbrRatio = isSbrActive(hAacConfig) ? config->userSbrRatio : 0;
     }
 
     {
@@ -1998,7 +1998,7 @@ AACENC_ERROR aacEncoder_SetParam(
         break;
     case AACENC_METADATA_MODE:
         if ((UINT)settings->userMetaDataMode != value) {
-            if ( !((value>=0) && (value<=2)) ) {
+            if ( !(((INT)value>=0) && ((INT)value<=2)) ) {
                 err = AACENC_INVALID_CONFIG;
                 break;
             }

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -93,7 +93,7 @@ amm-info@iis.fraunhofer.de
 /*
    Huffman Tables
 */
-const INT FDKaacEnc_huff_ltab1_2[3][3][3][3]=
+const ULONG FDKaacEnc_huff_ltab1_2[3][3][3][3]=
 {
   {
     { {0x000b0009,0x00090007,0x000b0009}, {0x000a0008,0x00070006,0x000a0008}, {0x000b0009,0x00090008,0x000b0009} },
@@ -113,7 +113,7 @@ const INT FDKaacEnc_huff_ltab1_2[3][3][3][3]=
 };
 
 
-const INT FDKaacEnc_huff_ltab3_4[3][3][3][3]=
+const ULONG FDKaacEnc_huff_ltab3_4[3][3][3][3]=
 {
   {
     { {0x00010004,0x00040005,0x00080008}, {0x00040005,0x00050004,0x00080008}, {0x00090009,0x00090008,0x000a000b} },
@@ -132,7 +132,7 @@ const INT FDKaacEnc_huff_ltab3_4[3][3][3][3]=
   }
 };
 
-const INT FDKaacEnc_huff_ltab5_6[9][9]=
+const ULONG FDKaacEnc_huff_ltab5_6[9][9]=
 {
   {0x000d000b, 0x000c000a, 0x000b0009, 0x000b0009, 0x000a0009, 0x000b0009, 0x000b0009, 0x000c000a, 0x000d000b},
   {0x000c000a, 0x000b0009, 0x000a0008, 0x00090007, 0x00080007, 0x00090007, 0x000a0008, 0x000b0009, 0x000c000a},
@@ -145,7 +145,7 @@ const INT FDKaacEnc_huff_ltab5_6[9][9]=
   {0x000d000b, 0x000c000a, 0x000c0009, 0x000b0009, 0x000a0009, 0x000a0009, 0x000b0009, 0x000c000a, 0x000d000b}
 };
 
-const INT FDKaacEnc_huff_ltab7_8[8][8]=
+const ULONG FDKaacEnc_huff_ltab7_8[8][8]=
 {
   {0x00010005, 0x00030004, 0x00060005, 0x00070006, 0x00080007, 0x00090008, 0x000a0009, 0x000b000a},
   {0x00030004, 0x00040003, 0x00060004, 0x00070005, 0x00080006, 0x00080007, 0x00090007, 0x00090008},
@@ -157,7 +157,7 @@ const INT FDKaacEnc_huff_ltab7_8[8][8]=
   {0x000b000a, 0x000a0008, 0x000a0008, 0x000a0008, 0x000b0009, 0x000b0009, 0x000c0009, 0x000c000a}
 };
 
-const INT FDKaacEnc_huff_ltab9_10[13][13]=
+const ULONG FDKaacEnc_huff_ltab9_10[13][13]=
 {
   {0x00010006, 0x00030005, 0x00060006, 0x00080006, 0x00090007, 0x000a0008, 0x000a0009, 0x000b000a, 0x000b000a, 0x000c000a, 0x000c000b, 0x000d000b, 0x000d000c},
   {0x00030005, 0x00040004, 0x00060004, 0x00070005, 0x00080006, 0x00080007, 0x00090007, 0x000a0008, 0x000a0008, 0x000a0009, 0x000b000a, 0x000c000a, 0x000c000b},
@@ -392,7 +392,7 @@ const USHORT FDKaacEnc_huff_ctab11[21][17]=
   {0x0046, 0x00ea, 0x0034, 0x00ea, 0x0011, 0x001b, 0x00a9, 0x0094, 0x00e2, 0x0031, 0x00d0, 0x00e5, 0x0007, 0x0070, 0x0069, 0x003e, 0x0021}
 };
 
-const INT FDKaacEnc_huff_ctabscf[121]=
+const ULONG FDKaacEnc_huff_ctabscf[121]=
 {
   0x0003ffe8, 0x0003ffe6, 0x0003ffe7, 0x0003ffe5, 0x0007fff5, 0x0007fff1, 0x0007ffed, 0x0007fff6,
   0x0007ffee, 0x0007ffef, 0x0007fff0, 0x0007fffc, 0x0007fffd, 0x0007ffff, 0x0007fffe, 0x0007fff7,
@@ -657,11 +657,11 @@ const SFB_PARAM_SHORT p_FDKaacEnc_96000_short_128 = {
 */
 const FIXP_DBL FDKaacEnc_tnsEncCoeff3[8]=
 {
-  0x81f1d201, 0x91261481, 0xadb92301, 0xd438af00, 0x00000000, 0x37898080, 0x64130dff, 0x7cca6fff
+  (FIXP_DBL)0x81f1d201, (FIXP_DBL)0x91261481, (FIXP_DBL)0xadb92301, (FIXP_DBL)0xd438af00, (FIXP_DBL)0x00000000, (FIXP_DBL)0x37898080, (FIXP_DBL)0x64130dff, (FIXP_DBL)0x7cca6fff
 };
 const FIXP_DBL FDKaacEnc_tnsCoeff3Borders[8]={
-  0x80000001 /*-4*/,  0x87b826df /*-3*/,  0x9df24154 /*-2*/,  0xbfffffe5 /*-1*/,
-  0xe9c5e578 /* 0*/,  0x1c7b90f0 /* 1*/,  0x4fce83a9 /* 2*/,  0x7352f2c3 /* 3*/
+  (FIXP_DBL)0x80000001 /*-4*/,  (FIXP_DBL)0x87b826df /*-3*/,  (FIXP_DBL)0x9df24154 /*-2*/,  (FIXP_DBL)0xbfffffe5 /*-1*/,
+  (FIXP_DBL)0xe9c5e578 /* 0*/,  (FIXP_DBL)0x1c7b90f0 /* 1*/,  (FIXP_DBL)0x4fce83a9 /* 2*/,  (FIXP_DBL)0x7352f2c3 /* 3*/
 };
 
 /*
@@ -669,15 +669,15 @@ const FIXP_DBL FDKaacEnc_tnsCoeff3Borders[8]={
 */
 const FIXP_DBL FDKaacEnc_tnsEncCoeff4[16]=
 {
-  0x808bc881, 0x84e2e581, 0x8d6b4a01, 0x99da9201, 0xa9c45701, 0xbc9dde81, 0xd1c2d500, 0xe87ae540,
-  0x00000000, 0x1a9cd9c0, 0x340ff240, 0x4b3c8bff, 0x5f1f5e7f, 0x6ed9eb7f, 0x79bc387f, 0x7f4c7e7f
+  (FIXP_DBL)0x808bc881, (FIXP_DBL)0x84e2e581, (FIXP_DBL)0x8d6b4a01, (FIXP_DBL)0x99da9201, (FIXP_DBL)0xa9c45701, (FIXP_DBL)0xbc9dde81, (FIXP_DBL)0xd1c2d500, (FIXP_DBL)0xe87ae540,
+  (FIXP_DBL)0x00000000, (FIXP_DBL)0x1a9cd9c0, (FIXP_DBL)0x340ff240, (FIXP_DBL)0x4b3c8bff, (FIXP_DBL)0x5f1f5e7f, (FIXP_DBL)0x6ed9eb7f, (FIXP_DBL)0x79bc387f, (FIXP_DBL)0x7f4c7e7f
 };
 const FIXP_DBL FDKaacEnc_tnsCoeff4Borders[16]=
 {
-  0x80000001 /*-8*/,  0x822deff0 /*-7*/,  0x88a4bfe6 /*-6*/,  0x932c159d /*-5*/,
-  0xa16827c2 /*-4*/,  0xb2dcde27 /*-3*/,  0xc6f20b91 /*-2*/,  0xdcf89c64 /*-1*/,
-  0xf4308ce1 /* 0*/,  0x0d613054 /* 1*/,  0x278dde80 /* 2*/,  0x4000001b /* 3*/,
-  0x55a6127b /* 4*/,  0x678dde8f /* 5*/,  0x74ef0ed7 /* 6*/,  0x7d33f0da /* 7*/
+  (FIXP_DBL)0x80000001 /*-8*/,  (FIXP_DBL)0x822deff0 /*-7*/,  (FIXP_DBL)0x88a4bfe6 /*-6*/,  (FIXP_DBL)0x932c159d /*-5*/,
+  (FIXP_DBL)0xa16827c2 /*-4*/,  (FIXP_DBL)0xb2dcde27 /*-3*/,  (FIXP_DBL)0xc6f20b91 /*-2*/,  (FIXP_DBL)0xdcf89c64 /*-1*/,
+  (FIXP_DBL)0xf4308ce1 /* 0*/,  (FIXP_DBL)0x0d613054 /* 1*/,  (FIXP_DBL)0x278dde80 /* 2*/,  (FIXP_DBL)0x4000001b /* 3*/,
+  (FIXP_DBL)0x55a6127b /* 4*/,  (FIXP_DBL)0x678dde8f /* 5*/,  (FIXP_DBL)0x74ef0ed7 /* 6*/,  (FIXP_DBL)0x7d33f0da /* 7*/
 };
 const FIXP_DBL FDKaacEnc_mTab_4_3Elc[512]={
   FL2FXCONST_DBL(0.3968502629920499),FL2FXCONST_DBL(0.3978840634868335),FL2FXCONST_DBL(0.3989185359354711),FL2FXCONST_DBL(0.3999536794661432),
