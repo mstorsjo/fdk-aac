@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -158,21 +158,6 @@ amm-info@iis.fraunhofer.de
 #include "conceal.h"
 
 
-
-#define CAN_DO_PS(aot) \
-  ((aot) == AOT_AAC_LC \
-|| (aot) == AOT_SBR \
-|| (aot) == AOT_PS \
-|| (aot) == AOT_ER_BSAC \
-|| (aot) == AOT_DRM_AAC)
-
-#define IS_USAC(aot) \
-  ((aot) == AOT_USAC \
-|| (aot) == AOT_RSVD50)
-
-#define IS_LOWDELAY(aot) \
-  ((aot) == AOT_ER_AAC_LD \
-|| (aot) == AOT_ER_AAC_ELD)
 
 void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
 {

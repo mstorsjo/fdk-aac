@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -296,6 +296,7 @@ CreateStreamMuxConfig(
 
   USHORT coreFrameOffset=0;
 
+  hAss->taraBufferFullness  = 0xFF;
   hAss->audioMuxVersionA    = 0; /* for future extensions */
   hAss->streamMuxConfigBits = 0;
 
@@ -339,13 +340,7 @@ CreateStreamMuxConfig(
             hAss->streamMuxConfigBits+=1;
           }
           if( (useSameConfig == 0) || (transLayer==0) ) {
-            UINT bits;
-
-            if ( hAss->audioMuxVersion == 1 ) {
-              FDKpushFor(hBs, 2); /* align to ASC, even if we do not know the length of the "ascLen" field yet */
-            }
-
-            bits = FDKgetValidBits( hBs );
+            const UINT alignAnchor = FDKgetValidBits(hBs);
 
             transportEnc_writeASC(
                     hBs,
@@ -353,19 +348,24 @@ CreateStreamMuxConfig(
                     cb
                     );
 
-            bits = FDKgetValidBits( hBs ) - bits;
-
             if ( hAss->audioMuxVersion == 1 ) {
-              FDKpushBack(hBs, bits+2);
-              hAss->streamMuxConfigBits += transportEnc_LatmWriteValue( hBs, bits );
+              UINT ascLen = transportEnc_LatmWriteValue(hBs, 0);
+              FDKbyteAlign(hBs, alignAnchor);
+              ascLen = FDKgetValidBits(hBs) - alignAnchor - ascLen;
+              FDKpushBack(hBs, FDKgetValidBits(hBs) - alignAnchor);
+
+              transportEnc_LatmWriteValue(hBs, ascLen);
+
               transportEnc_writeASC(
                       hBs,
                       hAss->config[prog][layer],
                       cb
                       );
+
+              FDKbyteAlign(hBs, alignAnchor); /* asc length fillbits */
             }
 
-            hAss->streamMuxConfigBits += bits; /* add asc length to smc summary */
+            hAss->streamMuxConfigBits += FDKgetValidBits(hBs) - alignAnchor; /* add asc length to smc summary */
           }
           transLayer++;
 
@@ -384,7 +384,6 @@ CreateStreamMuxConfig(
           case AOT_ER_AAC_LD     :
           case AOT_ER_AAC_ELD    :
           case AOT_USAC:
-          case AOT_RSVD50:
             p_linfo->frameLengthType = 0;
 
             FDKwriteBits( hBs, p_linfo->frameLengthType, 3 );                        /* frameLengthType */

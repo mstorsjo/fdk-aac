@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 3
-#define SBRENCODER_LIB_VL2 6
+#define SBRENCODER_LIB_VL2 8
 
 
 
@@ -1552,12 +1552,6 @@ INT FDKsbrEnc_EnvInit (
   hSbrElement->sbrConfigData.sbrSyntaxFlags = 0;
 
   switch (aot) {
-  case AOT_DRM_MPEG_PS:
-  case AOT_DRM_SBR:
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_SCALABLE;
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_DRM_CRC;
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_CRC;
-    break;
   case AOT_ER_AAC_ELD:
     hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_LOW_DELAY;
     break;
@@ -1847,7 +1841,7 @@ INT sbrEncoder_Init(
 
 
 
-    if ( (aot==AOT_PS) || (aot==AOT_MP2_PS) || (aot==AOT_DABPLUS_PS) || (aot==AOT_DRM_MPEG_PS) ) {
+    if ( (aot==AOT_PS) ) {
         usePs = 1;
     }
     if ( (aot==AOT_ER_AAC_ELD) ) {

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1100,7 +1100,6 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, c
       }
       break;
 
-    case TT_RSVD50:
     case TT_MP4_ADTS:
     case TT_MP4_LOAS:
       err = transportDec_readStream(hTp, layer);
