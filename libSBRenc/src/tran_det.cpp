@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -676,7 +676,7 @@ FDKsbrEnc_InitSbrTransientDetector(HANDLE_SBR_TRANSIENT_DETECTOR h_sbrTransientD
     tmp = fixMax(tmp, FL2FXCONST_DBL(0.0001));
     tmp = fDivNorm(FL2FXCONST_DBL(0.000075), fPow2(tmp), &scale_1);
 
-    scale_1 = -(scale_1 + scale_0 + 2);
+    scale_1 = (scale_1 + scale_0 + 2);
 
     FDK_ASSERT(no_cols <= QMF_MAX_TIME_SLOTS);
     FDK_ASSERT(no_rows <= QMF_CHANNELS);
@@ -684,14 +684,7 @@ FDKsbrEnc_InitSbrTransientDetector(HANDLE_SBR_TRANSIENT_DETECTOR h_sbrTransientD
     h_sbrTransientDetector->no_cols = no_cols;
     h_sbrTransientDetector->tran_thr = (FIXP_DBL)((params->tran_thr << (32-24-1)) / no_rows);
     h_sbrTransientDetector->tran_fc = tran_fc;
-
-    if (scale_1>=0) {
-      h_sbrTransientDetector->split_thr = fMult(tmp, bitrateFactor_fix) >> scale_1;
-    }
-    else {
-      h_sbrTransientDetector->split_thr = fMult(tmp, bitrateFactor_fix) << (-scale_1);
-    }
-
+    h_sbrTransientDetector->split_thr = scaleValueSaturate(fMult(tmp, bitrateFactor_fix), scale_1);     
     h_sbrTransientDetector->no_rows = no_rows;
     h_sbrTransientDetector->mode = params->tran_det_mode;
     h_sbrTransientDetector->prevLowBandEnergy = FL2FXCONST_DBL(0.0f);

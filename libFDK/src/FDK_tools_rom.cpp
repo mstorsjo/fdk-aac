@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1902,7 +1902,7 @@ const USHORT sqrt_tab[49]={
 0xb504};
 
 LNK_SECTION_CONSTDATA_L1
-const FIXP_DBL invCount[50]=  /* This could be 16-bit wide */
+const FIXP_DBL invCount[80]=  /* This could be 16-bit wide */
 {
     0x00000000, 0x7fffffff, 0x40000000, 0x2aaaaaab, 0x20000000,
     0x1999999a, 0x15555555, 0x12492492, 0x10000000, 0x0e38e38e,
@@ -1913,7 +1913,13 @@ const FIXP_DBL invCount[50]=  /* This could be 16-bit wide */
     0x04444444, 0x04210842, 0x04000000, 0x03e0f83e, 0x03c3c3c4,
     0x03a83a84, 0x038e38e4, 0x03759f23, 0x035e50d8, 0x03483483,
     0x03333333, 0x031f3832, 0x030c30c3, 0x02fa0be8, 0x02e8ba2f,
-    0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab, 0x029cbc15
+    0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab, 0x029cbc15,
+    0x028f5c29, 0x02828283, 0x02762762, 0x026a439f, 0x025ed098,
+    0x0253c825, 0x02492492, 0x023ee090, 0x0234f72c, 0x022b63cc,
+    0x02222222, 0x02192e2a, 0x02108421, 0x02082082, 0x02000000,
+    0x01f81f82, 0x01f07c1f, 0x01e9131b, 0x01e1e1e2, 0x01dae607,
+    0x01d41d42, 0x01cd8569, 0x01c71c72, 0x01c0e070, 0x01bacf91,
+    0x01b4e81b, 0x01af286c, 0x01a98ef6, 0x01a41a42, 0x019ec8e9
 };
 
 
@@ -2032,19 +2038,6 @@ static const element_list_t node_aac_cpe = {
   el_aac_cpe,
   { &node_aac_cpe0, &node_aac_cpe1 }
 };
-
-#define el_mpegsres_sce &el_aac_sce[2]
-
-static const element_list_t node_mpegsres_sce = {
-  el_mpegsres_sce,
-  { NULL, NULL }
-};
-
-static const element_list_t node_mpegsres_cpe = {
-  el_aac_cpe1,
-  { NULL, NULL }
-};
-
 
 /*
  * AOT C- {17,23}
@@ -2424,13 +2417,6 @@ const element_list_t * getBitstreamElementList(AUDIO_OBJECT_TYPE aot, SCHAR epCo
         else
           return &node_eld_cpe_epc1;
       }
-    case AOT_MPEGS_RESIDUALS:
-      if (nChannels == 1) {
-        return &node_mpegsres_sce;
-      } else {
-        return &node_mpegsres_cpe;
-      }
-      break;
     default:
       break;
   }

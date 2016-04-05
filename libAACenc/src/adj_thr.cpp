@@ -2138,7 +2138,7 @@ static FIXP_DBL FDKaacEnc_bitresCalcBitFac(const INT       bitresBits,
         bresParam->clipSpendLow, bresParam->clipSpendHigh,
         bresParam->minBitSpend, bresParam->maxBitSpend, bitspend_slope);
 
-    pe_pers = fDivNorm(pex - adjThrChan->peMin, adjThrChan->peMax - adjThrChan->peMin);
+    pe_pers = (pex > adjThrChan->peMin) ? fDivNorm(pex - adjThrChan->peMin, adjThrChan->peMax - adjThrChan->peMin) : 0;
     tmp_fix = fMult(((FIXP_DBL)bitSpend + (FIXP_DBL)bitSave), pe_pers);
     bitresFac_fix = (UNITY>>1) - ((FIXP_DBL)bitSave>>1) + (tmp_fix>>1); qbres = (DFRACT_BITS-2);
 

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -137,7 +137,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 6
+#define SBRDECODER_LIB_VL2 7
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #ifdef __ANDROID__
 #define SBRDECODER_LIB_BUILD_DATE ""
@@ -318,7 +318,6 @@ SBR_ERROR sbrDecoder_ResetElement (
     case AOT_PS:
     case AOT_ER_AAC_SCAL:
     case AOT_DRM_AAC:
-    case AOT_DRM_SURROUND:
       if (CreatePsDec ( &self->hParametricStereoDec, samplesPerFrame )) {
         sbrError = SBRDEC_CREATE_ERROR;
         goto bail;
@@ -503,7 +502,6 @@ SBR_ERROR sbrDecoder_InitElement (
         case AOT_PS:
         case AOT_ER_AAC_SCAL:
         case AOT_DRM_AAC:
-        case AOT_DRM_SURROUND:
           elChannels = 2;
           break;
         default:
