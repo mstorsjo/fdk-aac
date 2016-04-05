@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -107,14 +107,11 @@ typedef struct {
 } TAB_VBR_QUAL_FACTOR;
 
 static const TAB_VBR_QUAL_FACTOR tableVbrQualFactor[] = {
-  {QCDATA_BR_MODE_CBR,   FL2FXCONST_DBL(0.00f)},
   {QCDATA_BR_MODE_VBR_1, FL2FXCONST_DBL(0.160f)}, /* 32 kbps mono   AAC-LC + SBR + PS */
   {QCDATA_BR_MODE_VBR_2, FL2FXCONST_DBL(0.148f)}, /* 64 kbps stereo AAC-LC + SBR      */
   {QCDATA_BR_MODE_VBR_3, FL2FXCONST_DBL(0.135f)}, /* 80 - 96 kbps stereo AAC-LC       */
   {QCDATA_BR_MODE_VBR_4, FL2FXCONST_DBL(0.111f)}, /* 128 kbps stereo AAC-LC           */
-  {QCDATA_BR_MODE_VBR_5, FL2FXCONST_DBL(0.070f)}, /* 192 kbps stereo AAC-LC           */
-  {QCDATA_BR_MODE_SFR,   FL2FXCONST_DBL(0.00f)},
-  {QCDATA_BR_MODE_FF,    FL2FXCONST_DBL(0.00f)}
+  {QCDATA_BR_MODE_VBR_5, FL2FXCONST_DBL(0.070f)}  /* 192 kbps stereo AAC-LC           */
 };
 
 static INT isConstantBitrateMode(
@@ -369,6 +366,7 @@ QCNew_bail:
 AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
                                    struct QC_INIT *init)
 {
+  int i;
   hQC->maxBitsPerFrame = init->maxBits;
   hQC->minBitsPerFrame = init->minBits;
   hQC->nElements       = init->channelMapping->nElements;
@@ -399,25 +397,12 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
                             (init->averageBits/init->nSubFrames) - hQC->globHdrBits,
                             hQC->maxBitsPerFrame/init->channelMapping->nChannelsEff);
 
-  switch(hQC->bitrateMode){
-    case QCDATA_BR_MODE_CBR:
-    case QCDATA_BR_MODE_VBR_1:
-    case QCDATA_BR_MODE_VBR_2:
-    case QCDATA_BR_MODE_VBR_3:
-    case QCDATA_BR_MODE_VBR_4:
-    case QCDATA_BR_MODE_VBR_5:
-    case QCDATA_BR_MODE_SFR:
-    case QCDATA_BR_MODE_FF:
-      if((int)hQC->bitrateMode < (int)(sizeof(tableVbrQualFactor)/sizeof(TAB_VBR_QUAL_FACTOR))){
-        hQC->vbrQualFactor = (FIXP_DBL)tableVbrQualFactor[hQC->bitrateMode].vbrQualFactor;
-      } else {
-        hQC->vbrQualFactor = FL2FXCONST_DBL(0.f); /* default setting */
-      }
+  hQC->vbrQualFactor = FL2FXCONST_DBL(0.f);
+  for (i=0; i<(int)(sizeof(tableVbrQualFactor)/sizeof(TAB_VBR_QUAL_FACTOR)); i++) {
+    if (hQC->bitrateMode==tableVbrQualFactor[i].bitrateMode) {
+      hQC->vbrQualFactor = (FIXP_DBL)tableVbrQualFactor[i].vbrQualFactor;
       break;
-    case QCDATA_BR_MODE_INVALID:
-    default:
-      hQC->vbrQualFactor = FL2FXCONST_DBL(0.f);
-      break;
+    }
   }
 
   FDKaacEnc_AdjThrInit(

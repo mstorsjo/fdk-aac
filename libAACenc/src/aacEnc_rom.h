@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -105,11 +105,11 @@ amm-info@iis.fraunhofer.de
 /*
   Huffman Tables
 */
-extern const INT    FDKaacEnc_huff_ltab1_2[3][3][3][3];
-extern const INT    FDKaacEnc_huff_ltab3_4[3][3][3][3];
-extern const INT    FDKaacEnc_huff_ltab5_6[9][9];
-extern const INT    FDKaacEnc_huff_ltab7_8[8][8];
-extern const INT    FDKaacEnc_huff_ltab9_10[13][13];
+extern const ULONG  FDKaacEnc_huff_ltab1_2[3][3][3][3];
+extern const ULONG  FDKaacEnc_huff_ltab3_4[3][3][3][3];
+extern const ULONG  FDKaacEnc_huff_ltab5_6[9][9];
+extern const ULONG  FDKaacEnc_huff_ltab7_8[8][8];
+extern const ULONG  FDKaacEnc_huff_ltab9_10[13][13];
 extern const UCHAR  FDKaacEnc_huff_ltab11[17][17];
 extern const UCHAR  FDKaacEnc_huff_ltabscf[121];
 extern const USHORT FDKaacEnc_huff_ctab1[3][3][3][3];
@@ -123,7 +123,7 @@ extern const USHORT FDKaacEnc_huff_ctab8[8][8];
 extern const USHORT FDKaacEnc_huff_ctab9[13][13];
 extern const USHORT FDKaacEnc_huff_ctab10[13][13];
 extern const USHORT FDKaacEnc_huff_ctab11[21][17];
-extern const INT    FDKaacEnc_huff_ctabscf[121];
+extern const ULONG  FDKaacEnc_huff_ctabscf[121];
 
 /*
   quantizer

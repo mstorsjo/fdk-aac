@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -435,7 +435,9 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
          &averageBitsPerFrame,
           config->bitrateMode,
           config->nSubFrames
-          ) != config->bitRate )
+          ) != config->bitRate
+      && !((config->bitrateMode>=1) && (config->bitrateMode<=5))
+     )
   {
     return AAC_ENC_UNSUPPORTED_BITRATE;
   }
