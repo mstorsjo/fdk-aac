@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -283,9 +283,7 @@ void sbrEncoder_GetHeader(SBR_ENCODER   *sbrEncoder,
                           INT            element_index,
                           int            fSendHeaders)
 {
-  int bits;
-
-  bits = encodeSbrHeaderData (&sbrEncoder->sbrElement[element_index]->sbrHeaderData, hBs);
+  encodeSbrHeaderData (&sbrEncoder->sbrElement[element_index]->sbrHeaderData, hBs);
     
   if (fSendHeaders == 0) {
     /* Prevent header being embedded into the SBR payload. */

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -447,7 +447,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                                     INT                  totalChannels
                                    )
 {
-    INT commonWindow = 1;
+    const INT commonWindow = 1;
     INT maxSfbPerGroup[(2)];
     INT mdctSpectrum_e;
     INT ch;   /* counts through channels          */
@@ -815,7 +815,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                       &hThisPsyConf[1]->tnsConf);
             }
 
-            FDK_ASSERT(commonWindow=1); /* all checks for TNS do only work for common windows (which is always set)*/
+            FDK_ASSERT(1==commonWindow); /* all checks for TNS do only work for common windows (which is always set)*/
             for(w = 0; w < nWindows[0]; w++)
             {
                 if (isShortWindow[0])

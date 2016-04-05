@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -130,14 +130,14 @@ the crash recovery strategy will be activated once.
 
 typedef struct {
   INT                 bitrate;
-  LONG                bits2PeFactor_mono;
-  LONG                bits2PeFactor_mono_slope;
-  LONG                bits2PeFactor_stereo;
-  LONG                bits2PeFactor_stereo_slope;
-  LONG                bits2PeFactor_mono_scfOpt;
-  LONG                bits2PeFactor_mono_scfOpt_slope;
-  LONG                bits2PeFactor_stereo_scfOpt;
-  LONG                bits2PeFactor_stereo_scfOpt_slope;
+  ULONG               bits2PeFactor_mono;
+  ULONG               bits2PeFactor_mono_slope;
+  ULONG               bits2PeFactor_stereo;
+  ULONG               bits2PeFactor_stereo_slope;
+  ULONG               bits2PeFactor_mono_scfOpt;
+  ULONG               bits2PeFactor_mono_scfOpt_slope;
+  ULONG               bits2PeFactor_stereo_scfOpt;
+  ULONG               bits2PeFactor_stereo_scfOpt_slope;
 
 } BIT_PE_SFAC;
 
