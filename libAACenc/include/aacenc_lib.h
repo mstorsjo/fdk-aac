@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -897,11 +897,7 @@ typedef enum
                                                         This configuration can be used only with stereo input audio data.
                                                   - 23: MPEG-4 AAC Low-Delay.
                                                   - 39: MPEG-4 AAC Enhanced Low-Delay. Since there is no ::AUDIO_OBJECT_TYPE for ELD in
-                                                        combination with SBR defined, enable SBR explicitely by ::AACENC_SBR_MODE parameter.
-                                                  - 129: MPEG-2 AAC Low Complexity.
-                                                  - 132: MPEG-2 AAC Low Complexity with Spectral Band Replication (HE-AAC).
-                                                  - 156: MPEG-2 AAC Low Complexity with Spectral Band Replication and Parametric Stereo (HE-AAC v2).
-                                                         This configuration can be used only with stereo input audio data. */
+                                                        combination with SBR defined, enable SBR explicitely by ::AACENC_SBR_MODE parameter. */
 
   AACENC_BITRATE                  = 0x0101,  /*!< Total encoder bitrate. This parameter is mandatory and interacts with ::AACENC_BITRATEMODE.
                                                   - CBR: Bitrate in bits/second.
@@ -957,6 +953,16 @@ typedef enum
                                                   - 0: Determine bandwidth internally (default, see chapter \ref BEHAVIOUR_BANDWIDTH).
                                                   - 1 to fs/2: Frequency bandwidth in Hertz. (Experts only, better do not
                                                                touch this value to avoid degraded audio quality) */
+
+  AACENC_PEAK_BITRATE             = 0x0207,  /*!< Peak bitrate configuration parameter to adjust maximum bits per audio frame. Bitrate is in bits/second. 
+                                                  The peak bitrate will internally be limited to the chosen bitrate ::AACENC_BITRATE as lower limit
+                                                  and the number_of_effective_channels*6144 bit as upper limit.
+
+                                                  Setting the peak bitrate equal to ::AACENC_BITRATE does not necessarily mean that the audio frames
+                                                  will be of constant size. Since the peak bitate is in bits/second, the frame sizes can vary by
+                                                  one byte in one or the other direction over various frames. However, it is not recommended to reduce
+                                                  the peak pitrate to ::AACENC_BITRATE - it would disable the bitreservoir, which would affect the
+                                                  audio quality by a large amount. */
 
   AACENC_TRANSMUX                 = 0x0300,  /*!< Transport type to be used. See ::TRANSPORT_TYPE in FDK_audio.h. Following
                                                   types can be configured in encoder library:
@@ -1022,6 +1028,11 @@ typedef enum
   AACENC_TPSUBFRAMES              = 0x0303,  /*!< Number of sub frames in a transport frame for LOAS/LATM or ADTS (default 1).
                                                   - ADTS: Maximum number of sub frames restricted to 4.
                                                   - LOAS/LATM: Maximum number of sub frames restricted to 2.*/
+
+  AACENC_AUDIOMUXVER              = 0x0304,  /*!< AudioMuxVersion to be used for LATM. (AudioMuxVersionA, currently not implemented):
+                                                  - 0: Default, no transmission of tara Buffer fullness, no ASC length and including actual latm Buffer fullnes.
+                                                  - 1: Transmission of tara Buffer fullness, ASC length and actual latm Buffer fullness.
+                                                  - 2: Transmission of tara Buffer fullness, ASC length and maximum level of latm Buffer fullness. */
 
   AACENC_PROTECTION               = 0x0306,  /*!< Configure protection in tranpsort layer:
                                                   - 0: No protection. (default)

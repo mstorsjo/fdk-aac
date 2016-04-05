@@ -1248,6 +1248,8 @@ AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
     case QCDATA_BR_MODE_VBR_4:
     case QCDATA_BR_MODE_VBR_5:
       qcOut[0]->totFillBits = (qcOut[0]->grantedDynBits - qcOut[0]->usedDynBits)&7; /* precalculate alignment bits */
+      qcOut[0]->totalBits = qcOut[0]->staticBits + qcOut[0]->usedDynBits + qcOut[0]->totFillBits + qcOut[0]->elementExtBits + qcOut[0]->globalExtBits;
+      qcOut[0]->totFillBits += ( fixMax(0, qcKernel->minBitsPerFrame - qcOut[0]->totalBits) + 7) & ~7;
       break;
 
     case QCDATA_BR_MODE_CBR:
@@ -1257,6 +1259,8 @@ AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
       /* processing fill-bits */
       INT deltaBitRes = qcOut[0]->grantedDynBits - qcOut[0]->usedDynBits ;
       qcOut[0]->totFillBits = fixMax((deltaBitRes&7), (deltaBitRes - (fixMax(0,bitResSpace-7)&~7)));
+      qcOut[0]->totalBits = qcOut[0]->staticBits + qcOut[0]->usedDynBits + qcOut[0]->totFillBits + qcOut[0]->elementExtBits + qcOut[0]->globalExtBits;
+      qcOut[0]->totFillBits += ( fixMax(0, qcKernel->minBitsPerFrame - qcOut[0]->totalBits) + 7) & ~7;
       break;
   } /* switch (qcKernel->bitrateMode) */
 

@@ -621,7 +621,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
           FDKmemclear(&psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset],
                       (windowLength[ch]-psyData[ch]->lowpassLine)*sizeof(FIXP_DBL));
 
-          if (hPsyConfLong->filterbank != FB_LC) {
+          if ( (hPsyConfLong->filterbank != FB_LC) && (psyData[ch]->lowpassLine >= FADE_OUT_LEN) ) {
             /* Do blending to reduce gibbs artifacts */
             for (int i=0; i<FADE_OUT_LEN; i++) {
               psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset - FADE_OUT_LEN + i] = fMult(psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset - FADE_OUT_LEN + i], fadeOutFactor[i]);

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -134,13 +134,7 @@ typedef enum
 
   TT_MP4_LOAS          = 10, /**< Audio Sync Stream.         */
 
-  TT_DRM               = 12, /**< Digital Radio Mondial (DRM30/DRM+) bitstream format. */
-
-  TT_MP1_L1            = 16, /**< MPEG 1 Audio Layer 1 audio bitstream. */
-  TT_MP1_L2            = 17, /**< MPEG 1 Audio Layer 2 audio bitstream. */
-  TT_MP1_L3            = 18, /**< MPEG 1 Audio Layer 3 audio bitstream. */
-
-  TT_RSVD50            = 50 /**< */
+  TT_DRM               = 12  /**< Digital Radio Mondial (DRM30/DRM+) bitstream format. */
 
 } TRANSPORT_TYPE;
 
@@ -203,38 +197,22 @@ typedef enum
   AOT_SAOC             = 43, /**< SAOC                                      */
   AOT_LD_MPEGS         = 44, /**< Low Delay MPEG Surround                   */
 
-  AOT_RSVD50           = 50,  /**< Interim AOT for Rsvd50                   */
-
   /* Pseudo AOTs */
-  AOT_MP2_AAC_MAIN     = 128, /**< Virtual AOT MP2 Main profile                           */
-  AOT_MP2_AAC_LC       = 129, /**< Virtual AOT MP2 Low Complexity profile                 */
-  AOT_MP2_AAC_SSR      = 130, /**< Virtual AOT MP2 Scalable Sampling Rate profile         */
-
-  AOT_MP2_SBR          = 132, /**< Virtual AOT MP2 Low Complexity Profile with SBR        */
-
-  AOT_DAB              = 134, /**< Virtual AOT for DAB (Layer2 with scalefactor CRC)      */
-  AOT_DABPLUS_AAC_LC   = 135, /**< Virtual AOT for DAB plus AAC-LC                        */
-  AOT_DABPLUS_SBR      = 136, /**< Virtual AOT for DAB plus HE-AAC                        */
-  AOT_DABPLUS_PS       = 137, /**< Virtual AOT for DAB plus HE-AAC v2                     */
-
-  AOT_PLAIN_MP1        = 140, /**< Virtual AOT for plain mp1                              */
-  AOT_PLAIN_MP2        = 141, /**< Virtual AOT for plain mp2                              */
-  AOT_PLAIN_MP3        = 142, /**< Virtual AOT for plain mp3                              */
-
   AOT_DRM_AAC          = 143, /**< Virtual AOT for DRM (ER-AAC-SCAL without SBR)          */
   AOT_DRM_SBR          = 144, /**< Virtual AOT for DRM (ER-AAC-SCAL with SBR)             */
-  AOT_DRM_MPEG_PS      = 145, /**< Virtual AOT for DRM (ER-AAC-SCAL with SBR and MPEG-PS) */
-  AOT_DRM_SURROUND     = 146, /**< Virtual AOT for DRM Surround (ER-AAC-SCAL (+SBR) +MPS) */
-
-  AOT_MP2_PS           = 156, /**< Virtual AOT MP2 Low Complexity Profile with SBR and PS */
-
-  AOT_MPEGS_RESIDUALS  = 256  /**< Virtual AOT for MPEG Surround residuals                */
+  AOT_DRM_MPEG_PS      = 145  /**< Virtual AOT for DRM (ER-AAC-SCAL with SBR and MPEG-PS) */
 
 } AUDIO_OBJECT_TYPE;
 
+#define CAN_DO_PS(aot) \
+  ((aot) == AOT_AAC_LC \
+|| (aot) == AOT_SBR \
+|| (aot) == AOT_PS \
+|| (aot) == AOT_ER_BSAC \
+|| (aot) == AOT_DRM_AAC)
+
 #define IS_USAC(aot) \
-  ((aot) == AOT_USAC \
-|| (aot) == AOT_RSVD50)
+  ((aot) == AOT_USAC)
 
 #define IS_LOWDELAY(aot) \
   ((aot) == AOT_ER_AAC_LD \
