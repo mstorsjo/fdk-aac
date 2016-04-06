@@ -1851,10 +1851,10 @@ INT sbrEncoder_Init(
     if ( (aot==AOT_PS) || (aot==AOT_MP2_PS) || (aot==AOT_DABPLUS_PS) || (aot==AOT_DRM_MPEG_PS) ) {
         usePs = 1;
     }
-    if ( (aot==AOT_ER_AAC_ELD) ) {
+    if ( aot==AOT_ER_AAC_ELD ) {
         lowDelay = 1;
     }
-    else if ( (aot==AOT_ER_AAC_LD) ) {
+    else if ( aot==AOT_ER_AAC_LD ) {
         error = 1;
         goto bail;
     }
