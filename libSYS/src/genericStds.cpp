@@ -92,14 +92,14 @@ amm-info@iis.fraunhofer.de
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "genericStds.h"
-
 #include <math.h>
+
+#include "genericStds.h"
 
 /* library info */
 #define SYS_LIB_VL0 1
 #define SYS_LIB_VL1 3
-#define SYS_LIB_VL2 7
+#define SYS_LIB_VL2 8
 #define SYS_LIB_TITLE "System Integration Library"
 #ifdef __ANDROID__
 #define SYS_LIB_BUILD_DATE ""

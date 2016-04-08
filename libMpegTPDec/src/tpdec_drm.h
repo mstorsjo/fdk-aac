@@ -81,53 +81,114 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/*****************************  MPEG-4 AAC Decoder  **************************
 
-   Author(s):   Manuel Jander
-   Description: FDK tools versioning support
+   Author(s):   Josef Hoepfl
+   Description: DRM interface
 
 ******************************************************************************/
 
-#include "FDK_core.h"
+#ifndef TPDEC_DRM_H
+#define TPDEC_DRM_H
 
-/* FDK tools library info */
-#define FDK_TOOLS_LIB_VL0 2
-#define FDK_TOOLS_LIB_VL1 3
-#define FDK_TOOLS_LIB_VL2 6
-#define FDK_TOOLS_LIB_TITLE "FDK Tools"
-#ifdef __ANDROID__
-#define FDK_TOOLS_LIB_BUILD_DATE ""
-#define FDK_TOOLS_LIB_BUILD_TIME ""
-#else
-#define FDK_TOOLS_LIB_BUILD_DATE __DATE__
-#define FDK_TOOLS_LIB_BUILD_TIME __TIME__
-#endif
+#include "tpdec_lib.h"
 
-int FDK_toolsGetLibInfo(LIB_INFO *info)
-{
-  UINT v;
-  int i;
 
-  if (info == NULL) {
-    return -1;
-  }
+#include "FDK_crc.h"
 
-  /* search for next free tab */
-  i = FDKlibInfo_lookup(info, FDK_TOOLS);
-  if (i<0) return -1;
+typedef struct {
 
-  info += i;
+  FDK_CRCINFO crcInfo;             /* CRC state info */
+  USHORT      crcReadValue;        /* CRC value read from bitstream data */
 
-  v = LIB_VERSION(FDK_TOOLS_LIB_VL0, FDK_TOOLS_LIB_VL1, FDK_TOOLS_LIB_VL2);
+} STRUCT_DRM;
 
-  FDKsprintf(info->versionStr, "%d.%d.%d", ((v >> 24) & 0xff), ((v >> 16) & 0xff), ((v >> 8 ) & 0xff));
+typedef STRUCT_DRM *HANDLE_DRM;
 
-  info->module_id = FDK_TOOLS;
-  info->version = v;
-  info->build_date = (char *)FDK_TOOLS_LIB_BUILD_DATE;
-  info->build_time = (char *)FDK_TOOLS_LIB_BUILD_TIME;
-  info->title      = (char *)FDK_TOOLS_LIB_TITLE;
-  info->flags = 0;
+/*!
+  \brief Initialize DRM CRC
 
-  return 0;
-}
+  The function initialzes the crc buffer and the crc lookup table.
+
+  \return  none
+*/
+void drmRead_CrcInit( HANDLE_DRM pDrm );
+
+/**
+ * \brief Starts CRC region with a maximum number of bits
+ *        If mBits is positive zero padding will be used for CRC calculation, if there
+ *        are less than mBits bits available.
+ *        If mBits is negative no zero padding is done.
+ *        If mBits is zero the memory for the buffer is allocated dynamically, the
+ *        number of bits is not limited.
+ *
+ * \param pDrm DRM data handle
+ * \param hBs bitstream handle, on which the CRC region referes to
+ * \param mBits max number of bits in crc region to be considered
+ *
+ * \return  ID for the created region, -1 in case of an error
+ */
+int drmRead_CrcStartReg(
+        HANDLE_DRM pDrm,
+        HANDLE_FDK_BITSTREAM hBs,
+        int mBits
+        );
+
+/**
+ * \brief Ends CRC region identified by reg
+ *
+ * \param pDrm DRM data handle
+ * \param hBs bitstream handle, on which the CRC region referes to
+ * \param reg CRC regions ID returned by drmRead_CrcStartReg()
+ *
+ * \return  none
+ */
+void drmRead_CrcEndReg(
+        HANDLE_DRM pDrm,
+        HANDLE_FDK_BITSTREAM hBs,
+        int reg
+        );
+
+/**
+ * \brief Check CRC
+ *
+ * Checks if the currently calculated CRC matches the CRC field read from the bitstream
+ * Deletes all CRC regions.
+ *
+ * \param pDrm DRM data handle
+ *
+ * \return Returns 0 if they are identical otherwise 1
+ */
+TRANSPORTDEC_ERROR drmRead_CrcCheck( HANDLE_DRM pDrm );
+
+/**
+ * \brief Check if we have a valid DRM frame at the current bitbuffer position
+ *
+ * This function assumes enough bits in buffer for the current frame.
+ * It reads out the header bits to prepare the bitbuffer for the decode loop.
+ * In case the header bits show an invalid bitstream/frame, the whole frame is skipped.
+ *
+ * \param pDrm DRM data handle which is filled with parsed DRM header data
+ * \param bs handle of bitstream from whom the DRM header is read
+ *
+ * \return  error status
+ */
+TRANSPORTDEC_ERROR drmRead_DecodeHeader(
+        HANDLE_DRM            pDrm,
+        HANDLE_FDK_BITSTREAM  bs
+        );
+
+/**
+ * \brief   Parse a Drm specific SDC audio config from a given bitstream handle.
+ *
+ * \param pAsc                         A pointer to an allocated CSAudioSpecificConfig struct.
+ * \param hBs                          Bitstream handle.
+ *
+ * \return  Total element count including all SCE, CPE and LFE.
+ */
+TRANSPORTDEC_ERROR DrmRawSdcAudioConfig_Parse( CSAudioSpecificConfig *pAsc,
+                                               HANDLE_FDK_BITSTREAM hBs );
+
+
+
+#endif /* TPDEC_DRM_H */

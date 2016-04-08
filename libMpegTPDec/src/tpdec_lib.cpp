@@ -102,6 +102,7 @@ amm-info@iis.fraunhofer.de
 
 #include "tpdec_latm.h"
 
+#include "tpdec_drm.h"
 
 
 #define MODULE_NAME "transportDec"
@@ -113,6 +114,7 @@ typedef union {
 
   CLatmDemux latm;
 
+  STRUCT_DRM drm;
 
 } transportdec_parser_t;
 
@@ -182,6 +184,9 @@ HANDLE_TRANSPORTDEC transportDec_Open( const TRANSPORT_TYPE transportFmt, const 
     hInput->numberOfRawDataBlocks = 0;
     break;
 
+  case TT_DRM:
+    drmRead_CrcInit(&hInput->parser.drm);
+    break;
 
   case TT_MP4_LATM_MCP0:
   case TT_MP4_LATM_MCP1:
@@ -244,6 +249,18 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *
     default:
       fConfigFound = 1;
       err = AudioSpecificConfig_Parse(&hTp->asc[layer], hBs, 1, &hTp->callbacks);
+      if (err == TRANSPORTDEC_OK) {
+        int errC;
+
+        errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[layer]);
+        if (errC != 0) {
+          err = TRANSPORTDEC_PARSE_ERROR;
+        }
+      }
+      break;
+    case TT_DRM:
+      fConfigFound = 1;
+      err = DrmRawSdcAudioConfig_Parse(&hTp->asc[layer], hBs);
       if (err == TRANSPORTDEC_OK) {
         int errC;
 
@@ -1083,6 +1100,7 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, c
       break;
 
     case TT_MP4_RAW:
+    case TT_DRM:
       /* One Access Unit was filled into buffer.
          So get the length out of the buffer. */
       hTp->auLength[layer] = FDKgetValidBits(hBs);
@@ -1283,6 +1301,7 @@ TRANSPORTDEC_ERROR transportDec_GetLibInfo( LIB_INFO *info )
     | CAPF_LATM
     | CAPF_LOAS
     | CAPF_RAWPACKETS
+    | CAPF_DRM
     ;
 
   return TRANSPORTDEC_OK; /* FDKERR_NOERROR; */
@@ -1294,6 +1313,8 @@ int  transportDec_CrcStartReg(HANDLE_TRANSPORTDEC pTp, INT mBits)
   switch (pTp->transportFmt) {
   case TT_MP4_ADTS:
     return adtsRead_CrcStartReg(&pTp->parser.adts, &pTp->bitStream[0], mBits);
+  case TT_DRM:
+    return drmRead_CrcStartReg(&pTp->parser.drm, &pTp->bitStream[0], mBits);
   default:
     return 0;
   }
@@ -1304,6 +1325,9 @@ void transportDec_CrcEndReg(HANDLE_TRANSPORTDEC pTp, INT reg)
   switch (pTp->transportFmt) {
   case TT_MP4_ADTS:
     adtsRead_CrcEndReg(&pTp->parser.adts, &pTp->bitStream[0], reg);
+    break;
+  case TT_DRM:
+    drmRead_CrcEndReg(&pTp->parser.drm, &pTp->bitStream[0], reg);
     break;
   default:
     break;
@@ -1321,6 +1345,9 @@ TRANSPORTDEC_ERROR transportDec_CrcCheck(HANDLE_TRANSPORTDEC pTp)
       transportDec_AdjustEndOfAccessUnit(pTp);
     }
     return adtsRead_CrcCheck(&pTp->parser.adts);
+  case TT_DRM:
+    return drmRead_CrcCheck(&pTp->parser.drm);
+    break;
   default:
     return TRANSPORTDEC_OK;
   }

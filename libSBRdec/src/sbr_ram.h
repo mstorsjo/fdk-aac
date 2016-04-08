@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -135,6 +135,7 @@ struct SBR_DECODER_INSTANCE
   USHORT codecFrameSize;
   UCHAR synDownsampleFac;
   UCHAR numDelayFrames;        /* The current number of additional delay frames used for processing. */
+  UCHAR numFlushedFrames;      /* The variable counts the number of frames which are flushed consecutively. */
 
   UINT flags;
 

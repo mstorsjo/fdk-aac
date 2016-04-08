@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -225,7 +225,14 @@ static void changeQmfType( HANDLE_SBR_DEC hSbrDec,                     /*!< hand
   }
 
   if (resetAnaQmf) {
-    int qmfErr = qmfInitAnalysisFilterBank (
+    QMF_FILTER_BANK prvAnaQmf;
+    int  qmfErr;
+
+    /* Store current configuration */
+    FDKmemcpy(&prvAnaQmf, &hSbrDec->AnalysiscQMF, sizeof(QMF_FILTER_BANK));
+
+    /* Reset analysis QMF */
+    qmfErr = qmfInitAnalysisFilterBank (
            &hSbrDec->AnalysiscQMF,
             hSbrDec->anaQmfStates,
             hSbrDec->AnalysiscQMF.no_col,
@@ -234,13 +241,22 @@ static void changeQmfType( HANDLE_SBR_DEC hSbrDec,                     /*!< hand
             hSbrDec->AnalysiscQMF.no_channels,
             anaQmfFlags | QMF_FLAG_KEEP_STATES
             );
+
     if (qmfErr != 0) {
-      FDK_ASSERT(0);
+      /* Restore old configuration of analysis QMF */
+      FDKmemcpy(&hSbrDec->AnalysiscQMF, &prvAnaQmf, sizeof(QMF_FILTER_BANK));
     }
   }
 
   if (resetSynQmf) {
-    int qmfErr = qmfInitSynthesisFilterBank (
+    QMF_FILTER_BANK prvSynQmf;
+    int  qmfErr;
+
+    /* Store current configuration */
+    FDKmemcpy(&prvSynQmf, &hSbrDec->SynthesisQMF, sizeof(QMF_FILTER_BANK));
+
+    /* Reset synthesis QMF */
+    qmfErr = qmfInitSynthesisFilterBank (
            &hSbrDec->SynthesisQMF,
             hSbrDec->pSynQmfStates,
             hSbrDec->SynthesisQMF.no_col,
@@ -251,7 +267,8 @@ static void changeQmfType( HANDLE_SBR_DEC hSbrDec,                     /*!< hand
             );
 
     if (qmfErr != 0) {
-      FDK_ASSERT(0);
+      /* Restore old configuration of synthesis QMF */
+      FDKmemcpy(&hSbrDec->SynthesisQMF, &prvSynQmf, sizeof(QMF_FILTER_BANK));
     }
   }
 }
@@ -321,7 +338,8 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
           HANDLE_SBR_PREV_FRAME_DATA hPrevFrameData,  /*!< Some control data of last frame */
           const int applyProcessing,         /*!< Flag for SBR operation */
           HANDLE_PS_DEC h_ps_d,
-          const UINT flags
+          const UINT flags,
+          const int codecFrameSize
          )
 {
   int i, slot, reserve;
@@ -348,6 +366,33 @@ sbr_dec ( HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
   if (flags & SBRDEC_ELD_GRID) {
     /* Choose the right low delay filter bank */
     changeQmfType( hSbrDec, (flags & SBRDEC_LD_MPS_QMF) ? 1 : 0 );
+
+    /* If the LD-MPS QMF is not available delay the signal by (96-48*ldSbrSamplingRate)
+     * samples according to ISO/IEC 14496-3:2009/FDAM 2:2010(E) chapter 4.5.2.13. */
+    if ( (flags & SBRDEC_LD_MPS_QMF)
+      && (hSbrDec->AnalysiscQMF.flags & QMF_FLAG_CLDFB) )
+    {
+      INT_PCM *pDlyBuf = hSbrDec->coreDelayBuf;  /* DLYBUF */
+      int smpl, delay = 96 >> (!(flags & SBRDEC_DOWNSAMPLE) ? 1 : 0);
+      /* Create TMPBUF */
+      C_AALLOC_SCRATCH_START(pcmTemp, INT_PCM, (96));
+      /* Copy delay samples from INBUF to TMPBUF */
+      for (smpl = 0; smpl < delay; smpl += 1) {
+        pcmTemp[smpl] = timeIn[(codecFrameSize-delay+smpl)*strideIn];
+      }
+      /* Move input signal remainder to the very end of INBUF */
+      for (smpl = (codecFrameSize-delay-1)*strideIn; smpl >= 0; smpl -= strideIn) {
+        timeIn[smpl+delay] = timeIn[smpl];
+      }
+      /* Copy delayed samples from last frame from DLYBUF to the very beginning of INBUF */
+      for (smpl = 0; smpl < delay; smpl += 1) {
+        timeIn[smpl*strideIn] = pDlyBuf[smpl];
+      }
+      /* Copy TMPBUF to DLYBUF */
+      FDKmemcpy(pDlyBuf, pcmTemp, delay*sizeof(INT_PCM));
+      /* Destory TMPBUF */
+      C_AALLOC_SCRATCH_END(pcmTemp, INT_PCM, (96));
+    }
   }
 
   /*
@@ -761,7 +806,7 @@ createSbrDec (SBR_CHANNEL * hSbrChannel,
   {
     int qmfErr;
     /* Adapted QMF analysis post-twiddles for down-sampled HQ SBR */
-    const UINT downSampledFlag = (downsampleFac==2) ? QMF_FLAG_DOWNSAMPLED : 0;
+    const UINT downSampledFlag = (flags & SBRDEC_DOWNSAMPLE) ? QMF_FLAG_DOWNSAMPLED : 0;
 
     qmfErr = qmfInitAnalysisFilterBank (
                     &hs->AnalysiscQMF,
@@ -835,6 +880,9 @@ createSbrDec (SBR_CHANNEL * hSbrChannel,
                  );
     }
   }
+
+  /* Clear input delay line */
+  FDKmemclear(hs->coreDelayBuf, (96)*sizeof(INT_PCM));
 
   /* assign qmf time slots */
   assignTimeSlots( &hSbrChannel->SbrDec, hHeaderData->numberTimeSlots * hHeaderData->timeStep, qmfFlags & QMF_FLAG_LP);
