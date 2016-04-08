@@ -98,7 +98,7 @@ amm-info@iis.fraunhofer.de
 /* Encoder library info */
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 19
+#define AACENCODER_LIB_VL2 22
 #define AACENCODER_LIB_TITLE "AAC Encoder"
 #ifdef __ANDROID__
 #define AACENCODER_LIB_BUILD_DATE ""
@@ -813,11 +813,16 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     switch ( hAacConfig->audioObjectType ) {
       case AOT_ER_AAC_LD:
       case AOT_ER_AAC_ELD:
-        if (config->userBitrateMode==8) {
-          hAacConfig->bitrateMode = 0;
-        }
         if (config->userBitrateMode==0) {
-          hAacConfig->bitreservoir = 100*config->nChannels; /* default, reduced bitreservoir */
+          /* bitreservoir  = (maxBitRes-minBitRes)/(maxBitRate-minBitrate)*(bitRate-minBitrate)+minBitRes; */
+          if ( isLowDelay(hAacConfig->audioObjectType) ) {
+            INT bitreservoir;
+            INT brPerChannel = hAacConfig->bitRate/hAacConfig->nChannels;
+            brPerChannel     = fMin(BITRATE_MAX_LD, fMax(BITRATE_MIN_LD, brPerChannel));
+            FIXP_DBL slope   = fDivNorm((brPerChannel-BITRATE_MIN_LD), BITRATE_MAX_LD-BITRATE_MIN_LD); /* calc slope for interpolation */
+            bitreservoir     = fMultI(slope, (INT)(BITRES_MAX_LD-BITRES_MIN_LD)) + BITRES_MIN_LD; /* interpolate */
+            hAacConfig->bitreservoir = bitreservoir & ~7; /* align to bytes */
+          }
         }
         if (hAacConfig->bitrateMode!=0) {
           return AACENC_INVALID_CONFIG;

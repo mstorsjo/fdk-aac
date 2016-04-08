@@ -298,7 +298,7 @@ FDKsbrEnc_sbrNoiseFloorEstimateQmf(HANDLE_SBR_NOISE_FLOOR_ESTIMATE h_sbrNoiseFlo
                          SCHAR    *indexVector,              /*!< Index vector to obtain the patched data. */
                          INT missingHarmonicsFlag,           /*!< Flag indicating if a strong tonal component will be missing. */
                          INT startIndex,                     /*!< Start index. */
-                         int numberOfEstimatesPerFrame,      /*!< The number of tonality estimates per frame. */
+                         UINT numberOfEstimatesPerFrame,     /*!< The number of tonality estimates per frame. */
                          int transientFrame,                 /*!< A flag indicating if a transient is present. */
                          INVF_MODE* pInvFiltLevels,          /*!< Pointer to the vector holding the inverse filtering levels. */
                          UINT sbrSyntaxFlags

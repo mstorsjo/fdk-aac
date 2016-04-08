@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -684,6 +684,9 @@ const sbrTuningTable_t sbrTuningTable[] =
 
   /** AAC LOW DELAY SECTION **/
 
+  /* 24 kHz dual rate - 12kHz singlerate is not allowed (deactivated in FDKsbrEnc_IsSbrSettingAvail()) */
+  { CODEC_AACLD,   8000, 32000,  12000, 1,  1, 1, 0, 0,  1, 0, 6, SBR_MONO, 3 }, /* nominal:  8 kbit/s */
+
   /*** mono ***/
   /* 16/32 kHz dual rate not yet tuned ->alb copied from non LD tables*/
   { CODEC_AACLD,  16000, 18000,  16000, 1,  4, 5, 9, 7,  1, 0, 6, SBR_MONO, 3 }, /* nominal: 16 kbit/s wrr: tuned */
@@ -702,10 +705,10 @@ const sbrTuningTable_t sbrTuningTable[] =
   { CODEC_AACLD,  52000, 64001,  22050, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 56 kbit/s */
 
   /* 24/48 kHz dual rate */
-  { CODEC_AACLD,  20000, 22000,  24000, 1,  4, 1, 8, 4,  2, 3, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
+  { CODEC_AACLD,  20000, 22000,  24000, 1,  3, 4, 8, 8,  2, 0, 6, SBR_MONO, 2 }, /* nominal: 20 kbit/s */
   { CODEC_AACLD,  22000, 28000,  24000, 1,  3, 8, 8, 7,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 24 kbit/s */
   { CODEC_AACLD,  28000, 36000,  24000, 1,  4, 8, 8, 7,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 32 kbit/s */
-  { CODEC_AACLD,  36000, 56000,  24000, 1,  8, 9, 9, 9,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
+  { CODEC_AACLD,  36000, 56000,  24000, 1,  8, 9, 9, 8,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 40 kbit/s */
   { CODEC_AACLD,  56000, 64001,  24000, 1, 13,11,11,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 kbit/s */
 
   /* 32/64 kHz dual rate */  /* placebo settings */  /*jgr: new, copy from CODEC_AAC */
@@ -722,7 +725,7 @@ const sbrTuningTable_t sbrTuningTable[] =
   { CODEC_AACLD, 100000,160001,  44100, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */
 
   /* 48/96 kHz dual rate */  /* 32 and 40kbps line tuned for dual-rate SBR */
-  { CODEC_AACLD,  36000, 60000,  48000, 1,  8, 7, 6, 9,  2, 0, 3, SBR_MONO, 2 }, /* nominal: 40 */
+  { CODEC_AACLD,  36000, 60000,  48000, 1,  4, 7, 4, 4,  2, 0, 3, SBR_MONO, 3 }, /* nominal: 40 */
   { CODEC_AACLD,  60000, 72000,  48000, 1,  9, 9,10,10,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 64 */
   { CODEC_AACLD,  72000,100000,  48000, 1, 11,11,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 80 */
   { CODEC_AACLD, 100000,160001,  48000, 1, 13,13,11,11,  2, 0, 3, SBR_MONO, 1 }, /* nominal: 128 */

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -118,7 +118,7 @@ typedef struct
   INT bufferLength;               /*!< Length of the r and i buffers. */
   INT stepSize;                   /*!< Stride for the lpc estimate. */
   INT numberOfEstimates;          /*!< The total number of estiamtes, available in the quotaMatrix.*/
-  INT numberOfEstimatesPerFrame;  /*!< The number of estimates per frame available in the quotaMatrix.*/
+  UINT numberOfEstimatesPerFrame; /*!< The number of estimates per frame available in the quotaMatrix.*/
   INT lpcLength[2];               /*!< Segment length used for second order LPC analysis.*/
   INT nextSample;                 /*!< Where to start the LPC analysis of the current frame.*/
   INT move;                       /*!< How many estimates to move in the quotaMatrix, when buffering. */

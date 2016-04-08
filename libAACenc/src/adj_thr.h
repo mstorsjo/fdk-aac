@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -118,7 +118,8 @@ void FDKaacEnc_AdjThrInit(ADJ_THR_STATE *hAdjThr,
                 INT nChannelsEff,
                 INT sampleRate,
                 INT advancedBitsToPe,
-                FIXP_DBL vbrQualFactor);
+                FIXP_DBL vbrQualFactor,
+                const INT dZoneQuantEnable);
  
 
 void FDKaacEnc_DistributeBits(ADJ_THR_STATE *adjThrState,
@@ -140,6 +141,7 @@ void FDKaacEnc_AdjustThresholds(ATS_ELEMENT* AdjThrStateElement[(8)],
     QC_OUT*           qcOut,
     PSY_OUT_ELEMENT*  psyOutElement[(8)],
     INT               CBRbitrateMode,
+    INT               maxIter2ndGuess,
     CHANNEL_MAPPING*  cm);
 
 void FDKaacEnc_AdjThrClose(ADJ_THR_STATE** hAdjThr);

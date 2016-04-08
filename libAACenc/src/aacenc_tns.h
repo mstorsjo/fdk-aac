@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -117,21 +117,25 @@ amm-info@iis.fraunhofer.de
 
 #define MAX_NUM_OF_FILTERS 2
 
+#define HIFILT 0           /* index of higher filter   */
+#define LOFILT 1           /* index of lower filter    */
 
-typedef struct{ /*stuff that is tabulated dependent on bitrate etc. */
-  INT     filterEnabled[MAX_NUM_OF_FILTERS];
-  INT     threshOn[MAX_NUM_OF_FILTERS];                /* min. prediction gain for using tns TABUL*/
-  INT     tnsLimitOrder[MAX_NUM_OF_FILTERS];           /* Limit for TNS order TABUL*/
-  INT     tnsFilterDirection[MAX_NUM_OF_FILTERS];      /* Filtering direction, 0=up, 1=down TABUL */
-  INT     acfSplit[MAX_NUM_OF_FILTERS];
-  INT     seperateFiltersAllowed;
 
-}TNS_CONFIG_TABULATED;
-
+typedef struct{ /* stuff that is tabulated dependent on bitrate etc. */
+  INT      filterEnabled[MAX_NUM_OF_FILTERS];
+  INT      threshOn[MAX_NUM_OF_FILTERS];                /* min. prediction gain for using tns TABUL*/
+  INT      filterStartFreq[MAX_NUM_OF_FILTERS];         /* lowest freq for lpc TABUL*/
+  INT      tnsLimitOrder[MAX_NUM_OF_FILTERS];           /* Limit for TNS order TABUL*/
+  INT      tnsFilterDirection[MAX_NUM_OF_FILTERS];      /* Filtering direction, 0=up, 1=down TABUL */
+  INT      acfSplit[MAX_NUM_OF_FILTERS];
+  FIXP_DBL tnsTimeResolution[MAX_NUM_OF_FILTERS];       /* TNS max. time resolution TABUL. Should be fract but MSVC won't compile then */
+  INT      seperateFiltersAllowed;
+} TNS_PARAMETER_TABULATED;
 
 
 typedef struct {   /*assigned at InitTime*/
-  TNS_CONFIG_TABULATED confTab;
+  TNS_PARAMETER_TABULATED confTab;
+  INT isLowDelay;
   INT tnsActive;
   INT maxOrder;                /* max. order of tns filter */
   INT coefRes;
@@ -148,8 +152,8 @@ typedef struct {   /*assigned at InitTime*/
 
 
 typedef struct {
-  INT   tnsActive;
-  INT   predictionGain;
+  INT   tnsActive[MAX_NUM_OF_FILTERS];
+  INT   predictionGain[MAX_NUM_OF_FILTERS];
 } TNS_SUBBLOCK_INFO;
 
 typedef struct{   /*changed at runTime*/

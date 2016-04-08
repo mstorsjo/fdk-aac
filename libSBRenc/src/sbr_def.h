@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -122,6 +122,8 @@ amm-info@iis.fraunhofer.de
 /************  Definitions ***************/
 #define SBR_COMP_MODE_DELTA                     0
 #define SBR_COMP_MODE_CTS                       1
+#define SBR_MAX_ENERGY_VALUES                   5
+#define SBR_GLOBAL_TONALITY_VALUES              2
 
 #define MAX_NUM_CHANNELS                        2
 
@@ -232,6 +234,8 @@ amm-info@iis.fraunhofer.de
 #define FREQ                      0
 #define TIME                      1
 
+/* qmf data scaling */
+#define QMF_SCALE_OFFSET          7
 
 /* huffman tables */
 #define CODE_BOOK_SCF_LAV00         60
@@ -267,13 +271,5 @@ typedef enum
   INVF_SWITCHED /* not a real choice but used here to control behaviour */
 }
 INVF_MODE;
-
-typedef enum
-{
-  FREQ_RES_LOW = 0,
-  FREQ_RES_HIGH
-}
-FREQ_RES;
-
 
 #endif

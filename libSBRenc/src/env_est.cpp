@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -102,6 +102,114 @@ static const UCHAR panTable[2][10] = { { 0, 2, 4, 6, 8,12,16,20,24},
                                        { 0, 2, 4, 8,12, 0, 0, 0, 0 } };
 static const UCHAR maxIndex[2] = {9, 5};
 
+
+/******************************************************************************
+ Functionname:  FDKsbrEnc_GetTonality
+******************************************************************************/
+/***************************************************************************/
+/*!
+
+  \brief      Calculates complete energy per band from the energy values
+              of the QMF subsamples.
+
+  \brief      quotaMatrix - calculated in FDKsbrEnc_CalculateTonalityQuotas()
+  \brief      noEstPerFrame - number of estimations per frame
+  \brief      startIndex - start index for the quota matrix
+  \brief      Energies - energy matrix
+  \brief      startBand - start band
+  \brief      stopBand - number of QMF bands
+  \brief      numberCols - number of QMF subsamples
+
+  \return     mean tonality of the 5 bands with the highest energy
+              scaled by 2^(RELAXATION_SHIFT+2)*RELAXATION_FRACT
+
+****************************************************************************/
+static FIXP_DBL FDKsbrEnc_GetTonality(
+        const FIXP_DBL *const *quotaMatrix,
+        const INT              noEstPerFrame,
+        const INT              startIndex,
+        const FIXP_DBL *const *Energies,
+        const UCHAR            startBand,
+        const INT              stopBand,
+        const INT              numberCols
+        )
+{
+  UCHAR b, e, k;
+  INT      no_enMaxBand[SBR_MAX_ENERGY_VALUES] = { -1, -1, -1, -1, -1 };
+  FIXP_DBL energyMax[SBR_MAX_ENERGY_VALUES] = { FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f) };
+  FIXP_DBL energyMaxMin = MAXVAL_DBL; /* min. energy in energyMax array */
+  UCHAR    posEnergyMaxMin = 0;       /* min. energy in energyMax array position */
+  FIXP_DBL tonalityBand[SBR_MAX_ENERGY_VALUES] = { FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f), FL2FXCONST_DBL(0.0f) };
+  FIXP_DBL globalTonality = FL2FXCONST_DBL(0.0f);
+  FIXP_DBL energyBand[QMF_CHANNELS];
+  INT      maxNEnergyValues; /* max. number of max. energy values */
+
+  /*** Sum up energies for each band ***/
+  FDK_ASSERT(numberCols==15||numberCols==16);
+  /* numberCols is always 15 or 16 for ELD. In case of 16 bands, the
+      energyBands are initialized with the [15]th column.
+      The rest of the column energies are added in the next step.   */
+  if (numberCols==15) {
+    for (b=startBand; b<stopBand; b++) {
+      energyBand[b]=FL2FXCONST_DBL(0.0f);
+    }
+  } else {
+    for (b=startBand; b<stopBand; b++) {
+      energyBand[b]=Energies[15][b]>>4;
+    }
+  }
+
+  for (k=0; k<15; k++) {
+    for (b=startBand; b<stopBand; b++) {
+      energyBand[b] += Energies[k][b]>>4;
+    }
+  }
+
+  /*** Determine 5 highest band-energies ***/
+  maxNEnergyValues = fMin(SBR_MAX_ENERGY_VALUES, stopBand-startBand);
+
+  /* Get min. value in energyMax array */
+  energyMaxMin = energyMax[0] = energyBand[startBand];
+  no_enMaxBand[0] = startBand;
+  posEnergyMaxMin = 0;
+  for (k=1; k<maxNEnergyValues; k++) {
+    energyMax[k] = energyBand[startBand+k];
+    no_enMaxBand[k] = startBand+k;
+    if (energyMaxMin > energyMax[k]) {
+      energyMaxMin = energyMax[k];
+      posEnergyMaxMin = k;
+    }
+  }
+
+  for (b=startBand+maxNEnergyValues; b<stopBand; b++) {
+    if (energyBand[b] > energyMaxMin) {
+      energyMax[posEnergyMaxMin] = energyBand[b];
+      no_enMaxBand[posEnergyMaxMin] = b;
+
+      /* Again, get min. value in energyMax array */
+      energyMaxMin = energyMax[0];
+      posEnergyMaxMin = 0;
+      for (k=1; k<maxNEnergyValues; k++) {
+        if (energyMaxMin > energyMax[k]) {
+          energyMaxMin = energyMax[k];
+          posEnergyMaxMin = k;
+        }
+      }
+    }
+  }
+  /*** End determine 5 highest band-energies ***/
+
+  /* Get tonality values for 5 highest energies */
+  for (e=0; e<maxNEnergyValues; e++) {
+    tonalityBand[e]=FL2FXCONST_DBL(0.0f);
+    for (k=0; k<noEstPerFrame; k++) {
+      tonalityBand[e] += quotaMatrix[startIndex + k][no_enMaxBand[e]] >> 1;
+    }
+    globalTonality += tonalityBand[e] >> 2; /* headroom of 2+1 (max. 5 additions) */
+  }
+
+  return globalTonality;
+}
 
 /***************************************************************************/
 /*!
@@ -919,10 +1027,42 @@ FDKsbrEnc_extractSbrEnvelope1 (
                                      hEnvChan->qmfScale);
 
 
+  if(h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) {
+    FIXP_DBL tonality = FDKsbrEnc_GetTonality (
+          hEnvChan->TonCorr.quotaMatrix,
+          hEnvChan->TonCorr.numberOfEstimatesPerFrame,
+          hEnvChan->TonCorr.startIndexMatrix,
+          sbrExtrEnv->YBuffer + sbrExtrEnv->YBufferWriteOffset,
+          h_con->freqBandTable[HI][0]+1,
+          h_con->noQmfBands,
+          sbrExtrEnv->no_cols
+        );
+
+    hEnvChan->encEnvData.ton_HF[1] = hEnvChan->encEnvData.ton_HF[0];
+    hEnvChan->encEnvData.ton_HF[0] = tonality;
+
+    /* tonality is scaled by 2^19/0.524288f (fract part of RELAXATION) */
+    hEnvChan->encEnvData.global_tonality = (hEnvChan->encEnvData.ton_HF[0]>>1) + (hEnvChan->encEnvData.ton_HF[1]>>1);
+  }
+
+
 
   /*
     Transient detection COEFF Transform OK
   */
+  if(h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY)
+  {
+    FDKsbrEnc_fastTransientDetect(
+            &hEnvChan->sbrFastTransientDetector,
+             sbrExtrEnv->YBuffer,
+             sbrExtrEnv->YBufferScale,
+             sbrExtrEnv->YBufferWriteOffset,
+             eData->transient_info
+             );
+
+  }
+  else
+  {
   FDKsbrEnc_transientDetect(&hEnvChan->sbrTransientDetector,
                              sbrExtrEnv->YBuffer,
                              sbrExtrEnv->YBufferScale,
@@ -931,6 +1071,7 @@ FDKsbrEnc_extractSbrEnvelope1 (
                              sbrExtrEnv->YBufferSzShift,
                              sbrExtrEnv->time_step,
                              hEnvChan->SbrEnvFrame.frameMiddleSlot);
+  }
 
 
 
@@ -951,7 +1092,8 @@ FDKsbrEnc_extractSbrEnvelope1 (
                           sbrExtrEnv->YBufferSzShift,
                           h_con->nSfb[1],
                           sbrExtrEnv->time_step,
-                          sbrExtrEnv->no_cols);
+                          sbrExtrEnv->no_cols,
+                         &hEnvChan->encEnvData.global_tonality);
 
 
 }
@@ -1128,12 +1270,26 @@ FDKsbrEnc_extractSbrEnvelope2 (
         && ( ed->nEnvelopes == 1 ) )
    {
 
-     if (hEnvChan->encEnvData.ldGrid)
-       hEnvChan->encEnvData.currentAmpResFF = (AMP_RES)h_con->initAmpResFF;
-     else
+     if (h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY)
+     {
+       /* Note: global_tonaliy_float_value == ((float)hEnvChan->encEnvData.global_tonality/((INT64)(1)<<(31-(19+2)))/0.524288*(2.0/3.0)));
+                threshold_float_value == ((float)h_con->thresholdAmpResFF_m/((INT64)(1)<<(31-(h_con->thresholdAmpResFF_e)))/0.524288*(2.0/3.0))); */
+       /* decision of SBR_AMP_RES */
+       if (fIsLessThan( /* global_tonality > threshold ? */
+             h_con->thresholdAmpResFF_m, h_con->thresholdAmpResFF_e,
+             hEnvChan->encEnvData.global_tonality, RELAXATION_SHIFT+2 )
+          )
+       {
+         hEnvChan->encEnvData.currentAmpResFF = SBR_AMP_RES_1_5;
+       }
+       else {
+         hEnvChan->encEnvData.currentAmpResFF = SBR_AMP_RES_3_0;
+       }
+     } else {
        hEnvChan->encEnvData.currentAmpResFF = SBR_AMP_RES_1_5;
+     }
 
-     if ( hEnvChan->encEnvData.currentAmpResFF != hEnvChan->encEnvData.init_sbr_amp_res) {
+      if ( hEnvChan->encEnvData.currentAmpResFF != hEnvChan->encEnvData.init_sbr_amp_res) {
 
         FDKsbrEnc_InitSbrHuffmanTables(&hEnvChan->encEnvData,
                                        &hEnvChan->sbrCodeEnvelope,
@@ -1172,7 +1328,12 @@ FDKsbrEnc_extractSbrEnvelope2 (
     }
 
     /* Low energy in low band fix */
-    if ( hEnvChan->sbrTransientDetector.prevLowBandEnergy < hEnvChan->sbrTransientDetector.prevHighBandEnergy && hEnvChan->sbrTransientDetector.prevHighBandEnergy > FL2FX_DBL(0.03))
+    if ( hEnvChan->sbrTransientDetector.prevLowBandEnergy < hEnvChan->sbrTransientDetector.prevHighBandEnergy
+      && hEnvChan->sbrTransientDetector.prevHighBandEnergy > FL2FX_DBL(0.03)
+      /* The fix needs the non-fast transient detector running.
+         It sets prevLowBandEnergy and prevHighBandEnergy.      */
+      && !(h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY)
+      )
     {
       int i;
 
