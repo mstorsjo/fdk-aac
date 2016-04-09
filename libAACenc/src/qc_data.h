@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -268,6 +268,8 @@ typedef struct
   ELEMENT_BITS  *elementBits[(8)];
   BITCNTR_STATE *hBitCounter;
   ADJ_THR_STATE *hAdjThr;
+
+  INT dZoneQuantEnable;   /* enable dead zone quantizer */
 
 } QC_STATE;
 

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -102,12 +102,14 @@ void FDKaacEnc_QuantizeSpectrum(INT sfbCnt,
                       INT sfbPerGroup,
                       INT *sfbOffset, FIXP_DBL *mdctSpectrum,
                       INT globalGain, INT *scalefactors,
-                      SHORT *quantizedSpectrum);
+                      SHORT *quantizedSpectrum,
+                      INT dZoneQuantEnable);
 
 FIXP_DBL FDKaacEnc_calcSfbDist(FIXP_DBL *mdctSpectrum,
                      SHORT *quantSpectrum,
                      INT noOfLines,
-                     INT gain);
+                     INT gain,
+                     INT dZoneQuantEnable);
 
 void FDKaacEnc_calcSfbQuantEnergyAndDist(FIXP_DBL *mdctSpectrum,
                                SHORT   *quantSpectrum,

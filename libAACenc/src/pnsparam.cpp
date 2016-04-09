@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -107,6 +107,7 @@ typedef struct {
 typedef struct {
   ULONG brFrom;
   ULONG brTo;
+  UCHAR S16000;
   UCHAR S22050;
   UCHAR S24000;
   UCHAR S32000;
@@ -115,25 +116,26 @@ typedef struct {
 } AUTO_PNS_TAB;
 
 static const AUTO_PNS_TAB levelTable_mono[]= {
-  {0,      11999, 1, 1, 1, 1, 1,},
-  {12000,  19999, 1, 1, 1, 1, 1,},
-  {20000,  28999, 2, 1, 1, 1, 1,},
-  {29000,  40999, 4, 4, 4, 2, 2,},
-  {41000,  55999, 9, 9, 7, 7, 7,},
-  {56000,  79999, 0, 0, 0, 9, 9,},
-  {80000,  99999, 0, 0, 0, 0, 0,},
-  {100000,999999, 0, 0, 0, 0, 0,},
+  {0,      11999, 0, 1, 1, 1, 1, 1,},
+  {12000,  19999, 0, 1, 1, 1, 1, 1,},
+  {20000,  28999, 0, 2, 1, 1, 1, 1,},
+  {29000,  40999, 0, 4, 4, 4, 2, 2,},
+  {41000,  55999, 0, 9, 9, 7, 7, 7,},
+  {56000,  61999, 0, 0, 0, 0, 9, 9,},
+  {62000,  75999, 0, 0, 0, 0, 0, 0,},
+  {76000,  92999, 0, 0, 0, 0, 0, 0,},
+  {93000, 999999, 0, 0, 0, 0, 0, 0,},
 };
 
 static const AUTO_PNS_TAB levelTable_stereo[]= {
-  {0,      11999, 1, 1, 1, 1, 1,},
-  {12000,  19999, 3, 1, 1, 1, 1,},
-  {20000,  28999, 3, 3, 3, 2, 2,},
-  {29000,  40999, 7, 6, 6, 5, 5,},
-  {41000,  55999, 9, 9, 7, 7, 7,},
-  {56000,  79999, 0, 0, 0, 0, 0,},
-  {80000,  99999, 0, 0, 0, 0, 0,},
-  {100000,999999, 0, 0, 0, 0, 0,},
+  {0,      11999, 0, 1, 1, 1, 1, 1,},
+  {12000,  19999, 0, 3, 1, 1, 1, 1,},
+  {20000,  28999, 0, 3, 3, 3, 2, 2,},
+  {29000,  40999, 0, 7, 6, 6, 5, 5,},
+  {41000,  55999, 0, 9, 9, 7, 7, 7,},
+  {56000,  79999, 0, 0, 0, 0, 0, 0,},
+  {80000,  99999, 0, 0, 0, 0, 0, 0,},
+  {100000,999999, 0, 0, 0, 0, 0, 0,},
 };
 
 
@@ -160,11 +162,11 @@ static const PNS_INFO_TAB pnsInfoTab[] = {
 };
 
 static const AUTO_PNS_TAB levelTable_lowComplexity[]= {
-  {0,      27999, 0, 0, 0, 0, 0,},
-  {28000,  31999, 2, 2, 2, 2, 2,},
-  {32000,  47999, 3, 3, 3, 3, 3,},
-  {48000,  48000, 4, 4, 4, 4, 4,},
-  {48001, 999999, 0, 0, 0, 0, 0,},
+  {0,      27999, 0, 0, 0, 0, 0, 0,},
+  {28000,  31999, 0, 2, 2, 2, 2, 2,},
+  {32000,  47999, 0, 3, 3, 3, 3, 3,},
+  {48000,  48000, 0, 4, 4, 4, 4, 4,},
+  {48001, 999999, 0, 0, 0, 0, 0, 0,},
 };
 
 /* conversion of old LC tuning tables to new (LD enc) structure (only entries which are actually used were converted) */
@@ -211,6 +213,7 @@ int FDKaacEnc_lookUpPnsUse (int bitRate, int sampleRate, int numChan, const int 
   }
 
   switch (sampleRate) {
+  case 16000: hUsePns = levelTable[i].S16000; break;
   case 22050: hUsePns = levelTable[i].S22050; break;
   case 24000: hUsePns = levelTable[i].S24000; break;
   case 32000: hUsePns = levelTable[i].S32000; break;

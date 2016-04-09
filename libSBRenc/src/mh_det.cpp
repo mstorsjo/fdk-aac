@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -663,10 +663,27 @@ static void transientCleanUp(FIXP_DBL **quotaBuffer,
 }
 
 
-/**************************************************************************/
+/*****************************************************************************/
 /*!
-  \brief     Do detection for one tonality estimate.
+  \brief     Detection for one tonality estimate.
 
+  This is the actual missing harmonics detection, using information from the
+  previous detection.
+
+  If a missing harmonic was detected (in a previous frame) due to too high
+  tonality differences, but there was not enough tonality difference in the
+  current frame, the detection algorithm still continues to trace the strongest
+  tone in the scalefactor band (assuming that this is the tone that is going to
+  be replaced in the decoder). This is done to avoid abrupt endings of sines
+  fading out (e.g. in the glockenspiel).
+
+  The function also tries to estimate where one sine is going to be replaced
+  with multiple sines (due to the patching). This is done by comparing the
+  tonality flatness measure of the original and the SBR signal.
+
+  The function also tries to estimate (for the scalefactor bands only
+  containing one qmf subband) when a strong tone in the original will be
+  replaced by a strong tone in the adjacent QMF subband.
 
   \return    none.
 
@@ -694,10 +711,10 @@ static void detection(FIXP_DBL *quotaBuffer,
   for(i=0;i<nSfb;i++){
 
     thresTemp = (guideVectors.guideVectorDiff[i] != FL2FXCONST_DBL(0.0f))
-                  ? fixMax(fMult(mhThresh.decayGuideDiff,guideVectors.guideVectorDiff[i]), mhThresh.thresHoldDiffGuide)
+                  ? fMax(fMult(mhThresh.decayGuideDiff,guideVectors.guideVectorDiff[i]), mhThresh.thresHoldDiffGuide)
                   : mhThresh.thresHoldDiff;
 
-    thresTemp = fixMin(thresTemp, mhThresh.thresHoldDiff);
+    thresTemp = fMin(thresTemp, mhThresh.thresHoldDiff);
 
     if(pDiffVecScfb[i] > thresTemp){
       pHarmVec[i] = 1;
@@ -813,8 +830,11 @@ static void detectionWithPrediction(FIXP_DBL **quotaBuffer,
 
   if(newDetectionAllowed){
 
+    /* Since we don't want to use the transient region for detection (since the tonality values
+       tend to be a bit unreliable for this region) the guide-values are copied to the current
+       starting point. */
     if(totNoEst > 1){
-      start = detectionStart;
+      start = detectionStart+1;
 
       if (start != 0) {
         FDKmemcpy(guideVectors[start].guideVectorDiff,guideVectors[0].guideVectorDiff,nSfb*sizeof(FIXP_DBL));

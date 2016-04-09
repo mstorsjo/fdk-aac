@@ -380,7 +380,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
   if ( isConstantBitrateMode(hQC->bitrateMode) ) {
     INT bitresPerChannel = (hQC->bitResTotMax / init->channelMapping->nChannelsEff);
     /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
-    hQC->bitDistributionMode = (bitresPerChannel>100) ? 0 : (bitresPerChannel>0) ? 1 : 2;
+    hQC->bitDistributionMode = (bitresPerChannel>BITRES_MIN_LD) ? 0 : (bitresPerChannel>0) ? 1 : 2;
   }
   else {
     hQC->bitDistributionMode = 0; /* full bitreservoir */
@@ -405,6 +405,16 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
     }
   }
 
+  if (init->channelMapping->nChannelsEff == 1 &&
+     (init->bitrate / init->channelMapping->nChannelsEff) < 32000 &&
+     init->advancedBitsToPe != 0
+     )
+  {
+    hQC->dZoneQuantEnable = 1;
+  } else {
+    hQC->dZoneQuantEnable = 0;
+  }
+
   FDKaacEnc_AdjThrInit(
         hQC->hAdjThr,
         init->meanPe,
@@ -414,7 +424,8 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
         init->channelMapping->nChannelsEff,
         init->sampleRate,                 /* output sample rate */
         init->advancedBitsToPe,           /* if set, calc bits2PE factor depending on samplerate */
-        hQC->vbrQualFactor
+        hQC->vbrQualFactor,
+        hQC->dZoneQuantEnable
         );
 
   return AAC_ENC_OK;
@@ -877,6 +888,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                                      qcOut[c],
                                      psyOut[c]->psyOutElement,
                                      isConstantBitrateMode(hQC->bitrateMode),
+                                     hQC->hAdjThr->maxIter2ndGuess,
                                      cm);
 
       } /* -end- sub frame counter */
@@ -904,6 +916,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                       FDKaacEnc_EstimateScaleFactors(psyOut[c]->psyOutElement[i]->psyOutChannel,
                                             qcElement[c][i]->qcOutChannel,
                                             hQC->invQuant,
+                                            hQC->dZoneQuantEnable,
                                             cm->elInfo[i].nChannelsInEl);
 
 
@@ -998,7 +1011,8 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                                                              qcOutCh->mdctSpectrum,
                                                              qcOutCh->globalGain,
                                                              qcOutCh->scf,
-                                                             qcOutCh->quantSpec) ;
+                                                             qcOutCh->quantSpec,
+                                                             hQC->dZoneQuantEnable);
 
                                   /*-------------------------------------------- */
                                   if (FDKaacEnc_calcMaxValueInSfb(psyOutCh->sfbCnt,

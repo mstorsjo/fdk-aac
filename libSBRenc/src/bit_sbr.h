@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -141,8 +141,8 @@ struct SBR_ENV_DATA
 {
 
   INT sbr_xpos_ctrl;
-  INT freq_res_fixfix;
-
+  FREQ_RES freq_res_fixfix[2];
+  UCHAR fResTransIsLow;
 
   INVF_MODE sbr_invf_mode;
   INVF_MODE sbr_invf_mode_vec[MAX_NUM_NOISE_VALUES];
@@ -205,6 +205,8 @@ struct SBR_ENV_DATA
   INT balance;
   AMP_RES init_sbr_amp_res;
   AMP_RES currentAmpResFF;
+  FIXP_DBL ton_HF[SBR_GLOBAL_TONALITY_VALUES]; /* tonality is scaled by 2^19/0.524288f (fract part of RELAXATION) */
+  FIXP_DBL global_tonality;
 
   /* extended data */
   INT extended_data;
