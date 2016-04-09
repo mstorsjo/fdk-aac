@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -682,7 +682,7 @@ FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current 
 
   /*
   Reset the patching and allocate memory for the quota matrix.
-  Assing parameters for the LPC analysis.
+  Assuming parameters for the LPC analysis.
   */
   if (sbrCfg->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) {
     switch (timeSlots) {
@@ -690,7 +690,7 @@ FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current 
       hTonCorr->lpcLength[0]              = 8 - LPC_ORDER;
       hTonCorr->lpcLength[1]              = 7 - LPC_ORDER;
       hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LD;
-      hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 7;
+      hTonCorr->numberOfEstimatesPerFrame = 2; /* sbrCfg->noQmfSlots / 7 */
       hTonCorr->frameStartIndexInvfEst    = 0;
       hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_512LD;
       break;
@@ -698,7 +698,7 @@ FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current 
       hTonCorr->lpcLength[0]              = 8 - LPC_ORDER;
       hTonCorr->lpcLength[1]              = 8 - LPC_ORDER;
       hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LD;
-      hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 8;
+      hTonCorr->numberOfEstimatesPerFrame = 2; /* sbrCfg->noQmfSlots / 8 */
       hTonCorr->frameStartIndexInvfEst    = 0;
       hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_512LD;
       break;

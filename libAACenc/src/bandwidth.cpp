@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -127,7 +127,7 @@ static const BANDWIDTH_TAB bandWidthTable_LD_24000[] = {
   { 8000,  2000,  2000},
   {12000,  2000,  2300},
   {16000,  2200,  2500},
-  {24000,  5650,  6400},
+  {24000,  5650,  7200},
   {32000,  11600, 12000},
   {40000,  12000, 16000},
   {48000,  16000, 16000},
@@ -138,10 +138,10 @@ static const BANDWIDTH_TAB bandWidthTable_LD_24000[] = {
 static const BANDWIDTH_TAB bandWidthTable_LD_32000[] = {
   { 8000,  2000,  2000},
   {12000,  2000,  2000},
-  {24000,  4250,  5200},
+  {24000,  4250,  7200},
   {32000,  8400,  9000},
   {40000,  9400,  11300},
-  {48000,  11900, 13700},
+  {48000,  11900, 14700},
   {64000,  14800, 16000},
   {76000,  16000, 16000},
   {360001, 16000, 16000}

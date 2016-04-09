@@ -98,6 +98,11 @@ amm-info@iis.fraunhofer.de
 
 #include "sbr_encoder.h"
 
+#define BITRES_MAX_LD   4000
+#define BITRES_MIN_LD    500
+#define BITRATE_MAX_LD 70000 /* Max assumed bitrate for bitres calculation */
+#define BITRATE_MIN_LD 12000 /* Min assumed bitrate for bitres calculation */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

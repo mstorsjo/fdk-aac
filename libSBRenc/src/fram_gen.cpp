@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -266,7 +266,7 @@ static void calcCtrlSignal (HANDLE_SBR_GRID hSbrGrid, FRAME_CLASS frameClass,
 
 static void ctrlSignal2FrameInfo (HANDLE_SBR_GRID hSbrGrid,
                                   HANDLE_SBR_FRAME_INFO hFrameInfo,
-                                  INT freq_res_fixfix);
+                                  FREQ_RES *freq_res_fixfix);
 
 
 /* table for 8 time slot index */
@@ -341,8 +341,9 @@ static const FREQ_RES freqRes_table_16[16] = {
 static void generateFixFixOnly ( HANDLE_SBR_FRAME_INFO hSbrFrameInfo,
                                  HANDLE_SBR_GRID hSbrGrid,
                                  int tranPosInternal,
-                                 int numberTimeSlots
-                               );
+                                 int numberTimeSlots,
+                                 UCHAR fResTransIsLow
+                                 );
 
 
 /*!
@@ -402,11 +403,10 @@ FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
   const int *v_tuningFreq = v_tuning + 3;
 
   hSbrEnvFrame->v_tuningSegm = v_tuningSegm;
-  INT freq_res_fixfix = hSbrEnvFrame->freq_res_fixfix;
 
   if (ldGrid) {
     /* in case there was a transient at the very end of the previous frame, start with a transient envelope */
-    if(v_transient_info_pre[1] && (numberTimeSlots - v_transient_info_pre[0] < minFrameTranDistance)){
+    if ( !tranFlag && v_transient_info_pre[1] && (numberTimeSlots - v_transient_info_pre[0] < minFrameTranDistance) ){
       tranFlag = 1;
       tranPos  = 0;
     }
@@ -529,7 +529,8 @@ FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
       generateFixFixOnly ( &(hSbrEnvFrame->SbrFrameInfo),
                            &(hSbrEnvFrame->SbrGrid),
                            tranPosInternal,
-                           numberTimeSlots
+                           numberTimeSlots,
+                           hSbrEnvFrame->fResTransIsLow
                            );
 
       return &(hSbrEnvFrame->SbrFrameInfo);
@@ -677,7 +678,7 @@ FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
   ---------------------------------------------------------------------------*/
   ctrlSignal2FrameInfo (&hSbrEnvFrame->SbrGrid,
                         &hSbrEnvFrame->SbrFrameInfo,
-                        freq_res_fixfix);
+                         hSbrEnvFrame->freq_res_fixfix);
 
   return &hSbrEnvFrame->SbrFrameInfo;
 }
@@ -692,7 +693,8 @@ FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
 static void generateFixFixOnly ( HANDLE_SBR_FRAME_INFO hSbrFrameInfo,
                                  HANDLE_SBR_GRID hSbrGrid,
                                  int tranPosInternal,
-                                 int numberTimeSlots
+                                 int numberTimeSlots,
+                                 UCHAR fResTransIsLow
                                )
 {
   int nEnv, i, k=0, tranIdx;
@@ -727,8 +729,12 @@ static void generateFixFixOnly ( HANDLE_SBR_FRAME_INFO hSbrFrameInfo,
   /* adjust segment-frequency-resolution according to the segment-length */
   for (i=0; i<nEnv; i++){
     k = hSbrFrameInfo->borders[i+1] - hSbrFrameInfo->borders[i];
-    hSbrFrameInfo->freqRes[i] = freqResTable[k];
-    hSbrGrid->v_f[i] = freqResTable[k];
+    if (!fResTransIsLow)
+      hSbrFrameInfo->freqRes[i] = freqResTable[k];
+    else
+      hSbrFrameInfo->freqRes[i] = FREQ_RES_LOW;
+
+    hSbrGrid->v_f[i] = hSbrFrameInfo->freqRes[i];
   }
 
   hSbrFrameInfo->nEnvelopes = nEnv;
@@ -765,15 +771,16 @@ static void generateFixFixOnly ( HANDLE_SBR_FRAME_INFO hSbrFrameInfo,
 
 *******************************************************************************/
 void
-FDKsbrEnc_initFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME  hSbrEnvFrame,
-                          INT allowSpread,
-                          INT numEnvStatic,
-                          INT staticFraming,
-                          INT timeSlots,
-                          INT freq_res_fixfix
-                          ,int ldGrid
-                          )
-
+FDKsbrEnc_initFrameInfoGenerator (
+              HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
+              INT       allowSpread,
+              INT       numEnvStatic,
+              INT       staticFraming,
+              INT       timeSlots,
+        const FREQ_RES* freq_res_fixfix
+             ,UCHAR     fResTransIsLow,
+              INT       ldGrid
+        )
 {                               /* FH 00-06-26 */
 
   FDKmemclear(hSbrEnvFrame,sizeof(SBR_ENVELOPE_FRAME ));
@@ -786,7 +793,9 @@ FDKsbrEnc_initFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME  hSbrEnvFrame,
   hSbrEnvFrame->allowSpread = allowSpread;
   hSbrEnvFrame->numEnvStatic = numEnvStatic;
   hSbrEnvFrame->staticFraming = staticFraming;
-  hSbrEnvFrame->freq_res_fixfix = freq_res_fixfix;
+  hSbrEnvFrame->freq_res_fixfix[0] = freq_res_fixfix[0];
+  hSbrEnvFrame->freq_res_fixfix[1] = freq_res_fixfix[1];
+  hSbrEnvFrame->fResTransIsLow     = fResTransIsLow;
 
   hSbrEnvFrame->length_v_bord = 0;
   hSbrEnvFrame->length_v_bordFollow = 0;
@@ -804,6 +813,7 @@ FDKsbrEnc_initFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME  hSbrEnvFrame,
       hSbrEnvFrame->dmin = 2;
       hSbrEnvFrame->dmax = 16;
       hSbrEnvFrame->frameMiddleSlot = FRAME_MIDDLE_SLOT_512LD;
+      hSbrEnvFrame->SbrGrid.bufferFrameStart = 0;
   } else
   switch(timeSlots){
     case NUMBER_TIME_SLOTS_1920:
@@ -1862,19 +1872,28 @@ createDefFrameInfo(HANDLE_SBR_FRAME_INFO hSbrFrameInfo, INT nEnv, INT nTimeSlots
  Functionname:  ctrlSignal2FrameInfo
  *******************************************************************************
 
- Description: Calculates frame_info struct from control signal.
+ Description: Convert "clear-text" sbr_grid() to "frame info" used by the
+              envelope and noise floor estimators.
+              This is basically (except for "low level" calculations) the
+              bitstream decoder defined in the MPEG-4 standard, sub clause
+              4.6.18.3.3, Time / Frequency Grid.  See inline comments for
+              explanation of the shorten and noise border algorithms.
 
  Arguments:   hSbrGrid - source
               hSbrFrameInfo - destination
+              freq_res_fixfix - frequency resolution for FIXFIX frames
 
  Return:      void; hSbrFrameInfo contains the updated FRAME_INFO struct
 
 *******************************************************************************/
 static void
-ctrlSignal2FrameInfo (HANDLE_SBR_GRID hSbrGrid,
-                      HANDLE_SBR_FRAME_INFO hSbrFrameInfo,
-                      INT freq_res_fixfix)
+ctrlSignal2FrameInfo (
+        HANDLE_SBR_GRID        hSbrGrid,       /* input : the grid handle       */
+        HANDLE_SBR_FRAME_INFO  hSbrFrameInfo,  /* output: the frame info handle */
+        FREQ_RES              *freq_res_fixfix /* in/out: frequency resolution for FIXFIX frames */
+        )
 {
+  INT frameSplit = 0;
   INT nEnv = 0, border = 0, i, k, p /*?*/;
   INT *v_r = hSbrGrid->bs_rel_bord;
   INT *v_f = hSbrGrid->v_f;
@@ -1887,17 +1906,10 @@ ctrlSignal2FrameInfo (HANDLE_SBR_GRID hSbrGrid,
   case FIXFIX:
     createDefFrameInfo(hSbrFrameInfo, hSbrGrid->bs_num_env, numberTimeSlots);
 
-    /* At this point all frequency resolutions are set to FREQ_RES_HIGH, so
-     * only if freq_res_fixfix is set to FREQ_RES_LOW, they all have to be
-     * changed.
-     * snd */
-    if (freq_res_fixfix == FREQ_RES_LOW) {
-      for (i = 0; i < hSbrFrameInfo->nEnvelopes; i++) {
-        hSbrFrameInfo->freqRes[i] = FREQ_RES_LOW;
-      }
+    frameSplit = (hSbrFrameInfo->nEnvelopes > 1);
+    for (i = 0; i < hSbrFrameInfo->nEnvelopes; i++) {
+      hSbrGrid->v_f[i] = hSbrFrameInfo->freqRes[i] = freq_res_fixfix[frameSplit];
     }
-    /* ELD: store current frequency resolution */
-    hSbrGrid->v_f[0] = hSbrFrameInfo->freqRes[0];
     break;
 
   case FIXVAR:

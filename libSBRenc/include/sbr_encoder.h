@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -135,6 +135,12 @@ enum
   SBR_SYNTAX_DRM_CRC   = 0x0008
 };
 
+typedef enum
+{
+  FREQ_RES_LOW = 0,
+  FREQ_RES_HIGH
+} FREQ_RES;
+
 typedef struct
 {
   CODEC_TYPE       coreCoder;        /*!< LC or ELD */
@@ -168,8 +174,9 @@ typedef struct sbrConfiguration
   INT dynBwSupported;         /*!< Flag: support for dynamic bandwidth in this combination. */
   INT parametricCoding;       /*!< Flag: usage of parametric coding tool. */
   INT downSampleFactor;       /*!< Sampling rate relation between the SBR and the core encoder. */
-  int freq_res_fixfix[3];     /*!< Frequency resolution of envelopes in frame class FIXFIX
-                                 0=1 Env; 1=2 Env; 2=4 Env; */
+  FREQ_RES freq_res_fixfix[2];/*!< Frequency resolution of envelopes in frame class FIXFIX, for non-split case and split case */
+  UCHAR fResTransIsLow;       /*!< Frequency resolution of envelopes in transient frames: low (0) or variable (1) */
+
   /*
      core coder dependent tuning parameters
   */
@@ -221,6 +228,8 @@ typedef struct sbrConfiguration
   INT sbr_interpol_freq;      /*!< Flag: use interpolation in freq. direction. */
   INT sbr_smoothing_length;   /*!< Flag: choose length 4 or 0 (=on, off). */
   UCHAR init_amp_res_FF;
+  FIXP_DBL threshold_AmpRes_FF_m;
+  SCHAR threshold_AmpRes_FF_e;
 } sbrConfiguration, *sbrConfigurationPtr ;
 
 typedef struct SBR_CONFIG_DATA
@@ -237,7 +246,7 @@ typedef struct SBR_CONFIG_DATA
   INT noQmfBands;                       /**< Number of QMF frequency bands. */
   INT noQmfSlots;                       /**< Number of QMF slots. */
 
-  UCHAR *freqBandTable[2];              /**< Frequency table for low and hires, only MAX_FREQ_COEFFS/2 +1 coeefs actually needed for lowres. */
+  UCHAR *freqBandTable[2];              /**< Frequency table for low and hires, only MAX_FREQ_COEFFS/2 +1 coeffs actually needed for lowres. */
   UCHAR *v_k_master;                    /**< Master BandTable where freqBandTable is derived from. */
 
 
@@ -249,6 +258,8 @@ typedef struct SBR_CONFIG_DATA
   INT xposCtrlSwitch;                   /**< Flag indicates whether to switch xpos ctrl on the fly. */
   INT switchTransposers;                /**< Flag indicates whether to switch xpos on the fly .     */
   UCHAR initAmpResFF;
+  FIXP_DBL thresholdAmpResFF_m;
+  SCHAR thresholdAmpResFF_e;
 } SBR_CONFIG_DATA, *HANDLE_SBR_CONFIG_DATA;
 
 typedef struct {
