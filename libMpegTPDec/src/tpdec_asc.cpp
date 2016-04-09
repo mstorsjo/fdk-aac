@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -1126,6 +1126,8 @@ TRANSPORTDEC_ERROR EldSpecificConfig_Parse(
       if ( 0 != ld_sbr_header(asc, hBs, cb) ) {
         return TRANSPORTDEC_PARSE_ERROR;
       }
+    } else {
+      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
     }
   }
   esc->m_useLdQmfTimeAlign = 0;
@@ -1146,7 +1148,7 @@ TRANSPORTDEC_ERROR EldSpecificConfig_Parse(
 
     switch (eldExtType) {
       default:
-        for(cnt=0; cnt<len; cnt++) {
+        for(cnt=0; cnt<eldExtLen; cnt++) {
           FDKreadBits(hBs, 8 );
         }
         break;
@@ -1372,4 +1374,133 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
   return (ErrorStatus);
 }
 
+TRANSPORTDEC_ERROR DrmRawSdcAudioConfig_Parse(
+        CSAudioSpecificConfig *self,
+        HANDLE_FDK_BITSTREAM   bs
+        )
+{
+  TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
+
+  AudioSpecificConfig_Init(self);
+
+  if ((INT)FDKgetValidBits(bs) < 20) {
+    ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
+    goto bail;
+  }
+  else {
+    /* DRM - Audio information data entity - type 9
+       - Short Id            2 bits
+       - Stream Id           2 bits
+       - audio coding        2 bits
+       - SBR flag            1 bit
+       - audio mode          2 bits
+       - audio sampling rate 3 bits
+       - text flag           1 bit
+       - enhancement flag    1 bit
+       - coder field         5 bits
+       - rfa                 1 bit  */
+
+    int audioCoding, audioMode, cSamplingFreq, coderField, sfIdx, sbrFlag;
+
+    /* Read the SDC field */
+    FDKreadBits(bs,4);   /* Short and Stream Id */
+
+    audioCoding   = FDKreadBits(bs, 2);
+    sbrFlag       = FDKreadBits(bs, 1);
+    audioMode     = FDKreadBits(bs, 2);
+    cSamplingFreq = FDKreadBits(bs, 3);    /* audio sampling rate */
+
+    FDKreadBits(bs, 2);  /* Text and enhancement flag */
+    coderField   = FDKreadBits(bs, 5);
+    FDKreadBits(bs, 1);  /* rfa */
+
+    /* Evaluate configuration and fill the ASC */
+    switch (cSamplingFreq) {
+    case 0: /*  8 kHz */
+      sfIdx = 11;
+      break;
+    case 1: /* 12 kHz */
+      sfIdx = 9;
+      break;
+    case 2: /* 16 kHz */
+      sfIdx = 8;
+      break;
+    case 3: /* 24 kHz */
+      sfIdx = 6;
+      break;
+    case 5: /* 48 kHz */
+      sfIdx = 3;
+      break;
+    case 4: /* reserved */
+    case 6: /* reserved */
+    case 7: /* reserved */
+    default:
+      ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
+      goto bail;
+    }
+
+    self->m_samplingFrequencyIndex = sfIdx;
+    self->m_samplingFrequency = SamplingRateTable[sfIdx];
+
+    if ( sbrFlag ) {
+      UINT i;
+      int tmp = -1;
+      self->m_sbrPresentFlag = 1;
+      self->m_extensionAudioObjectType = AOT_SBR;
+      self->m_extensionSamplingFrequency = self->m_samplingFrequency << 1;
+      for (i=0; i<(sizeof(SamplingRateTable)/sizeof(SamplingRateTable[0])); i++){
+        if (SamplingRateTable[i] == self->m_extensionSamplingFrequency){
+          tmp = i;
+          break;
+        }
+      }
+      self->m_extensionSamplingFrequencyIndex = tmp;
+    }
+
+    switch (audioCoding) {
+      case 0: /* AAC */
+          self->m_aot = AOT_DRM_AAC     ;  /* Set pseudo AOT for Drm AAC */
+
+        switch (audioMode) {
+        case 1: /* parametric stereo */
+          self->m_psPresentFlag = 1;
+        case 0: /* mono */
+          self->m_channelConfiguration = 1;
+          break;
+        case 2: /* stereo */
+          self->m_channelConfiguration = 2;
+          break;
+        default:
+          ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
+          goto bail;
+        }
+        self->m_vcb11Flag = 1;
+        self->m_hcrFlag = 1;
+        self->m_samplesPerFrame = 960;
+        self->m_epConfig = 1;
+        break;
+      case 1: /* CELP */
+        self->m_aot = AOT_ER_CELP;
+        self->m_channelConfiguration = 1;
+        break;
+      case 2: /* HVXC */
+        self->m_aot = AOT_ER_HVXC;
+        self->m_channelConfiguration = 1;
+        break;
+      case 3: /* reserved */
+      default:
+        ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
+        self->m_aot = AOT_NONE;
+        break;
+    }
+
+    if (self->m_psPresentFlag && !self->m_sbrPresentFlag) {
+      ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
+      goto bail;
+    }
+  }
+
+bail:
+  return (ErrorStatus);
+}
 

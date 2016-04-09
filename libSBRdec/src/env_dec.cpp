@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -369,7 +369,7 @@ leanSbrConcealment(HANDLE_SBR_HEADER_DATA hHeaderData,     /*!< Static control d
   FIXP_SGL step;    /* speed of fade */
   int i;
 
-  int currentStartPos = h_prev_data->stopPos - hHeaderData->numberTimeSlots;
+  int currentStartPos = FDKmax(0, h_prev_data->stopPos - hHeaderData->numberTimeSlots);
   int currentStopPos = hHeaderData->numberTimeSlots;
 
 

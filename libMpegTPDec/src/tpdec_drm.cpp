@@ -81,53 +81,66 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/*****************************  MPEG-4 AAC Decoder  **************************
 
-   Author(s):   Manuel Jander
-   Description: FDK tools versioning support
+   Author(s):   Christian Griebel
+   Description: DRM transport stuff
 
 ******************************************************************************/
 
-#include "FDK_core.h"
+#include "tpdec_drm.h"
 
-/* FDK tools library info */
-#define FDK_TOOLS_LIB_VL0 2
-#define FDK_TOOLS_LIB_VL1 3
-#define FDK_TOOLS_LIB_VL2 6
-#define FDK_TOOLS_LIB_TITLE "FDK Tools"
-#ifdef __ANDROID__
-#define FDK_TOOLS_LIB_BUILD_DATE ""
-#define FDK_TOOLS_LIB_BUILD_TIME ""
-#else
-#define FDK_TOOLS_LIB_BUILD_DATE __DATE__
-#define FDK_TOOLS_LIB_BUILD_TIME __TIME__
-#endif
 
-int FDK_toolsGetLibInfo(LIB_INFO *info)
+#include "FDK_bitstream.h"
+
+
+
+void drmRead_CrcInit(HANDLE_DRM pDrm)      /*!< pointer to drm crc info stucture */
 {
-  UINT v;
-  int i;
+  FDK_ASSERT(pDrm != NULL);
 
-  if (info == NULL) {
-    return -1;
+  FDKcrcInit(&pDrm->crcInfo, 0x001d, 0xFFFF, 8);
+}
+
+int drmRead_CrcStartReg(
+                     HANDLE_DRM pDrm,            /*!< pointer to drm stucture */
+                     HANDLE_FDK_BITSTREAM hBs,   /*!< handle to current bit buffer structure */
+                     int mBits                   /*!< number of bits in crc region */
+                   )
+{
+  FDK_ASSERT(pDrm != NULL);
+
+  FDKcrcReset(&pDrm->crcInfo);
+
+  pDrm->crcReadValue = FDKreadBits(hBs, 8);
+
+  return ( FDKcrcStartReg(&pDrm->crcInfo, hBs, mBits) );
+
+}
+
+void drmRead_CrcEndReg(
+                    HANDLE_DRM pDrm,             /*!< pointer to drm crc info stucture */
+                    HANDLE_FDK_BITSTREAM hBs,    /*!< handle to current bit buffer structure */
+                    int reg                      /*!< crc region */
+                  )
+{
+  FDK_ASSERT(pDrm != NULL);
+
+  FDKcrcEndReg(&pDrm->crcInfo, hBs, reg);
+}
+
+TRANSPORTDEC_ERROR drmRead_CrcCheck( HANDLE_DRM pDrm )
+{
+  TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
+  USHORT crc;
+
+  crc = FDKcrcGetCRC(&pDrm->crcInfo) ^ 0xFF;
+  if (crc != pDrm->crcReadValue)
+  {
+    return (TRANSPORTDEC_CRC_ERROR);
   }
 
-  /* search for next free tab */
-  i = FDKlibInfo_lookup(info, FDK_TOOLS);
-  if (i<0) return -1;
-
-  info += i;
-
-  v = LIB_VERSION(FDK_TOOLS_LIB_VL0, FDK_TOOLS_LIB_VL1, FDK_TOOLS_LIB_VL2);
-
-  FDKsprintf(info->versionStr, "%d.%d.%d", ((v >> 24) & 0xff), ((v >> 16) & 0xff), ((v >> 8 ) & 0xff));
-
-  info->module_id = FDK_TOOLS;
-  info->version = v;
-  info->build_date = (char *)FDK_TOOLS_LIB_BUILD_DATE;
-  info->build_time = (char *)FDK_TOOLS_LIB_BUILD_TIME;
-  info->title      = (char *)FDK_TOOLS_LIB_TITLE;
-  info->flags = 0;
-
-  return 0;
+  return (ErrorStatus);
 }
+
+

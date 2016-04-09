@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -151,13 +151,13 @@ typedef struct
 }
 ENV_CALC_NRGS;
 
-/*static*/ void equalizeFiltBufferExp(FIXP_DBL *filtBuffer,
+static void equalizeFiltBufferExp(FIXP_DBL *filtBuffer,
                                   SCHAR   *filtBuffer_e,
                                   FIXP_DBL *NrgGain,
                                   SCHAR   *NrgGain_e,
                                   int    subbands);
 
-/*static*/ void calcNrgPerSubband(FIXP_DBL  **analysBufferReal,
+static void calcNrgPerSubband(FIXP_DBL  **analysBufferReal,
                               FIXP_DBL  **analysBufferImag,
                               int       lowSubband, int highSubband,
                               int       start_pos,  int next_pos,
@@ -165,7 +165,7 @@ ENV_CALC_NRGS;
                               FIXP_DBL *nrgEst,
                               SCHAR    *nrgEst_e );
 
-/*static*/ void calcNrgPerSfb(FIXP_DBL  **analysBufferReal,
+static void calcNrgPerSfb(FIXP_DBL  **analysBufferReal,
                           FIXP_DBL  **analysBufferImag,
                           int       nSfb,
                           UCHAR    *freqBandTable,
@@ -174,13 +174,13 @@ ENV_CALC_NRGS;
                           FIXP_DBL *nrg_est,
                           SCHAR    *nrg_est_e );
 
-/*static*/ void calcSubbandGain(FIXP_DBL  nrgRef, SCHAR nrgRef_e, ENV_CALC_NRGS* nrgs, int c,
+static void calcSubbandGain(FIXP_DBL  nrgRef, SCHAR nrgRef_e, ENV_CALC_NRGS* nrgs, int c,
                             FIXP_DBL  tmpNoise, SCHAR tmpNoise_e,
                             UCHAR     sinePresentFlag,
                             UCHAR     sineMapped,
                             int       noNoiseFlag);
 
-/*static*/ void calcAvgGain(ENV_CALC_NRGS* nrgs,
+static void calcAvgGain(ENV_CALC_NRGS* nrgs,
                         int        lowSubband,
                         int        highSubband,
                         FIXP_DBL  *sumRef_m,
@@ -188,7 +188,7 @@ ENV_CALC_NRGS;
                         FIXP_DBL  *ptrAvgGain_m,
                         SCHAR     *ptrAvgGain_e);
 
-/*static*/ void adjustTimeSlotLC(FIXP_DBL  *ptrReal,
+static void adjustTimeSlot_EldGrid(FIXP_DBL  *ptrReal,
                            ENV_CALC_NRGS* nrgs,
                            UCHAR *ptrHarmIndex,
                            int    lowSubbands,
@@ -196,8 +196,17 @@ ENV_CALC_NRGS;
                            int    scale_change,
                            int    noNoiseFlag,
                            int   *ptrPhaseIndex,
-                           int    fCldfb);
-/*static*/ void adjustTimeSlotHQ(FIXP_DBL  *ptrReal,
+                           int    scale_diff_low);
+
+static void adjustTimeSlotLC(FIXP_DBL  *ptrReal,
+                           ENV_CALC_NRGS* nrgs,
+                           UCHAR *ptrHarmIndex,
+                           int    lowSubbands,
+                           int    noSubbands,
+                           int    scale_change,
+                           int    noNoiseFlag,
+                           int   *ptrPhaseIndex);
+static void adjustTimeSlotHQ(FIXP_DBL  *ptrReal,
                            FIXP_DBL  *ptrImag,
                            HANDLE_SBR_CALCULATE_ENVELOPE h_sbr_cal_env,
                            ENV_CALC_NRGS* nrgs,
@@ -224,7 +233,7 @@ ENV_CALC_NRGS;
   Additionally, the flags in harmFlagsPrev are being updated by this function
   for the next frame.
 */
-/*static*/ void mapSineFlags(UCHAR *freqBandTable, /*!< Band borders (there's only 1 flag per band) */
+static void mapSineFlags(UCHAR *freqBandTable,         /*!< Band borders (there's only 1 flag per band) */
                          int nSfb,                     /*!< Number of bands in the table */
                          UCHAR *addHarmonics,           /*!< vector with 1 flag per sfb */
                          int *harmFlagsPrev,           /*!< Packed 'addHarmonics' */
@@ -990,7 +999,6 @@ calculateSbrEnvelope (QMF_SCALE_FACTOR  *sbrScaleFactor,           /*!< Scaling 
           /* Prevent the smoothing filter from running on constant levels */
           if (j-start_pos < smooth_length)
             smooth_ratio = FDK_sbrDecoder_sbr_smoothFilter[j-start_pos];
-
           else
             smooth_ratio = FL2FXCONST_SGL(0.0f);
 
@@ -1007,7 +1015,8 @@ calculateSbrEnvelope (QMF_SCALE_FACTOR  *sbrScaleFactor,           /*!< Scaling 
         }
         else
         {
-          adjustTimeSlotLC(&analysBufferReal[j][lowSubband],
+          if (flags & SBRDEC_ELD_GRID) {
+            adjustTimeSlot_EldGrid(&analysBufferReal[j][lowSubband],
                            pNrgs,
                           &h_sbr_cal_env->harmIndex,
                            lowSubband,
@@ -1015,7 +1024,18 @@ calculateSbrEnvelope (QMF_SCALE_FACTOR  *sbrScaleFactor,           /*!< Scaling 
                            scale_change,
                            noNoiseFlag,
                           &h_sbr_cal_env->phaseIndex,
-                           (flags & SBRDEC_ELD_GRID));
+                           EXP2SCALE(adj_e) - sbrScaleFactor->lb_scale);
+          } else
+          {
+            adjustTimeSlotLC(&analysBufferReal[j][lowSubband],
+                           pNrgs,
+                          &h_sbr_cal_env->harmIndex,
+                           lowSubband,
+                           noSubbands,
+                           scale_change,
+                           noNoiseFlag,
+                          &h_sbr_cal_env->phaseIndex);
+          }
         }
       } // for
 
@@ -1176,7 +1196,7 @@ resetSbrEnvelopeCalc (HANDLE_SBR_CALCULATE_ENVELOPE hCalEnv) /*!< pointer to env
   can be performed.
   This function is called once for each envelope before adjusting.
 */
-/*static*/ void equalizeFiltBufferExp(FIXP_DBL *filtBuffer,     /*!< bufferd gains */
+static void equalizeFiltBufferExp(FIXP_DBL *filtBuffer,     /*!< bufferd gains */
                                   SCHAR    *filtBuffer_e,   /*!< exponents of bufferd gains */
                                   FIXP_DBL *nrgGain,        /*!< gains for current envelope */
                                   SCHAR    *nrgGain_e,      /*!< exponents of gains for current envelope */
@@ -1331,7 +1351,7 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
 
   This function is used when interpolFreq is true.
 */
-/*static*/ void calcNrgPerSubband(FIXP_DBL  **analysBufferReal, /*!< Real part of subband samples */
+static void calcNrgPerSubband(FIXP_DBL  **analysBufferReal, /*!< Real part of subband samples */
                               FIXP_DBL  **analysBufferImag, /*!< Imaginary part of subband samples */
                               int       lowSubband,           /*!< Begin of the SBR frequency range */
                               int       highSubband,          /*!< High end of the SBR frequency range */
@@ -1452,7 +1472,7 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
 
   This function is used when interpolFreq is false.
 */
-/*static*/ void calcNrgPerSfb(FIXP_DBL  **analysBufferReal,  /*!< Real part of subband samples */
+static void calcNrgPerSfb(FIXP_DBL  **analysBufferReal,  /*!< Real part of subband samples */
                           FIXP_DBL  **analysBufferImag,  /*!< Imaginary part of subband samples */
                           int       nSfb,                /*!< Number of scale factor bands */
                           UCHAR    *freqBandTable,       /*!< First Subband for each Sfb */
@@ -1585,7 +1605,7 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
 
   The resulting energy gain is given by mantissa and exponent.
 */
-/*static*/ void calcSubbandGain(FIXP_DBL  nrgRef,            /*!< Reference Energy according to envelope data */
+static void calcSubbandGain(FIXP_DBL  nrgRef,            /*!< Reference Energy according to envelope data */
                             SCHAR     nrgRef_e,          /*!< Reference Energy according to envelope data (exponent) */
                             ENV_CALC_NRGS* nrgs,
                             int       i,
@@ -1689,7 +1709,7 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
   The result is used as a relative limit for all gains within the
   current "limiter band" (a certain frequency range).
 */
-/*static*/ void calcAvgGain(ENV_CALC_NRGS* nrgs,
+static void calcAvgGain(ENV_CALC_NRGS* nrgs,
                         int        lowSubband,    /*!< Begin of the limiter band */
                         int        highSubband,   /*!< High end of the limiter band */
                         FIXP_DBL  *ptrSumRef,
@@ -1728,21 +1748,101 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
   *ptrSumRef_e = sumRef_e;
 }
 
+static void adjustTimeSlot_EldGrid(
+                              FIXP_DBL *ptrReal,        /*!< Subband samples to be adjusted, real part */
+                              ENV_CALC_NRGS* nrgs,
+                              UCHAR    *ptrHarmIndex,   /*!< Harmonic index */
+                              int       lowSubband,     /*!< Lowest QMF-channel in the currently used SBR range. */
+                              int       noSubbands,     /*!< Number of QMF subbands */
+                              int       scale_change,   /*!< Number of bits to shift adjusted samples */
+                              int       noNoiseFlag,    /*!< Flag to suppress noise addition */
+                              int      *ptrPhaseIndex,  /*!< Start index to random number array */
+                              int       scale_diff_low) /*!<  */
+{
+  int k;
+  FIXP_DBL  signalReal, sbNoise;
+  int tone_count = 0;
+
+  FIXP_DBL *pGain       = nrgs->nrgGain;     /*!< Gains of current envelope */
+  FIXP_DBL *pNoiseLevel = nrgs->noiseLevel;  /*!< Noise levels of current envelope */
+  FIXP_DBL *pSineLevel  = nrgs->nrgSine;     /*!< Sine levels */
+
+  int    phaseIndex = *ptrPhaseIndex;
+  UCHAR  harmIndex  = *ptrHarmIndex;
+
+  static const INT harmonicPhase [2][4] = {
+    { 1, 0, -1,  0},
+    { 0, 1,  0, -1}
+  };
+
+  static const FIXP_DBL harmonicPhaseX [2][4] = {
+    { FL2FXCONST_DBL(2.0*1.245183154539139e-001),  FL2FXCONST_DBL(2.0*-1.123767859325028e-001),  FL2FXCONST_DBL(2.0*-1.245183154539139e-001), FL2FXCONST_DBL(2.0* 1.123767859325028e-001) },
+    { FL2FXCONST_DBL(2.0*1.245183154539139e-001),  FL2FXCONST_DBL(2.0* 1.123767859325028e-001),  FL2FXCONST_DBL(2.0*-1.245183154539139e-001), FL2FXCONST_DBL(2.0*-1.123767859325028e-001) }
+  };
+
+  for (k=0; k < noSubbands; k++) {
+
+    phaseIndex = (phaseIndex + 1) & (SBR_NF_NO_RANDOM_VAL - 1);
+
+    if( (pSineLevel[0] != FL2FXCONST_DBL(0.0f)) || (noNoiseFlag == 1) ){
+      sbNoise = FL2FXCONST_DBL(0.0f);
+    } else {
+      sbNoise = pNoiseLevel[0];
+    }
+
+    signalReal = fMultDiv2(*ptrReal,*pGain) << ((int)scale_change);
+
+    signalReal += (fMultDiv2(FDK_sbrDecoder_sbr_randomPhase[phaseIndex][0], sbNoise)<<4);
+
+    signalReal += pSineLevel[0] * harmonicPhase[0][harmIndex];
+
+    *ptrReal = signalReal;
+
+    if (k == 0) {
+      *(ptrReal-1) += scaleValue(fMultDiv2(harmonicPhaseX[lowSubband&1][harmIndex], pSineLevel[0]), -scale_diff_low)  ;
+      if (k < noSubbands - 1) {
+        *(ptrReal)   += fMultDiv2(pSineLevel[1], harmonicPhaseX[(lowSubband+1)&1][harmIndex]);
+      }
+    }
+    if (k > 0 && k < noSubbands - 1 && tone_count < 16) {
+      *(ptrReal)   += fMultDiv2(pSineLevel[- 1], harmonicPhaseX [(lowSubband+k)&1]  [harmIndex]);
+      *(ptrReal)   += fMultDiv2(pSineLevel[+ 1], harmonicPhaseX [(lowSubband+k+1)&1][harmIndex]);
+    }
+    if (k == noSubbands - 1 && tone_count < 16) {
+      if (k > 0) {
+        *(ptrReal)   += fMultDiv2(pSineLevel[- 1], harmonicPhaseX [(lowSubband+k)&1][harmIndex]);
+      }
+      if (k + lowSubband + 1< 63) {
+        *(ptrReal+1) += fMultDiv2(pSineLevel[0], harmonicPhaseX[(lowSubband+k+1)&1][harmIndex]);
+      }
+    }
+
+    if(pSineLevel[0] != FL2FXCONST_DBL(0.0f)){
+      tone_count++;
+    }
+    ptrReal++;
+    pNoiseLevel++;
+    pGain++;
+    pSineLevel++;
+  }
+
+  *ptrHarmIndex = (harmIndex + 1) & 3;
+  *ptrPhaseIndex = phaseIndex & (SBR_NF_NO_RANDOM_VAL - 1);
+}
 
 /*!
   \brief   Amplify one timeslot of the signal with the calculated gains
            and add the noisefloor.
 */
 
-/*static*/ void adjustTimeSlotLC(FIXP_DBL *ptrReal,       /*!< Subband samples to be adjusted, real part */
+static void adjustTimeSlotLC(FIXP_DBL *ptrReal,       /*!< Subband samples to be adjusted, real part */
                              ENV_CALC_NRGS* nrgs,
                              UCHAR    *ptrHarmIndex,  /*!< Harmonic index */
                              int       lowSubband,    /*!< Lowest QMF-channel in the currently used SBR range. */
                              int       noSubbands,    /*!< Number of QMF subbands */
                              int       scale_change,  /*!< Number of bits to shift adjusted samples */
                              int       noNoiseFlag,   /*!< Flag to suppress noise addition */
-                             int      *ptrPhaseIndex, /*!< Start index to random number array */
-                             int       fCldfb)        /*!< CLDFB 80 flag */
+                             int      *ptrPhaseIndex) /*!< Start index to random number array */
 {
   FIXP_DBL *pGain       = nrgs->nrgGain;     /*!< Gains of current envelope */
   FIXP_DBL *pNoiseLevel = nrgs->noiseLevel;  /*!< Noise levels of current envelope */
@@ -1775,41 +1875,10 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
   sineLevelNext = (noSubbands > 1) ? pSineLevel[0] : FL2FXCONST_DBL(0.0f);
 
   if (sineLevel!=FL2FXCONST_DBL(0.0f)) tone_count++;
-
   else if (!noNoiseFlag)
         /* Add noisefloor to the amplified signal */
         signalReal += (fMultDiv2(FDK_sbrDecoder_sbr_randomPhase[index][0], pNoiseLevel[0])<<4);
 
-  if (fCldfb) {
-
-    if (!(harmIndex&0x1)) {
-      /* harmIndex 0,2 */
-      signalReal += (harmIndex&0x2) ? -sineLevel : sineLevel;
-      *ptrReal++ = signalReal;
-    }
-    else {
-      /* harmIndex 1,3 in combination with freqInvFlag */
-      int shift = (int) (scale_change+1);
-      shift = (shift>=0) ? fixMin(DFRACT_BITS-1,shift) : fixMax(-(DFRACT_BITS-1),shift);
-
-      FIXP_DBL tmp1 = scaleValue( fMultDiv2(C1_CLDFB, sineLevel), -shift );
-
-      FIXP_DBL tmp2 = fMultDiv2(C1_CLDFB, sineLevelNext);
-
-
-      /* save switch and compare operations and reduce to XOR statement */
-      if ( ((harmIndex>>1)&0x1)^freqInvFlag) {
-          *(ptrReal-1) += tmp1;
-          signalReal   -= tmp2;
-      } else {
-          *(ptrReal-1) -= tmp1;
-          signalReal   += tmp2;
-      }
-      *ptrReal++ = signalReal;
-      freqInvFlag = !freqInvFlag;
-    }
-
-  } else
   {
     if (!(harmIndex&0x1)) {
       /* harmIndex 0,2 */
@@ -1933,8 +2002,9 @@ FIXP_DBL maxSubbandSample( FIXP_DBL ** re,   /*!< Real part of input and output 
   *ptrHarmIndex = (harmIndex + 1) & 3;
   *ptrPhaseIndex = index & (SBR_NF_NO_RANDOM_VAL - 1);
 }
-void adjustTimeSlotHQ(FIXP_DBL *RESTRICT ptrReal,           /*!< Subband samples to be adjusted, real part */
-                      FIXP_DBL *RESTRICT ptrImag,               /*!< Subband samples to be adjusted, imag part */
+static void adjustTimeSlotHQ(
+                      FIXP_DBL *RESTRICT ptrReal,      /*!< Subband samples to be adjusted, real part */
+                      FIXP_DBL *RESTRICT ptrImag,      /*!< Subband samples to be adjusted, imag part */
                       HANDLE_SBR_CALCULATE_ENVELOPE h_sbr_cal_env,
                       ENV_CALC_NRGS* nrgs,
                       int       lowSubband,            /*!< Lowest QMF-channel in the currently used SBR range. */
@@ -2137,7 +2207,6 @@ ResetLimiterBands ( UCHAR *limiterBandTable,   /*!< Resulting band borders in QM
   UCHAR workLimiterBandTable[MAX_FREQ_COEFFS / 2 + MAX_NUM_PATCHES + 1];
   int patchBorders[MAX_NUM_PATCHES + 1];
   int kx, k2;
-  FIXP_DBL temp;
 
   int lowSubband = freqBandTable[0];
   int highSubband = freqBandTable[noFreqBands];
@@ -2169,13 +2238,32 @@ ResetLimiterBands ( UCHAR *limiterBandTable,   /*!< Resulting band borders in QM
 
 
     while (hiLimIndex <= tempNoLim) {
+      FIXP_DBL div_m, oct_m, temp;
+      INT div_e  = 0, oct_e  = 0, temp_e = 0;
+
       k2 = workLimiterBandTable[hiLimIndex] + lowSubband;
       kx = workLimiterBandTable[loLimIndex] + lowSubband;
 
-      temp = FX_SGL2FX_DBL(FDK_getNumOctavesDiv8(kx,k2)); /* Number of octaves */
-      temp = fMult(temp, FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4[limiterBands]);
+      div_m  = fDivNorm(k2, kx, &div_e);
 
-      if (temp < FL2FXCONST_DBL (0.49f)>>5) {
+      /* calculate number of octaves */
+      oct_m  = fLog2(div_m, div_e, &oct_e);
+
+      /* multiply with limiterbands per octave    */
+      /* values 1, 1.2, 2, 3 -> scale factor of 2 */
+      temp = fMultNorm(oct_m, FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4_DBL[limiterBands], &temp_e);
+
+      /* overall scale factor of temp ist addition of scalefactors from log2 calculation,
+         limiter bands scalefactor (2) and limiter bands multiplication */
+      temp_e += oct_e + 2;
+
+      /*    div can be a maximum of 64 (k2 = 64 and kx = 1)
+         -> oct can be a maximum of 6
+         -> temp can be a maximum of 18 (as limiterBandsPerOctoave is a maximum factor of 3)
+         -> we need a scale factor of 5 for comparisson
+      */
+      if (temp >> (5 - temp_e) < FL2FXCONST_DBL (0.49f) >> 5) {
+
         if (workLimiterBandTable[hiLimIndex] == workLimiterBandTable[loLimIndex]) {
           workLimiterBandTable[hiLimIndex] = highSubband;
           nBands--;
