@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -125,6 +125,7 @@ amm-info@iis.fraunhofer.de
 typedef enum
 {
   HEADER_NOT_PRESENT,
+  HEADER_ERROR,
   HEADER_OK,
   HEADER_RESET
 }
@@ -132,10 +133,10 @@ SBR_HEADER_STATUS;
 
 typedef enum
 {
-  SBR_NOT_INITIALIZED,
-  UPSAMPLING,
-  SBR_HEADER,
-  SBR_ACTIVE
+  SBR_NOT_INITIALIZED = 0,
+  UPSAMPLING = 1,
+  SBR_HEADER = 2,
+  SBR_ACTIVE = 3
 }
 SBR_SYNC_STATE;
 
@@ -179,6 +180,7 @@ typedef FREQ_BAND_DATA *HANDLE_FREQ_BAND_DATA;
 #define SBRDEC_LOW_POWER      16  /* Flag indicating that Low Power QMF mode shall be used. */
 #define SBRDEC_PS_DECODED     32  /* Flag indicating that PS was decoded and rendered. */
 #define SBRDEC_LD_MPS_QMF    512  /* Flag indicating that the LD-MPS QMF shall be used. */
+#define SBRDEC_SYNTAX_DRM   2048  /* Flag indicating that DRM30/DRM+ reverse syntax is being used. */
 #define SBRDEC_DOWNSAMPLE   8192  /* Flag indicating that the downsampling mode is used. */
 #define SBRDEC_FLUSH       16384  /* Flag is used to flush all elements in use. */
 #define SBRDEC_FORCE_RESET 32768  /* Flag is used to force a reset of all elements in use. */

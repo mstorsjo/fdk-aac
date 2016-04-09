@@ -110,7 +110,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 11
+#define AACDECODER_LIB_VL2 17
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #ifdef __ANDROID__
 #define AACDECODER_LIB_BUILD_DATE ""
@@ -181,8 +181,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_ConfigRaw (
           break;
         }
         /* if baselayer is OK we continue decoding */
-        if(layer  >= 1){
+        if(layer >= 1){
           self->nrOfLayers = layer;
+          err = AAC_DEC_OK;
         }
         break;
       }
@@ -785,8 +786,8 @@ static INT aacDecoder_EstimateNumberOfLostFrames(HANDLE_AACDECODER self)
 
 LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
         HANDLE_AACDECODER  self,
-        INT_PCM           *pTimeData,
-        const INT          timeDataSize,
+        INT_PCM           *pTimeData_extern,
+        const INT          timeDataSize_extern,
         const UINT         flags)
 {
     AAC_DECODER_ERROR ErrorStatus;
@@ -796,11 +797,16 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
     HANDLE_FDK_BITSTREAM hBs;
     int fTpInterruption = 0;  /* Transport originated interruption detection. */
     int fTpConceal = 0;       /* Transport originated concealment. */
+    INT_PCM *pTimeData = NULL;
+    INT timeDataSize = 0;
 
 
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
+
+    pTimeData = self->pcmOutputBuffer;
+    timeDataSize = sizeof(self->pcmOutputBuffer)/sizeof(*self->pcmOutputBuffer);
 
     if (flags & AACDEC_INTR) {
       self->streamInfo.numLostAccessUnits = 0;
@@ -918,7 +924,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
     if (self->sbrEnabled)
     {
       SBR_ERROR sbrError = SBRDEC_OK;
-      int chOutMapIdx = ((self->chMapIndex==0) && (self->streamInfo.numChannels<7)) ? self->streamInfo.numChannels : self->chMapIndex;
+      int chIdx, numCoreChannel = self->streamInfo.numChannels;
+      int chOutMapIdx = ((self->chMapIndex==0) && (numCoreChannel<7)) ? numCoreChannel : self->chMapIndex;
 
       /* set params */
       sbrDecoder_SetParam ( self->hSbrDecoder,
@@ -978,10 +985,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
 
        if (self->psPossible) {
          self->flags |= AC_PS_PRESENT;
-         self->channelType[0] = ACT_FRONT;
-         self->channelType[1] = ACT_FRONT;
-         self->channelIndices[0] = 0;
-         self->channelIndices[1] = 1;
+       }
+       for (chIdx = numCoreChannel; chIdx < self->streamInfo.numChannels; chIdx+=1) {
+         self->channelType[chIdx] = ACT_FRONT;
+         self->channelIndices[chIdx] = chIdx;
        }
      }
    }
@@ -1006,7 +1013,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
             self->channelOutputMapping,
             (self->limiterEnableCurr) ? &pcmLimiterScale : NULL
       );
-    if (dmxErr == PCMDMX_INVALID_MODE) {
+    if ( (ErrorStatus == AAC_DEC_OK)
+      && (dmxErr == PCMDMX_INVALID_MODE) ) {
       /* Announce the framework that the current combination of channel configuration and downmix
        * settings are not know to produce a predictable behavior and thus maybe produce strange output. */
       ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
@@ -1050,6 +1058,19 @@ bail:
 
     /* Update Statistics */
     aacDecoder_UpdateBitStreamCounters(&self->streamInfo, hBs, nBits, ErrorStatus);
+
+    /* Check whether external output buffer is large enough. */
+    if (timeDataSize_extern < self->streamInfo.numChannels*self->streamInfo.frameSize) {
+      ErrorStatus = AAC_DEC_OUTPUT_BUFFER_TOO_SMALL;
+    }
+
+    /* Update external output buffer. */
+    if ( IS_OUTPUT_VALID(ErrorStatus) ) {
+      FDKmemcpy(pTimeData_extern, pTimeData, self->streamInfo.numChannels*self->streamInfo.frameSize*sizeof(*pTimeData));
+    }
+    else {
+      FDKmemclear(pTimeData_extern, timeDataSize_extern*sizeof(*pTimeData_extern));
+    }
 
     return ErrorStatus;
 }
@@ -1120,6 +1141,7 @@ LINKSPEC_CPP INT aacDecoder_GetLibInfo ( LIB_INFO *info )
   /* Set flags */
   info->flags = 0
       | CAPF_AAC_LC
+      | CAPF_ER_AAC_SCAL
       | CAPF_AAC_VCB11
       | CAPF_AAC_HCR
       | CAPF_AAC_RVLC
@@ -1130,6 +1152,7 @@ LINKSPEC_CPP INT aacDecoder_GetLibInfo ( LIB_INFO *info )
 
       | CAPF_AAC_MPEG4
 
+      | CAPF_AAC_DRM_BSFORMAT
 
       | CAPF_AAC_1024
       | CAPF_AAC_960

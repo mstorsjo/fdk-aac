@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -187,6 +187,15 @@ const FIXP_SGL FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4[4] =
   FL2FXCONST_SGL(1.2f / 4.0f),
   FL2FXCONST_SGL(2.0f / 4.0f),
   FL2FXCONST_SGL(3.0f / 4.0f)
+};
+
+/*! Constants for calculating the number of limiter bands */
+const FIXP_DBL FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4_DBL[4] =
+{
+  FL2FXCONST_DBL(1.0f / 4.0f),
+  FL2FXCONST_DBL(1.2f / 4.0f),
+  FL2FXCONST_DBL(2.0f / 4.0f),
+  FL2FXCONST_DBL(3.0f / 4.0f)
 };
 
 /*! Ratio of old gains and noise levels for the first 4 timeslots of an envelope */

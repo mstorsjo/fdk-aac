@@ -128,6 +128,7 @@ amm-info@iis.fraunhofer.de
 #include "lpp_tran.h"
 #include "transcendent.h"
 
+#include "FDK_crc.h"
 
 #include "sbrdec_drc.h"
 
@@ -137,7 +138,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 2
 #define SBRDECODER_LIB_VL1 2
-#define SBRDECODER_LIB_VL2 7
+#define SBRDECODER_LIB_VL2 12
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #ifdef __ANDROID__
 #define SBRDECODER_LIB_BUILD_DATE ""
@@ -192,6 +193,33 @@ static void copySbrHeader( HANDLE_SBR_HEADER_DATA hDst, const HANDLE_SBR_HEADER_
   /* update pointers */
   hDst->freqBandData.freqBandTable[0]  = hDst->freqBandData.freqBandTableLo;
   hDst->freqBandData.freqBandTable[1] = hDst->freqBandData.freqBandTableHi;
+}
+
+static int compareSbrHeader( const HANDLE_SBR_HEADER_DATA hHdr1, const HANDLE_SBR_HEADER_DATA hHdr2 )
+{
+  int result = 0;
+
+  /* compare basic data */
+  result |= (hHdr1->syncState != hHdr2->syncState) ? 1 : 0;
+  result |= (hHdr1->status != hHdr2->status) ? 1 : 0;
+  result |= (hHdr1->frameErrorFlag != hHdr2->frameErrorFlag) ? 1 : 0;
+  result |= (hHdr1->numberTimeSlots != hHdr2->numberTimeSlots) ? 1 : 0;
+  result |= (hHdr1->numberOfAnalysisBands != hHdr2->numberOfAnalysisBands) ? 1 : 0;
+  result |= (hHdr1->timeStep != hHdr2->timeStep) ? 1 : 0;
+  result |= (hHdr1->sbrProcSmplRate != hHdr2->sbrProcSmplRate) ? 1 : 0;
+
+  /* compare bitstream data */
+  result |= FDKmemcmp( &hHdr1->bs_data, &hHdr2->bs_data, sizeof(SBR_HEADER_DATA_BS) );
+  result |= FDKmemcmp( &hHdr1->bs_info, &hHdr2->bs_info, sizeof(SBR_HEADER_DATA_BS_INFO) );
+
+  /* compare frequency band data */
+  result |= FDKmemcmp( &hHdr1->freqBandData, &hHdr2->freqBandData, (8+MAX_NUM_LIMITERS+1)*sizeof(UCHAR) );
+  result |= FDKmemcmp( hHdr1->freqBandData.freqBandTableLo, hHdr2->freqBandData.freqBandTableLo, (MAX_FREQ_COEFFS/2+1)*sizeof(UCHAR) );
+  result |= FDKmemcmp( hHdr1->freqBandData.freqBandTableHi, hHdr2->freqBandData.freqBandTableHi, (MAX_FREQ_COEFFS+1)*sizeof(UCHAR) );
+  result |= FDKmemcmp( hHdr1->freqBandData.freqBandTableNoise, hHdr2->freqBandData.freqBandTableNoise, (MAX_NOISE_COEFFS+1)*sizeof(UCHAR) );
+  result |= FDKmemcmp( hHdr1->freqBandData.v_k_master, hHdr2->freqBandData.v_k_master, (MAX_FREQ_COEFFS+1)*sizeof(UCHAR) );
+
+  return result;
 }
 
 
@@ -391,6 +419,7 @@ int sbrDecoder_isCoreCodecValid(AUDIO_OBJECT_TYPE coreCodec)
     case AOT_PS:
     case AOT_ER_AAC_SCAL:
     case AOT_ER_AAC_ELD:
+    case AOT_DRM_AAC:
       return 1;
     default:
       return 0;
@@ -463,6 +492,8 @@ SBR_ERROR sbrDecoder_InitElement (
 
   self->flags = 0;
   self->flags |= (coreCodec == AOT_ER_AAC_ELD) ? SBRDEC_ELD_GRID : 0;
+  self->flags |= (coreCodec == AOT_ER_AAC_SCAL) ? SBRDEC_SYNTAX_SCAL : 0;
+  self->flags |= (coreCodec == AOT_DRM_AAC)     ? SBRDEC_SYNTAX_SCAL|SBRDEC_SYNTAX_DRM : 0;
 
   /* Init SBR elements */
   {
@@ -928,23 +959,72 @@ SBR_ERROR sbrDecoder_Parse(
         )
 {
   SBR_DECODER_ELEMENT   *hSbrElement;
-  HANDLE_SBR_HEADER_DATA hSbrHeader;
+  HANDLE_SBR_HEADER_DATA hSbrHeader = NULL;
   HANDLE_SBR_CHANNEL    *pSbrChannel;
 
   SBR_FRAME_DATA *hFrameDataLeft;
   SBR_FRAME_DATA *hFrameDataRight;
 
   SBR_ERROR errorStatus = SBRDEC_OK;
-  SBR_SYNC_STATE initialSyncState;
   SBR_HEADER_STATUS headerStatus = HEADER_NOT_PRESENT;
 
   INT  startPos;
   INT  CRCLen = 0;
+  HANDLE_FDK_BITSTREAM hBsOriginal = hBs;
+  FDK_CRCINFO  crcInfo;         /* shall be used for all other CRCs in the future (TBD) */
+  INT          crcReg = 0;
+  USHORT       drmSbrCrc = 0;
 
   int  stereo;
   int  fDoDecodeSbrData = 1;
 
   int lastSlot, lastHdrSlot = 0, thisHdrSlot;
+
+  /* Reverse bits of DRM SBR payload */
+  if ( (self->flags & SBRDEC_SYNTAX_DRM) && *count > 0 )
+  {
+    UCHAR *bsBufferDrm = (UCHAR*)self->workBuffer1;
+    HANDLE_FDK_BITSTREAM hBsBwd = (HANDLE_FDK_BITSTREAM) (bsBufferDrm + (512));
+    int dataBytes, dataBits;
+
+    dataBits = *count;
+
+    if (dataBits > ((512)*8)) {
+      /* do not flip more data than needed */
+      dataBits = (512)*8;
+    }
+
+    dataBytes = (dataBits+7)>>3;
+
+    int j;
+
+    if ((j = (int)FDKgetValidBits(hBs)) != 8) {
+      FDKpushBiDirectional(hBs, (j-8));
+    }
+
+    j = 0;
+    for ( ; dataBytes > 0; dataBytes--)
+    {
+      int i;
+      UCHAR tmpByte;
+      UCHAR buffer = 0x00;
+
+      tmpByte = (UCHAR) FDKreadBits(hBs, 8);
+      for (i = 0; i < 4; i++) {
+        int shift = 2 * i + 1;
+        buffer |= (tmpByte & (0x08>>i)) << shift;
+        buffer |= (tmpByte & (0x10<<i)) >> shift;
+      }
+      bsBufferDrm[j++] = buffer;
+      FDKpushBack(hBs, 16);
+    }
+
+    FDKinitBitStream(hBsBwd, bsBufferDrm, (512), dataBits, BS_READER);
+
+    /* Use reversed data */
+    hBs = hBsBwd;
+    bsPayLen = *count;
+  }
 
   /* Remember start position of  SBR element */
   startPos = FDKgetValidBits(hBs);
@@ -970,7 +1050,6 @@ SBR_ERROR sbrDecoder_Parse(
   hFrameDataLeft  = &self->pSbrElement[elementIndex]->pSbrChannel[0]->frameData[hSbrElement->useFrameSlot];
   hFrameDataRight = &self->pSbrElement[elementIndex]->pSbrChannel[1]->frameData[hSbrElement->useFrameSlot];
 
-  initialSyncState = hSbrHeader->syncState;
 
   /* reset PS flag; will be set after PS was found */
   self->flags &= ~SBRDEC_PS_DECODED;
@@ -1006,11 +1085,18 @@ SBR_ERROR sbrDecoder_Parse(
   */
   if (fDoDecodeSbrData)
   {
-    if (crcFlag == 1) {
+    if (crcFlag) {
       switch (self->coreCodec) {
       case AOT_ER_AAC_ELD:
         FDKpushFor (hBs, 10);
         /* check sbrcrc later: we don't know the payload length now */
+        break;
+      case AOT_DRM_AAC:
+        drmSbrCrc = (USHORT)FDKreadBits(hBs, 8);
+        /* Setup CRC decoder */
+        FDKcrcInit(&crcInfo, 0x001d, 0xFFFF, 8);
+        /* Start CRC region */
+        crcReg = FDKcrcStartReg(&crcInfo, hBs, 0);
         break;
       default:
         CRCLen = bsPayLen - 10;                     /* change: 0 => i */
@@ -1056,6 +1142,7 @@ SBR_ERROR sbrDecoder_Parse(
         hSbrHeader->syncState = SBR_HEADER;
       } else {
         hSbrHeader->syncState = SBR_NOT_INITIALIZED;
+        headerStatus = HEADER_ERROR;
       }
     }
 
@@ -1105,7 +1192,7 @@ SBR_ERROR sbrDecoder_Parse(
         valBits = (INT)FDKgetValidBits(hBs);
       }
 
-      if ( crcFlag == 1 ) {
+      if ( crcFlag ) {
         switch (self->coreCodec) {
         case AOT_ER_AAC_ELD:
           {
@@ -1115,6 +1202,14 @@ SBR_ERROR sbrDecoder_Parse(
             FDKpushBack(hBs, payloadbits);
             fDoDecodeSbrData      = SbrCrcCheck (hBs, crcLen);
             FDKpushFor(hBs, crcLen);
+          }
+          break;
+        case AOT_DRM_AAC:
+          /* End CRC region */
+          FDKcrcEndReg(&crcInfo, hBs, crcReg);
+          /* Check CRC */
+          if ((FDKcrcGetCRC(&crcInfo)^0xFF) != drmSbrCrc) {
+            fDoDecodeSbrData = 0;
           }
           break;
         default:
@@ -1167,8 +1262,25 @@ SBR_ERROR sbrDecoder_Parse(
   }
 
 bail:
-  if (errorStatus == SBRDEC_OK) {
-    if (headerStatus == HEADER_NOT_PRESENT) {
+
+  if ( self->flags & SBRDEC_SYNTAX_DRM )
+  {
+    hBs = hBsOriginal;
+  }
+
+  if ( (errorStatus == SBRDEC_OK)
+    || ( (errorStatus == SBRDEC_PARSE_ERROR)
+      && (headerStatus != HEADER_ERROR) ) )
+  {
+    int useOldHdr = ( (headerStatus == HEADER_NOT_PRESENT)
+                   || (headerStatus == HEADER_ERROR) ) ? 1 : 0;
+
+    if (!useOldHdr && (thisHdrSlot != lastHdrSlot)) {
+      useOldHdr |= ( compareSbrHeader( hSbrHeader,
+                                      &self->sbrHeader[elementIndex][lastHdrSlot] ) == 0 ) ? 1 : 0;
+    }
+
+    if (useOldHdr != 0) {
       /* Use the old header for this frame */
       hSbrElement->useHeaderSlot[hSbrElement->useFrameSlot] = lastHdrSlot;
     } else {
@@ -1229,12 +1341,21 @@ sbrDecoder_DecodeElement (
   int  numElementChannels = hSbrElement->nChannels; /* Number of channels of the current SBR element */
 
   if (self->flags & SBRDEC_FLUSH) {
-    /* Move frame pointer to the next slot which is up to be decoded/applied next */
-    hSbrElement->useFrameSlot = (hSbrElement->useFrameSlot+1) % (self->numDelayFrames+1);
-    /* Update header and frame data pointer because they have already been set */
-    hSbrHeader = &self->sbrHeader[elementIndex][hSbrElement->useHeaderSlot[hSbrElement->useFrameSlot]];
-    hFrameDataLeft  = &hSbrElement->pSbrChannel[0]->frameData[hSbrElement->useFrameSlot];
-    hFrameDataRight = &hSbrElement->pSbrChannel[1]->frameData[hSbrElement->useFrameSlot];
+    if ( self->numFlushedFrames > self->numDelayFrames ) {
+      int hdrIdx;
+      /* No valid SBR payload available, hence switch to upsampling (in all headers) */
+      for (hdrIdx = 0; hdrIdx < ((1)+1); hdrIdx += 1) {
+        self->sbrHeader[elementIndex][hdrIdx].syncState = UPSAMPLING;
+      }
+    }
+    else {
+      /* Move frame pointer to the next slot which is up to be decoded/applied next */
+      hSbrElement->useFrameSlot = (hSbrElement->useFrameSlot+1) % (self->numDelayFrames+1);
+      /* Update header and frame data pointer because they have already been set */
+      hSbrHeader = &self->sbrHeader[elementIndex][hSbrElement->useHeaderSlot[hSbrElement->useFrameSlot]];
+      hFrameDataLeft  = &hSbrElement->pSbrChannel[0]->frameData[hSbrElement->useFrameSlot];
+      hFrameDataRight = &hSbrElement->pSbrChannel[1]->frameData[hSbrElement->useFrameSlot];
+    }
   }
 
   /* Update the header error flag */
@@ -1354,7 +1475,8 @@ sbrDecoder_DecodeElement (
            &pSbrChannel[0]->prevFrameData,
             (hSbrHeader->syncState == SBR_ACTIVE),
             h_ps_d,
-            self->flags
+            self->flags,
+            codecFrameSize
           );
 
   if (stereo) {
@@ -1371,7 +1493,8 @@ sbrDecoder_DecodeElement (
              &pSbrChannel[1]->prevFrameData,
               (hSbrHeader->syncState == SBR_ACTIVE),
               NULL,
-              self->flags
+              self->flags,
+              codecFrameSize
             );
   }
 
@@ -1387,20 +1510,21 @@ sbrDecoder_DecodeElement (
     if ( !(self->flags & SBRDEC_PS_DECODED) ) {
       /* A decoder which is able to decode PS has to produce a stereo output even if no PS data is availble. */
       /* So copy left channel to right channel.                                                              */
+      int copyFrameSize = codecFrameSize * 2 / self->synDownsampleFac;
       if (interleaved) {
         INT_PCM *ptr;
         INT i;
         FDK_ASSERT(strideOut == 2);
 
         ptr = timeData;
-        for (i = codecFrameSize; i--; ) 
+        for (i = copyFrameSize>>1; i--; )
         {
           INT_PCM tmp; /* This temporal variable is required because some compilers can't do *ptr++ = *ptr++ correctly. */
           tmp = *ptr++; *ptr++ = tmp;
           tmp = *ptr++; *ptr++ = tmp;
         }
       } else {
-        FDKmemcpy( timeData+2*codecFrameSize, timeData, 2*codecFrameSize*sizeof(INT_PCM) );
+        FDKmemcpy( timeData+copyFrameSize, timeData, copyFrameSize*sizeof(INT_PCM) );
       }
     }
     *numOutChannels = 2;  /* Output minimum two channels when PS is enabled. */
@@ -1464,14 +1588,23 @@ SBR_ERROR sbrDecoder_Apply ( HANDLE_SBRDECODER   self,
     self->flags &= ~SBRDEC_PS_DECODED;
   }
 
+  if ( self->flags & SBRDEC_FLUSH ) {
+    /* flushing is signalized, hence increment the flush frame counter */
+    self->numFlushedFrames++;
+  }
+  else {
+    /* no flushing is signalized, hence reset the flush frame counter */
+    self->numFlushedFrames = 0;
+  }
+
   /* Loop over SBR elements */
   for (sbrElementNum = 0; sbrElementNum<self->numSbrElements; sbrElementNum++)
   {
     int numElementChan;
 
     if (psPossible && self->pSbrElement[sbrElementNum]->pSbrChannel[1] == NULL) {
-      errorStatus = SBRDEC_UNSUPPORTED_CONFIG;
-      goto bail;
+      /* Disable PS and try decoding SBR mono. */
+      psPossible = 0;
     }
 
     numElementChan = (self->pSbrElement[sbrElementNum]->elementID == ID_CPE) ? 2 : 1;
@@ -1579,6 +1712,7 @@ INT sbrDecoder_GetLibInfo( LIB_INFO *info )
     | CAPF_SBR_HQ
     | CAPF_SBR_LP
     | CAPF_SBR_PS_MPEG
+    | CAPF_SBR_DRM_BS
     | CAPF_SBR_CONCEALMENT
     | CAPF_SBR_DRC
       ;
@@ -1607,6 +1741,9 @@ UINT sbrDecoder_GetDelay( const HANDLE_SBRDECODER self )
         /* Low delay SBR: */
         {
           outputDelay += (flags & SBRDEC_DOWNSAMPLE) ? 32 : 64;   /* QMF synthesis */
+          if (flags & SBRDEC_LD_MPS_QMF) {
+            outputDelay += 32;
+          }
         }
       }
       else if (!IS_USAC(self->coreCodec)) {

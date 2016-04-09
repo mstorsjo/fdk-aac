@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -225,6 +225,8 @@ struct AAC_DECODER_INSTANCE {
 
   FIXP_DBL     extGain[1];                           /*!< Gain that must be applied to the output signal. */
   UINT         extGainDelay;                         /*!< Delay that must be accounted for extGain. */
+
+  INT_PCM      pcmOutputBuffer[(8)*(2048)];
 
 };
 
