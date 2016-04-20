@@ -329,8 +329,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(HANDLE_FDK_BITSTREAM bs,
         if (numLinesInSecIdx >= MAX_SFB_HCR) {
           return AAC_DEC_PARSE_ERROR;
         }
-        if (
-             (sect_cb == BOOKSCL) )
+        if (sect_cb == BOOKSCL)
         {
           return AAC_DEC_INVALID_CODE_BOOK;
         } else {
