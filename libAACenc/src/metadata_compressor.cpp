@@ -193,36 +193,36 @@ struct DRC_COMP {
  *  Profile tables.
  */
 static const FIXP_DBL tabMaxBoostThr[] = {
-    (FIXP_DBL)(-43<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-53<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-55<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-65<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-50<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-40<<METADATA_FRACT_BITS)
+    (FIXP_DBL)(int)((unsigned)-43<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-53<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-55<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-65<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-50<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-40<<METADATA_FRACT_BITS)
 };
 static const FIXP_DBL tabBoostThr[] = {
-    (FIXP_DBL)(-31<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-41<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-31<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-41<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-31<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-31<<METADATA_FRACT_BITS)
+    (FIXP_DBL)(int)((unsigned)-31<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-41<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-31<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-41<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-31<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-31<<METADATA_FRACT_BITS)
 };
 static const FIXP_DBL tabEarlyCutThr[] = {
-    (FIXP_DBL)(-26<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-21<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-26<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-21<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-26<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-20<<METADATA_FRACT_BITS)
+    (FIXP_DBL)(int)((unsigned)-26<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-21<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-26<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-21<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-26<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-20<<METADATA_FRACT_BITS)
 };
 static const FIXP_DBL tabCutThr[]      = {
-    (FIXP_DBL)(-16<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-11<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-16<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-21<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-16<<METADATA_FRACT_BITS),
-    (FIXP_DBL)(-10<<METADATA_FRACT_BITS)
+    (FIXP_DBL)(int)((unsigned)-16<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-11<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-16<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-21<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-16<<METADATA_FRACT_BITS),
+    (FIXP_DBL)(int)((unsigned)-10<<METADATA_FRACT_BITS)
 };
 static const FIXP_DBL tabMaxCutThr[]   = {
     (FIXP_DBL)(4<<METADATA_FRACT_BITS),
@@ -576,7 +576,7 @@ INT FDK_DRC_Generator_Initialize(
     drcComp->channels     = channelMapping.nChannels;
 
     /* Init states. */
-    drcComp->smoothLevel[0] = drcComp->smoothLevel[1] = (FIXP_DBL)(-135<<METADATA_FRACT_BITS);
+    drcComp->smoothLevel[0] = drcComp->smoothLevel[1] = (FIXP_DBL)(int)((unsigned)-135<<METADATA_FRACT_BITS);
 
     FDKmemclear(drcComp->smoothGain, sizeof(drcComp->smoothGain));
     FDKmemclear(drcComp->holdCnt, sizeof(drcComp->holdCnt));
