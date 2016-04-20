@@ -904,6 +904,9 @@ static const FRAME_INFO v_frame_info4_8 = { 0, 4, {0, 2, 4, 6, 8}, {1, 1, 1, 1},
             break;
         default:
             FDK_ASSERT(0);
+            /* in case assertion checks are disabled, force a definite memory fault at first access */
+            pTable = NULL;
+            break;
     }
 
     /* look number of envelopes in table */
