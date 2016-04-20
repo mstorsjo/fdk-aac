@@ -1037,7 +1037,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER  hAacEncoder,
     }
 
     /* Clear input buffer */
-    if ( (InitFlags == AACENC_INIT_ALL) ) {
+    if ( InitFlags == AACENC_INIT_ALL ) {
         FDKmemclear(hAacEncoder->inputBuffer, sizeof(INT_PCM)*hAacEncoder->nMaxAacChannels*INPUTBUFFER_SIZE);
     }
 
