@@ -1942,10 +1942,10 @@ INT sbrEncoder_Init(
     if ( (aot==AOT_PS) ) {
         usePs = 1;
     }
-    if ( (aot==AOT_ER_AAC_ELD) ) {
+    if ( aot==AOT_ER_AAC_ELD ) {
         lowDelay = 1;
     }
-    else if ( (aot==AOT_ER_AAC_LD) ) {
+    else if ( aot==AOT_ER_AAC_LD ) {
         error = 1;
         goto bail;
     }

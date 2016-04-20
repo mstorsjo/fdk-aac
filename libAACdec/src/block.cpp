@@ -329,8 +329,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(HANDLE_FDK_BITSTREAM bs,
         }
         pNumLinesInSec[numLinesInSecIdx] = BandOffsets[top] - BandOffsets[band];
         numLinesInSecIdx++;
-        if (
-             (sect_cb == BOOKSCL) )
+        if (sect_cb == BOOKSCL)
         {
           return AAC_DEC_INVALID_CODE_BOOK;
         } else {

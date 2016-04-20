@@ -459,7 +459,7 @@ void BidirectionalEstimation_UseScfOfPrevFrameAsReference (
           break;
 
         case NOISE_HCB:
-          if ( (pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousCodebook[bnds]==NOISE_HCB) ) {
+          if ( pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousCodebook[bnds]==NOISE_HCB ) {
             commonMin = FDKmin(pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfFwd[bnds],pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfBwd[bnds]);
             pAacDecoderChannelInfo->pDynData->aScaleFactor[bnds] = FDKmin(commonMin, pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousScaleFactor[bnds]);
           } else {
@@ -669,7 +669,7 @@ void PredictiveInterpolation (
           break;
 
         case NOISE_HCB:
-          if ( (pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousCodebook[bnds]==NOISE_HCB) ) {
+          if ( pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousCodebook[bnds]==NOISE_HCB ) {
             commonMin = FDKmin(pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfFwd[bnds],pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfBwd[bnds]);
             pAacDecoderChannelInfo->pDynData->aScaleFactor[bnds] = FDKmin(commonMin, pAacDecoderStaticChannelInfo->concealmentInfo.aRvlcPreviousScaleFactor[bnds]);
           }
