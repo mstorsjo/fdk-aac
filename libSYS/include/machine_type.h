@@ -293,7 +293,7 @@ amm-info@iis.fraunhofer.de
 #else
 #ifndef FORCEINLINE
   #if defined(__GNUC__)	/* cppp replaced: elif */
-    #define FORCEINLINE __attribute((always_inline))
+    #define FORCEINLINE inline __attribute((always_inline))
   #else
     #define FORCEINLINE
   #endif
