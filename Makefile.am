@@ -12,7 +12,7 @@ AM_CPPFLAGS = \
     -I$(top_srcdir)/libFDK/include \
     -I$(top_srcdir)/libPCMutils/include
 
-AM_CXXFLAGS = -fno-exceptions -fno-rtti
+AM_CXXFLAGS = -fno-exceptions -fno-rtti -std=c++98
 libfdk_aac_la_LINK = $(LINK) $(libfdk_aac_la_LDFLAGS)
 # Mention a dummy pure C file to trigger generation of the $(LINK) variable
 nodist_EXTRA_libfdk_aac_la_SOURCES = dummy.c
