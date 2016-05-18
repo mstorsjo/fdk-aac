@@ -118,7 +118,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
 
     if (accu < FL2FXCONST_DBL(0.0f))
     {
-      accu=-accu;
+      accu = -accu;
       /* normalize */
       INT   accuShift = CntLeadingZeros(accu) - 1;  /* CountLeadingBits() is not necessary here since test value is always > 0 */
       accu <<= accuShift;
@@ -130,7 +130,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       accu >>= fixMin(totalShift,DFRACT_BITS-1);
       quaSpectrum[line] = (SHORT)(-((LONG)(k + accu) >> (DFRACT_BITS-1-16)));
     }
-    else if(accu > FL2FXCONST_DBL(0.0f))
+    else if (accu > FL2FXCONST_DBL(0.0f))
     {
       /* normalize */
       INT   accuShift = CntLeadingZeros(accu) - 1;  /* CountLeadingBits() is not necessary here since test value is always > 0 */
@@ -144,7 +144,7 @@ static void FDKaacEnc_quantizeLines(INT      gain,
       quaSpectrum[line] = (SHORT)((LONG)(k + accu) >> (DFRACT_BITS-1-16));
     }
     else
-      quaSpectrum[line]=0;
+      quaSpectrum[line] = 0;
   }
 }
 
@@ -173,7 +173,7 @@ static void FDKaacEnc_invQuantizeLines(INT  gain,
 
   for (line = 0; line < noOfLines; line++) {
 
-    if(quantSpectrum[line] < 0) {
+    if (quantSpectrum[line] < 0) {
       FIXP_DBL accu;
       INT ex,specExp,tabIndex;
       FIXP_DBL s,t;
@@ -232,7 +232,7 @@ static void FDKaacEnc_invQuantizeLines(INT  gain,
       accu = fMult(s,t);
 
       /* get approperiate exponent shifter */
-      specExp = FDKaacEnc_specExpTableComb[iquantizermod][specExp]-1; /* -1 to avoid overflows in accu */
+      specExp = FDKaacEnc_specExpTableComb[iquantizermod][specExp] - 1; /* -1 to avoid overflows in accu */
 
       if (( -iquantizershift-specExp) < 0)
         accu <<= -(-iquantizershift-specExp);
