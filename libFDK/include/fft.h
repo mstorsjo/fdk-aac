@@ -121,7 +121,7 @@ void ifft(int length, FIXP_DBL *pInput, INT *scalefactor);
  */
 
 LNK_SECTION_CODE_L1
-static void FORCEINLINE fft_4(FIXP_DBL *x)
+static FORCEINLINE void fft_4(FIXP_DBL *x)
 {
     FIXP_DBL a00, a10, a20, a30, tmp0, tmp1;
 
@@ -149,7 +149,7 @@ static void FORCEINLINE fft_4(FIXP_DBL *x)
 }
 
 LNK_SECTION_CODE_L1
-static void FORCEINLINE fft_8(FIXP_DBL *x)
+static FORCEINLINE void fft_8(FIXP_DBL *x)
 {
       #define W_PiFOURTH STC(0x5a82799a)
 
