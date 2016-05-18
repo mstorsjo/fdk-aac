@@ -139,7 +139,7 @@ void ifft(int length, FIXP_DBL *pInput, INT *scalefactor);
  * bit scale headroom. The values are interleaved, real/imag pairs.
  */
 LNK_SECTION_CODE_L1
-static void FDK_FORCEINLINE fft_4(FIXP_DBL *x) {
+static FDK_FORCEINLINE void fft_4(FIXP_DBL *x) {
   FIXP_DBL a00, a10, a20, a30, tmp0, tmp1;
 
   a00 = (x[0] + x[4]) >> 1; /* Re A + Re B */
@@ -168,7 +168,7 @@ static void FDK_FORCEINLINE fft_4(FIXP_DBL *x) {
 
 #ifndef FUNCTION_fft_8
 LNK_SECTION_CODE_L1
-static void FDK_FORCEINLINE fft_8(FIXP_DBL *x) {
+static FDK_FORCEINLINE void fft_8(FIXP_DBL *x) {
   FIXP_SPK w_PiFOURTH = {{FIXP_SGL(0x5A82), FIXP_SGL(0x5A82)}};
 
   FIXP_DBL a00, a10, a20, a30;
