@@ -958,7 +958,7 @@ static FIXP_DBL FDKaacEnc_calcChaosMeasure(PSY_OUT_CHANNEL *psyOutChannel,
            CalcInvLdData( (((CalcLdData(frameFormFactor)>>1) -
                             (CalcLdData(frameEnergy)>>(2+1))) -
                            (fMultDiv2(FL2FXCONST_DBL(0.75f),CalcLdData((FIXP_DBL)frameNLines<<(DFRACT_BITS-1-SCALE_NLINES))) -
-                            (((FIXP_DBL)(SCALE_FORM_FAC-SCALE_NRGS_SQRT4+FORM_FAC_SHIFT-(SCALE_NLINES_P34))<<(DFRACT_BITS-1-LD_DATA_SHIFT))>>1))
+                            (((FIXP_DBL)(-((-SCALE_FORM_FAC+SCALE_NRGS_SQRT4-FORM_FAC_SHIFT+SCALE_NLINES_P34) << (DFRACT_BITS-1-LD_DATA_SHIFT))))>>1))
                           )<<1 );
   } else {
 
