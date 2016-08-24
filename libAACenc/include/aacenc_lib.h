@@ -707,7 +707,7 @@ the encoder deactivates PNS calculation internally.
 
 #define AACENCODER_LIB_VL0 3
 #define AACENCODER_LIB_VL1 4
-#define AACENCODER_LIB_VL2 12
+#define AACENCODER_LIB_VL2 22
 
 /**
  *  AAC encoder error codes.

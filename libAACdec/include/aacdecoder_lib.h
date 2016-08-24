@@ -350,7 +350,7 @@ Where N equals to CStreamInfo::frameSize .
 
 #define AACDECODER_LIB_VL0 2
 #define AACDECODER_LIB_VL1 5
-#define AACDECODER_LIB_VL2 10
+#define AACDECODER_LIB_VL2 17
 
 /**
  * \brief  AAC decoder error codes.
