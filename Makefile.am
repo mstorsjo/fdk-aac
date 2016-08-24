@@ -74,7 +74,6 @@ AACENC_SRC = \
     libAACenc/src/pre_echo_control.cpp \
     libAACenc/src/quantize.cpp \
     libAACenc/src/tonality.cpp \
-    libAACenc/src/aacenc_hcr.cpp \
     libAACenc/src/aacEnc_rom.cpp \
     libAACenc/src/bandwidth.cpp \
     libAACenc/src/channel_map.cpp \
@@ -119,6 +118,7 @@ MPEGTPDEC_SRC = \
     libMpegTPDec/src/tpdec_adif.cpp \
     libMpegTPDec/src/tpdec_adts.cpp \
     libMpegTPDec/src/tpdec_asc.cpp \
+    libMpegTPDec/src/tpdec_drm.cpp \
     libMpegTPDec/src/tpdec_latm.cpp \
     libMpegTPDec/src/tpdec_lib.cpp
 
