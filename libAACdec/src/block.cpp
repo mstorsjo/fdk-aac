@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -324,11 +324,11 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(HANDLE_FDK_BITSTREAM bs,
 
       if (flags & AC_ER_HCR) {
         /* HCR input (long) -- collecting sideinfo (for HCR-_long_ only) */
-        pNumLinesInSec[numLinesInSecIdx] = BandOffsets[top] - BandOffsets[band];
-        numLinesInSecIdx++;
         if (numLinesInSecIdx >= MAX_SFB_HCR) {
           return AAC_DEC_PARSE_ERROR;
         }
+        pNumLinesInSec[numLinesInSecIdx] = BandOffsets[top] - BandOffsets[band];
+        numLinesInSecIdx++;
         if (sect_cb == BOOKSCL)
         {
           return AAC_DEC_INVALID_CODE_BOOK;

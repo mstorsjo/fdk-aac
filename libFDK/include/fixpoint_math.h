@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2014 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -93,6 +93,35 @@ amm-info@iis.fraunhofer.de
 
 
 #include "common_fix.h"
+
+#if !defined(FUNCTION_fIsLessThan)
+/**
+ * \brief Compares two fixpoint values incl. scaling.
+ * \param a_m mantissa of the first input value.
+ * \param a_e exponent of the first input value.
+ * \param b_m mantissa of the second input value.
+ * \param b_e exponent of the second input value.
+ * \return non-zero if (a_m*2^a_e) < (b_m*2^b_e), 0 otherwise
+ */
+FDK_INLINE INT fIsLessThan(FIXP_DBL a_m, INT a_e, FIXP_DBL b_m, INT b_e)
+{
+  if (a_e > b_e) {
+    return (b_m >> fMin(a_e-b_e, DFRACT_BITS-1) > a_m);
+  } else {
+    return (a_m >> fMin(b_e-a_e, DFRACT_BITS-1) < b_m);
+  }
+}
+
+FDK_INLINE INT fIsLessThan(FIXP_SGL a_m, INT a_e, FIXP_SGL b_m, INT b_e)
+{
+  if (a_e > b_e) {
+    return (b_m >> fMin(a_e-b_e, FRACT_BITS-1) > a_m);
+  } else {
+    return (a_m >> fMin(b_e-a_e, FRACT_BITS-1) < b_m);
+  }
+}
+#endif
+
 
 
 #define LD_DATA_SCALING (64.0f)

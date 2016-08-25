@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -89,6 +89,7 @@ amm-info@iis.fraunhofer.de
 #define _FRAM_GEN_H
 
 #include "sbr_def.h" /* for MAX_ENVELOPES and MAX_NOISE_ENVELOPES in struct FRAME_INFO and CODEC_TYPE */
+#include "sbr_encoder.h" /* for FREQ_RES */
 
 #define MAX_ENVELOPES_VARVAR MAX_ENVELOPES /*!< worst case number of envelopes in a VARVAR frame */
 #define MAX_ENVELOPES_FIXVAR_VARFIX 4 /*!< worst case number of envelopes in VARFIX and FIXVAR frames */
@@ -114,7 +115,7 @@ typedef enum {
 #define NUMBER_TIME_SLOTS_1920  15
 
 #define LD_PRETRAN_OFF           3
-#define FRAME_MIDDLE_SLOT_512LD  0
+#define FRAME_MIDDLE_SLOT_512LD  4
 #define NUMBER_TIME_SLOTS_512LD  8
 #define TRANSIENT_OFFSET_LD      0
 
@@ -248,9 +249,10 @@ typedef struct
   INT frameMiddleSlot;      /*!< transient detector offset in SBR timeslots */
 
   /* basic tuning parameters */
-  INT staticFraming;        /*!< 1: run static framing in time, i.e. exclusive use of bs_frame_class = FIXFIX */
-  INT numEnvStatic;         /*!< number of envelopes per frame for static framing */
-  INT freq_res_fixfix;      /*!< envelope frequency resolution to use for bs_frame_class = FIXFIX */
+  INT staticFraming;           /*!< 1: run static framing in time, i.e. exclusive use of bs_frame_class = FIXFIX */
+  INT numEnvStatic;            /*!< number of envelopes per frame for static framing */
+  FREQ_RES freq_res_fixfix[2]; /*!< envelope frequency resolution to use for bs_frame_class = FIXFIX; single env and split */
+  UCHAR fResTransIsLow;        /*!< frequency resolution for transient frames - always low (0) or according to table (1) */
 
   /* expert tuning parameters */
   const int *v_tuningSegm;  /*!< segment lengths to use around transient */
@@ -286,14 +288,16 @@ typedef SBR_ENVELOPE_FRAME *HANDLE_SBR_ENVELOPE_FRAME;
 
 
 void
-FDKsbrEnc_initFrameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME  hSbrEnvFrame,
-                          INT allowSpread,
-                          INT numEnvStatic,
-                          INT staticFraming,
-                          INT timeSlots,
-                          INT freq_res_fixfix
-                          ,int ldGrid
-                          );
+FDKsbrEnc_initFrameInfoGenerator (
+              HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,
+              INT       allowSpread,
+              INT       numEnvStatic,
+              INT       staticFraming,
+              INT       timeSlots,
+        const FREQ_RES* freq_res_fixfix
+             ,UCHAR     fResTransIsLow,
+              INT       ldGrid
+        );
 
 HANDLE_SBR_FRAME_INFO
 FDKsbrEnc_frameInfoGenerator (HANDLE_SBR_ENVELOPE_FRAME hSbrEnvFrame,

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -261,21 +261,23 @@ static const UINT opdDeltaTime_Code[] =
   0x00000001,  0x00000002,  0x00000001,  0x00000007,  0x00000006,  0000000000,  0x00000002,  0x00000003
 };
 
-static const INT psBands[] =
+static INT getNoBands(const INT mode)
 {
-  PS_BANDS_COARSE,
-  PS_BANDS_MID
-};
+  INT noBands = 0;
 
-static INT getNoBands(UINT mode)
-{
-  if(mode>=6)
-    return 0;
+  switch (mode) {
+    case 0: case 3: /* coarse */
+      noBands = PS_BANDS_COARSE;
+      break;
+    case 1: case 4: /* mid */
+      noBands = PS_BANDS_MID;
+      break;
+    case 2: case 5: /* fine not supported */
+    default:        /* coarse as default */
+      noBands = PS_BANDS_COARSE;
+  }
 
-  if(mode>=3)
-    mode = mode-3;
-
-  return psBands[mode];
+  return noBands;
 }
 
 static INT getIIDRes(INT iidMode)
@@ -524,7 +526,7 @@ static INT encodeIpdOpd(HANDLE_PS_OUT        psOut,
       bitCnt += FDKsbrEnc_EncodeIpd( hBitBuf,
                            psOut->ipd[env],
                            ipdLast,
-                           getNoBands((UINT)psOut->iidMode),
+                           getNoBands(psOut->iidMode),
                            psOut->deltaIPD[env],
                            &error);
 
@@ -532,7 +534,7 @@ static INT encodeIpdOpd(HANDLE_PS_OUT        psOut,
       bitCnt += FDKsbrEnc_EncodeOpd( hBitBuf,
                            psOut->opd[env],
                            opdLast,
-                           getNoBands((UINT)psOut->iidMode),
+                           getNoBands(psOut->iidMode),
                            psOut->deltaOPD[env],
                            &error );
     }
@@ -661,7 +663,7 @@ INT FDKsbrEnc_WritePSBitstream(const HANDLE_PS_OUT   psOut,
         bitCnt += FDKsbrEnc_EncodeIid( hBitBuf,
                              psOut->iid[env],
                              iidLast,
-                             getNoBands((UINT)psOut->iidMode),
+                             getNoBands(psOut->iidMode),
                              (PS_IID_RESOLUTION)getIIDRes(psOut->iidMode),
                              psOut->deltaIID[env],
                              &error );
@@ -677,7 +679,7 @@ INT FDKsbrEnc_WritePSBitstream(const HANDLE_PS_OUT   psOut,
         bitCnt += FDKsbrEnc_EncodeIcc( hBitBuf,
                              psOut->icc[env],
                              iccLast,
-                             getNoBands((UINT)psOut->iccMode),
+                             getNoBands(psOut->iccMode),
                              psOut->deltaICC[env],
                              &error);
 

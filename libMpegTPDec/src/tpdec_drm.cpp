@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -81,16 +81,66 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  MPEG AAC Audio Encoder  *************************
+/*****************************  MPEG-4 AAC Decoder  **************************
 
-   Initial author:       R. Boehm
-   contents/description: huffman codeword reordering
-                         based on source from aacErrRobTrans
+   Author(s):   Christian Griebel
+   Description: DRM transport stuff
 
 ******************************************************************************/
 
-#ifndef _AACENC_HCR
-#define _AACENC_HCR_H
+#include "tpdec_drm.h"
 
 
-#endif  /* ifndef _AACENC_HCR */
+#include "FDK_bitstream.h"
+
+
+
+void drmRead_CrcInit(HANDLE_DRM pDrm)      /*!< pointer to drm crc info stucture */
+{
+  FDK_ASSERT(pDrm != NULL);
+
+  FDKcrcInit(&pDrm->crcInfo, 0x001d, 0xFFFF, 8);
+}
+
+int drmRead_CrcStartReg(
+                     HANDLE_DRM pDrm,            /*!< pointer to drm stucture */
+                     HANDLE_FDK_BITSTREAM hBs,   /*!< handle to current bit buffer structure */
+                     int mBits                   /*!< number of bits in crc region */
+                   )
+{
+  FDK_ASSERT(pDrm != NULL);
+
+  FDKcrcReset(&pDrm->crcInfo);
+
+  pDrm->crcReadValue = FDKreadBits(hBs, 8);
+
+  return ( FDKcrcStartReg(&pDrm->crcInfo, hBs, mBits) );
+
+}
+
+void drmRead_CrcEndReg(
+                    HANDLE_DRM pDrm,             /*!< pointer to drm crc info stucture */
+                    HANDLE_FDK_BITSTREAM hBs,    /*!< handle to current bit buffer structure */
+                    int reg                      /*!< crc region */
+                  )
+{
+  FDK_ASSERT(pDrm != NULL);
+
+  FDKcrcEndReg(&pDrm->crcInfo, hBs, reg);
+}
+
+TRANSPORTDEC_ERROR drmRead_CrcCheck( HANDLE_DRM pDrm )
+{
+  TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
+  USHORT crc;
+
+  crc = FDKcrcGetCRC(&pDrm->crcInfo) ^ 0xFF;
+  if (crc != pDrm->crcReadValue)
+  {
+    return (TRANSPORTDEC_CRC_ERROR);
+  }
+
+  return (ErrorStatus);
+}
+
+

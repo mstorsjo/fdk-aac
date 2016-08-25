@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+Â© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur FÃ¶rderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -705,7 +705,7 @@ static int aacDecoder_drcExtractAndMap (
   }
   self->numPayloads = 0;
 
-  if (self->dvbAncDataAvailable)
+  if (self->dvbAncDataAvailable && self->numThreads < MAX_DRC_THREADS)
   { /* Append a DVB heavy compression payload thread if available. */
     int bitsParsed;
 

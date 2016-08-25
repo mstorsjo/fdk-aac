@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 
 #define SBRENCODER_LIB_VL0 3
 #define SBRENCODER_LIB_VL1 3
-#define SBRENCODER_LIB_VL2 4
+#define SBRENCODER_LIB_VL2 12
 
 
 
@@ -170,7 +170,6 @@ getSbrTuningTableIndex(UINT bitrate,    /*! the total bitrate in bits/sec */
 {
   int i, bitRateClosestLowerIndex=-1, bitRateClosestUpperIndex=-1, found = 0;
   UINT bitRateClosestUpper = 0, bitRateClosestLower=DISTANCE_CEIL_VALUE;
-  int isforThisCodec=0;
 
   #define isForThisCore(i) \
     ( ( sbrTuningTable[i].coreCoder == CODEC_AACLD && core == AOT_ER_AAC_ELD ) || \
@@ -413,6 +412,23 @@ FDKsbrEnc_AdjustSbrSettings (const sbrConfigurationPtr config, /*! output, modif
   config->codecSettings.transFac        = transFac;
   config->codecSettings.standardBitrate = standardBitrate;
 
+  if (bitRate < 28000) {
+    config->threshold_AmpRes_FF_m = (FIXP_DBL)MAXVAL_DBL;
+    config->threshold_AmpRes_FF_e = 7;
+  }
+  else if (bitRate >= 28000 && bitRate <= 48000) {
+    /* The float threshold is 75
+       0.524288f is fractional part of RELAXATION, the quotaMatrix and therefore tonality are scaled by this
+       2/3 is because the original implementation divides the tonality values by 3, here it's divided by 2
+       128 compensates the necessary shiftfactor of 7 */
+    config->threshold_AmpRes_FF_m = FL2FXCONST_DBL(75.0f*0.524288f/(2.0f/3.0f)/128.0f);
+    config->threshold_AmpRes_FF_e = 7;
+  }
+  else if (bitRate > 48000) {
+    config->threshold_AmpRes_FF_m = FL2FXCONST_DBL(0);
+    config->threshold_AmpRes_FF_e = 0;
+  }
+
   if (bitRate==0) {
     /* map vbr quality to bitrate */
     if (vbrMode < 30)
@@ -468,6 +484,57 @@ FDKsbrEnc_AdjustSbrSettings (const sbrConfigurationPtr config, /*! output, modif
     config->stereoMode      = sbrTuningTable[idx].stereoMode ;
     config->freqScale       = sbrTuningTable[idx].freqScale ;
 
+    if (numChannels == 1) {
+      /* stereo case */
+      switch (core) {
+        case AOT_AAC_LC:
+          if (bitRate <= (useSpeechConfig?24000U:20000U)) {
+            config->freq_res_fixfix[0] = FREQ_RES_LOW; /* set low frequency resolution for non-split frames */
+            config->freq_res_fixfix[1] = FREQ_RES_LOW; /* set low frequency resolution for split frames */
+          }
+          break;
+        case AOT_ER_AAC_ELD:
+          if (bitRate < 36000)
+            config->freq_res_fixfix[1] = FREQ_RES_LOW; /* set low frequency resolution for split frames */
+          if (bitRate < 26000) {
+            config->freq_res_fixfix[0] = FREQ_RES_LOW; /* set low frequency resolution for non-split frames */
+            config->fResTransIsLow = 1;                /* for transient frames, set low frequency resolution */
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    else {
+      /* stereo case */
+      switch (core) {
+        case AOT_AAC_LC:
+          if (bitRate <= 28000) {
+            config->freq_res_fixfix[0] = FREQ_RES_LOW; /* set low frequency resolution for non-split frames */
+            config->freq_res_fixfix[1] = FREQ_RES_LOW; /* set low frequency resolution for split frames */
+          }
+          break;
+        case AOT_ER_AAC_ELD:
+          if (bitRate < 72000) {
+            config->freq_res_fixfix[1] = FREQ_RES_LOW; /* set low frequency resolution for split frames */
+          }
+          if (bitRate < 52000) {
+            config->freq_res_fixfix[0] = FREQ_RES_LOW; /* set low frequency resolution for non-split frames */
+            config->fResTransIsLow = 1;                /* for transient frames, set low frequency resolution */
+          }
+          break;
+        default:
+          break;
+      }
+      if (bitRate <= 28000) {
+        /*
+          additionally restrict frequency resolution in FIXFIX frames
+          to further reduce SBR payload size */
+        config->freq_res_fixfix[0] = FREQ_RES_LOW;
+        config->freq_res_fixfix[1] = FREQ_RES_LOW;
+      }
+    }
+
     /* adjust usage of parametric coding dependent on bitrate and speech config flag */
     if (useSpeechConfig)
       config->parametricCoding  = 0;
@@ -516,6 +583,7 @@ static UINT
 FDKsbrEnc_InitializeSbrDefaults (sbrConfigurationPtr config,
                                  INT                 downSampleFactor,
                                  UINT                codecGranuleLen
+                                ,const INT           isLowDelay
                                  )
 {
     if ( (downSampleFactor < 1 || downSampleFactor > 2) ||
@@ -526,7 +594,11 @@ FDKsbrEnc_InitializeSbrDefaults (sbrConfigurationPtr config,
     config->useWaveCoding          = 0;
     config->crcSbr                 = 0;
     config->dynBwSupported         = 1;
-    config->tran_thr               = 13000;
+    if (isLowDelay)
+      config->tran_thr             = 6000;
+    else
+      config->tran_thr             = 13000;
+
     config->parametricCoding       = 1;
 
     config->sbrFrameSize           = codecGranuleLen * downSampleFactor;
@@ -559,7 +631,9 @@ FDKsbrEnc_InitializeSbrDefaults (sbrConfigurationPtr config,
     config->noiseFloorOffset       = 0;
     config->startFreq              = 5; /*  5.9 respectively  6.0 kHz at fs = 44.1/48 kHz */
     config->stopFreq               = 9; /* 16.2 respectively 16.8 kHz at fs = 44.1/48 kHz */
-
+    config->freq_res_fixfix[0]     = FREQ_RES_HIGH;  /* non-split case */
+    config->freq_res_fixfix[1]     = FREQ_RES_HIGH;  /* split case */
+    config->fResTransIsLow = 0;  /* for transient frames, set variable frequency resolution according to freqResTable */
 
     /* header_extra_1 */
     config->freqScale       = SBR_FREQ_SCALE_DEFAULT;
@@ -854,7 +928,7 @@ FDKsbrEnc_EnvEncodeFrame(HANDLE_SBR_ENCODER   hEnvEncoder,
                          int                  clearOutput              /*!< Do not consider any input signal */
                         )
 {
-  HANDLE_SBR_ELEMENT hSbrElement = hEnvEncoder->sbrElement[iElement];
+  HANDLE_SBR_ELEMENT hSbrElement = NULL;
   FDK_CRCINFO  crcInfo;
   INT    crcReg;
   INT    ch;
@@ -1207,7 +1281,10 @@ initEnvChannel (  HANDLE_SBR_CONFIG_DATA sbrConfigData,
 
   FDK_ASSERT(params->e >= 0);
 
-  hEnv->encEnvData.freq_res_fixfix = 1;
+  hEnv->encEnvData.freq_res_fixfix[0] = params->freq_res_fixfix[0];
+  hEnv->encEnvData.freq_res_fixfix[1] = params->freq_res_fixfix[1];
+  hEnv->encEnvData.fResTransIsLow     = params->fResTransIsLow;
+
   hEnv->fLevelProtect = 0;
 
   hEnv->encEnvData.ldGrid = (sbrConfigData->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) ? 1 : 0;
@@ -1349,11 +1426,29 @@ initEnvChannel (  HANDLE_SBR_CONFIG_DATA sbrConfigData,
                             e,
                             params->stat,
                             timeSlots,
-                            hEnv->encEnvData.freq_res_fixfix
-                            ,hEnv->encEnvData.ldGrid
+                            hEnv->encEnvData.freq_res_fixfix,
+                            hEnv->encEnvData.fResTransIsLow,
+                            hEnv->encEnvData.ldGrid
                             );
 
+  if(sbrConfigData->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY)
+  {
+    INT bandwidth_qmf_slot = (sbrConfigData->sampleFreq>>1) / (sbrConfigData->noQmfBands);
+    if(FDKsbrEnc_InitSbrFastTransientDetector(
+              &hEnv->sbrFastTransientDetector,
+               sbrConfigData->noQmfSlots,
+               bandwidth_qmf_slot,
+               sbrConfigData->noQmfBands,
+               sbrConfigData->freqBandTable[0][0]
+               ))
+      return(1);
+  }
+
+  /* The transient detector has to be initialized also if the fast transient
+     detector was active, because the values from the transient detector
+     structure are used. */
   if(FDKsbrEnc_InitSbrTransientDetector (&hEnv->sbrTransientDetector,
+                                          sbrConfigData->sbrSyntaxFlags,
                                           sbrConfigData->frameSize,
                                           sbrConfigData->sampleFreq,
                                           params,
@@ -1553,12 +1648,6 @@ INT FDKsbrEnc_EnvInit (
   hSbrElement->sbrConfigData.sbrSyntaxFlags = 0;
 
   switch (aot) {
-  case AOT_DRM_MPEG_PS:
-  case AOT_DRM_SBR:
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_SCALABLE;
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_DRM_CRC;
-    hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_CRC;
-    break;
   case AOT_ER_AAC_ELD:
     hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_LOW_DELAY;
     break;
@@ -1665,6 +1754,8 @@ INT FDKsbrEnc_EnvInit (
    /* other switches */
   hSbrElement->sbrConfigData.useWaveCoding             = params->useWaveCoding;
   hSbrElement->sbrConfigData.useParametricCoding       = params->parametricCoding;
+  hSbrElement->sbrConfigData.thresholdAmpResFF_m       = params->threshold_AmpRes_FF_m;
+  hSbrElement->sbrConfigData.thresholdAmpResFF_e       = params->threshold_AmpRes_FF_e;
 
   /* init freq band table */
   if(updateFreqBandTable(&hSbrElement->sbrConfigData,
@@ -1848,7 +1939,7 @@ INT sbrEncoder_Init(
 
 
 
-    if ( (aot==AOT_PS) || (aot==AOT_MP2_PS) || (aot==AOT_DABPLUS_PS) || (aot==AOT_DRM_MPEG_PS) ) {
+    if ( (aot==AOT_PS) ) {
         usePs = 1;
     }
     if ( aot==AOT_ER_AAC_ELD ) {
@@ -2006,7 +2097,8 @@ INT sbrEncoder_Init(
          */
         if ( ! FDKsbrEnc_InitializeSbrDefaults ( &sbrConfig[el],
                                                  *downSampleFactor,
-                                                  coreFrameLength
+                                                  coreFrameLength,
+                                                  IS_LOWDELAY(aot)
                                                   ) )
         {
           error = 1;

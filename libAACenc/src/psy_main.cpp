@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -342,6 +342,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
         tnsChannels,
         LONG_WINDOW,
         hPsy->granuleLength,
+        isLowDelay(audioObjectType),
         (syntaxFlags&AC_SBR_PRESENT)?1:0,
        &(hPsy->psyConf[0].tnsConf),
        &hPsy->psyConf[0],
@@ -362,6 +363,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
             tnsChannels,
             SHORT_WINDOW,
             hPsy->granuleLength,
+            isLowDelay(audioObjectType),
             (syntaxFlags&AC_SBR_PRESENT)?1:0,
            &hPsy->psyConf[1].tnsConf,
            &hPsy->psyConf[1],
@@ -447,7 +449,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                                     INT                  totalChannels
                                    )
 {
-    INT commonWindow = 1;
+    const INT commonWindow = 1;
     INT maxSfbPerGroup[(2)];
     INT mdctSpectrum_e;
     INT ch;   /* counts through channels          */
@@ -621,7 +623,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
           FDKmemclear(&psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset],
                       (windowLength[ch]-psyData[ch]->lowpassLine)*sizeof(FIXP_DBL));
 
-          if (hPsyConfLong->filterbank != FB_LC) {
+          if ( (hPsyConfLong->filterbank != FB_LC) && (psyData[ch]->lowpassLine >= FADE_OUT_LEN) ) {
             /* Do blending to reduce gibbs artifacts */
             for (int i=0; i<FADE_OUT_LEN; i++) {
               psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset - FADE_OUT_LEN + i] = fMult(psyData[ch]->mdctSpectrum[psyData[ch]->lowpassLine+wOffset - FADE_OUT_LEN + i], fadeOutFactor[i]);
@@ -763,7 +765,8 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
 
     /* Advance psychoacoustics: Tonality and TNS */
     if (psyStatic[0]->isLFE) {
-        tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive = 0;
+        tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] = 0;
+        tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT] = 0;
     }
     else
     {
@@ -815,15 +818,19 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                       &hThisPsyConf[1]->tnsConf);
             }
 
-            FDK_ASSERT(commonWindow=1); /* all checks for TNS do only work for common windows (which is always set)*/
+            FDK_ASSERT(1==commonWindow); /* all checks for TNS do only work for common windows (which is always set)*/
             for(w = 0; w < nWindows[0]; w++)
             {
                 if (isShortWindow[0])
-                    tnsActive[w] = tnsData[0]->dataRaw.Short.subBlockInfo[w].tnsActive ||
-                    ((channels == 2) ? tnsData[1]->dataRaw.Short.subBlockInfo[w].tnsActive : 0);
+                    tnsActive[w] = tnsData[0]->dataRaw.Short.subBlockInfo[w].tnsActive[HIFILT] ||
+                    tnsData[0]->dataRaw.Short.subBlockInfo[w].tnsActive[LOFILT] ||
+                    tnsData[channels-1]->dataRaw.Short.subBlockInfo[w].tnsActive[HIFILT] ||
+                    tnsData[channels-1]->dataRaw.Short.subBlockInfo[w].tnsActive[LOFILT];
                 else
-                    tnsActive[w] = tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive ||
-                    ((channels == 2) ? tnsData[1]->dataRaw.Long.subBlockInfo.tnsActive : 0);
+                    tnsActive[w] = tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] ||
+                    tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT] ||
+                    tnsData[channels-1]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] ||
+                    tnsData[channels-1]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT];
             }
 
             for(ch = 0; ch < channels; ch++) {
@@ -1150,8 +1157,8 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
                        psyData[ch]->sfbMaxScaleSpec.Long,
                        sfbTonality[ch],
                        psyOutChannel[ch]->tnsInfo.order[0][0],
-                       tnsData[ch]->dataRaw.Long.subBlockInfo.predictionGain,
-                       tnsData[ch]->dataRaw.Long.subBlockInfo.tnsActive,
+                       tnsData[ch]->dataRaw.Long.subBlockInfo.predictionGain[HIFILT],
+                       tnsData[ch]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT],
                        psyOutChannel[ch]->sfbEnergyLdData,
                        psyOutChannel[ch]->noiseNrg );
         } /* !isLFE */

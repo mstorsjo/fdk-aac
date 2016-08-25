@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -482,42 +482,42 @@ static void qmfSynPrototypeFirSlot1_filter(FIXP_QMF *RESTRICT realSlot,
      B = p_flt[4];                        /* Bottom=[8] Top=[9]     */
      A = p_fltm[3];                       /* Bottom=[316] Top=[317] */
      sta0 = sta[0];                       /* save state[0]          */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=9...........319  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=316...........6  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=8,18,    ...318  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=9...........319  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=316...........6  */
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=8,18,    ...318  */
      B = p_flt[3];                        /* Bottom=[6] Top=[7]     */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=317...........7  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=317...........7  */
      A = p_fltm[4];                       /* Bottom=[318] Top=[319] */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=7...........317  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=318...........8  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=6...........316  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=7...........317  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=318...........8  */
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=6...........316  */
      B = p_flt[2];                        /* Bottom=[X] Top=[5]     */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=9...........319  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=9...........319  */
      A = p_fltm[2];                       /* Bottom=[X] Top=[315]   */
-     *sta++ =         SMULWT( imag, B );  /* index=5,15, ...   315  */
+     sta[0] =         SMULWT( imag, B ); sta++; /* index=5,15, ...   315  */
      result = SMLAWT( sta0,   real, A );  /* index=315...........5  */
 
-     *pMyTimeOut++ = result;
+     pMyTimeOut[0] = result; pMyTimeOut++;
 
      real = *--realSlot;
      imag = *--imagSlot;
      A = p_fltm[0];                       /* Bottom=[310] Top=[311] */
      B = p_flt[7];                        /* Bottom=[14]  Top=[15]  */
      result = SMLAWB( sta[0], real, A );  /* index=310...........0  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=14..........324  */
-     *pMyTimeOut++ = result;
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=14..........324  */
+     pMyTimeOut[0] = result; pMyTimeOut++;
      B = p_flt[6];                        /* Bottom=[12]  Top=[13]  */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=311...........1  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=311...........1  */
      A = p_fltm[1];                       /* Bottom=[312] Top=[313] */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=13..........323  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=312...........2  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=12..........322  */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=313...........3  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=13..........323  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=312...........2  */
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=12..........322  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=313...........3  */
      A = p_fltm[2];                       /* Bottom=[314] Top=[315] */
      B = p_flt[5];                        /* Bottom=[10]  Top=[11]  */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=11..........321  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=314...........4  */
-     *sta++ =         SMULWB( imag, B );  /* index=10..........320  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=11..........321  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=314...........4  */
+     sta[0] =         SMULWB( imag, B ); sta++; /* index=10..........320  */
 
 
      p_flt    += 5;
@@ -566,21 +566,21 @@ INT qmfSynPrototypeFirSlot2(
      A = p_fltm[0];                       /* Bottom=[310] Top=[311] */
      B = p_flt[7];                        /* Bottom=[14]  Top=[15]  */
      result = SMLAWB( sta[0], real, A );  /* index=310...........0  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=14..........324  */
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=14..........324  */
      B = p_flt[6];                        /* Bottom=[12]  Top=[13]  */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=311...........1  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=311...........1  */
      A = p_fltm[1];                       /* Bottom=[312] Top=[313] */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=13..........323  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=312...........2  */
-     *sta++ = SMLAWB( sta[1], imag, B );  /* index=12..........322  */
-     *sta++ = SMLAWT( sta[1], real, A );  /* index=313...........3  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=13..........323  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=312...........2  */
+     sta[0] = SMLAWB( sta[1], imag, B ); sta++; /* index=12..........322  */
+     sta[0] = SMLAWT( sta[1], real, A ); sta++; /* index=313...........3  */
      A = p_fltm[2];                       /* Bottom=[314] Top=[315] */
      B = p_flt[5];                        /* Bottom=[10]  Top=[11]  */
-     *sta++ = SMLAWT( sta[1], imag, B );  /* index=11..........321  */
-     *sta++ = SMLAWB( sta[1], real, A );  /* index=314...........4  */
-     *sta++ =         SMULWB( imag, B );  /* index=10..........320  */
+     sta[0] = SMLAWT( sta[1], imag, B ); sta++; /* index=11..........321  */
+     sta[0] = SMLAWB( sta[1], real, A ); sta++; /* index=314...........4  */
+     sta[0] =         SMULWB( imag, B ); sta++; /* index=10..........320  */
 
-     *pMyTimeOut++ = result;
+     pMyTimeOut[0] = result; pMyTimeOut++;
 
      p_fltm   -= 5;
      p_flt    += 5;
@@ -610,8 +610,8 @@ INT qmfSynPrototypeFirSlot2(
     {
       FIXP_DBL result1, result2;
 
-      result1 = *pMyTimeOut++;
-      result2 = *pMyTimeOut++;
+      result1 = pMyTimeOut[0]; pMyTimeOut++;
+      result2 = pMyTimeOut[0]; pMyTimeOut++;
 
       result1 = fMult(result1,gain);
       timeOut -= stride;
@@ -635,8 +635,8 @@ INT qmfSynPrototypeFirSlot2(
       timeOut[0] = result2 << scale;
 #endif
 
-      result1 = *pMyTimeOut++;
-      result2 = *pMyTimeOut++;
+      result1 = pMyTimeOut[0]; pMyTimeOut++;
+      result2 = pMyTimeOut[0]; pMyTimeOut++;
 
       result1 = fMult(result1,gain);
       timeOut -= stride;
@@ -666,8 +666,8 @@ INT qmfSynPrototypeFirSlot2(
     for (no_channels>>=2; no_channels--;)
     {
       FIXP_DBL result1, result2;
-      result1 = *pMyTimeOut++;
-      result2 = *pMyTimeOut++;
+      result1 = pMyTimeOut[0]; pMyTimeOut++;
+      result2 = pMyTimeOut[0]; pMyTimeOut++;
       timeOut -= stride;
       if (result1 < 0)        result1 += add_neg;
       if (result1 < max_neg)  result1 = max_neg;
@@ -688,8 +688,8 @@ INT qmfSynPrototypeFirSlot2(
       timeOut[0] = result2 << scale;
 #endif
       
-      result1 = *pMyTimeOut++;
-      result2 = *pMyTimeOut++;
+      result1 = pMyTimeOut[0]; pMyTimeOut++;
+      result2 = pMyTimeOut[0]; pMyTimeOut++;
       timeOut -= stride;
       if (result1 < 0)        result1 += add_neg;
       if (result1 < max_neg)  result1 = max_neg;

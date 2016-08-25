@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -95,13 +95,7 @@ amm-info@iis.fraunhofer.de
 #include "aacEnc_rom.h"
 #include "aacenc_tns.h"
 
-enum {
-    HIFILT = 0, /* index of higher filter */
-    LOFILT = 1 /* index of lower filter */
-};
-
-
-#define FILTER_DIRECTION 0
+#define FILTER_DIRECTION 0 /* 0 = up, 1 = down */
 
 static const FIXP_DBL acfWindowLong[12+3+1] = {
   0x7fffffff,0x7fb80000,0x7ee00000,0x7d780000,0x7b800000,0x78f80000,0x75e00000,0x72380000,
@@ -111,20 +105,6 @@ static const FIXP_DBL acfWindowLong[12+3+1] = {
 static const FIXP_DBL acfWindowShort[4+3+1] = {
   0x7fffffff,0x7e000000,0x78000000,0x6e000000,0x60000000,0x4e000000,0x38000000,0x1e000000
 };
-
-
-typedef struct {
-  INT      filterEnabled[MAX_NUM_OF_FILTERS];
-  INT      threshOn[MAX_NUM_OF_FILTERS];                /* min. prediction gain for using tns TABUL*/
-  INT      filterStartFreq[MAX_NUM_OF_FILTERS];         /* lowest freq for lpc TABUL*/
-  INT      tnsLimitOrder[MAX_NUM_OF_FILTERS];           /* Limit for TNS order TABUL*/
-  INT      tnsFilterDirection[MAX_NUM_OF_FILTERS];      /* Filtering direction, 0=up, 1=down TABUL */
-  INT      acfSplit[MAX_NUM_OF_FILTERS];
-  FIXP_DBL tnsTimeResolution[MAX_NUM_OF_FILTERS];       /* TNS max. time resolution TABUL. Should be fract but MSVC won't compile then */
-  INT      seperateFiltersAllowed;
-
-} TNS_PARAMETER_TABULATED;
-
 
 typedef struct{
   INT                      bitRateFrom[2];  /* noneSbr=0, useSbr=1 */
@@ -373,6 +353,7 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
                                                  INT channels,
                                                  INT blockType,
                                                  INT granuleLength,
+                                                 INT isLowDelay,
                                                  INT ldSbrPresent,
                                                  TNS_CONFIG *tC,
                                                  PSY_CONFIGURATION *pC,
@@ -384,6 +365,8 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
 
   if (channels <= 0)
     return (AAC_ENCODER_ERROR)1;
+
+  tC->isLowDelay = isLowDelay;
 
   /* initialize TNS filter flag, order, and coefficient resolution (in bits per coeff) */
   tC->tnsActive      = (active) ? TRUE : FALSE;
@@ -450,26 +433,13 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
         const TNS_PARAMETER_TABULATED* pCfg = FDKaacEnc_GetTnsParam(bitRate, channels, ldSbrPresent);
 
         if ( pCfg != NULL ) {
+
+          FDKmemcpy(&(tC->confTab), pCfg, sizeof(tC->confTab));
+
           tC->lpcStartBand[HIFILT]         = FDKaacEnc_FreqToBandWithRounding(pCfg->filterStartFreq[HIFILT], sampleRate, pC->sfbCnt, pC->sfbOffset);
           tC->lpcStartLine[HIFILT]         = pC->sfbOffset[tC->lpcStartBand[HIFILT]];
           tC->lpcStartBand[LOFILT]         = FDKaacEnc_FreqToBandWithRounding(pCfg->filterStartFreq[LOFILT], sampleRate, pC->sfbCnt, pC->sfbOffset);
           tC->lpcStartLine[LOFILT]         = pC->sfbOffset[tC->lpcStartBand[LOFILT]];
-
-          tC->confTab.threshOn[HIFILT] = pCfg->threshOn[HIFILT];
-          tC->confTab.threshOn[LOFILT] = pCfg->threshOn[LOFILT];
-
-          tC->confTab.tnsLimitOrder[HIFILT] = pCfg->tnsLimitOrder[HIFILT];
-          tC->confTab.tnsLimitOrder[LOFILT] = pCfg->tnsLimitOrder[LOFILT];
-
-          tC->confTab.tnsFilterDirection[HIFILT] = pCfg->tnsFilterDirection[HIFILT];
-          tC->confTab.tnsFilterDirection[LOFILT] = pCfg->tnsFilterDirection[LOFILT];
-
-          tC->confTab.acfSplit[HIFILT] = pCfg->acfSplit[HIFILT];
-          tC->confTab.acfSplit[LOFILT] = pCfg->acfSplit[LOFILT];
-
-          tC->confTab.filterEnabled[HIFILT] = pCfg->filterEnabled[HIFILT];
-          tC->confTab.filterEnabled[LOFILT] = pCfg->filterEnabled[LOFILT];
-          tC->confTab.seperateFiltersAllowed = pCfg->seperateFiltersAllowed;
 
           FDKaacEnc_CalcGaussWindow(tC->acfWindow[HIFILT], tC->maxOrder+1, sampleRate, granuleLength, pCfg->tnsTimeResolution[HIFILT], TNS_TIMERES_SCALE);
           FDKaacEnc_CalcGaussWindow(tC->acfWindow[LOFILT], tC->maxOrder+1, sampleRate, granuleLength, pCfg->tnsTimeResolution[LOFILT], TNS_TIMERES_SCALE);
@@ -614,6 +584,7 @@ static inline FIXP_DBL FDKaacEnc_AutoCorrNormFac(
 
 static void FDKaacEnc_MergedAutoCorrelation(
         const FIXP_DBL           *spectrum,
+        const INT                 isLowDelay,
         const FIXP_DBL            acfWindow[MAX_NUM_OF_FILTERS][TNS_MAX_ORDER+3+1],
         const INT                 lpcStartLine[MAX_NUM_OF_FILTERS],
         const INT                 lpcStopLine,
@@ -632,6 +603,8 @@ static void FDKaacEnc_MergedAutoCorrelation(
     /* pre-initialization output */
     FDKmemclear(&_rxx1[0], sizeof(FIXP_DBL)*(maxOrder+1));
     FDKmemclear(&_rxx2[0], sizeof(FIXP_DBL)*(maxOrder+1));
+
+    idx0 = idx1 = idx2 = idx3 = idx4 = 0;
 
     /* MDCT line indices separating the 1st, 2nd, 3rd, and 4th analysis quarters */
     if ( (acfSplit[LOFILT]==-1) || (acfSplit[HIFILT]==-1) ) {
@@ -676,17 +649,27 @@ static void FDKaacEnc_MergedAutoCorrelation(
     /* compute energy normalization factors, i. e. 1/energy (saves some divisions) */
     if (rxx1_0 != FL2FXCONST_DBL(0.f))
     {
-        INT sc_fac1 = -1;
-        FIXP_DBL fac1 = FDKaacEnc_AutoCorrNormFac(rxx1_0, ((-2*sc1)+nsc1), &sc_fac1);
-        _rxx1[0] = scaleValue(fMult(rxx1_0,fac1),sc_fac1);
+      INT sc_fac1 = -1;
+      FIXP_DBL fac1 = FDKaacEnc_AutoCorrNormFac(rxx1_0, ((-2*sc1)+nsc1), &sc_fac1);
+      _rxx1[0] = scaleValue(fMult(rxx1_0,fac1),sc_fac1);
 
+      if (isLowDelay)
+      {
         for (lag = 1; lag <= maxOrder; lag++) {
           /* compute energy-normalized and windowed autocorrelation values at this lag */
+          FIXP_DBL x1 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx0, idx1, lag, nsc1);
+          _rxx1[lag] = fMult(scaleValue(fMult(x1,fac1),sc_fac1), acfWindow[LOFILT][lag]);
+        }
+      }
+      else
+      {
+        for (lag = 1; lag <= maxOrder; lag++) {
           if ((3 * lag) <= maxOrder + 3) {
               FIXP_DBL x1 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx0, idx1, lag, nsc1);
               _rxx1[lag] = fMult(scaleValue(fMult(x1,fac1),sc_fac1), acfWindow[LOFILT][3*lag]);
           }
         }
+      }
     }
 
     /* auto corr over upper 3/4 of spectrum */
@@ -762,8 +745,12 @@ INT FDKaacEnc_TnsDetect(
     : &tnsData->dataRaw.Long.subBlockInfo;
 
   tnsData->filtersMerged  = FALSE;
-  tsbi->tnsActive         = FALSE;
-  tsbi->predictionGain    = 1000;
+
+  tsbi->tnsActive[HIFILT]         = FALSE;
+  tsbi->predictionGain[HIFILT]    = 1000;
+  tsbi->tnsActive[LOFILT]         = FALSE;
+  tsbi->predictionGain[LOFILT]    = 1000;
+
   tnsInfo->numOfFilters[subBlockNumber] = 0;
   tnsInfo->coefRes[subBlockNumber]      = tC->coefRes;
   for (i = 0; i < tC->maxOrder; i++) {
@@ -779,6 +766,7 @@ INT FDKaacEnc_TnsDetect(
 
     FDKaacEnc_MergedAutoCorrelation(
           spectrum,
+          tC->isLowDelay,
           tC->acfWindow,
           tC->lpcStartLine,
           tC->lpcStopLine,
@@ -788,7 +776,7 @@ INT FDKaacEnc_TnsDetect(
           rxx2);
 
     /* compute higher TNS filter in lattice (ParCor) form with LeRoux-Gueguen algorithm */
-    tsbi->predictionGain = FDKaacEnc_AutoToParcor(rxx2, parcor_tmp, tC->confTab.tnsLimitOrder[HIFILT]);
+    tsbi->predictionGain[HIFILT] = FDKaacEnc_AutoToParcor(rxx2, parcor_tmp, tC->confTab.tnsLimitOrder[HIFILT]);
 
     /* non-linear quantization of TNS lattice coefficients with given resolution */
     FDKaacEnc_Parcor2Index(
@@ -815,9 +803,9 @@ INT FDKaacEnc_TnsDetect(
     tnsInfo->length[subBlockNumber][HIFILT] = sfbCnt - tC->lpcStartBand[HIFILT];
 
     /* disable TNS if predictionGain is less than 3dB or sumSqrCoef is too small */
-    if ((tsbi->predictionGain > tC->confTab.threshOn[HIFILT]) || (sumSqrCoef > (tC->confTab.tnsLimitOrder[HIFILT]/2 + 2)))
+    if ((tsbi->predictionGain[HIFILT] > tC->confTab.threshOn[HIFILT]) || (sumSqrCoef > (tC->confTab.tnsLimitOrder[HIFILT]/2 + 2)))
     {
-      tsbi->tnsActive = TRUE;
+      tsbi->tnsActive[HIFILT] = TRUE;
       tnsInfo->numOfFilters[subBlockNumber]++;
 
       /* compute second filter for lower quarter; only allowed for long windows! */
@@ -857,6 +845,7 @@ INT FDKaacEnc_TnsDetect(
           || ( (sumSqrCoef > 9)  && (sumSqrCoef < 22 * tC->confTab.tnsLimitOrder[LOFILT]) ) )
         {
           /* compare lower to upper filter; if they are very similar, merge them */
+          tsbi->tnsActive[LOFILT] = TRUE;
           sumSqrCoef = 0;
           for (i = 0; i < tC->confTab.tnsLimitOrder[LOFILT]; i++) {
             sumSqrCoef += FDKabs(tnsInfo->coef[subBlockNumber][HIFILT][i] - tnsInfo->coef[subBlockNumber][LOFILT][i]);
@@ -884,6 +873,8 @@ INT FDKaacEnc_TnsDetect(
             tnsInfo->numOfFilters[subBlockNumber]++;
           }
         } /* filter lower part */
+        tsbi->predictionGain[LOFILT]=predGain;
+
       } /* second filter allowed  */
     } /* if predictionGain > 1437 ... */
   } /* maxOrder > 0 && tnsActive */
@@ -944,7 +935,7 @@ void FDKaacEnc_TnsSync(
       INT doSync = 1, absDiffSum = 0;
 
       /* if TNS is active in at least one channel, check if ParCor coefficients of higher filter are similar */
-      if (pSbInfoDestW->tnsActive || pSbInfoSrcW->tnsActive) {
+      if (pSbInfoDestW->tnsActive[HIFILT] || pSbInfoSrcW->tnsActive[HIFILT]) {
         for (i = 0; i < tC->maxOrder; i++) {
           absDiff = FDKabs(tnsInfoDest->coef[w][HIFILT][i] - tnsInfoSrc->coef[w][HIFILT][i]);
           absDiffSum += absDiff;
@@ -957,12 +948,12 @@ void FDKaacEnc_TnsSync(
 
         if (doSync) {
             /* if no significant difference was detected, synchronize coefficient sets */
-            if (pSbInfoSrcW->tnsActive) {
+            if (pSbInfoSrcW->tnsActive[HIFILT]) {
               /* no dest filter, or more dest than source filters: use one dest filter */
-              if ((!pSbInfoDestW->tnsActive) ||
-                  ((pSbInfoDestW->tnsActive) && (tnsInfoDest->numOfFilters[w] > tnsInfoSrc->numOfFilters[w])))
+              if ((!pSbInfoDestW->tnsActive[HIFILT]) ||
+                  ((pSbInfoDestW->tnsActive[HIFILT]) && (tnsInfoDest->numOfFilters[w] > tnsInfoSrc->numOfFilters[w])))
               {
-                pSbInfoDestW->tnsActive = tnsInfoDest->numOfFilters[w] = 1;
+                pSbInfoDestW->tnsActive[HIFILT] = tnsInfoDest->numOfFilters[w] = 1;
               }
               tnsDataDest->filtersMerged = tnsDataSrc->filtersMerged;
               tnsInfoDest->order       [w][HIFILT] = tnsInfoSrc->order       [w][HIFILT];
@@ -975,7 +966,7 @@ void FDKaacEnc_TnsSync(
               }
             }
             else
-              pSbInfoDestW->tnsActive = tnsInfoDest->numOfFilters[w] = 0;
+              pSbInfoDestW->tnsActive[HIFILT] = tnsInfoDest->numOfFilters[w] = 0;
             }
         }
 
@@ -1012,8 +1003,8 @@ INT FDKaacEnc_TnsEncode(
 {
     INT i, startLine, stopLine;
 
-    if ( ( (blockType == SHORT_WINDOW) && (!tnsData->dataRaw.Short.subBlockInfo[subBlockNumber].tnsActive) )
-      || ( (blockType != SHORT_WINDOW) && (!tnsData->dataRaw.Long.subBlockInfo.tnsActive) ) )
+    if ( ( (blockType == SHORT_WINDOW) && (!tnsData->dataRaw.Short.subBlockInfo[subBlockNumber].tnsActive[HIFILT]) )
+      || ( (blockType != SHORT_WINDOW) && (!tnsData->dataRaw.Long.subBlockInfo.tnsActive[HIFILT]) ) )
     {
       return 1;
     }
@@ -1129,8 +1120,9 @@ static INT FDKaacEnc_AutoToParcor(
   FIXP_DBL *RESTRICT workBuffer = parcorWorkBuffer;
   const FIXP_DBL  autoCorr_0 = input[0];
 
+  FDKmemclear(reflCoeff,numOfCoeff*sizeof(FIXP_DBL));
+
   if((FIXP_DBL)input[0] == FL2FXCONST_DBL(0.0)) {
-    FDKmemclear(reflCoeff,numOfCoeff*sizeof(FIXP_DBL));
     return(predictionGain);
   }
 

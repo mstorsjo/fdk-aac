@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -157,22 +157,8 @@ amm-info@iis.fraunhofer.de
 
 #include "conceal.h"
 
+  #include "FDK_crc.h"
 
-
-#define CAN_DO_PS(aot) \
-  ((aot) == AOT_AAC_LC \
-|| (aot) == AOT_SBR \
-|| (aot) == AOT_PS \
-|| (aot) == AOT_ER_BSAC \
-|| (aot) == AOT_DRM_AAC)
-
-#define IS_USAC(aot) \
-  ((aot) == AOT_USAC \
-|| (aot) == AOT_RSVD50)
-
-#define IS_LOWDELAY(aot) \
-  ((aot) == AOT_ER_AAC_LD \
-|| (aot) == AOT_ER_AAC_ELD)
 
 void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self)
 {
@@ -552,8 +538,9 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
                 previous_element,
                 elIndex,
                 self->flags & AC_INDEP );
-        /* Enable SBR for implicit SBR signalling. */
-        if (sbrError == SBRDEC_OK) {
+        /* Enable SBR for implicit SBR signalling but only if no severe error happend. */
+        if ( (sbrError == SBRDEC_OK)
+          || (sbrError == SBRDEC_PARSE_ERROR) ) {
           self->sbrEnabled = 1;
         }
       } else {
@@ -568,7 +555,7 @@ AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse (HANDLE_AACDECODER self,
         FDKpushBiDirectional(hBs, *count);
         *count = 0;
       } else {
-        /* If this is not a fill element with a known length, we are screwed an no further parsing makes sense. */
+        /* If this is not a fill element with a known length, we are screwed and further parsing makes no sense. */
         if (sbrError != SBRDEC_OK) {
           self->frameOK = 0;
         }
@@ -847,12 +834,18 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
   switch (asc->m_aot) {
   case AOT_AAC_LC:
     self->streamInfo.profile = 1;
-    break;
+
+  case AOT_ER_AAC_SCAL:
+    if (asc->m_sc.m_gaSpecificConfig.m_layer > 0) {
+      /* aac_scalable_extension_element() currently not supported. */
+      return AAC_DEC_UNSUPPORTED_FORMAT;
+    }
 
   case AOT_SBR:
   case AOT_PS:
   case AOT_ER_AAC_LD:
   case AOT_ER_AAC_ELD:
+  case AOT_DRM_AAC:
     break;
 
   default:
@@ -972,11 +965,20 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self, const CS
 
   if (asc->m_aot == AOT_ER_AAC_ELD) {
     self->flags |=  AC_ELD;
+    self->flags |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;  /* Need to set the SBR flag for backward-compatibility
+                                                                     reasons. Even if SBR is not supported. */
     self->flags |= (asc->m_sc.m_eldSpecificConfig.m_sbrCrcFlag) ? AC_SBRCRC : 0;
     self->flags |= (asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign) ? AC_LD_MPS : 0;
   }
   self->flags |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
   self->flags |= (asc->m_epConfig >= 0) ? AC_ER : 0;
+  if ( asc->m_aot == AOT_DRM_AAC ) {
+    self->flags |= AC_DRM|AC_SBRCRC|AC_SCALABLE;
+  }
+  if ( (asc->m_aot == AOT_AAC_SCAL)
+    || (asc->m_aot == AOT_ER_AAC_SCAL) ) {
+    self->flags |= AC_SCALABLE;
+  }
 
 
   if (asc->m_sbrPresentFlag) {
@@ -1162,6 +1164,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
   /* Check sampling frequency  */
   switch ( self->streamInfo.aacSampleRate ) {
+    case 96000:
+    case 88200:
+    case 64000:
     case 16000:
     case 12000:
    case 11025:
@@ -1490,7 +1495,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
           /* get the remaining bits of this frame */
           bitCnt = transportDec_GetAuBitsRemaining(self->hInput, 0);
 
-          if ( (bitCnt > 0) && (self->flags & AC_SBR_PRESENT) && (self->flags & (AC_USAC|AC_RSVD50|AC_ELD)) )
+          if ( (bitCnt > 0) && (self->flags & AC_SBR_PRESENT) && (self->flags & (AC_USAC|AC_RSVD50|AC_ELD|AC_DRM)) )
           {
             SBR_ERROR err = SBRDEC_OK;
             int  elIdx, numChElements = el_cnt[ID_SCE] + el_cnt[ID_CPE];
@@ -1527,6 +1532,13 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
             }
           }
 
+
+          if (self->flags & AC_DRM)
+          {
+            if ((bitCnt = (INT)FDKgetValidBits(bs)) != 0) {
+              FDKpushBiDirectional(bs, bitCnt);
+            }
+          }
 
           if ( ! (self->flags & (AC_USAC|AC_RSVD50|AC_DRM)) )
           {

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -118,6 +118,9 @@ typedef struct
   FIXP_DBL * WorkBuffer1;
   FIXP_DBL * WorkBuffer2;
 
+  /* Delayed time input signal needed to align CLDFD with LD-MPS QMF. */
+  INT_PCM    coreDelayBuf[(96)];
+
   /* QMF filter states */
   FIXP_QAS   anaQmfStates[(320)];
   FIXP_QSS * pSynQmfStates;
@@ -182,7 +185,8 @@ sbr_dec (HANDLE_SBR_DEC hSbrDec,            /*!< handle to Decoder channel */
          HANDLE_SBR_PREV_FRAME_DATA hPrevFrameData,  /*!< Some control data of last frame */
          const int applyProcessing,         /*!< Flag for SBR operation */
          HANDLE_PS_DEC h_ps_d,
-         const UINT flags
+         const UINT flags,
+         const int codecFrameSize
         );
 
 

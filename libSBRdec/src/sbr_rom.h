@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -124,6 +124,7 @@ extern const FIXP_DBL FDK_sbrDecoder_sbr_whFactorsTable[NUM_WHFACTOR_TABLE_ENTRI
 extern const FIXP_SGL FDK_sbrDecoder_sbr_limGains_m[4];
 extern const UCHAR    FDK_sbrDecoder_sbr_limGains_e[4];
 extern const FIXP_SGL FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4[4];
+extern const FIXP_DBL FDK_sbrDecoder_sbr_limiterBandsPerOctaveDiv4_DBL[4];
 extern const FIXP_SGL FDK_sbrDecoder_sbr_smoothFilter[4];
 extern const FIXP_SGL FDK_sbrDecoder_sbr_randomPhase[SBR_NF_NO_RANDOM_VAL][2];
 extern const FIXP_SGL harmonicPhaseX [2][4];

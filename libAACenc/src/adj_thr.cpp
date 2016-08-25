@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -130,14 +130,14 @@ the crash recovery strategy will be activated once.
 
 typedef struct {
   INT                 bitrate;
-  LONG                bits2PeFactor_mono;
-  LONG                bits2PeFactor_mono_slope;
-  LONG                bits2PeFactor_stereo;
-  LONG                bits2PeFactor_stereo_slope;
-  LONG                bits2PeFactor_mono_scfOpt;
-  LONG                bits2PeFactor_mono_scfOpt_slope;
-  LONG                bits2PeFactor_stereo_scfOpt;
-  LONG                bits2PeFactor_stereo_scfOpt_slope;
+  ULONG               bits2PeFactor_mono;
+  ULONG               bits2PeFactor_mono_slope;
+  ULONG               bits2PeFactor_stereo;
+  ULONG               bits2PeFactor_stereo_slope;
+  ULONG               bits2PeFactor_mono_scfOpt;
+  ULONG               bits2PeFactor_mono_scfOpt_slope;
+  ULONG               bits2PeFactor_stereo_scfOpt;
+  ULONG               bits2PeFactor_stereo_scfOpt_slope;
 
 } BIT_PE_SFAC;
 
@@ -153,10 +153,10 @@ static const BIT_PE_SFAC S_Bits2PeTab16000[] = {
   { 24000, 0x23D70A3D, 0x029F16B1, 0x2199999A, 0x07DD4413, 0x23D70A3D, 0x029F16B1, 0x2199999A, 0x07DD4413},
   { 32000, 0x247AE148, 0x11B1D92B, 0x23851EB8, 0x01F75105, 0x247AE148, 0x110A137F, 0x23851EB8, 0x01F75105},
   { 48000, 0x2D1EB852, 0x6833C600, 0x247AE148, 0x014F8B59, 0x2CCCCCCD, 0x68DB8BAC, 0x247AE148, 0x01F75105},
-  { 64000, 0x60000000, 0x00000000, 0x251EB852, 0x154C985F, 0x60000000, 0x00000000, 0x2570A3D7, 0x154C985F},
-  { 96000, 0x60000000, 0x00000000, 0x39EB851F, 0x088509C0, 0x60000000, 0x00000000, 0x3A3D70A4, 0x088509C0},
-  {128000, 0x60000000, 0x00000000, 0x423D70A4, 0x18A43BB4, 0x60000000, 0x00000000, 0x428F5C29, 0x181E03F7},
-  {148000, 0x60000000, 0x00000000, 0x5147AE14, 0x00000000, 0x60000000, 0x00000000, 0x5147AE14, 0x00000000}
+  { 64000, 0x25c28f40, 0x00000000, 0x251EB852, 0x01480000, 0x25c28f40, 0x00000000, 0x2570A3D7, 0x01480000},
+  { 96000, 0x25c28f40, 0x00000000, 0x26000000, 0x01000000, 0x25c28f40, 0x00000000, 0x26000000, 0x01000000},
+  {128000, 0x25c28f40, 0x00000000, 0x270a3d80, 0x01000000, 0x25c28f40, 0x00000000, 0x270a3d80, 0x01000000},
+  {148000, 0x25c28f40, 0x00000000, 0x28000000, 0x00000000, 0x25c28f40, 0x00000000, 0x28000000, 0x00000000}
 };
 
 static const BIT_PE_SFAC S_Bits2PeTab22050[] = {
@@ -166,8 +166,8 @@ static const BIT_PE_SFAC S_Bits2PeTab22050[] = {
   { 48000, 0x23d70a3d, 0x014f8b59, 0x2199999a, 0x03eea20a, 0x23d70a3d, 0x14f8b59,  0x2199999a, 0x03eea20a},
   { 64000, 0x247ae148, 0x08d8ec96, 0x23851eb8, 0x00fba882, 0x247ae148, 0x88509c0,  0x23851eb8, 0x00fba882},
   { 96000, 0x2d1eb852, 0x3419e300, 0x247ae148, 0x00a7c5ac, 0x2ccccccd, 0x346dc5d6, 0x247ae148, 0x00fba882},
-  {128000, 0x60000000, 0x00000000, 0x251eb852, 0x029f16b1, 0x60000000, 0x00000000, 0x2570a3d7, 0x009f16b1},
-  {148000, 0x60000000, 0x00000000, 0x26b851ec, 0x00000000, 0x60000000, 0x00000000, 0x270a3d71, 0x00000000}
+  {128000, 0x25c28f40, 0x00000000, 0x251eb852, 0x029f16b1, 0x60000000, 0x25c28f40, 0x2570a3d7, 0x009f16b1},
+  {148000, 0x25c28f40, 0x00000000, 0x26b851ec, 0x00000000, 0x60000000, 0x25c28f40, 0x270a3d71, 0x00000000}
 };
 
 static const BIT_PE_SFAC S_Bits2PeTab24000[] = {
@@ -178,21 +178,21 @@ static const BIT_PE_SFAC S_Bits2PeTab24000[] = {
   { 64000, 0x24cccccd, 0x05e5f30e, 0x22e147ae, 0x01a36e2f, 0x24cccccd, 0x05e5f30e, 0x23333333, 0x014f8b59},
   { 96000, 0x2a8f5c29, 0x24b33db0, 0x247ae148, 0x00fba882, 0x2a8f5c29, 0x26fe718b, 0x247ae148, 0x00fba882},
   {128000, 0x4e666666, 0x1cd5f99c, 0x2570a3d7, 0x010c6f7a, 0x50a3d70a, 0x192a7371, 0x2570a3d7, 0x010c6f7a},
-  {148000, 0x60000000, 0x00000000, 0x26147ae1, 0x00000000, 0x60000000, 0x00000000, 0x26147ae1, 0x00000000}
+  {148000, 0x25c28f40, 0x00000000, 0x26147ae1, 0x00000000, 0x25c28f40, 0x00000000, 0x26147ae1, 0x00000000}
 };
 
 static const BIT_PE_SFAC S_Bits2PeTab32000[] = {
-  { 16000, 0x1199999a, 0x20c49ba6, 0x00000000, 0x4577d955, 0x00000000, 0x60fe4799, 0x00000000, 0x00000000},
-  { 24000, 0x1999999a, 0x0fba8827, 0x10f5c28f, 0x1b866e44, 0x17ae147b, 0x0fba8827, 0x00000000, 0x4d551d69},
+  { 16000, 0x247ae140, 0xFFFFAC1E, 0x270a3d80, 0xFFFE9B7C, 0x14ccccc0, 0x000110A1, 0x15c28f60, 0xFFFEEF5F},
+  { 24000, 0x23333340, 0x0fba8827, 0x21999980, 0x1b866e44, 0x18f5c280, 0x0fba8827, 0x119999a0, 0x4d551d69},
   { 32000, 0x1d70a3d7, 0x07357e67, 0x17ae147b, 0x09d49518, 0x1b851eb8, 0x0a7c5ac4, 0x12e147ae, 0x110a137f},
   { 48000, 0x20f5c28f, 0x049667b6, 0x1c7ae148, 0x053e2d62, 0x20a3d70a, 0x053e2d62, 0x1b333333, 0x05e5f30e},
   { 64000, 0x23333333, 0x029f16b1, 0x1f0a3d71, 0x02f2f987, 0x23333333, 0x029f16b1, 0x1e147ae1, 0x03eea20a},
   { 96000, 0x25c28f5c, 0x2c3c9eed, 0x21eb851f, 0x01f75105, 0x25c28f5c, 0x0a7c5ac4, 0x21eb851f, 0x01a36e2f},
   {128000, 0x50f5c28f, 0x18a43bb4, 0x23d70a3d, 0x010c6f7a, 0x30000000, 0x168b5cc0, 0x23851eb8, 0x0192a737},
-  {148000, 0x60000000, 0x00000000, 0x247ae148, 0x00dfb23b, 0x3dc28f5c, 0x300f4aaf, 0x247ae148, 0x01bf6476},
-  {160000, 0x60000000, 0xb15b5740, 0x24cccccd, 0x053e2d62, 0x4f5c28f6, 0xbefd0072, 0x251eb852, 0x04fb1184},
-  {200000, 0x00000000, 0x00000000, 0x2b333333, 0x0836be91, 0x00000000, 0x00000000, 0x2b333333, 0x0890390f},
-  {320000, 0x00000000, 0x00000000, 0x4947ae14, 0x00000000, 0x00000000, 0x00000000, 0x4a8f5c29, 0x00000000}
+  {148000, 0x25c28f40, 0x00000000, 0x247ae148, 0x00dfb23b, 0x3dc28f5c, 0x300f4aaf, 0x247ae148, 0x01bf6476},
+  {160000, 0x25c28f40, 0xb15b5740, 0x24cccccd, 0x053e2d62, 0x4f5c28f6, 0xbefd0072, 0x251eb852, 0x04fb1184},
+  {200000, 0x25c28f40, 0x00000000, 0x2b333333, 0x0836be91, 0x25c28f40, 0x00000000, 0x2b333333, 0x0890390f},
+  {320000, 0x25c28f40, 0x00000000, 0x4947ae14, 0x00000000, 0x25c28f40, 0x00000000, 0x4a8f5c29, 0x00000000}
 };
 
 static const BIT_PE_SFAC S_Bits2PeTab44100[] = {
@@ -205,8 +205,8 @@ static const BIT_PE_SFAC S_Bits2PeTab44100[] = {
   {128000, 0x2ae147ae, 0x1b435265, 0x223d70a4, 0x0192a737, 0x2a3d70a4, 0x1040bfe4, 0x21eb851f, 0x0192a737},
   {148000, 0x3b851eb8, 0x2832069c, 0x23333333, 0x00dfb23b, 0x3428f5c3, 0x2054c288, 0x22e147ae, 0x00dfb23b},
   {160000, 0x4a3d70a4, 0xc32ebe5a, 0x23851eb8, 0x01d5c316, 0x40000000, 0xcb923a2b, 0x23333333, 0x01d5c316},
-  {200000, 0x00000000, 0x00000000, 0x25c28f5c, 0x0713f078, 0x00000000, 0x00000000, 0x2570a3d7, 0x072a4f17},
-  {320000, 0x00000000, 0x00000000, 0x3fae147b, 0x00000000, 0x00000000, 0x00000000, 0x3fae147b, 0x00000000}
+  {200000, 0x25c28f40, 0x00000000, 0x25c28f5c, 0x0713f078, 0x25c28f40, 0x00000000, 0x2570a3d7, 0x072a4f17},
+  {320000, 0x25c28f40, 0x00000000, 0x3fae147b, 0x00000000, 0x25c28f40, 0x00000000, 0x3fae147b, 0x00000000}
 };
 
 static const BIT_PE_SFAC S_Bits2PeTab48000[] = {
@@ -219,8 +219,8 @@ static const BIT_PE_SFAC S_Bits2PeTab48000[] = {
   {128000, 0x28f5c28f, 0x14727dcc, 0x2147ae14, 0x0218def4, 0x2851eb85, 0x0e27e0f0, 0x20f5c28f, 0x0218def4},
   {148000, 0x3570a3d7, 0x1cd5f99c, 0x228f5c29, 0x01bf6476, 0x30f5c28f, 0x18777e75, 0x223d70a4, 0x01bf6476},
   {160000, 0x40000000, 0xcb923a2b, 0x23333333, 0x0192a737, 0x39eb851f, 0xd08d4bae, 0x22e147ae, 0x0192a737},
-  {200000, 0x00000000, 0x00000000, 0x251eb852, 0x06775a1b, 0x00000000, 0x00000000, 0x24cccccd, 0x06a4175a},
-  {320000, 0x00000000, 0x00000000, 0x3ccccccd, 0x00000000, 0x00000000, 0x00000000, 0x3d1eb852, 0x00000000}
+  {200000, 0x25c28f40, 0x00000000, 0x251eb852, 0x06775a1b, 0x25c28f40, 0x00000000, 0x24cccccd, 0x06a4175a},
+  {320000, 0x25c28f40, 0x00000000, 0x3ccccccd, 0x00000000, 0x25c28f40, 0x00000000, 0x3d1eb852, 0x00000000}
 };
 
 static const BITS2PE_CFG_TAB bits2PeConfigTab[] = {
@@ -258,6 +258,7 @@ static void FDKaacEnc_InitBits2PeFactor(
         const INT nChannels,
         const INT sampleRate,
         const INT advancedBitsToPe,
+        const INT dZoneQuantEnable,
         const INT invQuant
         )
 {
@@ -329,7 +330,32 @@ static void FDKaacEnc_InitBits2PeFactor(
   } /* advancedBitsToPe */
 
 
-  /* return bits2pe factor */
+  if (dZoneQuantEnable)
+  {
+    if(bit2PE_m >= (FL2FXCONST_DBL(0.6f))>>bit2PE_e)
+    {
+      /* Additional headroom for addition */
+      bit2PE_m >>= 1;
+      bit2PE_e  += 1;
+    }
+
+    /* the quantTendencyCompensator compensates a lower bit consumption due to increasing the tendency to quantize low spectral values to the lower quantizer border for bitrates below a certain bitrate threshold --> see also function calcSfbDistLD in quantize.c */
+    if ((bitRate/nChannels > 32000) && (bitRate/nChannels <= 40000)) {
+      bit2PE_m += (FL2FXCONST_DBL(0.4f))>>bit2PE_e;
+    }
+    else if (bitRate/nChannels > 20000) {
+      bit2PE_m += (FL2FXCONST_DBL(0.3f))>>bit2PE_e;
+    }
+    else if (bitRate/nChannels >= 16000) {
+      bit2PE_m += (FL2FXCONST_DBL(0.3f))>>bit2PE_e;
+    }
+    else {
+      bit2PE_m += (FL2FXCONST_DBL(0.0f))>>bit2PE_e;
+    }
+  }
+
+
+  /***** 3.) Return bits2pe factor *****/
   *bits2PeFactor_m = bit2PE_m;
   *bits2PeFactor_e = bit2PE_e;
 }
@@ -1649,6 +1675,7 @@ static void FDKaacEnc_adaptThresholdsToPe(CHANNEL_MAPPING*  cm,
                                 QC_OUT_ELEMENT*   qcElement[(8)],
                                 PSY_OUT_ELEMENT*  psyOutElement[(8)],
                                 const INT         desiredPe,
+                                const INT         maxIter2ndGuess,
                                 const INT         processElements,
                                 const INT         elementOffset)
 {
@@ -1733,7 +1760,7 @@ static void FDKaacEnc_adaptThresholdsToPe(CHANNEL_MAPPING*  cm,
    /* Part III: Iterate until bit constraints are met */
    /* -------------------------------------------------- */
    iter = 0;
-   while ((fixp_abs(redPeGlobal - desiredPe) > fMultI(FL2FXCONST_DBL(0.05f),desiredPe)) && (iter < 1)) {
+   while ((fixp_abs(redPeGlobal - desiredPe) > fMultI(FL2FXCONST_DBL(0.05f),desiredPe)) && (iter < maxIter2ndGuess)) {
 
      INT desiredPeNoAHGlobal;
      INT redPeNoAHGlobal = 0;
@@ -2138,7 +2165,7 @@ static FIXP_DBL FDKaacEnc_bitresCalcBitFac(const INT       bitresBits,
         bresParam->clipSpendLow, bresParam->clipSpendHigh,
         bresParam->minBitSpend, bresParam->maxBitSpend, bitspend_slope);
 
-    pe_pers = fDivNorm(pex - adjThrChan->peMin, adjThrChan->peMax - adjThrChan->peMin);
+    pe_pers = (pex > adjThrChan->peMin) ? fDivNorm(pex - adjThrChan->peMin, adjThrChan->peMax - adjThrChan->peMin) : 0;
     tmp_fix = fMult(((FIXP_DBL)bitSpend + (FIXP_DBL)bitSave), pe_pers);
     bitresFac_fix = (UNITY>>1) - ((FIXP_DBL)bitSave>>1) + (tmp_fix>>1); qbres = (DFRACT_BITS-2);
 
@@ -2225,13 +2252,18 @@ void FDKaacEnc_AdjThrInit(
         INT             nChannelsEff,
         INT             sampleRate,
         INT             advancedBitsToPe,
-        FIXP_DBL        vbrQualFactor
+        FIXP_DBL        vbrQualFactor,
+        const INT       dZoneQuantEnable
         )
 {
   INT i;
 
   FIXP_DBL POINT8 = FL2FXCONST_DBL(0.8f);
   FIXP_DBL POINT6 = FL2FXCONST_DBL(0.6f);
+
+  /* Max number of iterations in second guess is 3 for lowdelay aot and for configurations with
+     multiple audio elements in general, otherwise iteration value is always 1. */
+  hAdjThr->maxIter2ndGuess = (advancedBitsToPe!=0 || nElements>1) ? 3 : 1;
 
   /* common for all elements: */
   /* parameters for bitres control */
@@ -2313,10 +2345,11 @@ void FDKaacEnc_AdjThrInit(
     FDKaacEnc_InitBits2PeFactor(
               &atsElem->bits2PeFactor_m,
               &atsElem->bits2PeFactor_e,
-              chBitrate,       /* bitrate/channel*/
+              chBitrate*nChannelsEff, /* overall bitrate */
               nChannelsEff,    /* number of channels */
               sampleRate,
               advancedBitsToPe,
+              dZoneQuantEnable,
               invQuant
               );
 
@@ -2545,6 +2578,7 @@ void FDKaacEnc_AdjustThresholds(ATS_ELEMENT*        AdjThrStateElement[(8)],
                                 QC_OUT*             qcOut,
                                 PSY_OUT_ELEMENT*    psyOutElement[(8)],
                                 INT                 CBRbitrateMode,
+                                INT                 maxIter2ndGuess,
                                 CHANNEL_MAPPING*    cm)
 {
     int i;
@@ -2570,6 +2604,7 @@ void FDKaacEnc_AdjustThresholds(ATS_ELEMENT*        AdjThrStateElement[(8)],
                                             qcElement,
                                             psyOutElement,
                                             qcElement[i]->grantedPeCorr,
+                                            maxIter2ndGuess,
                                             1,         /* Process only 1 element */
                                             i);        /* Process exactly THIS element */
 

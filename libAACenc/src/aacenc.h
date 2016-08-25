@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -97,6 +97,11 @@ amm-info@iis.fraunhofer.de
 #include "tpenc_lib.h"
 
 #include "sbr_encoder.h"
+
+#define BITRES_MAX_LD   4000
+#define BITRES_MIN_LD    500
+#define BITRATE_MAX_LD 70000 /* Max assumed bitrate for bitres calculation */
+#define BITRATE_MIN_LD 12000 /* Min assumed bitrate for bitres calculation */
 
 #ifdef __cplusplus
 extern "C" {
@@ -205,6 +210,8 @@ struct AACENC_CONFIG {
   INT   maxBitsPerFrame;        /* maximum number of bits in AU */
   INT   bitreservoir;           /* size of bitreservoir */
 
+  INT   audioMuxVersion;        /* audio mux version in loas/latm transport format */
+
   UINT  sbrRatio;               /* sbr sampling rate ratio: dual- or single-rate */
 
   UCHAR useTns;                 /* flag: use temporal noise shaping */
@@ -222,6 +229,36 @@ typedef struct {
 } AACENC_EXT_PAYLOAD;
 
 typedef struct AAC_ENC *HANDLE_AAC_ENC;
+
+/**
+ * \brief Calculate framesize in bits for given bit rate, frame length and sampling rate.
+ *
+ * \param bitRate               Ttarget bitrate in bits per second.
+ * \param frameLength           Number of audio samples in one frame.
+ * \param samplingRate          Sampling rate in Hz.
+ *
+ * \return                      Framesize in bits per frame.
+*/
+INT FDKaacEnc_CalcBitsPerFrame(
+        const INT bitRate,
+        const INT frameLength,
+        const INT samplingRate
+        );
+
+/**
+ * \brief Calculate bitrate in bits per second for given framesize, frame length and sampling rate.
+ *
+ * \param bitsPerFrame          Framesize in bits per frame.
+ * \param frameLength           Number of audio samples in one frame.
+ * \param samplingRate          Sampling rate in Hz.
+ *
+ * \return                      Bitrate in bits per second.
+*/
+INT FDKaacEnc_CalcBitrate(
+        const INT bitsPerFrame,
+        const INT frameLength,
+        const INT samplingRate
+        );
 
 /**
  * \brief Limit given bit rate to a valid value

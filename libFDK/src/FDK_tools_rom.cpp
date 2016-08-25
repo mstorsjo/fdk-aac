@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -2039,19 +2039,6 @@ static const element_list_t node_aac_cpe = {
   { &node_aac_cpe0, &node_aac_cpe1 }
 };
 
-#define el_mpegsres_sce &el_aac_sce[2]
-
-static const element_list_t node_mpegsres_sce = {
-  el_mpegsres_sce,
-  { NULL, NULL }
-};
-
-static const element_list_t node_mpegsres_cpe = {
-  el_aac_cpe1,
-  { NULL, NULL }
-};
-
-
 /*
  * AOT C- {17,23}
  * epConfig = 0,1
@@ -2249,7 +2236,7 @@ static const rbd_id_t el_aac_cpe1_epc1[] = {
   ics_info,
   ms,
   ltp_data_present,
-  ltp_data,
+  /* ltp_data, */
   global_gain,
   section_data,
   scale_factor_data,
@@ -2260,7 +2247,7 @@ static const rbd_id_t el_aac_cpe1_epc1[] = {
   next_channel,
 
   ltp_data_present,
-  ltp_data,
+  /* ltp_data, */
   global_gain,
   section_data,
   scale_factor_data,
@@ -2303,7 +2290,178 @@ static const element_list_t node_aac_cpe_epc1 = {
   { &node_aac_cpe0_epc1, &node_aac_cpe1_epc1 }
 };
 
+/*
+ * AOT = 20
+ * epConfig = 0
+ */
+static const rbd_id_t el_scal_sce_epc0[] = {
+  ics_info,            /* ESC 1 */
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  esc2_rvlc,           /* ESC 2 */
+  tns_data,            /* ESC 3 */
+  spectral_data,       /* ESC 4 */
+  end_of_sequence
+};
 
+static const struct element_list node_scal_sce_epc0 = {
+  el_scal_sce_epc0,
+  { NULL, NULL }
+};
+
+static const rbd_id_t el_scal_cpe_epc0[] = {
+  ics_info,            /* ESC 0 */
+  ms,
+  tns_data_present,    /* ESC 1 (ch 0) */
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  esc2_rvlc,           /* ESC 2 (ch 0) */
+  tns_data,            /* ESC 3 (ch 0) */
+  spectral_data,       /* ESC 4 (ch 0) */
+  next_channel,
+  tns_data_present,    /* ESC 1 (ch 1) */
+  ltp_data_present,
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  esc2_rvlc,           /* ESC 2 (ch 1) */
+  tns_data,            /* ESC 3 (ch 1) */
+  spectral_data,       /* ESC 4 (ch 1) */
+  end_of_sequence
+};
+
+static const struct element_list node_scal_cpe_epc0 = {
+  el_scal_cpe_epc0,
+  { NULL, NULL }
+};
+
+/*
+ * AOT = 20
+ * epConfig = 1
+ */
+static const rbd_id_t el_scal_sce_epc1[] = {
+  ics_info,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  tns_data,
+  spectral_data,
+  end_of_sequence
+};
+
+static const struct element_list node_scal_sce_epc1 = {
+  el_scal_sce_epc1,
+  { NULL, NULL }
+};
+
+static const rbd_id_t el_scal_cpe_epc1[] = {
+  ics_info,
+  ms,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  next_channel,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  next_channel,
+  tns_data,
+  next_channel,
+  tns_data,
+  next_channel,
+  spectral_data,
+  next_channel,
+  spectral_data,
+  end_of_sequence
+};
+
+static const struct element_list node_scal_cpe_epc1 = {
+  el_scal_cpe_epc1,
+  { NULL, NULL }
+};
+
+/*
+ * Pseudo AOT for DRM/DRM+ (similar to AOT 20)
+ * Derived from epConfig = 1
+ */
+static const rbd_id_t el_drm_sce[] = {
+  drmcrc_start_reg,
+  ics_info,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  tns_data,
+  drmcrc_end_reg,
+  spectral_data,
+  end_of_sequence
+};
+
+static const struct element_list node_drm_sce = {
+  el_drm_sce,
+  { NULL, NULL }
+};
+
+static const rbd_id_t el_drm_cpe[] = {
+  drmcrc_start_reg,
+  ics_info,
+  ms,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  next_channel,
+  tns_data_present,
+  ltp_data_present,
+  /* ltp_data, */
+  global_gain,
+  section_data,
+  scale_factor_data,
+  esc1_hcr,
+  next_channel,
+  tns_data,
+  next_channel,
+  tns_data,
+  drmcrc_end_reg,
+  next_channel,
+  spectral_data,
+  next_channel,
+  spectral_data,
+  end_of_sequence
+};
+
+static const struct element_list node_drm_cpe = {
+  el_drm_cpe,
+  { NULL, NULL }
+};
 
 /*
  * AOT = 39
@@ -2418,6 +2576,19 @@ const element_list_t * getBitstreamElementList(AUDIO_OBJECT_TYPE aot, SCHAR epCo
           return &node_aac_cpe_epc1;
       }
       break;
+    case AOT_ER_AAC_SCAL:
+      if (nChannels == 1) {
+        if (epConfig <= 0)
+          return &node_scal_sce_epc0;
+        else
+          return &node_scal_sce_epc1;
+      } else {
+        if (epConfig <= 0)
+          return &node_scal_cpe_epc0;
+        else
+          return &node_scal_cpe_epc1;
+      }
+      break;
     case AOT_ER_AAC_ELD:
       if (nChannels == 1) {
         if (epConfig <= 0)
@@ -2430,11 +2601,14 @@ const element_list_t * getBitstreamElementList(AUDIO_OBJECT_TYPE aot, SCHAR epCo
         else
           return &node_eld_cpe_epc1;
       }
-    case AOT_MPEGS_RESIDUALS:
+    case AOT_DRM_AAC:
+    case AOT_DRM_SBR:
+    case AOT_DRM_MPEG_PS:
+      FDK_ASSERT(epConfig == 1);
       if (nChannels == 1) {
-        return &node_mpegsres_sce;
+        return &node_drm_sce;
       } else {
-        return &node_mpegsres_cpe;
+        return &node_drm_cpe;
       }
       break;
     default:

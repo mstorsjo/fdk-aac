@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -104,13 +104,19 @@ amm-info@iis.fraunhofer.de
 static void FDKaacEnc_quantizeLines(INT      gain,
                           INT      noOfLines,
                           FIXP_DBL *mdctSpectrum,
-                          SHORT      *quaSpectrum)
+                          SHORT    *quaSpectrum,
+                          INT      dZoneQuantEnable)
 {
   int   line;
-  FIXP_DBL k = FL2FXCONST_DBL(-0.0946f + 0.5f)>>16;
+  FIXP_DBL k = FL2FXCONST_DBL(0.0f);
   FIXP_QTD quantizer = FDKaacEnc_quantTableQ[(-gain)&3];
   INT      quantizershift = ((-gain)>>2)+1;
+  const INT kShift=16;
 
+  if (dZoneQuantEnable)
+    k = FL2FXCONST_DBL(0.23f)>>kShift;
+  else
+    k = FL2FXCONST_DBL(-0.0946f + 0.5f)>>kShift;
 
   for (line = 0; line < noOfLines; line++)
   {
@@ -263,7 +269,8 @@ void FDKaacEnc_QuantizeSpectrum(INT sfbCnt,
                       FIXP_DBL *mdctSpectrum,
                       INT globalGain,
                       INT *scalefactors,
-                      SHORT *quantizedSpectrum)
+                      SHORT *quantizedSpectrum,
+                      INT dZoneQuantEnable)
 {
   INT sfbOffs,sfb;
 
@@ -280,7 +287,8 @@ void FDKaacEnc_QuantizeSpectrum(INT sfbCnt,
     FDKaacEnc_quantizeLines(globalGain - scalefactor, /* QSS */
                   sfbOffset[sfbOffs+sfb+1] - sfbOffset[sfbOffs+sfb],
                   mdctSpectrum + sfbOffset[sfbOffs+sfb],
-                  quantizedSpectrum + sfbOffset[sfbOffs+sfb]);
+                  quantizedSpectrum + sfbOffset[sfbOffs+sfb],
+                  dZoneQuantEnable);
   }
 }
 
@@ -296,7 +304,8 @@ void FDKaacEnc_QuantizeSpectrum(INT sfbCnt,
 FIXP_DBL FDKaacEnc_calcSfbDist(FIXP_DBL *mdctSpectrum,
                      SHORT *quantSpectrum,
                      INT noOfLines,
-                     INT gain
+                     INT gain,
+                     INT dZoneQuantEnable
                      )
 {
   INT i,scale;
@@ -311,7 +320,8 @@ FIXP_DBL FDKaacEnc_calcSfbDist(FIXP_DBL *mdctSpectrum,
     FDKaacEnc_quantizeLines(gain,
                   1,
                  &mdctSpectrum[i],
-                 &quantSpectrum[i]);
+                 &quantSpectrum[i],
+                  dZoneQuantEnable);
 
     if (fAbs(quantSpectrum[i])>MAX_QUANT) {
       return FL2FXCONST_DBL(0.0f);

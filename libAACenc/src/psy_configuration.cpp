@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -634,13 +634,14 @@ AAC_ENCODER_ERROR FDKaacEnc_InitPsyConfiguration(INT   bitrate,
         if (psyConf->sfbOffset[sfb] >= psyConf->lowpassLine)
             break;
     }
-    psyConf->sfbActive = sfb;
+    psyConf->sfbActive = FDKmax(sfb, 1);
 
     for (sfb = 0; sfb < psyConf->sfbCnt; sfb++){
         if (psyConf->sfbOffset[sfb] >= psyConf->lowpassLineLFE)
             break;
     }
     psyConf->sfbActiveLFE = sfb;
+    psyConf->sfbActive = FDKmax(psyConf->sfbActive, psyConf->sfbActiveLFE);
 
     /* calculate minSnr */
     FDKaacEnc_initMinSnr(bitrate,

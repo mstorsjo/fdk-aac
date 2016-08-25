@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -81,13 +81,114 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  MPEG AAC Audio Encoder  *************************
+/*****************************  MPEG-4 AAC Decoder  **************************
 
-   Initial author:       R. Boehm
-   contents/description: huffman codeword reordering
-                         based on source from aacErrRobTrans
+   Author(s):   Josef Hoepfl
+   Description: DRM interface
 
 ******************************************************************************/
 
-#include "aacenc_hcr.h"
+#ifndef TPDEC_DRM_H
+#define TPDEC_DRM_H
 
+#include "tpdec_lib.h"
+
+
+#include "FDK_crc.h"
+
+typedef struct {
+
+  FDK_CRCINFO crcInfo;             /* CRC state info */
+  USHORT      crcReadValue;        /* CRC value read from bitstream data */
+
+} STRUCT_DRM;
+
+typedef STRUCT_DRM *HANDLE_DRM;
+
+/*!
+  \brief Initialize DRM CRC
+
+  The function initialzes the crc buffer and the crc lookup table.
+
+  \return  none
+*/
+void drmRead_CrcInit( HANDLE_DRM pDrm );
+
+/**
+ * \brief Starts CRC region with a maximum number of bits
+ *        If mBits is positive zero padding will be used for CRC calculation, if there
+ *        are less than mBits bits available.
+ *        If mBits is negative no zero padding is done.
+ *        If mBits is zero the memory for the buffer is allocated dynamically, the
+ *        number of bits is not limited.
+ *
+ * \param pDrm DRM data handle
+ * \param hBs bitstream handle, on which the CRC region referes to
+ * \param mBits max number of bits in crc region to be considered
+ *
+ * \return  ID for the created region, -1 in case of an error
+ */
+int drmRead_CrcStartReg(
+        HANDLE_DRM pDrm,
+        HANDLE_FDK_BITSTREAM hBs,
+        int mBits
+        );
+
+/**
+ * \brief Ends CRC region identified by reg
+ *
+ * \param pDrm DRM data handle
+ * \param hBs bitstream handle, on which the CRC region referes to
+ * \param reg CRC regions ID returned by drmRead_CrcStartReg()
+ *
+ * \return  none
+ */
+void drmRead_CrcEndReg(
+        HANDLE_DRM pDrm,
+        HANDLE_FDK_BITSTREAM hBs,
+        int reg
+        );
+
+/**
+ * \brief Check CRC
+ *
+ * Checks if the currently calculated CRC matches the CRC field read from the bitstream
+ * Deletes all CRC regions.
+ *
+ * \param pDrm DRM data handle
+ *
+ * \return Returns 0 if they are identical otherwise 1
+ */
+TRANSPORTDEC_ERROR drmRead_CrcCheck( HANDLE_DRM pDrm );
+
+/**
+ * \brief Check if we have a valid DRM frame at the current bitbuffer position
+ *
+ * This function assumes enough bits in buffer for the current frame.
+ * It reads out the header bits to prepare the bitbuffer for the decode loop.
+ * In case the header bits show an invalid bitstream/frame, the whole frame is skipped.
+ *
+ * \param pDrm DRM data handle which is filled with parsed DRM header data
+ * \param bs handle of bitstream from whom the DRM header is read
+ *
+ * \return  error status
+ */
+TRANSPORTDEC_ERROR drmRead_DecodeHeader(
+        HANDLE_DRM            pDrm,
+        HANDLE_FDK_BITSTREAM  bs
+        );
+
+/**
+ * \brief   Parse a Drm specific SDC audio config from a given bitstream handle.
+ *
+ * \param pAsc                         A pointer to an allocated CSAudioSpecificConfig struct.
+ * \param hBs                          Bitstream handle.
+ *
+ * \return  Total element count including all SCE, CPE and LFE.
+ */
+TRANSPORTDEC_ERROR DrmRawSdcAudioConfig_Parse( CSAudioSpecificConfig *pAsc,
+                                               HANDLE_FDK_BITSTREAM hBs );
+
+
+
+#endif /* TPDEC_DRM_H */

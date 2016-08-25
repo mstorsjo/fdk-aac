@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -268,8 +268,9 @@ qmfBasedNoiseFloorDetection(FIXP_DBL *noiseLevel,              /*!< Pointer to v
   /*
    * Add a noise floor offset to compensate for bias in the detector
    *****************************************************************/
-  if(!missingHarmonicFlag)
-    *noiseLevel = fMult(*noiseLevel, noiseFloorOffset)<<(NOISE_FLOOR_OFFSET_SCALING);
+  if(!missingHarmonicFlag) {
+    *noiseLevel = fixMin(fMult(*noiseLevel, noiseFloorOffset), (FIXP_DBL)MAXVAL_DBL>>NOISE_FLOOR_OFFSET_SCALING) << NOISE_FLOOR_OFFSET_SCALING;
+  }
 
   /*
    * check to see that we don't exceed the maximum allowed level
@@ -297,7 +298,7 @@ FDKsbrEnc_sbrNoiseFloorEstimateQmf(HANDLE_SBR_NOISE_FLOOR_ESTIMATE h_sbrNoiseFlo
                          SCHAR    *indexVector,              /*!< Index vector to obtain the patched data. */
                          INT missingHarmonicsFlag,           /*!< Flag indicating if a strong tonal component will be missing. */
                          INT startIndex,                     /*!< Start index. */
-                         int numberOfEstimatesPerFrame,      /*!< The number of tonality estimates per frame. */
+                         UINT numberOfEstimatesPerFrame,     /*!< The number of tonality estimates per frame. */
                          int transientFrame,                 /*!< A flag indicating if a transient is present. */
                          INVF_MODE* pInvFiltLevels,          /*!< Pointer to the vector holding the inverse filtering levels. */
                          UINT sbrSyntaxFlags

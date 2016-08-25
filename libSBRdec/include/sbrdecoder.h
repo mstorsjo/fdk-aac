@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -262,6 +262,7 @@ void sbrDecoder_drcDisable ( HANDLE_SBRDECODER  self,
  *         into *count if a payload length is given (byPayLen > 0). If no SBR payload length is
  *         given (bsPayLen < 0) then the bit stream position on return will be random after this
  *         function call in case of errors, and any further decoding will be completely pointless.
+ *         This function accepts either normal ordered SBR data or reverse ordered DRM SBR data.
  *
  * \param self           SBR decoder handle.
  * \param hBs            Bit stream handle as data source.

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -363,7 +363,8 @@ static INT FDKaacEnc_improveScf(FIXP_DBL *spec,
                       INT scf,
                       INT minScf,
                       FIXP_DBL  *distLdData,
-                      INT *minScfCalculated
+                      INT *minScfCalculated,
+                      INT dZoneQuantEnable
                       )
 {
    FIXP_DBL sfbDistLdData;
@@ -375,7 +376,8 @@ static INT FDKaacEnc_improveScf(FIXP_DBL *spec,
    sfbDistLdData = FDKaacEnc_calcSfbDist(spec,
                                          quantSpec,
                                          sfbWidth,
-                                         scf);
+                                         scf,
+                                         dZoneQuantEnable);
    *minScfCalculated = scf;
    /* nmr > 1.25 -> try to improve nmr */
    if (sfbDistLdData > (threshLdData-distFactorLdData)) {
@@ -390,7 +392,8 @@ static INT FDKaacEnc_improveScf(FIXP_DBL *spec,
          sfbDistLdData = FDKaacEnc_calcSfbDist(spec,
                                                quantSpecTmp,
                                                sfbWidth,
-                                               scf);
+                                               scf,
+                                               dZoneQuantEnable);
 
          if (sfbDistLdData < sfbDistBestLdData) {
             scfBest = scf;
@@ -408,7 +411,8 @@ static INT FDKaacEnc_improveScf(FIXP_DBL *spec,
          sfbDistLdData = FDKaacEnc_calcSfbDist(spec,
                                                quantSpecTmp,
                                                sfbWidth,
-                                               scf);
+                                               scf,
+                                               dZoneQuantEnable);
 
          if (sfbDistLdData < sfbDistBestLdData) {
             scfBest = scf;
@@ -429,7 +433,8 @@ static INT FDKaacEnc_improveScf(FIXP_DBL *spec,
          sfbDistLdData = FDKaacEnc_calcSfbDist(spec,
                                                quantSpecTmp,
                                                sfbWidth,
-                                               scf);
+                                               scf,
+                                               dZoneQuantEnable);
 
          if (sfbDistLdData < sfbDistAllowedLdData) {
            *minScfCalculated = scfBest+1;
@@ -454,6 +459,7 @@ static void FDKaacEnc_assimilateSingleScf(PSY_OUT_CHANNEL *psyOutChan,
                                 QC_OUT_CHANNEL   *qcOutChannel,
                                 SHORT *quantSpec,
                                 SHORT *quantSpecTmp,
+                                INT dZoneQuantEnable,
                                 INT *scf,
                                 INT *minScf,
                                 FIXP_DBL *sfbDist,
@@ -570,7 +576,8 @@ static void FDKaacEnc_assimilateSingleScf(PSY_OUT_CHANNEL *psyOutChan,
             sfbDistNew = FDKaacEnc_calcSfbDist(qcOutChannel->mdctSpectrum+sfbOffs,
                                                quantSpecTmp+sfbOffs,
                                                sfbWidth,
-                                               scfAct);
+                                               scfAct,
+                                               dZoneQuantEnable);
 
             if (sfbDistNew < sfbDist[sfbAct]) {
               /* success, replace scf by new one */
@@ -629,6 +636,7 @@ static void FDKaacEnc_assimilateMultipleScf(PSY_OUT_CHANNEL *psyOutChan,
                                   QC_OUT_CHANNEL  *qcOutChannel,
                                   SHORT *quantSpec,
                                   SHORT *quantSpecTmp,
+                                  INT dZoneQuantEnable,
                                   INT *scf,
                                   INT *minScf,
                                   FIXP_DBL *sfbDist,
@@ -724,7 +732,8 @@ static void FDKaacEnc_assimilateMultipleScf(PSY_OUT_CHANNEL *psyOutChan,
                 sfbDistNew[sfb] = FDKaacEnc_calcSfbDist(qcOutChannel->mdctSpectrum+sfbOffs,
                                               quantSpecTmp+sfbOffs,
                                               sfbWidth,
-                                              scfAct);
+                                              scfAct,
+                                              dZoneQuantEnable);
 
                 if (sfbDistNew[sfb] >qcOutChannel->sfbThresholdLdData[sfb]) {
                   /* no improvement, skip further dist. calculations */
@@ -768,6 +777,7 @@ static void FDKaacEnc_FDKaacEnc_assimilateMultipleScf2(PSY_OUT_CHANNEL *psyOutCh
                                    QC_OUT_CHANNEL  *qcOutChannel,
                                    SHORT *quantSpec,
                                    SHORT *quantSpecTmp,
+                                   INT dZoneQuantEnable,
                                    INT *scf,
                                    INT *minScf,
                                    FIXP_DBL *sfbDist,
@@ -883,7 +893,8 @@ static void FDKaacEnc_FDKaacEnc_assimilateMultipleScf2(PSY_OUT_CHANNEL *psyOutCh
                 sfbDistNew[sfb] = FDKaacEnc_calcSfbDist(qcOutChannel->mdctSpectrum+sfbOffs[sfb],
                                               quantSpecTmp+sfbOffs[sfb],
                                               sfbOffs[sfb+1]-sfbOffs[sfb],
-                                              scfNew);
+                                              scfNew,
+                                              dZoneQuantEnable);
 
                 if (sfbDistNew[sfb] > sfbDistMax[sfb]) {
                   /* no improvement, skip further dist. calculations */
@@ -963,7 +974,8 @@ static void FDKaacEnc_FDKaacEnc_assimilateMultipleScf2(PSY_OUT_CHANNEL *psyOutCh
               sfbDistNew[sfb] = FDKaacEnc_calcSfbDist(qcOutChannel->mdctSpectrum+sfbOffs[sfb],
                                                       quantSpecTmp+sfbOffs[sfb],
                                                       sfbOffs[sfb+1]-sfbOffs[sfb],
-                                                      scfNew);
+                                                      scfNew,
+                                                      dZoneQuantEnable);
 
               if (sfbDistNew[sfb] > qcOutChannel->sfbThresholdLdData[sfb]) {
                 /* no improvement, skip further dist. calculations */
@@ -1058,7 +1070,8 @@ FDKaacEnc_FDKaacEnc_EstimateScaleFactorsChannel(QC_OUT_CHANNEL   *qcOutChannel,
                             INT *RESTRICT globalGain,
                             FIXP_DBL *RESTRICT sfbFormFactorLdData
                             ,const INT invQuant,
-                            SHORT *RESTRICT quantSpec
+                            SHORT *RESTRICT quantSpec,
+                            const INT dZoneQuantEnable
                             )
 {
   INT i, j, sfb, sfbOffs;
@@ -1160,7 +1173,8 @@ FDKaacEnc_FDKaacEnc_EstimateScaleFactorsChannel(QC_OUT_CHANNEL   *qcOutChannel,
                               quantSpecTmp+psyOutChannel->sfbOffsets[sfbOffs+sfb],
                               psyOutChannel->sfbOffsets[sfbOffs+sfb+1]-psyOutChannel->sfbOffsets[sfbOffs+sfb],
                               threshLdData, scfInt, minSfMaxQuant[sfbOffs+sfb],
-                              &sfbDistLdData[sfbOffs+sfb], &minScfCalculated[sfbOffs+sfb]
+                              &sfbDistLdData[sfbOffs+sfb], &minScfCalculated[sfbOffs+sfb],
+                              dZoneQuantEnable
                               );
         }
         scf[sfbOffs+sfb] = scfInt;
@@ -1187,20 +1201,32 @@ FDKaacEnc_FDKaacEnc_EstimateScaleFactorsChannel(QC_OUT_CHANNEL   *qcOutChannel,
                           sfbNRelevantLines);
 
 
-    FDKaacEnc_assimilateSingleScf(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp, scf,
+    FDKaacEnc_assimilateSingleScf(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp,
+                        dZoneQuantEnable,
+                        scf,
                         minSfMaxQuant, sfbDistLdData, sfbConstPePart,
                         sfbFormFactorLdData, sfbNRelevantLines, minScfCalculated, 1);
 
+    if(invQuant > 1) {
+      FDKaacEnc_assimilateMultipleScf(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp,
+                        dZoneQuantEnable,
+                        scf,
+                        minSfMaxQuant, sfbDistLdData, sfbConstPePart,
+                        sfbFormFactorLdData, sfbNRelevantLines);
 
-    FDKaacEnc_assimilateMultipleScf(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp, scf,
-                          minSfMaxQuant, sfbDistLdData, sfbConstPePart,
-                          sfbFormFactorLdData, sfbNRelevantLines);
+      FDKaacEnc_assimilateMultipleScf(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp,
+                        dZoneQuantEnable,
+                        scf,
+                        minSfMaxQuant, sfbDistLdData, sfbConstPePart,
+                        sfbFormFactorLdData, sfbNRelevantLines);
 
 
-    FDKaacEnc_FDKaacEnc_assimilateMultipleScf2(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp, scf,
-                           minSfMaxQuant, sfbDistLdData, sfbConstPePart,
-                           sfbFormFactorLdData, sfbNRelevantLines);
-
+      FDKaacEnc_FDKaacEnc_assimilateMultipleScf2(psyOutChannel, qcOutChannel, quantSpec, quantSpecTmp,
+                        dZoneQuantEnable,
+                        scf,
+                        minSfMaxQuant, sfbDistLdData, sfbConstPePart,
+                        sfbFormFactorLdData, sfbNRelevantLines);
+    }
   }
 
 
@@ -1223,7 +1249,8 @@ FDKaacEnc_FDKaacEnc_EstimateScaleFactorsChannel(QC_OUT_CHANNEL   *qcOutChannel,
                FDKaacEnc_calcSfbDist(qcOutChannel->mdctSpectrum+psyOutChannel->sfbOffsets[sfbOffs+sfb],
                                      quantSpec+psyOutChannel->sfbOffsets[sfbOffs+sfb],
                                      psyOutChannel->sfbOffsets[sfbOffs+sfb+1]-psyOutChannel->sfbOffsets[sfbOffs+sfb],
-                                     scf[sfbOffs+sfb]
+                                     scf[sfbOffs+sfb],
+                                     dZoneQuantEnable
                                      );
         }
       }
@@ -1281,6 +1308,7 @@ void
 FDKaacEnc_EstimateScaleFactors(PSY_OUT_CHANNEL *psyOutChannel[],
                      QC_OUT_CHANNEL* qcOutChannel[],
                      const int invQuant,
+                     const INT dZoneQuantEnable,
                      const int nChannels)
 {
   int ch;
@@ -1293,7 +1321,8 @@ FDKaacEnc_EstimateScaleFactors(PSY_OUT_CHANNEL *psyOutChannel[],
                                   &qcOutChannel[ch]->globalGain,
                                   qcOutChannel[ch]->sfbFormFactorLdData
                                   ,invQuant,
-                                  qcOutChannel[ch]->quantSpec
+                                  qcOutChannel[ch]->quantSpec,
+                                  dZoneQuantEnable
                                   );
   }
 

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -167,6 +167,36 @@ const SCHAR ExponentTable [4][14] =
 } ;
 
 
+/* 41 scfbands */
+static const SHORT sfb_96_1024[42] =
+{
+     0,    4,    8,   12,   16,   20,   24,   28,   32,   36,   40,   44,
+    48,   52,   56,   64,   72,   80,   88,   96,  108,  120,  132,  144,
+   156,  172,  188,  212,  240,  276,  320,  384,  448,  512,  576,  640,
+   704,  768,  832,  896,  960, 1024
+};
+/* 12 scfbands */
+static const SHORT sfb_96_128[13] =
+{
+     0,    4,    8,   12,   16,   20,   24,   32,   40,   48,    64,  92,
+   128
+};
+
+/* 47 scfbands*/
+static const SHORT sfb_64_1024[48] =
+{
+     0,   4,   8,  12,  16,  20,  24,   28,  32,  36,  40,  44,  48,  52,
+    56,  64,  72,  80,  88, 100, 112,  124, 140, 156, 172, 192, 216, 240,
+   268, 304, 344, 384, 424, 464, 504,  544, 584, 624, 664, 704, 744, 784,
+   824, 864, 904, 944, 984,1024
+};
+
+/* 12 scfbands */
+static const SHORT sfb_64_128[13] =
+{
+     0,   4,   8,  12,  16,  20,  24,
+    32,  40,  48,  64,  92, 128
+};
 
 /* 49 scfbands */
 static const SHORT sfb_48_1024[50] = {
@@ -239,6 +269,35 @@ static const SHORT sfb_8_128[16] =
 };
 
 
+static const SHORT sfb_96_960[42] =
+{
+  0,      4,      8,      12,     16,     20,     24,     28,     32,     36,
+  40,     44,     48,     52,     56,     64,     72,     80,     88,     96,
+  108,    120,    132,    144,    156,    172,    188,    212,    240,    276,
+  320,    384,    448,    512,    576,    640,    704,    768,    832,    896,
+  960
+};   /* 40 scfbands */
+
+static const SHORT sfb_96_120[13] =
+{
+  0,      4,      8,      12,     16,     20,     24,     32,     40,     48,
+  64,     92,     120
+};   /* 12 scfbands */
+
+static const SHORT sfb_64_960[47] =
+{
+  0,      4,      8,      12,     16,     20,     24,     28,     32,     36,
+  40,     44,     48,     52,     56,     64,     72,     80,     88,     100,
+  112,    124,    140,    156,    172,    192,    216,    240,    268,    304,
+  344,    384,    424,    464,    504,    544,    584,    624,    664,    704,
+  744,    784,    824,    864,    904,    944,    960
+};   /* 46 scfbands */
+
+static const SHORT sfb_64_120[13] =
+{
+  0,      4,      8,      12,     16,     20,     24,     32,     40,     48,
+  64,     92,     120
+};   /* 12 scfbands */
 
 static const SHORT sfb_48_960[50] =
 {
@@ -358,9 +417,9 @@ static const SHORT sfb_24_480[31] =
 const SFB_INFO sfbOffsetTables[5][16] =
 {
   {
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
+    { sfb_96_1024, sfb_96_128, 41, 12 },
+    { sfb_96_1024, sfb_96_128, 41, 12 },
+    { sfb_64_1024, sfb_64_128, 47, 12 },
     { sfb_48_1024, sfb_48_128, 49, 14 },
     { sfb_48_1024, sfb_48_128, 49, 14 },
     { sfb_32_1024, sfb_48_128, 51, 14 },
@@ -372,9 +431,9 @@ const SFB_INFO sfbOffsetTables[5][16] =
     { sfb_8_1024, sfb_8_128, 40, 15 },
     { sfb_8_1024, sfb_8_128, 40, 15 },
   }, {
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
+    { sfb_96_960, sfb_96_120, 40, 12 },
+    { sfb_96_960, sfb_96_120, 40, 12 },
+    { sfb_64_960, sfb_64_120, 46, 12 },
     { sfb_48_960, sfb_48_120, 49, 14 },
     { sfb_48_960, sfb_48_120, 49, 14 },
     { sfb_32_960, sfb_48_120, 49, 14 },
@@ -388,9 +447,9 @@ const SFB_INFO sfbOffsetTables[5][16] =
   }, {
     { NULL, NULL, 0, 0 },
   }, {
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
+    { sfb_48_512,  NULL, 36, 0 },
+    { sfb_48_512,  NULL, 36, 0 },
+    { sfb_48_512,  NULL, 36, 0 },
     { sfb_48_512,  NULL, 36, 0 },
     { sfb_48_512, NULL, 36, 0},
     { sfb_32_512, NULL, 37, 0 },
@@ -402,9 +461,9 @@ const SFB_INFO sfbOffsetTables[5][16] =
     { sfb_24_512, NULL, 31, 0 },
     { sfb_24_512, NULL, 31, 0 },
   }, {
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
-    { NULL, NULL, 0, 0 },
+    { sfb_48_480, NULL, 35, 0 },
+    { sfb_48_480, NULL, 35, 0 },
+    { sfb_48_480, NULL, 35, 0 },
     { sfb_48_480, NULL, 35, 0 },
     { sfb_48_480, NULL, 35, 0 },
     { sfb_32_480, NULL, 37, 0 },

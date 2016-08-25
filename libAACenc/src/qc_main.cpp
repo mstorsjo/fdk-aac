@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -107,14 +107,11 @@ typedef struct {
 } TAB_VBR_QUAL_FACTOR;
 
 static const TAB_VBR_QUAL_FACTOR tableVbrQualFactor[] = {
-  {QCDATA_BR_MODE_CBR,   FL2FXCONST_DBL(0.00f)},
   {QCDATA_BR_MODE_VBR_1, FL2FXCONST_DBL(0.160f)}, /* 32 kbps mono   AAC-LC + SBR + PS */
   {QCDATA_BR_MODE_VBR_2, FL2FXCONST_DBL(0.148f)}, /* 64 kbps stereo AAC-LC + SBR      */
   {QCDATA_BR_MODE_VBR_3, FL2FXCONST_DBL(0.135f)}, /* 80 - 96 kbps stereo AAC-LC       */
   {QCDATA_BR_MODE_VBR_4, FL2FXCONST_DBL(0.111f)}, /* 128 kbps stereo AAC-LC           */
-  {QCDATA_BR_MODE_VBR_5, FL2FXCONST_DBL(0.070f)}, /* 192 kbps stereo AAC-LC           */
-  {QCDATA_BR_MODE_SFR,   FL2FXCONST_DBL(0.00f)},
-  {QCDATA_BR_MODE_FF,    FL2FXCONST_DBL(0.00f)}
+  {QCDATA_BR_MODE_VBR_5, FL2FXCONST_DBL(0.070f)}  /* 192 kbps stereo AAC-LC           */
 };
 
 static INT isConstantBitrateMode(
@@ -369,6 +366,7 @@ QCNew_bail:
 AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
                                    struct QC_INIT *init)
 {
+  int i;
   hQC->maxBitsPerFrame = init->maxBits;
   hQC->minBitsPerFrame = init->minBits;
   hQC->nElements       = init->channelMapping->nElements;
@@ -382,7 +380,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
   if ( isConstantBitrateMode(hQC->bitrateMode) ) {
     INT bitresPerChannel = (hQC->bitResTotMax / init->channelMapping->nChannelsEff);
     /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
-    hQC->bitDistributionMode = (bitresPerChannel>100) ? 0 : (bitresPerChannel>0) ? 1 : 2;
+    hQC->bitDistributionMode = (bitresPerChannel>BITRES_MIN_LD) ? 0 : (bitresPerChannel>0) ? 1 : 2;
   }
   else {
     hQC->bitDistributionMode = 0; /* full bitreservoir */
@@ -399,25 +397,22 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
                             (init->averageBits/init->nSubFrames) - hQC->globHdrBits,
                             hQC->maxBitsPerFrame/init->channelMapping->nChannelsEff);
 
-  switch(hQC->bitrateMode){
-    case QCDATA_BR_MODE_CBR:
-    case QCDATA_BR_MODE_VBR_1:
-    case QCDATA_BR_MODE_VBR_2:
-    case QCDATA_BR_MODE_VBR_3:
-    case QCDATA_BR_MODE_VBR_4:
-    case QCDATA_BR_MODE_VBR_5:
-    case QCDATA_BR_MODE_SFR:
-    case QCDATA_BR_MODE_FF:
-      if((int)hQC->bitrateMode < (int)(sizeof(tableVbrQualFactor)/sizeof(TAB_VBR_QUAL_FACTOR))){
-        hQC->vbrQualFactor = (FIXP_DBL)tableVbrQualFactor[hQC->bitrateMode].vbrQualFactor;
-      } else {
-        hQC->vbrQualFactor = FL2FXCONST_DBL(0.f); /* default setting */
-      }
+  hQC->vbrQualFactor = FL2FXCONST_DBL(0.f);
+  for (i=0; i<(int)(sizeof(tableVbrQualFactor)/sizeof(TAB_VBR_QUAL_FACTOR)); i++) {
+    if (hQC->bitrateMode==tableVbrQualFactor[i].bitrateMode) {
+      hQC->vbrQualFactor = (FIXP_DBL)tableVbrQualFactor[i].vbrQualFactor;
       break;
-    case QCDATA_BR_MODE_INVALID:
-    default:
-      hQC->vbrQualFactor = FL2FXCONST_DBL(0.f);
-      break;
+    }
+  }
+
+  if (init->channelMapping->nChannelsEff == 1 &&
+     (init->bitrate / init->channelMapping->nChannelsEff) < 32000 &&
+     init->advancedBitsToPe != 0
+     )
+  {
+    hQC->dZoneQuantEnable = 1;
+  } else {
+    hQC->dZoneQuantEnable = 0;
   }
 
   FDKaacEnc_AdjThrInit(
@@ -429,7 +424,8 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE *hQC,
         init->channelMapping->nChannelsEff,
         init->sampleRate,                 /* output sample rate */
         init->advancedBitsToPe,           /* if set, calc bits2PE factor depending on samplerate */
-        hQC->vbrQualFactor
+        hQC->vbrQualFactor,
+        hQC->dZoneQuantEnable
         );
 
   return AAC_ENC_OK;
@@ -892,6 +888,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                                      qcOut[c],
                                      psyOut[c]->psyOutElement,
                                      isConstantBitrateMode(hQC->bitrateMode),
+                                     hQC->hAdjThr->maxIter2ndGuess,
                                      cm);
 
       } /* -end- sub frame counter */
@@ -919,6 +916,7 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                       FDKaacEnc_EstimateScaleFactors(psyOut[c]->psyOutElement[i]->psyOutChannel,
                                             qcElement[c][i]->qcOutChannel,
                                             hQC->invQuant,
+                                            hQC->dZoneQuantEnable,
                                             cm->elInfo[i].nChannelsInEl);
 
 
@@ -1013,7 +1011,8 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT         hQC,
                                                              qcOutCh->mdctSpectrum,
                                                              qcOutCh->globalGain,
                                                              qcOutCh->scf,
-                                                             qcOutCh->quantSpec) ;
+                                                             qcOutCh->quantSpec,
+                                                             hQC->dZoneQuantEnable);
 
                                   /*-------------------------------------------- */
                                   if (FDKaacEnc_calcMaxValueInSfb(psyOutCh->sfbCnt,
@@ -1263,6 +1262,8 @@ AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
     case QCDATA_BR_MODE_VBR_4:
     case QCDATA_BR_MODE_VBR_5:
       qcOut[0]->totFillBits = (qcOut[0]->grantedDynBits - qcOut[0]->usedDynBits)&7; /* precalculate alignment bits */
+      qcOut[0]->totalBits = qcOut[0]->staticBits + qcOut[0]->usedDynBits + qcOut[0]->totFillBits + qcOut[0]->elementExtBits + qcOut[0]->globalExtBits;
+      qcOut[0]->totFillBits += ( fixMax(0, qcKernel->minBitsPerFrame - qcOut[0]->totalBits) + 7) & ~7;
       break;
 
     case QCDATA_BR_MODE_CBR:
@@ -1272,6 +1273,8 @@ AAC_ENCODER_ERROR FDKaacEnc_updateFillBits(CHANNEL_MAPPING*          cm,
       /* processing fill-bits */
       INT deltaBitRes = qcOut[0]->grantedDynBits - qcOut[0]->usedDynBits ;
       qcOut[0]->totFillBits = fixMax((deltaBitRes&7), (deltaBitRes - (fixMax(0,bitResSpace-7)&~7)));
+      qcOut[0]->totalBits = qcOut[0]->staticBits + qcOut[0]->usedDynBits + qcOut[0]->totFillBits + qcOut[0]->elementExtBits + qcOut[0]->globalExtBits;
+      qcOut[0]->totFillBits += ( fixMax(0, qcKernel->minBitsPerFrame - qcOut[0]->totalBits) + 7) & ~7;
       break;
   } /* switch (qcKernel->bitrateMode) */
 
