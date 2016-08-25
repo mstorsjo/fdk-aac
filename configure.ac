@@ -1,7 +1,7 @@
 dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([fdk-aac], [0.1.4], [http://sourceforge.net/projects/opencore-amr/])
+AC_INIT([fdk-aac], [0.1.5], [http://sourceforge.net/projects/opencore-amr/])
 AC_CONFIG_AUX_DIR(.)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([tar-ustar foreign])
