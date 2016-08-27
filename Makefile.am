@@ -650,6 +650,7 @@ EXTRA_DIST = \
     $(top_srcdir)/rust/* \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/tests/* \
+    $(top_srcdir)/win32/*.h \
     $(top_srcdir)/xhe-aac/.clang-format \
     $(top_srcdir)/xhe-aac/Android.bp \
     $(top_srcdir)/xhe-aac/NOTICE \
