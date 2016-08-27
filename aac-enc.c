@@ -18,7 +18,13 @@
 
 #include <stdio.h>
 #include <stdint.h>
+
+#if defined(_MSC_VER)
+#include <getopt.h>
+#else
 #include <unistd.h>
+#endif
+
 #include <stdlib.h>
 #include "libAACenc/include/aacenc_lib.h"
 #include "wavreader.h"

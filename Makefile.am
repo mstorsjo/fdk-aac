@@ -292,5 +292,6 @@ EXTRA_DIST = \
     $(top_srcdir)/libFDK/src/mips/*.cpp \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/PREUPLOAD.cfg \
-    $(top_srcdir)/tests/*
+    $(top_srcdir)/tests/* \
+    $(top_srcdir)/win32/*.h
 
