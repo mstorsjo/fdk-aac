@@ -1,51 +1,37 @@
-ACLOCAL_AMFLAGS = -I m4
-AUTOMAKE_OPTIONS = subdir-objects
+#
+# Options:
+# prefix=\path\to\install
+#
+# Compiling:  nmake -f Makefile.vc
+# Installing: nmake -f Makefile.vc prefix=\path\to\x install
+#
+
+VERSION=0.1.5
+
+# Linker and librarian commands
+LD = link
+AR = lib
+
+!IFDEF HOME
+# In case we are using a cross compiler shell.
+MKDIR_FLAGS = -p
+!ENDIF
 
 AM_CPPFLAGS = \
-    -I$(top_srcdir)/libAACdec/include \
-    -I$(top_srcdir)/libAACenc/include \
-    -I$(top_srcdir)/libArithCoding/include \
-    -I$(top_srcdir)/libDRCdec/include \
-    -I$(top_srcdir)/libSACdec/include \
-    -I$(top_srcdir)/libSACenc/include \
-    -I$(top_srcdir)/libSBRdec/include \
-    -I$(top_srcdir)/libSBRenc/include \
-    -I$(top_srcdir)/libMpegTPDec/include \
-    -I$(top_srcdir)/libMpegTPEnc/include \
-    -I$(top_srcdir)/libSYS/include \
-    -I$(top_srcdir)/libFDK/include \
-    -I$(top_srcdir)/libPCMutils/include
-
-AM_CXXFLAGS = -fno-exceptions -fno-rtti
-libfdk_aac_la_LINK = $(LINK) $(libfdk_aac_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libfdk_aac_la_SOURCES = dummy.c
-
-fdk_aacincludedir = $(includedir)/fdk-aac
-fdk_aacinclude_HEADERS = \
-    $(top_srcdir)/libSYS/include/machine_type.h \
-    $(top_srcdir)/libSYS/include/genericStds.h \
-    $(top_srcdir)/libSYS/include/FDK_audio.h \
-    $(top_srcdir)/libSYS/include/syslib_channelMapDescr.h \
-    $(top_srcdir)/libAACenc/include/aacenc_lib.h \
-    $(top_srcdir)/libAACdec/include/aacdecoder_lib.h
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = fdk-aac.pc
-
-lib_LTLIBRARIES = libfdk-aac.la
-
-libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
-    -export-symbols $(top_srcdir)/fdk-aac.sym
-
-if EXAMPLE
-bin_PROGRAMS = aac-enc$(EXEEXT)
-
-aac_enc_LDADD = libfdk-aac.la
-aac_enc_SOURCES = aac-enc.c wavreader.c
-
-noinst_HEADERS = wavreader.h
-endif
+    -Iwin32 \
+    -IlibAACdec/include \
+    -IlibAACenc/include \
+    -IlibArithCoding/include \
+    -IlibDRCdec/include \
+    -IlibSACdec/include \
+    -IlibSACenc/include \
+    -IlibSBRdec/include \
+    -IlibSBRenc/include \
+    -IlibMpegTPDec/include \
+    -IlibMpegTPEnc/include \
+    -IlibSYS/include \
+    -IlibFDK/include \
+    -IlibPCMutils/include
 
 AACDEC_SRC = \
     libAACdec/src/FDK_delay.cpp \
@@ -244,7 +230,7 @@ SYS_SRC = \
     libSYS/src/genericStds.cpp \
     libSYS/src/syslib_channelMapDescr.cpp
 
-libfdk_aac_la_SOURCES = \
+libfdk_aac_SOURCES = \
     $(AACDEC_SRC) $(AACENC_SRC) \
     $(ARITHCODING_SRC) \
     $(DRCDEC_SRC) \
@@ -253,44 +239,85 @@ libfdk_aac_la_SOURCES = \
     $(SBRDEC_SRC) $(SBRENC_SRC) \
     $(PCMUTILS_SRC) $(FDK_SRC) $(SYS_SRC)
 
-EXTRA_DIST = \
-    $(top_srcdir)/.clang-format \
-    $(top_srcdir)/autogen.sh \
-    $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
-    $(top_srcdir)/NOTICE \
-    $(top_srcdir)/OWNERS \
-    $(top_srcdir)/Android.bp \
-    $(top_srcdir)/fdk-aac.sym \
-    $(top_srcdir)/Makefile.vc \
-    $(top_srcdir)/documentation/*.pdf \
-    $(top_srcdir)/libAACdec/src/*.h \
-    $(top_srcdir)/libAACdec/src/arm/*.cpp \
-    $(top_srcdir)/libAACenc/src/*.h \
-    $(top_srcdir)/libArithCoding/include/*.h \
-    $(top_srcdir)/libDRCdec/include/*.h \
-    $(top_srcdir)/libDRCdec/src/*.h \
-    $(top_srcdir)/libSACdec/include/*.h \
-    $(top_srcdir)/libSACdec/src/*.h \
-    $(top_srcdir)/libSACenc/include/*.h \
-    $(top_srcdir)/libSACenc/src/*.h \
-    $(top_srcdir)/libSBRenc/src/*.h \
-    $(top_srcdir)/libSBRenc/include/*.h \
-    $(top_srcdir)/libSBRdec/src/*.h \
-    $(top_srcdir)/libSBRdec/src/arm/*.cpp \
-    $(top_srcdir)/libSBRdec/include/*.h \
-    $(top_srcdir)/libSYS/include/*.h \
-    $(top_srcdir)/libPCMutils/include/*.h \
-    $(top_srcdir)/libPCMutils/src/*.h \
-    $(top_srcdir)/libMpegTPEnc/include/*.h \
-    $(top_srcdir)/libMpegTPEnc/src/*.h \
-    $(top_srcdir)/libMpegTPDec/include/*.h \
-    $(top_srcdir)/libMpegTPDec/src/*.h \
-    $(top_srcdir)/libFDK/include/*.h \
-    $(top_srcdir)/libFDK/include/arm/*.h \
-    $(top_srcdir)/libFDK/include/mips/*.h \
-    $(top_srcdir)/libFDK/include/ppc/*.h \
-    $(top_srcdir)/libFDK/include/x86/*.h \
-    $(top_srcdir)/libFDK/src/arm/*.cpp \
-    $(top_srcdir)/libFDK/src/mips/*.cpp \
-    $(top_srcdir)/win32/*.h
 
+aac_enc_SOURCES = aac-enc.c wavreader.c
+
+prefix = \usr\local
+prefix_win = $(prefix:/=\)	# In case we are using MSYS or MinGW.
+
+CFLAGS   = /nologo /W3 /Ox /MT /EHsc /Dinline=__inline $(TARGET_FLAGS) $(AM_CPPFLAGS) $(XCFLAGS)
+CXXFLAGS = $(CFLAGS)
+CPPFLAGS = $(CFLAGS)
+LDFLAGS  = -nologo $(XLDFLAGS)
+ARFLAGS  = -nologo
+
+incdir = $(prefix_win)\include\fdk-aac
+bindir = $(prefix_win)\bin
+libdir = $(prefix_win)\lib
+
+INST_DIRS = $(bindir) $(incdir) $(libdir)
+
+LIB_DEF    = fdk-aac.def
+STATIC_LIB = fdk-aac.lib
+SHARED_LIB = fdk-aac-1.dll
+IMP_LIB    = fdk-aac.dll.lib
+
+AAC_ENC_OBJS = $(aac_enc_SOURCES:.c=.obj)
+FDK_OBJS     = $(libfdk_aac_SOURCES:.cpp=.obj)
+
+PROGS = aac-enc.exe
+
+
+
+all: $(LIB_DEF) $(STATIC_LIB) $(SHARED_LIB) $(IMP_LIB) $(PROGS)
+
+clean:
+	del /f $(LIB_DEF) $(STATIC_LIB) $(SHARED_LIB) $(IMP_LIB) $(PROGS) libfdk-aac.pc 2>NUL
+	del /f *.obj *.exp 2>NUL
+	del /f libAACdec\src\*.obj 2>NUL
+	del /f libAACenc\src\*.obj 2>NUL
+	del /f libArithCoding\src\*.obj 2>NUL
+	del /f libDRCdec\src\*.obj 2>NUL
+	del /f libFDK\src\*.obj 2>NUL
+	del /f libMpegTPDec\src\*.obj 2>NUL
+	del /f libMpegTPEnc\src\*.obj 2>NUL
+	del /f libPCMutils\src\*.obj 2>NUL
+	del /f libSACdec\src\*.obj 2>NUL
+	del /f libSACenc\src\*.obj 2>NUL
+	del /f libSBRdec\src\*.obj 2>NUL
+	del /f libSBRenc\src\*.obj 2>NUL
+	del /f libSYS\src\*.obj 2>NUL
+
+install: $(INST_DIRS)
+	copy libAACdec\include\aacdecoder_lib.h $(incdir)
+	copy libAACenc\include\aacenc_lib.h $(incdir)
+	copy libSYS\include\FDK_audio.h $(incdir)
+	copy libSYS\include\genericStds.h $(incdir)
+	copy libSYS\include\machine_type.h $(incdir)
+	copy libSYS\include\syslib_channelMapDescr.h $(incdir)
+	copy $(STATIC_LIB) $(libdir)
+	copy $(IMP_LIB) $(libdir)
+	copy $(SHARED_LIB) $(bindir)
+	copy $(PROGS) $(bindir)
+	copy $(LIB_DEF) $(libdir)
+
+$(INST_DIRS):
+	@mkdir $(MKDIR_FLAGS) $@
+
+$(STATIC_LIB): $(FDK_OBJS)
+	$(AR) $(ARFLAGS) -out:$@ $(FDK_OBJS)
+
+$(IMP_LIB): $(SHARED_LIB)
+
+$(SHARED_LIB): $(FDK_OBJS)
+	$(LD) $(LDFLAGS) -OUT:$@ -DEF:$(LIB_DEF) -implib:$(IMP_LIB) -DLL $(FDK_OBJS)
+
+$(PROGS): $(AAC_ENC_OBJS)
+	$(LD) $(LDFLAGS) -out:$@ $(AAC_ENC_OBJS) $(STATIC_LIB)
+
+.cpp.obj:
+	$(CXX) $(CXXFLAGS) -c -Fo$@ $<
+
+$(LIB_DEF):
+	@echo EXPORTS > $(LIB_DEF)
+	@type fdk-aac.sym >> $(LIB_DEF)
