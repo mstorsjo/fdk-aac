@@ -193,6 +193,16 @@ inline void cplxMultDiv2( FIXP_DBL *c_Re,
        : "r"(a_Re), "r"(a_Im), "r"(b_Re), "r"(b_Im)
        : "r0"
        );
+#elif defined(__TARGET_ARCH_8)
+    asm(
+       "smulh %0, %2, %4;\n"     /* tmp1  = a_Re * b_Re */
+       "msub %0, %3, %5, %0;\n" /* tmp1 -= a_Im * b_Im */
+       "smulh %1, %2, %5;\n"     /* tmp2  = a_Re * b_Im */
+       "madd %1, %3, %4, %1;\n" /* tmp2 += a_Im * b_Re */
+       : "=&r"(tmp1), "=&r"(tmp2)
+       : "r"(a_Re), "r"(a_Im), "r"(b_Re), "r"(b_Im)
+       : "r0"
+       );
 #else
     LONG discard;
     asm(

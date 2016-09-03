@@ -107,6 +107,12 @@ amm-info@iis.fraunhofer.de
 #define __arm__
 #endif
 
+#if defined(__AARCH64EL__) && !defined(__arm__)
+#define __TARGET_ARCH_8
+#define __TARGET_ARCH_7E_M
+#define __arm__
+#endif
+
 #if defined(_ARCH_PPC) && !defined(__powerpc__)
 #define __powerpc__ 1
 #endif
@@ -206,6 +212,14 @@ amm-info@iis.fraunhofer.de
 #define LDCOEFF_16BIT
 
 #elif defined(__powerpc__)
+#define ARCH_PREFER_MULT_32x32
+#define ARCH_PREFER_MULT_32x16
+#define SINETABLE_16BIT
+#define POW2COEFF_16BIT
+#define LDCOEFF_16BIT
+#define WINDOWTABLE_16BIT
+
+#elif defined(__aarch64__) || defined(__AARCH64EL__)
 #define ARCH_PREFER_MULT_32x32
 #define ARCH_PREFER_MULT_32x16
 #define SINETABLE_16BIT
