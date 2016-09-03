@@ -198,6 +198,14 @@ amm-info@iis.fraunhofer.de
 #undef POW2COEFF_16BIT
 #undef LDCOEFF_16BIT
 
+#elif defined(__aarch64__) || defined(__AARCH64EL__)
+#define ARCH_PREFER_MULT_32x32
+#define ARCH_PREFER_MULT_32x16
+#define SINETABLE_16BIT
+#define POW2COEFF_16BIT
+#define LDCOEFF_16BIT
+#define WINDOWTABLE_16BIT
+
 #elif defined(__x86__)	/* cppp replaced: elif */
 #define ARCH_PREFER_MULT_32x16
 #define SINETABLE_16BIT
