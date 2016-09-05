@@ -106,7 +106,7 @@ amm-info@iis.fraunhofer.de
 #define FUNCTION_fixmulBitExact_DS
 #define fixmulBitExact_DS(a,b) fixmul_DS(a,b)
 
-#if (defined(__ARM_ARCH_6__) || defined(__TARGET_ARCH_7E_M)) && !defined(__TARGET_ARCH_8)
+#if defined(__ARM_ARCH_6__) || defined(__TARGET_ARCH_7E_M)
 inline INT fixmuldiv2_DD (const INT a, const INT b)
 {
   INT result ;
