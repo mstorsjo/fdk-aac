@@ -113,14 +113,6 @@ amm-info@iis.fraunhofer.de
               : "r" (a), "r" (b), "r"(x) );
         return result ;
       }
-    #elif defined(__TARGET_ARCH_8)
-      inline FIXP_DBL fixmadddiv2_DD (FIXP_DBL x, const FIXP_DBL a, const FIXP_DBL b) {
-        INT result;
-        asm  ("madd %0, %1, %2, %3;\n"
-              : "=r" (result)
-              : "r" (a), "r" (b), "r"(x) );
-        return result ;
-      }
     #else /* __ARM_ARCH_6__ */
       inline FIXP_DBL fixmadddiv2_DD (FIXP_DBL x, const FIXP_DBL a, const FIXP_DBL b) {
         INT discard, result = x;

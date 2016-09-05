@@ -114,14 +114,6 @@ inline INT fixmuldiv2_DD (const INT a, const INT b)
                               : "r" (a), "r" (b)) ;
   return result ;
 }
-#elif defined(__TARGET_ARCH_8)
-inline INT fixmuldiv2_DD (const INT a, const INT b)
-{
-  INT result ;
-  __asm__ ("smulh %0, %1, %2" : "=r" (result)
-                              : "r" (a), "r" (b)) ;
-  return result ;
-}
 #else
 inline INT fixmuldiv2_DD (const INT a, const INT b)
 {
