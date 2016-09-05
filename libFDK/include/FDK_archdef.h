@@ -107,12 +107,6 @@ amm-info@iis.fraunhofer.de
 #define __arm__
 #endif
 
-#if defined(__AARCH64EL__) && !defined(__arm__)
-#define __TARGET_ARCH_8
-#define __TARGET_ARCH_7E_M
-#define __arm__
-#endif
-
 #if defined(_ARCH_PPC) && !defined(__powerpc__)
 #define __powerpc__ 1
 #endif

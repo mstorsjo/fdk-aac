@@ -81,41 +81,51 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: bitreversal of input data
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(FUNCTION_scramble)
+#if defined(__GNUC__)	/* cppp replaced: elif */
 
+#define FUNCTION_scramble
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+inline void scramble(FIXP_DBL x [], INT n) {
+  FDK_ASSERT(!(((INT)x)&(ALIGNMENT_DEFAULT-1)));
+  asm("mov     r2, #1;\n"               /* r2(m) = 1;           */
+      "sub     r3, %1, #1;\n"           /* r3 = n-1;            */
+      "mov     r4, #0;\n"               /* r4(j) = 0;           */
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+"scramble_m_loop%=:\n"                  /* {                    */
+      "mov     r5, %1;\n"               /*  r5(k) = 1;          */
 
-#endif /* all cores */
+"scramble_k_loop%=:\n"                  /*  {                   */
+      "mov     r5, r5, lsr #1;\n"       /*   k >>= 1;           */
+      "eor     r4, r4, r5;\n"           /*   j ^=k;             */
+      "ands    r10, r4, r5;\n"           /*   r10 = r4 & r5;      */
+      "beq     scramble_k_loop%=;\n"      /*  } while (r10 == 0);  */
 
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
+      "cmp     r4, r2;\n"               /*   if (r4 < r2) break;        */
+      "bcc     scramble_m_loop_end%=;\n"
 
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
-#endif
+      "mov     r5, r2, lsl #3;\n"       /* m(r5) = r2*4*2               */
+      "ldrd    r10, [%0, r5];\n"         /* r10 = x[r5], x7 = x[r5+1]     */
+      "mov     r6, r4, lsl #3;\n"      /* j(r6) = r4*4*2              */
+      "ldrd    r8, [%0, r6];\n"        /* r8 = x[r6], r9 = x[r6+1];  */
+      "strd    r10, [%0, r6];\n"        /* x[r6,r6+1] = r10,r11;        */
+      "strd    r8, [%0, r5];\n"         /* x[r5,r5+1] = r8,r9;          */
 
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
+"scramble_m_loop_end%=:\n"
+      "add     r2, r2, #1;\n"           /* r2++;                        */
+      "cmp     r2, r3;\n"
+      "bcc     scramble_m_loop%=;\n"      /* } while (r2(m) < r3(n-1));   */
+       :
+       : "r"(x), "r"(n)
+       : "r2","r3", "r4","r5", "r10","r11", "r8","r9", "r6" );
 
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
-
-#endif /* __ABS_H__ */
+}
+    #endif	/* __GNUC__ */
+#endif	/* defined(FUNCTION_scramble) */

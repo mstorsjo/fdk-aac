@@ -81,41 +81,43 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(__aarch64__) && defined(__GNUC__) || defined(__AARCH64EL__) && defined(__GNUC__)	/* cppp replaced: elif */
+
+#define FUNCTION_cplxMultDiv2_32x32X2
+//#define FUNCTION_cplxMult_32x32X2
+
+#ifdef FUNCTION_cplxMultDiv2_32x32X2
+inline void cplxMultDiv2( FIXP_DBL *c_Re,
+                          FIXP_DBL *c_Im,
+                          const FIXP_DBL a_Re,
+                          const FIXP_DBL a_Im,
+                          const FIXP_DBL b_Re,
+                          const FIXP_DBL b_Im)
+{
+    LONG tmp1, tmp2;
 
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+    asm(
+       "smulh %0, %2, %4;\n"     /* tmp1  = a_Re * b_Re */
+       "msub %0, %3, %5, %0;\n" /* tmp1 -= a_Im * b_Im */
+       "smulh %1, %2, %5;\n"     /* tmp2  = a_Re * b_Im */
+       "madd %1, %3, %4, %1;\n" /* tmp2 += a_Im * b_Re */
+       : "=&r"(tmp1), "=&r"(tmp2)
+       : "r"(a_Re), "r"(a_Im), "r"(b_Re), "r"(b_Im)
+       : "r0"
+       );
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+    *c_Re = tmp1;
+    *c_Im = tmp2;
+}
+#endif /* FUNCTION_cplxMultDiv2_32x32X2 */
 
-#endif /* all cores */
-
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
-
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
 #endif
 
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
-
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
-
-#endif /* __ABS_H__ */

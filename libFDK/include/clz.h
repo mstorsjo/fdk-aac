@@ -106,6 +106,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__powerpc__)
 #include "ppc/clz_ppc.h"
 
+#elif defined(__aarch64__) || defined(__AARCH64EL__)
+#include "aarch64/clz_aarch64.h"
+
 #endif /* all cores */
 
 

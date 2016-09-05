@@ -81,41 +81,68 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/********************************  Fraunhofer IIS  ***************************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: ARM scaling operations
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(__GNUC__) /* GCC Compiler */	/* cppp replaced: elif */
+
+inline static INT shiftRightSat(INT src, int scale)
+{
+  INT result;
+  asm(
+      "ssat %0,%2,%0;\n"
+
+      : "=&r"(result)
+      : "r"(src>>scale), "M"(SAMPLE_BITS)
+      );
+
+  return result;
+}
+
+  #define SATURATE_INT_PCM_RIGHT_SHIFT(src, scale) shiftRightSat(src, scale)
+
+inline static INT shiftLeftSat(INT src, int scale)
+{
+  INT result;
+  asm(
+      "ssat %0,%2,%0;\n"
+
+      : "=&r"(result)
+      : "r"(src<<scale), "M"(SAMPLE_BITS)
+      );
+
+  return result;
+}
+
+  #define SATURATE_INT_PCM_LEFT_SHIFT(src, scale)  shiftLeftSat(src, scale)
+
+#endif /* compiler selection */
+
+#define FUNCTION_scaleValueInPlace
+inline
+void scaleValueInPlace(FIXP_DBL *value, /*!< Value */
+                       INT scalefactor   /*!< Scalefactor */
+                       )
+{
+  INT newscale;
+  if ((newscale = scalefactor) >= 0)
+    *value <<= newscale;
+  else
+    *value >>= -newscale;
+}
 
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+  #define SATURATE_RIGHT_SHIFT(src, scale, dBits)                                                        \
+      ( (((LONG)(src) ^ ((LONG)(src) >> (DFRACT_BITS-1)))>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))     \
+          ? ((LONG)(src) >> (DFRACT_BITS-1)) ^ (LONG)(((1U)<<((dBits)-1))-1)                             \
+          : ((LONG)(src) >> (scale))
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+  #define SATURATE_LEFT_SHIFT(src, scale, dBits)                                                         \
+      ( ((LONG)(src) ^ ((LONG)(src) >> (DFRACT_BITS-1))) > ((LONG)(((1U)<<((dBits)-1))-1) >> (scale)) )  \
+          ? ((LONG)(src) >> (DFRACT_BITS-1)) ^ (LONG)(((1U)<<((dBits)-1))-1)                             \
+          : ((LONG)(src) << (scale))
 
-#endif /* all cores */
-
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
-
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
-#endif
-
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
-
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
-
-#endif /* __ABS_H__ */

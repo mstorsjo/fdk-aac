@@ -81,41 +81,48 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(__aarch64__) || defined(__AARCH64EL__)
 
+  /* ############################################################################# */
+  #if defined(__GNUC__) && !defined(__SYMBIAN32__)	/* cppp replaced: elif */
+  /* ############################################################################# */
+    /* AARCH64 GNU GCC */
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+    #define FUNCTION_fixmadddiv2_DD
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+      inline FIXP_DBL fixmadddiv2_DD (FIXP_DBL x, const FIXP_DBL a, const FIXP_DBL b) {
+        INT result;
+        asm  ("madd %0, %1, %2, %3;\n"
+              : "=r" (result)
+              : "r" (a), "r" (b), "r"(x) );
+        return result ;
+      }
 
-#endif /* all cores */
+    #define FUNCTION_fixmadddiv2BitExact_DD
+    #define fixmadddiv2BitExact_DD(a, b, c) fixmadddiv2_DD(a, b, c)
 
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
+    #define FUNCTION_fixmsubdiv2BitExact_DD
+    inline FIXP_DBL fixmsubdiv2BitExact_DD (FIXP_DBL x, const FIXP_DBL a, const FIXP_DBL b) {
+      return x - fixmuldiv2BitExact_DD(a, b);
+    }
 
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
-#endif
+    #define FUNCTION_fixmadddiv2BitExact_DS
+    #define fixmadddiv2BitExact_DS(a, b, c) fixmadddiv2_DS(a, b, c)
 
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
+    #define FUNCTION_fixmsubdiv2BitExact_DS
+    inline FIXP_DBL fixmsubdiv2BitExact_DS (FIXP_DBL x, const FIXP_DBL a, const FIXP_SGL b) {
+      return x - fixmuldiv2BitExact_DS(a, b);
+    }
+  /* ############################################################################# */
+  #endif /* toolchain */
+  /* ############################################################################# */
 
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
+#endif /* __aarch64__ */
 
-#endif /* __ABS_H__ */

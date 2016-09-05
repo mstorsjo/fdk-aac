@@ -104,6 +104,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__mips__)	/* cppp replaced: elif */
 #include "mips/scale.h"
 
+#elif defined(__aarch64__) || defined(__AARCH64EL__)	/* cppp replaced: elif */
+#include "aarch64/scale.h"
+
 #endif
 
 

@@ -81,41 +81,42 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(__aarch64__) || defined(__AARCH64EL__)
 
+#if defined(__GNUC__)
+  /* ARM gcc*/
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+  #define FUNCTION_fixnormz_D
+  #define FUNCTION_fixnorm_D
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+  inline INT fixnormz_D(LONG value)
+  {
+    INT result;
+    asm("clz %0, %1 ": "=r"(result) : "r"(value) );
+    return result;
+  }
 
-#endif /* all cores */
+  inline INT fixnorm_D(LONG value)
+  {
+    INT result;
+    if (value == 0) {
+      return 0;
+    }
+    if (value < 0) {
+      value = ~value;
+    }
+    result =  fixnormz_D(value);
+    return result - 1;
+  }
 
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
+#endif /* arm toolchain */
 
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
-#endif
+#endif /* __arm__ */
 
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
-
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
-
-#endif /* __ABS_H__ */

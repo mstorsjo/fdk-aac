@@ -81,41 +81,40 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  ***********************
+/***************************  Fraunhofer IIS FDK Tools  **********************
 
-   Author(s):   M. Lohwasser
-   Description: fixed point abs definitions
+   Author(s):
+   Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#if !defined(__ABS_H__)
-#define __ABS_H__
+#if defined(__aarch64__) || defined(__AARCH64EL__)
 
+#if defined(__GNUC__)	/* cppp replaced: elif */
+/* ARM with GNU compiler */
 
-#if defined(__mips__)	/* cppp replaced: elif */
-#include "mips/abs_mips.h"
+#define FUNCTION_fixmuldiv2_DD
 
-#elif defined(__x86__)	/* cppp replaced: elif */
-#include "x86/abs_x86.h"
+#define FUNCTION_fixmuldiv2BitExact_DD
+#define fixmuldiv2BitExact_DD(a,b) fixmuldiv2_DD(a,b)
+#define FUNCTION_fixmulBitExact_DD
+#define fixmulBitExact_DD(a,b) fixmul_DD(a,b)
 
-#endif /* all cores */
+#define FUNCTION_fixmuldiv2BitExact_DS
+#define fixmuldiv2BitExact_DS(a,b) fixmuldiv2_DS(a,b)
 
-/*************************************************************************
- *************************************************************************
-    Software fallbacks for missing functions
-**************************************************************************
-**************************************************************************/
+#define FUNCTION_fixmulBitExact_DS
+#define fixmulBitExact_DS(a,b) fixmul_DS(a,b)
 
-#if !defined(FUNCTION_fixabs_D)
-inline FIXP_DBL fixabs_D(FIXP_DBL x) { return ((x) > (FIXP_DBL)(0)) ? (x) : -(x) ; }
-#endif
+inline INT fixmuldiv2_DD (const INT a, const INT b)
+{
+  INT result ;
+  __asm__ ("smulh %0, %1, %2" : "=r" (result)
+                              : "r" (a), "r" (b)) ;
+  return result ;
+}
 
-#if !defined(FUNCTION_fixabs_I)
-inline INT fixabs_I(INT x)           { return ((x) > (INT)(0))      ? (x) : -(x) ; }
-#endif
+#endif /* defined(__GNUC__) */
 
-#if !defined(FUNCTION_fixabs_S)
-inline FIXP_SGL fixabs_S(FIXP_SGL x) { return ((x) > (FIXP_SGL)(0)) ? (x) : -(x) ; }
-#endif
+#endif /* __aarch64__ */
 
-#endif /* __ABS_H__ */

@@ -99,6 +99,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__GNUC__) && defined(__mips__) && __mips_isa_rev < 6
 #include "mips/cplx_mul.h"
 
+#elif defined(__aarch64__) || defined(__AARCH64EL__)
+#include "aarch64/cplx_mul.h"
+
 #endif /* #if defined all cores: bfin, arm, etc. */
 
 /* ############################################################################# */

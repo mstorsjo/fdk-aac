@@ -99,6 +99,9 @@ amm-info@iis.fraunhofer.de
 #elif defined(__mips__) && defined(__mips_dsp)	/* cppp replaced: elif */
 #include "mips/scramble.h"
 
+#elif defined(__aarch64__) || defined(__AARCH64EL__)	/* cppp replaced: elif */
+#include "aarch64/scramble.h"
+
 #endif
 
 /*****************************************************************************
