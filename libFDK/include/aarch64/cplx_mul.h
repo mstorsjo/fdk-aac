@@ -88,7 +88,7 @@ amm-info@iis.fraunhofer.de
 
 ******************************************************************************/
 
-#if defined(__aarch64__) && defined(__GNUC__) || defined(__AARCH64EL__) && defined(__GNUC__)	/* cppp replaced: elif */
+#if defined(__aarch64__) || defined(__AARCH64EL__) && defined(__GNUC__)	/* cppp replaced: elif */
 
 #define FUNCTION_cplxMultDiv2_32x32X2
 //#define FUNCTION_cplxMult_32x32X2

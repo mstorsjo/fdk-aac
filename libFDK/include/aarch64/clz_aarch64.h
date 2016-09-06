@@ -91,7 +91,7 @@ amm-info@iis.fraunhofer.de
 #if defined(__aarch64__) || defined(__AARCH64EL__)
 
 #if defined(__GNUC__)
-  /* ARM gcc*/
+  /* aarch64 gcc*/
 
   #define FUNCTION_fixnormz_D
   #define FUNCTION_fixnorm_D
@@ -116,7 +116,7 @@ amm-info@iis.fraunhofer.de
     return result - 1;
   }
 
-#endif /* arm toolchain */
+#endif /* aarch64 toolchain */
 
-#endif /* __arm__ */
+#endif /* __aarch64__ */
 

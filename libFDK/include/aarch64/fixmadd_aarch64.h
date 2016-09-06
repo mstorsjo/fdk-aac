@@ -91,7 +91,7 @@ amm-info@iis.fraunhofer.de
 #if defined(__aarch64__) || defined(__AARCH64EL__)
 
   /* ############################################################################# */
-  #if defined(__GNUC__) && !defined(__SYMBIAN32__)	/* cppp replaced: elif */
+  #if defined(__GNUC__)      /* cppp replaced: elif */
   /* ############################################################################# */
     /* AARCH64 GNU GCC */
 
