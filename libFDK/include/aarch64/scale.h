@@ -81,173 +81,68 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
-/***************************  Fraunhofer IIS FDK Tools  **********************
+/********************************  Fraunhofer IIS  ***************************
 
    Author(s):
-   Description: Scaling operations
+   Description: ARM scaling operations
 
 ******************************************************************************/
 
-#ifndef SCALE_H
-#define SCALE_H
+#if defined(__GNUC__) /* GCC Compiler */	/* cppp replaced: elif */
 
-#include "common_fix.h"
-#include "genericStds.h"
-#include "fixminmax.h"
-
-  #define SCALE_INLINE inline
-
-
-#if defined(__arm__)	/* cppp replaced: elif */
-#include "arm/scale.h"
-
-#elif defined(__mips__)	/* cppp replaced: elif */
-#include "mips/scale.h"
-
-#elif defined(__aarch64__) || defined(__AARCH64EL__)	/* cppp replaced: elif */
-#include "aarch64/scale.h"
-
-#endif
-
-
-#include "../src/scale.cpp"
-
-#ifndef FUNCTION_scaleValue
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$
- *
- *  \return Scaled input
- *
- */
-#define FUNCTION_scaleValue
-inline
-FIXP_DBL scaleValue(const FIXP_DBL value, /*!< Value */
-                    INT scalefactor   /*!< Scalefactor */
-                   )
+inline static INT shiftRightSat(INT src, int scale)
 {
-  if(scalefactor > 0)
-    return (value<<scalefactor);
-  else
-    return (value>>(-scalefactor));
-}
-#endif
+  INT result;
+  asm(
+      "ssat %0,%2,%0;\n"
 
-#ifndef FUNCTION_scaleValueSaturate
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$
- *  \param value The value to be scaled.
- *  \param the shift amount
- *  \return \f$ value * 2^scalefactor \f$
- *
- */
-#define FUNCTION_scaleValueSaturate
-inline
-FIXP_DBL scaleValueSaturate(
-        const FIXP_DBL value,
-        INT scalefactor
-        )
+      : "=&r"(result)
+      : "r"(src>>scale), "M"(SAMPLE_BITS)
+      );
+
+  return result;
+}
+
+  #define SATURATE_INT_PCM_RIGHT_SHIFT(src, scale) shiftRightSat(src, scale)
+
+inline static INT shiftLeftSat(INT src, int scale)
 {
-  if(scalefactor > 0) {
-    if (fNorm(value) < scalefactor && value != (FIXP_DBL)0) {
-      if (value > (FIXP_DBL)0) {
-        return (FIXP_DBL)MAXVAL_DBL;
-      } else {
-        return (FIXP_DBL)MINVAL_DBL;
-      }
-    } else {
-      return (value<<scalefactor);
-    }
-  } else {
-    if (-(DFRACT_BITS-1) > scalefactor) {
-      return (FIXP_DBL)0;
-    } else {
-    return (value>>(-scalefactor));
-    }
-  }
-}
-#endif
+  INT result;
+  asm(
+      "ssat %0,%2,%0;\n"
 
-#ifndef FUNCTION_scaleValueInPlace
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$ in place
- *
- *  \return void
- *
- */
+      : "=&r"(result)
+      : "r"(src<<scale), "M"(SAMPLE_BITS)
+      );
+
+  return result;
+}
+
+  #define SATURATE_INT_PCM_LEFT_SHIFT(src, scale)  shiftLeftSat(src, scale)
+
+#endif /* compiler selection */
+
 #define FUNCTION_scaleValueInPlace
 inline
-void scaleValueInPlace(
-        FIXP_DBL *value, /*!< Value */
-        INT scalefactor   /*!< Scalefactor */
-        )
+void scaleValueInPlace(FIXP_DBL *value, /*!< Value */
+                       INT scalefactor   /*!< Scalefactor */
+                       )
 {
   INT newscale;
-  /* Note: The assignment inside the if conditional allows combining a load with the compare to zero (on ARM and maybe others) */
-  if ((newscale = (scalefactor)) >= 0) {
-    *(value) <<= newscale;
-  } else {
-    *(value) >>= -newscale;
-  }
+  if ((newscale = scalefactor) >= 0)
+    *value <<= newscale;
+  else
+    *value >>= -newscale;
 }
-#endif
 
-/*!
- *
- *  \brief  Scale input value by 2^{scale} and saturate output to 2^{dBits-1}
- *  \return scaled and saturated value
- *
- *  This macro scales src value right or left and applies saturation to (2^dBits)-1
- *  maxima output.
- */
 
-#ifndef SATURATE_RIGHT_SHIFT
-  #define SATURATE_RIGHT_SHIFT(src, scale, dBits)                                                      \
-            ( (((LONG)(src)>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))      ? (LONG)(((1U)<<((dBits)-1))-1)    \
-              : (((LONG)(src)>>(scale)) < ~((LONG)(((1U)<<((dBits)-1))-1))) ? ~((LONG)(((1U)<<((dBits)-1))-1)) \
-              : ((LONG)(src) >> (scale)) )
-#endif
+  #define SATURATE_RIGHT_SHIFT(src, scale, dBits)                                                        \
+      ( (((LONG)(src) ^ ((LONG)(src) >> (DFRACT_BITS-1)))>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))     \
+          ? ((LONG)(src) >> (DFRACT_BITS-1)) ^ (LONG)(((1U)<<((dBits)-1))-1)                             \
+          : ((LONG)(src) >> (scale))
 
-#ifndef SATURATE_LEFT_SHIFT
-  #define SATURATE_LEFT_SHIFT(src, scale, dBits)                                                       \
-            ( ((LONG)(src) > ((LONG)(((1U)<<((dBits)-1))-1)>>(scale)))    ? (LONG)(((1U)<<((dBits)-1))-1)      \
-              : ((LONG)(src) < ~((LONG)(((1U)<<((dBits)-1))-1)>>(scale))) ? ~((LONG)(((1U)<<((dBits)-1))-1))   \
-              : ((LONG)(src) << (scale)) )
-#endif
+  #define SATURATE_LEFT_SHIFT(src, scale, dBits)                                                         \
+      ( ((LONG)(src) ^ ((LONG)(src) >> (DFRACT_BITS-1))) > ((LONG)(((1U)<<((dBits)-1))-1) >> (scale)) )  \
+          ? ((LONG)(src) >> (DFRACT_BITS-1)) ^ (LONG)(((1U)<<((dBits)-1))-1)                             \
+          : ((LONG)(src) << (scale))
 
-#ifndef SATURATE_SHIFT
-#define SATURATE_SHIFT(src, scale, dBits)               \
-     ( ((scale) < 0)                                      \
-      ? SATURATE_LEFT_SHIFT((src), -(scale), (dBits))   \
-      : SATURATE_RIGHT_SHIFT((src), (scale), (dBits)) )
-#endif
-
-/*
- * Alternative shift and saturate left, saturates to -0.99999 instead of -1.0000
- * to avoid problems when inverting the sign of the result.
- */
-#ifndef SATURATE_LEFT_SHIFT_ALT
-#define SATURATE_LEFT_SHIFT_ALT(src, scale, dBits)                                                     \
-            ( ((LONG)(src) > ((LONG)(((1U)<<((dBits)-1))-1)>>(scale)))    ? (LONG)(((1U)<<((dBits)-1))-1)      \
-              : ((LONG)(src) < ~((LONG)(((1U)<<((dBits)-1))-2)>>(scale))) ? ~((LONG)(((1U)<<((dBits)-1))-2))   \
-              : ((LONG)(src) << (scale)) )
-#endif
-
-#ifndef SATURATE_RIGHT_SHIFT_ALT
-  #define SATURATE_RIGHT_SHIFT_ALT(src, scale, dBits)                                                  \
-            ( (((LONG)(src)>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))      ? (LONG)(((1U)<<((dBits)-1))-1)    \
-              : (((LONG)(src)>>(scale)) < ~((LONG)(((1U)<<((dBits)-1))-2))) ? ~((LONG)(((1U)<<((dBits)-1))-2)) \
-              : ((LONG)(src) >> (scale)) )
-#endif
-
-#ifndef SATURATE_INT_PCM_RIGHT_SHIFT
-#define SATURATE_INT_PCM_RIGHT_SHIFT(src, scale) SATURATE_RIGHT_SHIFT(src, scale, SAMPLE_BITS)
-#endif
-
-#ifndef SATURATE_INT_PCM_LEFT_SHIFT
-#define SATURATE_INT_PCM_LEFT_SHIFT(src, scale) SATURATE_LEFT_SHIFT(src, scale, SAMPLE_BITS)
-#endif
-
-#endif /* #ifndef SCALE_H */

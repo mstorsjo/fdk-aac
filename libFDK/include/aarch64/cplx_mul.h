@@ -84,170 +84,40 @@ amm-info@iis.fraunhofer.de
 /***************************  Fraunhofer IIS FDK Tools  **********************
 
    Author(s):
-   Description: Scaling operations
+   Description: fixed point intrinsics
 
 ******************************************************************************/
 
-#ifndef SCALE_H
-#define SCALE_H
+#if defined(__aarch64__) || defined(__AARCH64EL__) && defined(__GNUC__)	/* cppp replaced: elif */
 
-#include "common_fix.h"
-#include "genericStds.h"
-#include "fixminmax.h"
+#define FUNCTION_cplxMultDiv2_32x32X2
+//#define FUNCTION_cplxMult_32x32X2
 
-  #define SCALE_INLINE inline
-
-
-#if defined(__arm__)	/* cppp replaced: elif */
-#include "arm/scale.h"
-
-#elif defined(__mips__)	/* cppp replaced: elif */
-#include "mips/scale.h"
-
-#elif defined(__aarch64__) || defined(__AARCH64EL__)	/* cppp replaced: elif */
-#include "aarch64/scale.h"
-
-#endif
-
-
-#include "../src/scale.cpp"
-
-#ifndef FUNCTION_scaleValue
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$
- *
- *  \return Scaled input
- *
- */
-#define FUNCTION_scaleValue
-inline
-FIXP_DBL scaleValue(const FIXP_DBL value, /*!< Value */
-                    INT scalefactor   /*!< Scalefactor */
-                   )
+#ifdef FUNCTION_cplxMultDiv2_32x32X2
+inline void cplxMultDiv2( FIXP_DBL *c_Re,
+                          FIXP_DBL *c_Im,
+                          const FIXP_DBL a_Re,
+                          const FIXP_DBL a_Im,
+                          const FIXP_DBL b_Re,
+                          const FIXP_DBL b_Im)
 {
-  if(scalefactor > 0)
-    return (value<<scalefactor);
-  else
-    return (value>>(-scalefactor));
+    LONG tmp1, tmp2;
+
+
+    asm(
+       "smulh %0, %2, %4;\n"     /* tmp1  = a_Re * b_Re */
+       "msub %0, %3, %5, %0;\n" /* tmp1 -= a_Im * b_Im */
+       "smulh %1, %2, %5;\n"     /* tmp2  = a_Re * b_Im */
+       "madd %1, %3, %4, %1;\n" /* tmp2 += a_Im * b_Re */
+       : "=&r"(tmp1), "=&r"(tmp2)
+       : "r"(a_Re), "r"(a_Im), "r"(b_Re), "r"(b_Im)
+       : "r0"
+       );
+
+    *c_Re = tmp1;
+    *c_Im = tmp2;
 }
+#endif /* FUNCTION_cplxMultDiv2_32x32X2 */
+
 #endif
 
-#ifndef FUNCTION_scaleValueSaturate
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$
- *  \param value The value to be scaled.
- *  \param the shift amount
- *  \return \f$ value * 2^scalefactor \f$
- *
- */
-#define FUNCTION_scaleValueSaturate
-inline
-FIXP_DBL scaleValueSaturate(
-        const FIXP_DBL value,
-        INT scalefactor
-        )
-{
-  if(scalefactor > 0) {
-    if (fNorm(value) < scalefactor && value != (FIXP_DBL)0) {
-      if (value > (FIXP_DBL)0) {
-        return (FIXP_DBL)MAXVAL_DBL;
-      } else {
-        return (FIXP_DBL)MINVAL_DBL;
-      }
-    } else {
-      return (value<<scalefactor);
-    }
-  } else {
-    if (-(DFRACT_BITS-1) > scalefactor) {
-      return (FIXP_DBL)0;
-    } else {
-    return (value>>(-scalefactor));
-    }
-  }
-}
-#endif
-
-#ifndef FUNCTION_scaleValueInPlace
-/*!
- *
- *  \brief Multiply input by \f$ 2^{scalefactor} \f$ in place
- *
- *  \return void
- *
- */
-#define FUNCTION_scaleValueInPlace
-inline
-void scaleValueInPlace(
-        FIXP_DBL *value, /*!< Value */
-        INT scalefactor   /*!< Scalefactor */
-        )
-{
-  INT newscale;
-  /* Note: The assignment inside the if conditional allows combining a load with the compare to zero (on ARM and maybe others) */
-  if ((newscale = (scalefactor)) >= 0) {
-    *(value) <<= newscale;
-  } else {
-    *(value) >>= -newscale;
-  }
-}
-#endif
-
-/*!
- *
- *  \brief  Scale input value by 2^{scale} and saturate output to 2^{dBits-1}
- *  \return scaled and saturated value
- *
- *  This macro scales src value right or left and applies saturation to (2^dBits)-1
- *  maxima output.
- */
-
-#ifndef SATURATE_RIGHT_SHIFT
-  #define SATURATE_RIGHT_SHIFT(src, scale, dBits)                                                      \
-            ( (((LONG)(src)>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))      ? (LONG)(((1U)<<((dBits)-1))-1)    \
-              : (((LONG)(src)>>(scale)) < ~((LONG)(((1U)<<((dBits)-1))-1))) ? ~((LONG)(((1U)<<((dBits)-1))-1)) \
-              : ((LONG)(src) >> (scale)) )
-#endif
-
-#ifndef SATURATE_LEFT_SHIFT
-  #define SATURATE_LEFT_SHIFT(src, scale, dBits)                                                       \
-            ( ((LONG)(src) > ((LONG)(((1U)<<((dBits)-1))-1)>>(scale)))    ? (LONG)(((1U)<<((dBits)-1))-1)      \
-              : ((LONG)(src) < ~((LONG)(((1U)<<((dBits)-1))-1)>>(scale))) ? ~((LONG)(((1U)<<((dBits)-1))-1))   \
-              : ((LONG)(src) << (scale)) )
-#endif
-
-#ifndef SATURATE_SHIFT
-#define SATURATE_SHIFT(src, scale, dBits)               \
-     ( ((scale) < 0)                                      \
-      ? SATURATE_LEFT_SHIFT((src), -(scale), (dBits))   \
-      : SATURATE_RIGHT_SHIFT((src), (scale), (dBits)) )
-#endif
-
-/*
- * Alternative shift and saturate left, saturates to -0.99999 instead of -1.0000
- * to avoid problems when inverting the sign of the result.
- */
-#ifndef SATURATE_LEFT_SHIFT_ALT
-#define SATURATE_LEFT_SHIFT_ALT(src, scale, dBits)                                                     \
-            ( ((LONG)(src) > ((LONG)(((1U)<<((dBits)-1))-1)>>(scale)))    ? (LONG)(((1U)<<((dBits)-1))-1)      \
-              : ((LONG)(src) < ~((LONG)(((1U)<<((dBits)-1))-2)>>(scale))) ? ~((LONG)(((1U)<<((dBits)-1))-2))   \
-              : ((LONG)(src) << (scale)) )
-#endif
-
-#ifndef SATURATE_RIGHT_SHIFT_ALT
-  #define SATURATE_RIGHT_SHIFT_ALT(src, scale, dBits)                                                  \
-            ( (((LONG)(src)>>(scale)) > (LONG)(((1U)<<((dBits)-1))-1))      ? (LONG)(((1U)<<((dBits)-1))-1)    \
-              : (((LONG)(src)>>(scale)) < ~((LONG)(((1U)<<((dBits)-1))-2))) ? ~((LONG)(((1U)<<((dBits)-1))-2)) \
-              : ((LONG)(src) >> (scale)) )
-#endif
-
-#ifndef SATURATE_INT_PCM_RIGHT_SHIFT
-#define SATURATE_INT_PCM_RIGHT_SHIFT(src, scale) SATURATE_RIGHT_SHIFT(src, scale, SAMPLE_BITS)
-#endif
-
-#ifndef SATURATE_INT_PCM_LEFT_SHIFT
-#define SATURATE_INT_PCM_LEFT_SHIFT(src, scale) SATURATE_LEFT_SHIFT(src, scale, SAMPLE_BITS)
-#endif
-
-#endif /* #ifndef SCALE_H */
