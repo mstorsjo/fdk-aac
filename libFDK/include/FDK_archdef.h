@@ -99,7 +99,7 @@ amm-info@iis.fraunhofer.de
 /* Take action against VisualStudio 2005 crosscompile problems. */
 
 /* Use single macro (the GCC built in macro) for architecture identification independent of the particular toolchain */
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || (defined(_MSC_VER) && defined(_M_IX86)) || defined (__x86_64__)
+#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || (defined(_MSC_VER) && defined(_M_IX86)) || defined (__x86_64__) || (defined(_MSC_VER) && defined(_M_X64))
 #define __x86__
 #endif
 
