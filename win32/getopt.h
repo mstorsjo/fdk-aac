@@ -614,7 +614,7 @@ int getopt_parse( int mode, getopt_std_args, ... )
     /*
      * we use `this_arg' to store these temporarily.
      */
-    CHAR *this_arg = malloc(sizeof(CHAR) * optspan);
+    CHAR **this_arg = malloc(sizeof(CHAR) * optspan);
     /*
      * we cannot manipulate `argv' directly, since the `getopt'
      * API prototypes it as `read-only'; this cast to `arglist'
@@ -731,9 +731,11 @@ int getopt_parse( int mode, getopt_std_args, ... )
 	 * specified for the `getopt_long' APIs.
 	 */
 	va_list refptr;
-	va_start( refptr, optstring );
+
 	struct option *longopts = va_arg( refptr, struct option * );
 	int *optindex = va_arg( refptr, int * );
+
+	va_start( refptr, optstring );
 	va_end( refptr );
 
 	/* ensuring that `optarg' does not inherit any junk, from parsing

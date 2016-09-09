@@ -121,7 +121,7 @@ MPEGTPDEC_SRC = \
     libMpegTPDec/src/tpdec_adif.cpp \
     libMpegTPDec/src/tpdec_adts.cpp \
     libMpegTPDec/src/tpdec_asc.cpp \
-	libMpegTPDec/src/tpdec_drm.cpp \
+    libMpegTPDec/src/tpdec_drm.cpp \
     libMpegTPDec/src/tpdec_latm.cpp \
     libMpegTPDec/src/tpdec_lib.cpp
 
@@ -193,7 +193,7 @@ aac_enc_SOURCES = aac-enc.c wavreader.c
 prefix = \usr\local
 prefix_win = $(prefix:/=\)	# In case we are using MSYS or MinGW.
 
-CFLAGS   = /nologo /W3 /Ox /MT /EHsc $(TARGET_FLAGS) $(AM_CPPFLAGS) $(XCFLAGS)
+CFLAGS   = /nologo /W3 /Ox /MT /EHsc /Dinline=__inline $(TARGET_FLAGS) $(AM_CPPFLAGS) $(XCFLAGS)
 CXXFLAGS = $(CFLAGS)
 CPPFLAGS = $(CFLAGS)
 LDFLAGS  = -nologo $(XLDFLAGS)
@@ -259,7 +259,7 @@ $(PROGS): $(AAC_ENC_OBJS)
 	$(LD) $(LDFLAGS) -out:$@ $(AAC_ENC_OBJS) $(STATIC_LIB)
 
 .cpp.obj:
-	$(CXX) $(CXXFLAGS) -c -Fo:$@ $<
+	$(CXX) $(CXXFLAGS) -c -Fo$@ $<
 
 $(LIB_DEF):
 	@echo EXPORTS > $(LIB_DEF)
