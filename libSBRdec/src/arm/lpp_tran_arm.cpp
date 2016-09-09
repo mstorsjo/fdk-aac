@@ -97,7 +97,10 @@ amm-info@iis.fraunhofer.de
 #ifdef FUNCTION_LPPTRANSPOSER_func1
 
 /* Note: This code requires only 43 cycles per iteration instead of 61 on ARM926EJ-S */
-__attribute__ ((noinline)) static void lppTransposer_func1(
+#ifdef __GNUC__
+__attribute__ ((noinline))
+#endif
+static void lppTransposer_func1(
   FIXP_DBL *lowBandReal,
   FIXP_DBL *lowBandImag,
   FIXP_DBL **qmfBufferReal,

@@ -154,7 +154,6 @@ amm-info@iis.fraunhofer.de
 #endif
 
 #ifdef _M_ARM
-#include "cmnintrin.h"
 #include "armintr.h"
 #endif
 
