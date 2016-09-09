@@ -1,10 +1,6 @@
 #
 # Options:
-# machine=Win32|Win64
 # prefix=\path\to\install
-#
-# If no machine is specified, the makefile uses the systems
-# PROCESSOR_ARCHITECTURE.
 #
 # Compiling:  nmake -f Makefile.vc
 # Installing: nmake -f Makefile.vc prefix=\path\to\x install
@@ -12,20 +8,12 @@
 
 VERSION=0.1.5
 
-# Compiler, linker, librarian, and other tools
-CC  = cl
-CXX = cl
-LD  = link
-AR  = lib
+# Linker and librarian commands
+LD = link
+AR = lib
 
-!IFDEF MACHINE
-!IF "$(MACHINE)" == "Win64"
-TARGET_FLAGS = /D__x86_64__
-!ENDIF
-!ELSE
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 TARGET_FLAGS = /D__x86_64__
-!ENDIF
 !ENDIF
 
 !IFDEF HOME
