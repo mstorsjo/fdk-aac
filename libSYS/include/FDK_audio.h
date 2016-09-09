@@ -204,6 +204,11 @@ typedef enum
   AOT_SAOC             = 43, /**< SAOC                                      */
   AOT_LD_MPEGS         = 44, /**< Low Delay MPEG Surround                   */
 
+  AOT_DABPLUS_AAC_LC   = 135, /**< Virtual AOT for DAB plus AAC-LC                        */
+  AOT_DABPLUS_SBR      = 136, /**< Virtual AOT for DAB plus HE-AAC                        */
+  AOT_DABPLUS_PS       = 137, /**< Virtual AOT for DAB plus HE-AAC v2                     */
+
+
   /* Pseudo AOTs */
   AOT_DRM_AAC          = 143, /**< Virtual AOT for DRM (ER-AAC-SCAL without SBR)          */
   AOT_DRM_SBR          = 144, /**< Virtual AOT for DRM (ER-AAC-SCAL with SBR)             */

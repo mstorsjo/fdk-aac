@@ -2554,6 +2554,9 @@ const element_list_t * getBitstreamElementList(AUDIO_OBJECT_TYPE aot, SCHAR epCo
     case AOT_AAC_LC:
     case AOT_SBR:
     case AOT_PS:
+    case AOT_DABPLUS_AAC_LC:
+    case AOT_DABPLUS_SBR:
+    case AOT_DABPLUS_PS:
       FDK_ASSERT(epConfig == -1);
       if (nChannels == 1) {
         return &node_aac_sce;

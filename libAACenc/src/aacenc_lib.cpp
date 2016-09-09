@@ -327,7 +327,8 @@ static inline INT isSbrActive(const HANDLE_AACENC_CONFIG hAacConfig)
 {
     INT sbrUsed = 0;
 
-    if ( (hAacConfig->audioObjectType==AOT_SBR) || (hAacConfig->audioObjectType==AOT_PS) )
+    if ( (hAacConfig->audioObjectType==AOT_SBR) || (hAacConfig->audioObjectType==AOT_PS)
+      || (hAacConfig->audioObjectType==AOT_DABPLUS_SBR) || (hAacConfig->audioObjectType==AOT_DABPLUS_PS) )
     {
         sbrUsed = 1;
     }
@@ -343,7 +344,8 @@ static inline INT isPsActive(const AUDIO_OBJECT_TYPE audioObjectType)
 {
     INT psUsed = 0;
 
-    if ( (audioObjectType==AOT_PS) )
+    if ( (audioObjectType==AOT_PS)
+      || (audioObjectType==AOT_DABPLUS_PS) )
     {
         psUsed = 1;
     }
@@ -369,7 +371,6 @@ static SBR_PS_SIGNALING getSbrSignalingMode(
   }
 
   if ((audioObjectType==AOT_AAC_LC)     || (audioObjectType==AOT_SBR)     || (audioObjectType==AOT_PS)    ||
-      (audioObjectType==AOT_MP2_AAC_LC) || (audioObjectType==AOT_MP2_SBR) || (audioObjectType==AOT_MP2_PS) ||
       (audioObjectType==AOT_DABPLUS_SBR) || (audioObjectType==AOT_DABPLUS_PS) ) {
     switch (transportType) {
       case TT_MP4_ADIF:
@@ -429,16 +430,13 @@ static void FDKaacEnc_MapConfig(
   /* Map virtual aot to transport aot. */
   switch (hAacConfig->audioObjectType) {
     case AOT_DABPLUS_AAC_LC:
-    case AOT_MP2_AAC_LC:
       transport_AOT = AOT_AAC_LC;
       break;
     case AOT_DABPLUS_SBR:
-    case AOT_MP2_SBR:
       transport_AOT = AOT_SBR;
       cc->flags |= CC_SBR;
      break;
     case AOT_DABPLUS_PS:
-    case AOT_MP2_PS:
       transport_AOT = AOT_PS;
       cc->flags |= CC_SBR;
       break;
@@ -1848,21 +1846,18 @@ AACENC_ERROR aacEncoder_SetParam(
               case AOT_PS:
               case AOT_DRM_SBR: // Added mfeilen
               case AOT_DABPLUS_PS:
-              case AOT_MP2_PS:
                 if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_PS))) {
                   err = AACENC_INVALID_CONFIG;
                   goto bail;
                 }
               case AOT_SBR:
               case AOT_DABPLUS_SBR:
-              case AOT_MP2_SBR:
                 if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_SBR))) {
                   err = AACENC_INVALID_CONFIG;
                   goto bail;
                 }
               case AOT_AAC_LC:
               case AOT_DABPLUS_AAC_LC:
-              case AOT_MP2_AAC_LC:
               case AOT_ER_AAC_LD:
               case AOT_ER_AAC_ELD:
                 if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_AAC))) {
