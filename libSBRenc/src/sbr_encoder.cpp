@@ -1939,7 +1939,7 @@ INT sbrEncoder_Init(
 
 
 
-    if ( (aot==AOT_PS) ) {
+    if ( aot==AOT_PS ) {
         usePs = 1;
     }
     if ( aot==AOT_ER_AAC_ELD ) {
