@@ -54,8 +54,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/libSBRenc/include
 
 
-LOCAL_CPPFLAGS += -std=c++98
-
 LOCAL_MODULE:= libFraunhoferAAC
 
 include $(BUILD_STATIC_LIBRARY)
