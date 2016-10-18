@@ -1260,9 +1260,9 @@ const FIXP_WTP * FDKgetWindowSlope(int length, int shape)
 #define QTCFL(x)  FL2FXCONST_SGL(x)
 #define QTC(x)    FX_DBL2FXCONST_SGL(x)
 #else
-#define QFC(x) (x)
+#define QFC(x) ((FIXP_DBL)(x))
 #define QTCFL(x)  FL2FXCONST_DBL(x)
-#define QTC(x)  (x)
+#define QTC(x)  ((FIXP_DBL)(x))
 #endif /* ARCH_PREFER_MULT_32x16 */
 
 #ifndef LOW_POWER_SBR_ONLY
