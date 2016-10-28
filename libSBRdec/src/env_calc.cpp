@@ -2031,7 +2031,7 @@ static void adjustTimeSlotHQ(
   FIXP_SGL direct_ratio = /*FL2FXCONST_SGL(1.0f) */ (FIXP_SGL)MAXVAL_SGL - smooth_ratio;
   int    index = *ptrPhaseIndex;
   UCHAR   harmIndex = *ptrHarmIndex;
-  register int freqInvFlag = (lowSubband & 1);
+  int freqInvFlag = (lowSubband & 1);
   FIXP_DBL sineLevel;
   int shift;
 
