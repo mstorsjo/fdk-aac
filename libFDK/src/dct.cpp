@@ -324,12 +324,12 @@ void dct_IV(FIXP_DBL *pDat,
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
-    register int i;
+    int i;
 
     /* 29 cycles on ARM926 */
     for (i = 0; i < M-1; i+=2,pDat_0+=2,pDat_1-=2)
     {
-      register FIXP_DBL accu1,accu2,accu3,accu4;
+      FIXP_DBL accu1,accu2,accu3,accu4;
 
       accu1 = pDat_1[1]; accu2 = pDat_0[0];
       accu3 = pDat_0[1]; accu4 = pDat_1[0];
@@ -342,7 +342,7 @@ void dct_IV(FIXP_DBL *pDat,
     }
     if (M&1)
     {
-      register FIXP_DBL accu1,accu2;
+      FIXP_DBL accu1,accu2;
 
       accu1 = pDat_1[1]; accu2 = pDat_0[0];
 
@@ -363,7 +363,7 @@ void dct_IV(FIXP_DBL *pDat,
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
-    register FIXP_DBL accu1,accu2,accu3,accu4;
+    FIXP_DBL accu1,accu2,accu3,accu4;
     int idx, i;
 
     /* Sin and Cos values are 0.0f and 1.0f */
@@ -450,12 +450,12 @@ void dst_IV(FIXP_DBL *pDat,
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
 
-    register int i;
+    int i;
 
     /* 34 cycles on ARM926 */
     for (i = 0; i < M-1; i+=2,pDat_0+=2,pDat_1-=2)
     {
-      register FIXP_DBL accu1,accu2,accu3,accu4;
+      FIXP_DBL accu1,accu2,accu3,accu4;
 
       accu1 =  pDat_1[1]; accu2 = -pDat_0[0];
       accu3 =  pDat_0[1]; accu4 = -pDat_1[0];
@@ -468,7 +468,7 @@ void dst_IV(FIXP_DBL *pDat,
     }
     if (M&1)
     {
-      register FIXP_DBL accu1,accu2;
+      FIXP_DBL accu1,accu2;
 
       accu1 =  pDat_1[1]; accu2 = -pDat_0[0];
 
@@ -488,7 +488,7 @@ void dst_IV(FIXP_DBL *pDat,
   {
     FIXP_DBL *RESTRICT pDat_0;
     FIXP_DBL *RESTRICT pDat_1;
-    register FIXP_DBL accu1,accu2,accu3,accu4;
+    FIXP_DBL accu1,accu2,accu3,accu4;
     int idx, i;
 
     pDat_0 = &pDat[0];
