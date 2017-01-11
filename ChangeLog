@@ -1,3 +1,11 @@
+0.1.5
+ - Updated upstream sources
+ - Fixed building with GCC 3.3 and 3.4
+ - Fixed building with GCC 6
+ - AArch64 optimizations
+ - Makefiles for building with MSVC
+ - Support building the code in C++11 mode
+
 0.1.4
  - Updated upstream sources, with minor changes to the decoder API
    breaking the ABI. (Calling code using AUDIO_CHANNEL_TYPE may need to
