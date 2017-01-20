@@ -1,0 +1,32 @@
+cc_library_static {
+    name: "libFraunhoferAAC",
+    srcs: [
+        "libAACdec/src/*.cpp",
+        "libAACenc/src/*.cpp",
+        "libPCMutils/src/*.cpp",
+        "libFDK/src/*.cpp",
+        "libSYS/src/*.cpp",
+        "libMpegTPDec/src/*.cpp",
+        "libMpegTPEnc/src/*.cpp",
+        "libSBRdec/src/*.cpp",
+        "libSBRenc/src/*.cpp",
+    ],
+    cflags: [
+        "-Wno-sequence-point",
+        "-Wno-extra",
+        "-Wno-#warnings",
+        "-Wno-constant-logical-operand",
+        "-Wno-self-assign",
+    ],
+    export_include_dirs: [
+        "libAACdec/include",
+        "libAACenc/include",
+        "libPCMutils/include",
+        "libFDK/include",
+        "libSYS/include",
+        "libMpegTPDec/include",
+        "libMpegTPEnc/include",
+        "libSBRdec/include",
+        "libSBRenc/include",
+    ],
+}
