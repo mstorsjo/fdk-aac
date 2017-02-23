@@ -791,36 +791,29 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(
         const UINT         flags)
 {
     AAC_DECODER_ERROR ErrorStatus;
-    INT layer;
-    INT nBits;
-    INT interleaved = self->outputInterleaved;
-    HANDLE_FDK_BITSTREAM hBs;
     int fTpInterruption = 0;  /* Transport originated interruption detection. */
     int fTpConceal = 0;       /* Transport originated concealment. */
-    INT_PCM *pTimeData = NULL;
-    INT timeDataSize = 0;
-
 
     if (self == NULL) {
       return AAC_DEC_INVALID_HANDLE;
     }
-
-    pTimeData = self->pcmOutputBuffer;
-    timeDataSize = sizeof(self->pcmOutputBuffer)/sizeof(*self->pcmOutputBuffer);
+    INT interleaved = self->outputInterleaved;
+    INT_PCM *pTimeData = self->pcmOutputBuffer;
+    INT timeDataSize = sizeof(self->pcmOutputBuffer)/sizeof(*self->pcmOutputBuffer);
 
     if (flags & AACDEC_INTR) {
       self->streamInfo.numLostAccessUnits = 0;
     }
 
-    hBs = transportDec_GetBitstream(self->hInput, 0);
+    HANDLE_FDK_BITSTREAM hBs = transportDec_GetBitstream(self->hInput, 0);
 
     /* Get current bits position for bitrate calculation. */
-    nBits = FDKgetValidBits(hBs);
+    INT nBits = FDKgetValidBits(hBs);
     if (! (flags & (AACDEC_CONCEAL | AACDEC_FLUSH) ) )
     {
       TRANSPORTDEC_ERROR err;
 
-      for(layer = 0; layer < self->nrOfLayers; layer++)
+      for(INT layer = 0; layer < self->nrOfLayers; layer++)
       {
         err = transportDec_ReadAccessUnit(self->hInput, layer);
         if (err != TRANSPORTDEC_OK) {
