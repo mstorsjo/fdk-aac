@@ -187,12 +187,12 @@ static FIXP_DBL spectralChange(FIXP_DBL Energies[NUMBER_TIME_SLOTS_2304][MAX_FRE
 
     /* Sum up energies in first half */
     for (i=start; i<border; i++) {
-      accu1 += scaleValue(Energies[i][j], -energies_e_diff[i]);
+      accu1 = fAddSaturate(accu1, scaleValue(Energies[i][j], -energies_e_diff[i]));
     }
 
     /* Sum up energies in second half */
     for (i=border; i<stop; i++) {
-      accu2 += scaleValue(Energies[i][j], -energies_e_diff[i]);
+      accu2 = fAddSaturate(accu2, scaleValue(Energies[i][j], -energies_e_diff[i]));
     }
 
     /* Energy change in current band */
