@@ -488,14 +488,12 @@ static FDK_METADATA_ERROR ProcessCompressor(
 {
     FDK_METADATA_ERROR err = METADATA_OK;
 
-    INT dynrng, compr;
-    DRC_PROFILE profileDrc  = convertProfile(pMetadata->mpegDrc.drc_profile);
-    DRC_PROFILE profileComp = convertProfile(pMetadata->etsiAncData.comp_profile);
-
     if ( (pMetadata==NULL) || (hDrcComp==NULL) ) {
       err = METADATA_INVALID_HANDLE;
       return err;
     }
+    DRC_PROFILE profileDrc  = convertProfile(pMetadata->mpegDrc.drc_profile);
+    DRC_PROFILE profileComp = convertProfile(pMetadata->etsiAncData.comp_profile);
 
     /* first, check if profile is same as last frame
      * otherwise, update setup */
@@ -511,8 +509,8 @@ static FDK_METADATA_ERROR ProcessCompressor(
     }
 
     /* in case of embedding external values, copy this now (limiter may overwrite them) */
-    dynrng = decodeDynrng(pMetadata->mpegDrc.dyn_rng_ctl[0], pMetadata->mpegDrc.dyn_rng_sgn[0]);
-    compr  = decodeCompr(pMetadata->etsiAncData.compression_value);
+    INT dynrng = decodeDynrng(pMetadata->mpegDrc.dyn_rng_ctl[0], pMetadata->mpegDrc.dyn_rng_sgn[0]);
+    INT compr  = decodeCompr(pMetadata->etsiAncData.compression_value);
 
     /* Call compressor */
     if (FDK_DRC_Generator_Calc(hDrcComp,
