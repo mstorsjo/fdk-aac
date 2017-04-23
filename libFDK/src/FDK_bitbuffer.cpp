@@ -157,6 +157,8 @@ void FDK_ResetBitBuffer ( HANDLE_FDK_BITBUF hBitBuf )
 
 INT  FDK_get (HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits)
 {
+  if (numberOfBits == 0 || numberOfBits > hBitBuf->ValidBits) return 0;
+
   UINT byteOffset = hBitBuf->BitNdx >> 3 ;
   UINT bitOffset  = hBitBuf->BitNdx & 0x07 ;
 
@@ -166,22 +168,20 @@ INT  FDK_get (HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits)
 
   UINT byteMask = hBitBuf->bufSize - 1 ;
 
-  UINT tx = (hBitBuf->Buffer [ byteOffset    & byteMask] << 24) |
-            (hBitBuf->Buffer [(byteOffset+1) & byteMask] << 16) |
-            (hBitBuf->Buffer [(byteOffset+2) & byteMask] <<  8) |
-             hBitBuf->Buffer [(byteOffset+3) & byteMask];
+  UINT tx =                                hBitBuf->Buffer [ byteOffset    & byteMask] << 24 << bitOffset;
 
-  if (bitOffset)
-  {
-    tx <<= bitOffset;
-    tx |= hBitBuf->Buffer [(byteOffset+4) & byteMask] >> (8-bitOffset);
-  }
+  if (numberOfBits + bitOffset >  8) tx |= hBitBuf->Buffer [(byteOffset+1) & byteMask] << 16 << bitOffset;
+  if (numberOfBits + bitOffset > 16) tx |= hBitBuf->Buffer [(byteOffset+2) & byteMask] <<  8 << bitOffset;
+  if (numberOfBits + bitOffset > 24) tx |= hBitBuf->Buffer [(byteOffset+3) & byteMask]       << bitOffset;
+  if (numberOfBits + bitOffset > 32) tx |= hBitBuf->Buffer [(byteOffset+4) & byteMask] >> (8 - bitOffset);
 
   return (tx >> (32 - numberOfBits)) ;
 }
 
 INT FDK_get32 (HANDLE_FDK_BITBUF hBitBuf)
 {
+  if (hBitBuf->ValidBits < 32) return 0;
+
   UINT BitNdx = hBitBuf->BitNdx + 32;
   if (BitNdx <= hBitBuf->bufBits)
   {

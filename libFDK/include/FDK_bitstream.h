@@ -212,9 +212,20 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
   INT missingBits = numberOfBits - hBitStream->BitsInCache;
   if (missingBits > 0)
   {
-    UINT bits = hBitStream->CacheWord << missingBits;
-    hBitStream->CacheWord = FDK_get32 (&hBitStream->hBitBuf) ;
-    hBitStream->BitsInCache = CACHE_BITS - missingBits;
+    const UINT bits	 = hBitStream->CacheWord << missingBits;
+    const UINT validBits = FDK_getValidBits (&hBitStream->hBitBuf);
+
+    if (validBits >= 32)
+    {
+      hBitStream->CacheWord = FDK_get32 (&hBitStream->hBitBuf) ;
+      hBitStream->BitsInCache = CACHE_BITS - missingBits;
+    }
+    else
+    {
+      hBitStream->CacheWord = FDK_get (&hBitStream->hBitBuf,validBits) ;
+      hBitStream->BitsInCache = validBits - missingBits;
+    }
+
     return ( bits | (hBitStream->CacheWord >> hBitStream->BitsInCache)) & BitMask[numberOfBits];
   }
 
@@ -226,10 +237,12 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
 
   if (hBitStream->BitsInCache <= numberOfBits)
   {
-    const INT freeBits = (CACHE_BITS-1) - hBitStream->BitsInCache ;
+    const UINT validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
+    const INT  freeBits   = (CACHE_BITS-1) - hBitStream->BitsInCache ;
+    const INT  bitsToRead = (freeBits <= validBits) ? freeBits : validBits ;
 
-    hBitStream->CacheWord = (hBitStream->CacheWord << freeBits) | FDK_get (&hBitStream->hBitBuf,freeBits) ;
-    hBitStream->BitsInCache += freeBits ;
+    hBitStream->CacheWord = (hBitStream->CacheWord << bitsToRead) | FDK_get (&hBitStream->hBitBuf,bitsToRead) ;
+    hBitStream->BitsInCache += bitsToRead ;
   }
 
   hBitStream->BitsInCache -= numberOfBits ;
@@ -243,8 +256,18 @@ FDK_INLINE UINT FDKreadBit(HANDLE_FDK_BITSTREAM hBitStream)
 #ifdef OPTIMIZE_FDKREADBITS
   if (!hBitStream->BitsInCache)
   {
-    hBitStream->CacheWord = FDK_get32 (&hBitStream->hBitBuf);
-    hBitStream->BitsInCache = CACHE_BITS;
+    const UINT validBits = FDK_getValidBits (&hBitStream->hBitBuf);
+
+    if (validBits >= 32)
+    {
+      hBitStream->CacheWord = FDK_get32 (&hBitStream->hBitBuf);
+      hBitStream->BitsInCache = CACHE_BITS;
+    }
+    else
+    {
+      hBitStream->CacheWord = FDK_get (&hBitStream->hBitBuf,validBits);
+      hBitStream->BitsInCache = validBits;
+    }
   }
   hBitStream->BitsInCache--;
 
@@ -268,10 +291,12 @@ inline UINT FDKread2Bits(HANDLE_FDK_BITSTREAM hBitStream)
   UINT BitsInCache = hBitStream->BitsInCache;
   if (BitsInCache < 2)  /* Comparison changed from 'less-equal' to 'less' */
   {
-    const INT freeBits = (CACHE_BITS-1) - BitsInCache ;
+    const UINT validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
+    const INT  freeBits   = (CACHE_BITS-1) - BitsInCache ;
+    const INT  bitsToRead = (freeBits <= validBits) ? freeBits : validBits ;
 
-    hBitStream->CacheWord = (hBitStream->CacheWord << freeBits) | FDK_get (&hBitStream->hBitBuf,freeBits) ;
-    BitsInCache += freeBits;
+    hBitStream->CacheWord = (hBitStream->CacheWord << bitsToRead) | FDK_get (&hBitStream->hBitBuf,bitsToRead) ;
+    BitsInCache += bitsToRead;
   }
   hBitStream->BitsInCache = BitsInCache - 2;
   return (hBitStream->CacheWord >> hBitStream->BitsInCache) & 0x3;
