@@ -223,7 +223,15 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
     else
     {
       hBitStream->CacheWord = FDK_get (&hBitStream->hBitBuf,validBits) ;
-      hBitStream->BitsInCache = validBits - missingBits;
+      if (validBits >= missingBits)
+      {
+        hBitStream->BitsInCache = validBits - missingBits;
+      }
+      else
+      {
+        hBitStream->BitsInCache = 0;
+        hBitStream->CacheWord <<= missingBits - validBits;
+      }
     }
 
     return ( bits | (hBitStream->CacheWord >> hBitStream->BitsInCache)) & BitMask[numberOfBits];
@@ -243,6 +251,12 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
 
     hBitStream->CacheWord = (hBitStream->CacheWord << bitsToRead) | FDK_get (&hBitStream->hBitBuf,bitsToRead) ;
     hBitStream->BitsInCache += bitsToRead ;
+    if (hBitStream->BitsInCache < numberOfBits)
+    {
+      hBitStream->CacheWord <<= numberOfBits - hBitStream->BitsInCache;
+      hBitStream->BitsInCache = 0;
+      return (hBitStream->CacheWord >> hBitStream->BitsInCache) & validMask ;
+    }
   }
 
   hBitStream->BitsInCache -= numberOfBits ;
