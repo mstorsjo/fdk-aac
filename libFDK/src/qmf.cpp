@@ -791,6 +791,10 @@ qmfInverseModulationHQ( HANDLE_QMF_FILTER_BANK synQmf,  /*!< Handle of Qmf Synth
     scaleValues(&tImag[0+synQmf->lsb], &qmfImag[0+synQmf->lsb], synQmf->usb-synQmf->lsb, scaleFactorHighBand);
   }
 
+  if (synQmf->usb > synQmf->no_channels) {
+    return;
+  }
+
   FDKmemclear(&tReal[synQmf->usb], (synQmf->no_channels-synQmf->usb)*sizeof(FIXP_QMF));
   FDKmemclear(&tImag[synQmf->usb], (synQmf->no_channels-synQmf->usb)*sizeof(FIXP_QMF));
 
