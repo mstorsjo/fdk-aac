@@ -720,6 +720,10 @@ inline static void qmfInverseModulationHQ(
                 synQmf->usb - synQmf->lsb, (int)scaleFactorHighBand);
   }
 
+  if (synQmf->usb > synQmf->no_channels) {
+    return;
+  }
+
   FDKmemclear(&tReal[synQmf->usb],
               (synQmf->no_channels - synQmf->usb) * sizeof(FIXP_DBL));
   FDKmemclear(&tImag[synQmf->usb],
