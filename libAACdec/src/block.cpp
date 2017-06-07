@@ -372,6 +372,9 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(
       }
 
       sect_len += sect_len_incr;
+      if (sect_len <= 0) {
+         return AAC_DEC_PARSE_ERROR;
+      }
 
       top = band + sect_len;
 
