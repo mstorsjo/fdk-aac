@@ -498,7 +498,7 @@ ReadPsData (HANDLE_PS_DEC h_ps_d,          /*!< handle to struct PS_DEC */
     h_ps_d->bPsDataAvail[h_ps_d->bsReadSlot] = ppt_none;
     /* discard all remaining bits */
     nBitsLeft -= startbits - FDKgetValidBits(hBitBuf);
-    while (nBitsLeft) {
+    while (nBitsLeft > 0) {
       int i = nBitsLeft;
       if (i>8) {
         i = 8;
