@@ -940,6 +940,10 @@ resetSbrDec (HANDLE_SBR_DEC hSbrDec,
   FIXP_DBL  **OverlapBufferReal = hSbrDec->QmfBufferReal;
   FIXP_DBL  **OverlapBufferImag = hSbrDec->QmfBufferImag;
 
+  if (!hSbrDec->LppTrans.pSettings) {
+    return SBRDEC_NOT_INITIALIZED;
+  }
+
   /* assign qmf time slots */
   assignTimeSlots( hSbrDec, hHeaderData->numberTimeSlots * hHeaderData->timeStep, useLP);
 
