@@ -1039,6 +1039,10 @@ resetSbrDec(HANDLE_SBR_DEC hSbrDec, HANDLE_SBR_HEADER_DATA hHeaderData,
   FIXP_DBL **OverlapBufferReal = hSbrDec->qmfDomainInCh->hQmfSlotsReal;
   FIXP_DBL **OverlapBufferImag = hSbrDec->qmfDomainInCh->hQmfSlotsImag;
 
+  if (!hSbrDec->LppTrans.pSettings) {
+    return SBRDEC_NOT_INITIALIZED;
+  }
+
   /* in case the previous frame was not active in terms of SBR processing, the
      full band from 0 to no_channels was rescaled and not overwritten. Thats why
      the scaling factor lb_scale can be seen as assigned to all bands from 0 to
