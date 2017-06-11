@@ -411,11 +411,15 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
     case drmcrc_end_reg:
       if (pTpDec != NULL) {
         transportDec_CrcEndReg(pTpDec, crcReg1);
+        crcReg1 = -1;
       }
       break;
     case adtscrc_end_reg2:
-      if (pTpDec != NULL) {
+      if (crcReg1 != -1) {
+        error = AAC_DEC_DECODE_FRAME_ERROR;
+      } else if (pTpDec != NULL) {
         transportDec_CrcEndReg(pTpDec, crcReg2);
+        crcReg2 = -1;
       }
       break;
     case drmcrc_start_reg:
@@ -447,5 +451,16 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
   } while (list->id[i] != end_of_sequence);
 
 bail:
+  if (crcReg1 != -1 || crcReg2 != -1) {
+    if (error == AAC_DEC_OK) {
+      error = AAC_DEC_DECODE_FRAME_ERROR;
+    }
+    if (crcReg1 != -1) {
+      transportDec_CrcEndReg(pTpDec, crcReg1);
+    }
+    if (crcReg2 != -1) {
+      transportDec_CrcEndReg(pTpDec, crcReg2);
+    }
+  }
   return error;
 }
