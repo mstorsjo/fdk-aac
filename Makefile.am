@@ -40,9 +40,13 @@ libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
 
 if EXAMPLE
 bin_PROGRAMS = aac-enc$(EXEEXT)
+noinst_PROGRAMS = test-encode-decode$(EXEEXT)
 
 aac_enc_LDADD = libfdk-aac.la
 aac_enc_SOURCES = aac-enc.c wavreader.c
+
+test_encode_decode_LDADD = libfdk-aac.la
+test_encode_decode_SOURCES = test-encode-decode.c wavreader.c sha1.c
 
 noinst_HEADERS = wavreader.h
 endif
@@ -295,5 +299,6 @@ EXTRA_DIST = \
     $(top_srcdir)/libFDK/src/mips/*.cpp \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/PREUPLOAD.cfg \
+    $(top_srcdir)/sha1.h \
     $(top_srcdir)/win32/*.h
 

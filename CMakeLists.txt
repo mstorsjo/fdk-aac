@@ -62,7 +62,7 @@ include(CPack)
 # Options
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
-option(BUILD_PROGRAMS "Build aac-enc utility" OFF)
+option(BUILD_PROGRAMS "Build extra utilities" OFF)
 option(FDK_AAC_INSTALL_CMAKE_CONFIG_MODULE "Install CMake package configuration file" ON)
 option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 
@@ -586,4 +586,15 @@ if(BUILD_PROGRAMS)
   ## Program target installation
   install(TARGETS aac-enc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+
+  ## Tool for testing the library
+  set(test_encode_decode_SOURCES
+    test-encode-decode.c
+    wavreader.c
+    wavreader.h
+    sha1.c
+    sha1.h)
+
+  add_executable(test-encode-decode ${test_encode_decode_SOURCES})
+  target_link_libraries(test-encode-decode PRIVATE fdk-aac)
 endif()
