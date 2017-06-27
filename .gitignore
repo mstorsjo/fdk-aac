@@ -27,6 +27,7 @@ m4/lt~obsolete.m4
 missing
 stamp-h1
 aac-enc
+test-encode-decode
 compile
 
 CMakeCache.txt
