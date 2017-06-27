@@ -586,4 +586,15 @@ if(BUILD_PROGRAMS)
   ## Program target installation
   install(TARGETS aac-enc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+
+  ## Tool for testing the library
+  set(test_encode_decode_SOURCES
+    test-encode-decode.c
+    wavreader.c
+    wavreader.h
+    sha1.c
+    sha1.h)
+
+  add_executable(test-encode-decode ${test_encode_decode_SOURCES})
+  target_link_libraries(test-encode-decode PRIVATE fdk-aac)
 endif()
