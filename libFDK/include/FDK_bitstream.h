@@ -277,10 +277,14 @@ FDK_INLINE UINT FDKreadBit(HANDLE_FDK_BITSTREAM hBitStream)
       hBitStream->CacheWord = FDK_get32 (&hBitStream->hBitBuf);
       hBitStream->BitsInCache = CACHE_BITS;
     }
-    else
+    else if (validBits > 0)
     {
       hBitStream->CacheWord = FDK_get (&hBitStream->hBitBuf,validBits);
       hBitStream->BitsInCache = validBits;
+    }
+    else
+    {
+      return 0;
     }
   }
   hBitStream->BitsInCache--;
