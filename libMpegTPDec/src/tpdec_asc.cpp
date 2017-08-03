@@ -650,6 +650,8 @@ int CProgramConfig_LookupElement(
         /* search in front channels */
         for (i = 0; i < pPce->NumFrontChannelElements; i++) {
           int heightLayer = pPce->FrontElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           if (isCpe == pPce->FrontElementIsCpe[i] && pPce->FrontElementTagSelect[i] == tag) {
             int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
             AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_FRONT);
@@ -704,6 +706,8 @@ int CProgramConfig_LookupElement(
         /* search in side channels */
         for (i = 0; i < pPce->NumSideChannelElements; i++) {
           int heightLayer = pPce->SideElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           if (isCpe == pPce->SideElementIsCpe[i] && pPce->SideElementTagSelect[i] == tag) {
             int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
             AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_SIDE);
@@ -758,6 +762,8 @@ int CProgramConfig_LookupElement(
         /* search in back channels */
         for (i = 0; i < pPce->NumBackChannelElements; i++) {
           int heightLayer = pPce->BackElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           if (isCpe == pPce->BackElementIsCpe[i] && pPce->BackElementTagSelect[i] == tag) {
             int h, elIdx = ec[heightLayer], chIdx = cc[heightLayer];
             AUDIO_CHANNEL_TYPE aChType = (AUDIO_CHANNEL_TYPE)((heightLayer<<4) | ACT_BACK);
@@ -817,18 +823,24 @@ int CProgramConfig_LookupElement(
            Start with counting the front channels/elements at normal height */
         for (i = 0; i < pPce->NumFrontChannelElements; i+=1) {
           int heightLayer = pPce->FrontElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           ec[heightLayer] += 1;
           cc[heightLayer] += (pPce->FrontElementIsCpe[i]) ? 2 : 1;
         }
         /* Count side channels/elements at normal height */
         for (i = 0; i < pPce->NumSideChannelElements; i+=1) {
           int heightLayer = pPce->SideElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           ec[heightLayer] += 1;
           cc[heightLayer] += (pPce->SideElementIsCpe[i]) ? 2 : 1;
         }
         /* Count back channels/elements at normal height */
         for (i = 0; i < pPce->NumBackChannelElements; i+=1) {
           int heightLayer = pPce->BackElementHeightInfo[i];
+          if (heightLayer >= PC_NUM_HEIGHT_LAYER)
+            return 0;
           ec[heightLayer] += 1;
           cc[heightLayer] += (pPce->BackElementIsCpe[i]) ? 2 : 1;
         }
