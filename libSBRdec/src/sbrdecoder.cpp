@@ -1444,6 +1444,9 @@ sbrDecoder_DecodeElement (
     self->flags |= (applyPs) ? SBRDEC_PS_DECODED : 0;
   }
 
+  if (channelMapping[0] == 255 || channelMapping[1] == 255)
+    return SBRDEC_UNSUPPORTED_CONFIG;
+
   /* Set strides for reading and writing */
   if (interleaved) {
     strideIn = numInChannels;
