@@ -1446,6 +1446,10 @@ sbrDecoder_DecodeElement (
 
   if (channelMapping[0] == 255 || channelMapping[1] == 255)
     return SBRDEC_UNSUPPORTED_CONFIG;
+  if (!pSbrChannel[0]->SbrDec.LppTrans.pSettings)
+    return SBRDEC_UNSUPPORTED_CONFIG;
+  if (stereo && !pSbrChannel[1]->SbrDec.LppTrans.pSettings)
+    return SBRDEC_UNSUPPORTED_CONFIG;
 
   /* Set strides for reading and writing */
   if (interleaved) {
