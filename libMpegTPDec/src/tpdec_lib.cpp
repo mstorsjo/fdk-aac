@@ -665,7 +665,7 @@ TRANSPORTDEC_ERROR transportDec_FillData(const HANDLE_TRANSPORTDEC hTp,
       return TRANSPORTDEC_OK;
     }
 
-    if (hTp->numberOfRawDataBlocks <= 0) {
+    if (hTp->numberOfRawDataBlocks <= 0 || FDKgetValidBits(hBs) == 0) {
       FDKfeedBuffer(hBs, pBuffer, bufferSize, pBytesValid);
     }
   }
