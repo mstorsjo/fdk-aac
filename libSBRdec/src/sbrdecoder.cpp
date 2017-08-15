@@ -1728,6 +1728,11 @@ static SBR_ERROR sbrDecoder_DecodeElement(
       self->flags |= (applyPs) ? SBRDEC_PS_DECODED : 0;
     }
 
+    if (!pSbrChannel[0]->SbrDec.LppTrans.pSettings)
+      return SBRDEC_UNSUPPORTED_CONFIG;
+    if (stereo && !pSbrChannel[1]->SbrDec.LppTrans.pSettings)
+      return SBRDEC_UNSUPPORTED_CONFIG;
+
     offset0 = FDK_chMapDescr_getMapValue(mapDescr, channelIndex, mapIdx);
     offset0_block = offset0 * codecFrameSize;
     if (stereo || psPossible) {
