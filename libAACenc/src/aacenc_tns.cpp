@@ -388,7 +388,7 @@ AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
   switch (granuleLength) {
     case 1024:
       /* TNS start line: skip lower MDCT lines to prevent artifacts due to filter mismatch */
-      tC->lpcStartBand[LOFILT]   = (blockType == SHORT_WINDOW) ? 0 : ((sampleRate < 18783) ? 4 : 8);
+      tC->lpcStartBand[LOFILT]   = (blockType == SHORT_WINDOW) ? 0 : ((sampleRate <= 8000) ? 2 : ((sampleRate < 18783) ? 4 : 8));
       tC->lpcStartLine[LOFILT]   = pC->sfbOffset[tC->lpcStartBand[LOFILT]];
 
       i = tC->lpcStopBand;
