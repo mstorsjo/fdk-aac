@@ -342,7 +342,9 @@ TRANSPORTDEC_ERROR transportDec_FillData(
     }
   } else {
     /* ... else feed bitbuffer with new stream data (append). */
-    FDKfeedBuffer (hBs, pBuffer, bufferSize, pBytesValid);
+    if ((hTp->numberOfRawDataBlocks <= 0) || (FDKgetValidBits(hBs)==0)) {
+      FDKfeedBuffer (hBs, pBuffer, bufferSize, pBytesValid) ;
+    }
   }
 
   return TRANSPORTDEC_OK;
