@@ -181,6 +181,9 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
   FDKmemcpy(&oldPce, &pAsc->m_progrConfigElement, sizeof(CProgramConfig));
 
   valBits = FDKgetValidBits(hBs);
+  if (valBits < ADTS_HEADERLENGTH) {
+    return TRANSPORTDEC_NOT_ENOUGH_BITS;
+  }
 
   /* adts_fixed_header */
   bs.mpeg_id = FDKreadBits(hBs, Adts_Length_Id);
