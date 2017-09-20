@@ -185,6 +185,9 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(
 #endif
 
   valBits = FDKgetValidBits(hBs);
+  if (valBits < ADTS_HEADERLENGTH) {
+    return TRANSPORTDEC_NOT_ENOUGH_BITS;
+  }
 
   /* adts_fixed_header */
   bs.mpeg_id           = FDKreadBits(hBs, Adts_Length_Id);
