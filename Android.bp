@@ -12,6 +12,8 @@ cc_library_static {
         "libSBRenc/src/*.cpp",
     ],
     cflags: [
+        "-Werror",
+        "-Wno-constant-conversion",
         "-Wno-sequence-point",
         "-Wno-extra",
         "-Wno-#warnings",
