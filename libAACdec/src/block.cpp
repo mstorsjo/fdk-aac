@@ -143,7 +143,8 @@ LONG CBlock_GetEscape(HANDLE_FDK_BITSTREAM bs, /*!< pointer to bitstream */
     if (FDKreadBit(bs) == 0) break;
   }
 
-  if (i == 32) return (MAX_QUANTIZED_VALUE + 1);
+  /* (1 << i) will shift into the sign bit if i >= 31 */
+  if (i >= 31) return (MAX_QUANTIZED_VALUE + 1);
 
   off = FDKreadBits(bs, i);
   i = off + (1 << i);
