@@ -138,7 +138,7 @@ LONG CBlock_GetEscape(HANDLE_FDK_BITSTREAM bs, /*!< pointer to bitstream */
 
   if (i > 16)
   {
-    if (i - 16 > CACHE_BITS) { /* cannot read more than "CACHE_BITS" bits at once in the function FDKreadBits() */
+    if (i >= 31) { /* (1 << i) will shift into the sign bit if i >= 31 */
       return (MAX_QUANTIZED_VALUE + 1); /* returning invalid value that will be captured later */
     }
 
