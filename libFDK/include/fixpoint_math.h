@@ -479,15 +479,19 @@ inline FIXP_DBL fAddSaturate(const FIXP_DBL a, const FIXP_DBL b)
 
 /**
  * \brief Calculate the value of 1/i where i is a integer value. It supports
- *        input values from 1 upto 80.
+ *        input values from 0 upto 79.
  * \param intValue Integer input value.
  * \param FIXP_DBL representation of 1/intValue
  */
 inline FIXP_DBL GetInvInt(int intValue)
 {
-  FDK_ASSERT((intValue > 0) && (intValue < 80));
-  FDK_ASSERT(intValue<80);
-	return invCount[intValue];
+  FDK_ASSERT((intValue >= 0) && (intValue < 80));
+  if (intValue > 79)
+    return invCount[79];
+  else if (intValue < 0)
+    return invCount[0];
+  else
+    return invCount[intValue];
 }
 
 
