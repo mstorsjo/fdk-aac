@@ -1147,6 +1147,9 @@ static INT FDKaacEnc_AutoToParcor(
     workBuffer++;
   }
 
+  if (input[0] == 0)
+    input[0] = 1;
+
   tmp = fMult((FIXP_DBL)((LONG)TNS_PREDGAIN_SCALE<<21), fDivNorm(fAbs(autoCorr_0), fAbs(input[0]), &scale));
   if ( fMultDiv2(autoCorr_0, input[0])<FL2FXCONST_DBL(0.0f) ) {
     tmp = -tmp;
