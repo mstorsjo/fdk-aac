@@ -293,7 +293,7 @@ void lppTransposer (HANDLE_SBR_LPP_TRANS hLppTrans,    /*!< Handle of lpp transp
   }
 
   /* init bwIndex for each patch */
-  FDKmemclear(bwIndex, pSettings->noOfPatches*sizeof(INT));
+  FDKmemclear(bwIndex, MAX_NUM_PATCHES*sizeof(INT));
 
   /*
     Calc common low band scale factor
@@ -621,9 +621,9 @@ void lppTransposer (HANDLE_SBR_LPP_TRANS hLppTrans,    /*!< Handle of lpp transp
       FDK_ASSERT( hiBand < (64) );
 
       /* bwIndex[patch] is already initialized with value from previous band inside this patch */
-      while (hiBand >= pSettings->bwBorders[bwIndex[patch]])
+      while (hiBand >= pSettings->bwBorders[bwIndex[patch]] && bwIndex[patch] < MAX_NUM_PATCHES-1) {
         bwIndex[patch]++;
-
+      }
 
       /*
         Filter Step 2: add the left slope with the current filter to the buffer
@@ -962,6 +962,10 @@ resetLppTransposer (HANDLE_SBR_LPP_TRANS hLppTrans,  /*!< Handle of lpp transpos
   for(i = 0 ; i < noNoiseBands; i++){
     pSettings->bwBorders[i] = noiseBandTable[i+1];
   }
+  for (;i < MAX_NUM_NOISE_VALUES; i++) {
+    pSettings->bwBorders[i] = 255;
+  }
+
 
   /*
    * Choose whitening factors
