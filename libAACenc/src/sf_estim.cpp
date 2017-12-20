@@ -533,6 +533,7 @@ static void FDKaacEnc_assimilateSingleScf(PSY_OUT_CHANNEL *psyOutChan,
         (scfAct > scfMin) &&
         (scfAct <= scfMin+MAX_SCF_DELTA) &&
         (scfAct >= scfMax-MAX_SCF_DELTA) &&
+        (scfAct <= fixMin(scfMin,fixMin(*scfLast, *scfNext))+MAX_SCF_DELTA) &&
         (*scfLast != prevScfLast[sfbAct] ||
          *scfNext != prevScfNext[sfbAct] ||
          deltaPe < deltaPeLast[sfbAct])) {
