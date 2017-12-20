@@ -1444,7 +1444,7 @@ sbrDecoder_DecodeElement (
     self->flags |= (applyPs) ? SBRDEC_PS_DECODED : 0;
   }
 
-  if (channelMapping[0] == 255 || channelMapping[1] == 255)
+  if (channelMapping[0] == 255 || ((*numOutChannels == 2) && channelMapping[1] == 255))
     return SBRDEC_UNSUPPORTED_CONFIG;
   if (!pSbrChannel[0]->SbrDec.LppTrans.pSettings)
     return SBRDEC_UNSUPPORTED_CONFIG;
