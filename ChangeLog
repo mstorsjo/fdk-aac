@@ -1,3 +1,7 @@
+0.1.6
+ - Lots of minor assorted crash/fuzz fixes, mostly for the decoder but
+   also some for the encoder
+
 0.1.5
  - Updated upstream sources
  - Fixed building with GCC 3.3 and 3.4
