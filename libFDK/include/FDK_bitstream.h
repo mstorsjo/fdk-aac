@@ -245,7 +245,7 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
 
   if (hBitStream->BitsInCache <= numberOfBits)
   {
-    const UINT validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
+    const INT  validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
     const INT  freeBits   = (CACHE_BITS-1) - hBitStream->BitsInCache ;
     const INT  bitsToRead = (freeBits <= validBits) ? freeBits : validBits ;
 
@@ -309,7 +309,7 @@ inline UINT FDKread2Bits(HANDLE_FDK_BITSTREAM hBitStream)
   UINT BitsInCache = hBitStream->BitsInCache;
   if (BitsInCache < 2)  /* Comparison changed from 'less-equal' to 'less' */
   {
-    const UINT validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
+    const INT  validBits  = FDK_getValidBits (&hBitStream->hBitBuf) ;
     const INT  freeBits   = (CACHE_BITS-1) - BitsInCache ;
     const INT  bitsToRead = (freeBits <= validBits) ? freeBits : validBits ;
 
