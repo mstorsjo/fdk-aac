@@ -478,15 +478,13 @@ void CJointStereo_ApplyMS(
   \param pWindowGroupLength pointer to window group length array.
   \param windowGroups number of window groups.
   \param scaleFactorBandsTransmitted number of transmitted scalefactor bands.
-  \param CommonWindow common window bit.
   \return  none
 */
 void CJointStereo_ApplyIS(CAacDecoderChannelInfo *pAacDecoderChannelInfo[2],
                           const short *pScaleFactorBandOffsets,
                           const UCHAR *pWindowGroupLength,
                           const int windowGroups,
-                          const int scaleFactorBandsTransmitted,
-                          const UINT CommonWindow);
+                          const int scaleFactorBandsTransmitted);
 
 /* aacdec_pns.cpp */
 int CPns_IsPnsUsed(const CPnsData *pPnsData, const int group, const int band);

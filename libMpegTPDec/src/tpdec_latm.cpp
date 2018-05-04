@@ -126,7 +126,6 @@ static TRANSPORTDEC_ERROR CLatmDemux_ReadAudioMuxElement(
     CSTpCallBacks *pTpDecCallbacks, CSAudioSpecificConfig *pAsc,
     int *pfConfigFound) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
-  UCHAR applyAsc = pLatmDemux->applyAsc;
 
   if (m_muxConfigPresent) {
     pLatmDemux->m_useSameStreamMux = FDKreadBits(bs, 1);
@@ -152,7 +151,12 @@ static TRANSPORTDEC_ERROR CLatmDemux_ReadAudioMuxElement(
           goto bail;
         }
 
-        if (pLatmDemux->newCfgHasAudioPreRoll) {
+        /* Allow flushing only when audioPreroll functionality is enabled in
+         * current and new config otherwise the new config can be applied
+         * immediately. */
+        if (pAsc->m_sc.m_usacConfig.element[0]
+                .extElement.usacExtElementHasAudioPreRoll &&
+            pLatmDemux->newCfgHasAudioPreRoll) {
           pLatmDemux->newCfgHasAudioPreRoll = 0;
           /* with audioPreRoll we must flush before applying new cfg */
           pLatmDemux->applyAsc = 0;
@@ -223,7 +227,7 @@ static TRANSPORTDEC_ERROR CLatmDemux_ReadAudioMuxElement(
 
 bail:
   if (ErrorStatus != TRANSPORTDEC_OK) {
-    pLatmDemux->applyAsc = applyAsc;
+    pLatmDemux->applyAsc = 1;
   }
 
   return (ErrorStatus);

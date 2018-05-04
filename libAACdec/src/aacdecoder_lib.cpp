@@ -396,7 +396,8 @@ static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
       /* MPS found but invalid or not decodable by this instance            */
       hAacDecoder->mpsEnableCurr = 0;
       hAacDecoder->mpsApplicable = 0;
-      if ((coreCodec == AOT_USAC) || IS_LOWDELAY(coreCodec)) {
+      if ((coreCodec == AOT_USAC) || (coreCodec == AOT_DRM_USAC) ||
+          IS_LOWDELAY(coreCodec)) {
         errTp = TRANSPORTDEC_PARSE_ERROR;
       } else {
         errTp = TRANSPORTDEC_OK;
@@ -1654,14 +1655,14 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
                       self->streamInfo.frameSize;
 
           for (ch = 0; ch < self->streamInfo.numChannels; ch++) {
-            int mapValue = FDK_chMapDescr_getMapValue(
+            UCHAR mapValue = FDK_chMapDescr_getMapValue(
                 &self->mapDescr, (UCHAR)ch, self->chMapIndex);
-            reverseInChannelMap[mapValue] = ch;
+            if (mapValue < (8)) reverseInChannelMap[mapValue] = ch;
           }
           for (ch = 0; ch < (int)numDrcOutChannels; ch++) {
-            int mapValue = FDK_chMapDescr_getMapValue(
+            UCHAR mapValue = FDK_chMapDescr_getMapValue(
                 &self->mapDescr, (UCHAR)ch, numDrcOutChannels);
-            reverseOutChannelMap[mapValue] = ch;
+            if (mapValue < (8)) reverseOutChannelMap[mapValue] = ch;
           }
 
           /* The output of SBR and MPS is interleaved. Deinterleaving may be

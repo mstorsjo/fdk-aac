@@ -1151,6 +1151,12 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
                                     &syncLayerFrameBits, &fConfigFound,
                                     &headerBits);
       if (TPDEC_IS_FATAL_ERROR(err)) {
+        /* Rewind - TPDEC_SYNCSKIP, in order to look for a synch one bit ahead
+         * next time. Ensure that the bit amount lands at a multiple of
+         * TPDEC_SYNCSKIP. */
+        FDKpushBiDirectional(
+            hBs, -headerBits + TPDEC_SYNCSKIP + (bitsAvail % TPDEC_SYNCSKIP));
+
         goto bail;
       }
     }
