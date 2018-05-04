@@ -285,12 +285,12 @@ static FIXP_DBL addLowbandEnergies(FIXP_DBL **Energies, int *scaleEnergies,
   /* freqBandTable[LORES] has MAX_FREQ_COEFFS/2 +1 coeefs max. */
   for (ts = tran_offdiv2; ts < YBufferWriteOffset; ts++) {
     for (k = 0; k < freqBandTable[0]; k++) {
-      accu1 += Energies[ts][k] >> sc1;
+      accu1 = fAddSaturate(accu1, Energies[ts][k] >> sc1);
     }
   }
   for (; ts < tran_offdiv2 + (slots >> nrgSzShift); ts++) {
     for (k = 0; k < freqBandTable[0]; k++) {
-      accu2 += Energies[ts][k] >> sc2;
+      accu2 = fAddSaturate(accu2, Energies[ts][k] >> sc2);
     }
   }
 
