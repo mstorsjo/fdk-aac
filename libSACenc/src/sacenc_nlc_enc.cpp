@@ -379,16 +379,22 @@ static UINT huff_enc_1D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
 
   switch (data_type) {
     case t_CLD:
-      part0 = fdk_sacenc_huffPart0Tab.cld[in_data[0]];
       pHuffTab = fdk_sacenc_huffCLDTab.h1D[dim1];
       break;
     case t_ICC:
-      part0 = fdk_sacenc_huffPart0Tab.icc[in_data[0]];
       pHuffTab = fdk_sacenc_huffICCTab.h1D[dim1];
       break;
   }
 
   if (p0_flag) {
+    switch (data_type) {
+      case t_CLD:
+        part0 = fdk_sacenc_huffPart0Tab.cld[in_data[0]];
+        break;
+      case t_ICC:
+        part0 = fdk_sacenc_huffPart0Tab.icc[in_data[0]];
+        break;
+    }
     huffBits += FDKwriteBits(strm, HUFF_VALUE(part0), HUFF_LENGTH(part0));
     offset = 1;
   }
