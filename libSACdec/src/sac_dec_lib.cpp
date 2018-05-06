@@ -698,6 +698,7 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
     INT coreSbrFrameLengthIndex, INT configBytes, const UCHAR configMode,
     UCHAR *configChanged) {
   SACDEC_ERROR err = MPS_OK;
+  SPATIAL_SPECIFIC_CONFIG spatialSpecificConfig;
 
   switch (coreCodec) {
     case AOT_DRM_USAC:
@@ -705,7 +706,6 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
       if (configMode == AC_CM_DET_CFG_CHANGE) {
         /* In config detection mode write spatial specific config parameters
          * into temporarily allocated structure */
-        SPATIAL_SPECIFIC_CONFIG spatialSpecificConfig;
         err = SpatialDecParseMps212Config(
             hBs, &spatialSpecificConfig, samplingRate, coreCodec,
             stereoConfigIndex, coreSbrFrameLengthIndex);
@@ -718,9 +718,16 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
       break;
     case AOT_ER_AAC_ELD:
     case AOT_ER_AAC_LD:
-      err = SpatialDecParseSpecificConfig(
-          hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup, configBytes,
-          coreCodec);
+      if (configMode == AC_CM_DET_CFG_CHANGE) {
+        /* In config detection mode write spatial specific config parameters
+         * into temporarily allocated structure */
+        err = SpatialDecParseSpecificConfig(hBs, &spatialSpecificConfig,
+                                            configBytes, coreCodec);
+      } else {
+        err = SpatialDecParseSpecificConfig(
+            hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup,
+            configBytes, coreCodec);
+      }
       break;
     default:
       err = MPS_UNSUPPORTED_FORMAT;

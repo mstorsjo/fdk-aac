@@ -366,7 +366,7 @@ static FIXP_DBL addHighbandEnergies(
         accu += (EnergiesM[slotOut][j] >> scale[0]);
       }
     }
-    nrgTotal = accu >> (scaleEnergies[1] - scale[1]);
+    nrgTotal = fAddSaturate(nrgTotal, accu >> (scaleEnergies[1] - scale[1]));
   }
 
   return (nrgTotal);

@@ -2488,7 +2488,7 @@ TRANSPORTDEC_ERROR DrmRawSdcAudioConfig_Parse(
 
     switch (audioCoding) {
       case 0: /* AAC */
-        if (coderField >> 2) {
+        if ((coderField >> 2) && (audioMode != 1)) {
           self->m_aot = AOT_DRM_SURROUND; /* Set pseudo AOT for Drm Surround */
         } else {
           self->m_aot = AOT_DRM_AAC; /* Set pseudo AOT for Drm AAC */
