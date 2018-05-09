@@ -257,11 +257,11 @@ static int CProgramConfig_ReadHeightExt(CProgramConfig *pPce,
     }
   } else {
     /* No valid extension data found -> restore the initial bitbuffer state */
-    FDKpushBack(bs, startAnchor - FDKgetValidBits(bs));
+    FDKpushBack(bs, (INT)startAnchor - (INT)FDKgetValidBits(bs));
   }
 
   /* Always report the bytes read. */
-  *bytesAvailable -= (startAnchor - FDKgetValidBits(bs)) >> 3;
+  *bytesAvailable -= ((INT)startAnchor - (INT)FDKgetValidBits(bs)) >> 3;
 
   return (err);
 }
