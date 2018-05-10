@@ -115,8 +115,8 @@ amm-info@iis.fraunhofer.de
 typedef struct {
   UCHAR isActive;
   INT maxBits;
-  UINT bitBufCntBits;
-  UINT validBits;
+  INT bitBufCntBits;
+  INT validBits;
 
 } CCrcRegData;
 

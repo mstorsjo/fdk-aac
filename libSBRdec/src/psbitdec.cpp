@@ -496,7 +496,7 @@ unsigned int ReadPsData(
     /* no useful PS data could be read from bitstream */
     h_ps_d->bPsDataAvail[h_ps_d->bsReadSlot] = ppt_none;
     /* discard all remaining bits */
-    nBitsLeft -= startbits - FDKgetValidBits(hBitBuf);
+    nBitsLeft -= startbits - (INT)FDKgetValidBits(hBitBuf);
     while (nBitsLeft > 0) {
       int i = nBitsLeft;
       if (i > 8) {
@@ -505,7 +505,7 @@ unsigned int ReadPsData(
       FDKreadBits(hBitBuf, i);
       nBitsLeft -= i;
     }
-    return (startbits - FDKgetValidBits(hBitBuf));
+    return (UINT)(startbits - (INT)FDKgetValidBits(hBitBuf));
   }
 
   if (pBsData->modeIid > 2) {

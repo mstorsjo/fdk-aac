@@ -281,7 +281,7 @@ INT FDKcrcStartReg(HANDLE_FDK_CRCINFO hCrcInfo, const HANDLE_FDK_BITSTREAM hBs,
   FDK_ASSERT(hCrcInfo->crcRegData[reg].isActive == 0);
   hCrcInfo->crcRegData[reg].isActive = 1;
   hCrcInfo->crcRegData[reg].maxBits = mBits;
-  hCrcInfo->crcRegData[reg].validBits = FDKgetValidBits(hBs);
+  hCrcInfo->crcRegData[reg].validBits = (INT)FDKgetValidBits(hBs);
   hCrcInfo->crcRegData[reg].bitBufCntBits = 0;
 
   hCrcInfo->regStart = (hCrcInfo->regStart + 1) % MAX_CRC_REGS;
@@ -296,10 +296,10 @@ INT FDKcrcEndReg(HANDLE_FDK_CRCINFO hCrcInfo, const HANDLE_FDK_BITSTREAM hBs,
 
   if (hBs->ConfigCache == BS_WRITER) {
     hCrcInfo->crcRegData[reg].bitBufCntBits =
-        FDKgetValidBits(hBs) - hCrcInfo->crcRegData[reg].validBits;
+        (INT)FDKgetValidBits(hBs) - hCrcInfo->crcRegData[reg].validBits;
   } else {
     hCrcInfo->crcRegData[reg].bitBufCntBits =
-        hCrcInfo->crcRegData[reg].validBits - FDKgetValidBits(hBs);
+        hCrcInfo->crcRegData[reg].validBits - (INT)FDKgetValidBits(hBs);
   }
 
   if (hCrcInfo->crcRegData[reg].maxBits == 0) {
@@ -432,7 +432,7 @@ static void crcCalc(HANDLE_FDK_CRCINFO hCrcInfo, HANDLE_FDK_BITSTREAM hBs,
   if (hBs->ConfigCache == BS_READER) {
     bsReader = *hBs;
     FDKpushBiDirectional(&bsReader,
-                         -(INT)(rD->validBits - FDKgetValidBits(&bsReader)));
+                         -(rD->validBits - (INT)FDKgetValidBits(&bsReader)));
   } else {
     FDKinitBitStream(&bsReader, hBs->hBitBuf.Buffer, hBs->hBitBuf.bufSize,
                      hBs->hBitBuf.ValidBits, BS_READER);
@@ -441,7 +441,7 @@ static void crcCalc(HANDLE_FDK_CRCINFO hCrcInfo, HANDLE_FDK_BITSTREAM hBs,
 
   int bits, rBits;
   rBits = (rD->maxBits >= 0) ? rD->maxBits : -rD->maxBits; /* ramaining bits */
-  if ((rD->maxBits > 0) && (((INT)rD->bitBufCntBits >> 3 << 3) < rBits)) {
+  if ((rD->maxBits > 0) && ((rD->bitBufCntBits >> 3 << 3) < rBits)) {
     bits = rD->bitBufCntBits;
   } else {
     bits = rBits;
