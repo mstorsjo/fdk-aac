@@ -437,7 +437,8 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
                                                  UCHAR *elementInstanceTag,
                                                  UINT alignmentAnchor) {
   AAC_DECODER_ERROR error = AAC_DEC_OK;
-  UINT dataStart, dseBits;
+  UINT dseBits;
+  INT dataStart;
   int dataByteAlignFlag, count;
 
   FDK_ASSERT(self != NULL);
@@ -460,14 +461,14 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
     FDKbyteAlign(bs, alignmentAnchor);
   }
 
-  dataStart = FDKgetValidBits(bs);
+  dataStart = (INT)FDKgetValidBits(bs);
 
   error = CAacDecoder_AncDataParse(&self->ancData, bs, count);
   transportDec_CrcEndReg(self->hInput, crcReg);
 
   {
     /* Move to the beginning of the data chunk */
-    FDKpushBack(bs, dataStart - FDKgetValidBits(bs));
+    FDKpushBack(bs, dataStart - (INT)FDKgetValidBits(bs));
 
     /* Read Anc data if available */
     aacDecoder_drcMarkPayload(self->hDrcInfo, bs, DVB_DRC_ANC_DATA);
@@ -477,7 +478,7 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
     PCMDMX_ERROR dmxErr = PCMDMX_OK;
 
     /* Move to the beginning of the data chunk */
-    FDKpushBack(bs, dataStart - FDKgetValidBits(bs));
+    FDKpushBack(bs, dataStart - (INT)FDKgetValidBits(bs));
 
     /* Read DMX meta-data */
     dmxErr = pcmDmx_Parse(self->hPcmUtils, bs, dseBits, 0 /* not mpeg2 */);
@@ -487,8 +488,7 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
   }
 
   /* Move to the very end of the element. */
-  FDKpushBiDirectional(
-      bs, (INT)FDKgetValidBits(bs) - (INT)dataStart + (INT)dseBits);
+  FDKpushBiDirectional(bs, (INT)FDKgetValidBits(bs) - dataStart + (INT)dseBits);
 
   return error;
 }
