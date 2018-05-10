@@ -566,7 +566,7 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
                                 with respect to the beginning of the syntactic
                                 element in which ByteAlign() occurs. */
 
-  numHeaderBits = cfgStartPos - FDKgetValidBits(bitstream);
+  numHeaderBits = cfgStartPos - (INT)FDKgetValidBits(bitstream);
   bitsAvailable -= numHeaderBits;
 
   pSpatialSpecificConfig->sacExtCnt = 0;
@@ -594,7 +594,7 @@ bail:
        bitbuffer is exactly at its end when leaving the function. */
     FDKpushBiDirectional(
         bitstream,
-        (sacHeaderLen * 8) - (cfgStartPos - FDKgetValidBits(bitstream)));
+        (sacHeaderLen * 8) - (cfgStartPos - (INT)FDKgetValidBits(bitstream)));
   }
 
   return err;

@@ -283,7 +283,7 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp,
 
   for (i = 0; i < 2; i++) {
     if (i > 0) {
-      FDKpushBack(hBs, length * 8 - FDKgetValidBits(hBs));
+      FDKpushBack(hBs, (INT)length * 8 - (INT)FDKgetValidBits(hBs));
       configMode = AC_CM_ALLOC_MEM;
     }
 
