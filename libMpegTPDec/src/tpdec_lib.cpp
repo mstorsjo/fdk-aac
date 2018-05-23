@@ -1337,9 +1337,9 @@ static TRANSPORTDEC_ERROR transportDec_readStream(HANDLE_TRANSPORTDEC hTp,
   INT bitDistance, bfDelta;
 
   /* Obtain distance to next synch word */
-  bitDistance = FDKgetValidBits(hBs);
+  bitDistance = (INT)FDKgetValidBits(hBs);
   error = synchronization(hTp, &headerBits);
-  bitDistance -= FDKgetValidBits(hBs);
+  bitDistance -= (INT)FDKgetValidBits(hBs);
 
   FDK_ASSERT(bitDistance >= 0);
 
@@ -1380,7 +1380,7 @@ static TRANSPORTDEC_ERROR transportDec_readStream(HANDLE_TRANSPORTDEC hTp,
         int num, denom;
 
         /* Obtain estimate of number of lost frames */
-        num = hTp->asc[0].m_samplingFrequency * (bfDelta + bitDistance) +
+        num = (INT)hTp->asc[0].m_samplingFrequency * (bfDelta + bitDistance) +
               hTp->remainder;
         denom = hTp->avgBitRate * hTp->asc[0].m_samplesPerFrame;
         if (num > 0) {

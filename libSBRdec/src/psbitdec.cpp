@@ -311,6 +311,7 @@ int DecodePs(struct PS_DEC *h_ps_d,  /*!< PS handle */
     pBsData->noEnv = 1;
 
     if (pBsData->bEnableIid) {
+      pBsData->bFineIidQ = h_ps_d->specificTo.mpeg.bPrevFrameFineIidQ;
       for (gr = 0; gr < NO_HI_RES_IID_BINS; gr++) {
         pBsData->aaIidIndex[pBsData->noEnv - 1][gr] =
             h_ps_d->specificTo.mpeg.aIidPrevFrameIndex[gr];
@@ -332,6 +333,9 @@ int DecodePs(struct PS_DEC *h_ps_d,  /*!< PS handle */
       }
     }
   }
+
+  /* Update previous frame Iid quantization */
+  h_ps_d->specificTo.mpeg.bPrevFrameFineIidQ = pBsData->bFineIidQ;
 
   /* Update previous frame index buffers */
   for (gr = 0; gr < NO_HI_RES_IID_BINS; gr++) {

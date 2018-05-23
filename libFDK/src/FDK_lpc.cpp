@@ -184,12 +184,19 @@ void CLpc_SynthesisLattice(FIXP_DBL *signal, const int signal_size,
   for (i = signal_size; i != 0; i--) {
     FIXP_DBL *pState = state + order - 1;
     const FIXP_DBL *pCoeff = coeff + order - 1;
-    FIXP_DBL tmp;
+    FIXP_DBL tmp, accu;
 
-    tmp = scaleValue(*pSignal, signal_e) - fMult(*pCoeff--, *pState--);
+    accu =
+        fMultSubDiv2(scaleValue(*pSignal, signal_e - 1), *pCoeff--, *pState--);
+    tmp = SATURATE_LEFT_SHIFT_ALT(accu, 1, DFRACT_BITS);
+
     for (j = order - 1; j != 0; j--) {
-      tmp = tmp - fMult(pCoeff[0], pState[0]);
-      pState[1] = pState[0] + fMult(*pCoeff--, tmp);
+      accu = fMultSubDiv2(tmp >> 1, pCoeff[0], pState[0]);
+      tmp = SATURATE_LEFT_SHIFT_ALT(accu, 1, DFRACT_BITS);
+
+      accu = fMultAddDiv2(pState[0] >> 1, *pCoeff--, tmp);
+      pState[1] = SATURATE_LEFT_SHIFT_ALT(accu, 1, DFRACT_BITS);
+
       pState--;
     }
 

@@ -1589,9 +1589,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     case 14:
       ascChannels = 8;
       break;
-    case 13: /* 22.2 setup */
-      ascChannels = 24;
-      break;
     default:
       return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
   }
@@ -2837,7 +2834,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
               /* usacExtElementStop = 1; */
             }
 
-            usacExtBitPos = FDKgetValidBits(bs);
+            usacExtBitPos = (INT)FDKgetValidBits(bs);
 
             USAC_EXT_ELEMENT_TYPE usacExtElementType =
                 self->pUsacConfig[streamIndex]
@@ -2862,7 +2859,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
             /* Skip any remaining bits of extension payload */
             usacExtBitPos = (usacExtElementPayloadLength * 8) -
-                            (usacExtBitPos - FDKgetValidBits(bs));
+                            (usacExtBitPos - (INT)FDKgetValidBits(bs));
             if (usacExtBitPos < 0) {
               self->frameOK = 0;
               ErrorStatus = AAC_DEC_PARSE_ERROR;

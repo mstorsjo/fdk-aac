@@ -274,17 +274,28 @@ static int FDK_QmfDomain_AllocatePersistentMemory(HANDLE_FDK_QMF_DOMAIN qd) {
     size = gc->nBandsAnalysis * 10;
     if (size > 0) {
       if (gc->nBandsAnalysis == QMF_DOMAIN_ANALYSIS_QMF_BANDS_16) {
-        if (NULL == (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates16(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pAnaQmfStates == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates16(ch)))
+            goto bail;
+        }
       } else if (gc->nBandsAnalysis == QMF_DOMAIN_ANALYSIS_QMF_BANDS_24) {
-        if (NULL == (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates24(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pAnaQmfStates == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates24(ch)))
+            goto bail;
+        }
       } else if (gc->nBandsAnalysis == QMF_DOMAIN_ANALYSIS_QMF_BANDS_32) {
-        if (NULL == (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates32(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pAnaQmfStates == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates32(ch)))
+            goto bail;
+        }
       } else {
-        if (NULL == (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pAnaQmfStates == NULL) {
+          if (NULL == (qd->QmfDomainIn[ch].pAnaQmfStates = GetAnaQmfStates(ch)))
+            goto bail;
+        }
       }
     } else {
       qd->QmfDomainIn[ch].pAnaQmfStates = NULL;
@@ -293,20 +304,36 @@ static int FDK_QmfDomain_AllocatePersistentMemory(HANDLE_FDK_QMF_DOMAIN qd) {
     size = gc->nQmfOvTimeSlots + gc->nQmfTimeSlots;
     if (size > 0) {
       if (gc->nQmfTimeSlots == QMF_DOMAIN_TIMESLOTS_16) {
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal16(ch)))
-          goto bail;
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag16(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].hQmfSlotsReal == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal16(ch)))
+            goto bail;
+        }
+        if (qd->QmfDomainIn[ch].hQmfSlotsImag == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag16(ch)))
+            goto bail;
+        }
       } else if (gc->nQmfTimeSlots == QMF_DOMAIN_TIMESLOTS_32) {
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal32(ch)))
-          goto bail;
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag32(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].hQmfSlotsReal == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal32(ch)))
+            goto bail;
+        }
+        if (qd->QmfDomainIn[ch].hQmfSlotsImag == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag32(ch)))
+            goto bail;
+        }
       } else {
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal(ch)))
-          goto bail;
-        if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].hQmfSlotsReal == NULL) {
+          if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsReal = GetQmfSlotsReal(ch)))
+            goto bail;
+        }
+        if (qd->QmfDomainIn[ch].hQmfSlotsImag == NULL) {
+          if (NULL == (qd->QmfDomainIn[ch].hQmfSlotsImag = GetQmfSlotsImag(ch)))
+            goto bail;
+        }
       }
     } else {
       qd->QmfDomainIn[ch].hQmfSlotsReal = NULL;
@@ -316,17 +343,23 @@ static int FDK_QmfDomain_AllocatePersistentMemory(HANDLE_FDK_QMF_DOMAIN qd) {
     size = gc->nQmfOvTimeSlots * gc->nQmfProcBands * CMPLX_MOD;
     if (size > 0) {
       if (gc->nQmfOvTimeSlots == QMF_DOMAIN_OV_TIMESLOTS_16) {
-        if (NULL ==
-            (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer16(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pOverlapBuffer == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer16(ch)))
+            goto bail;
+        }
       } else if (gc->nQmfOvTimeSlots == QMF_DOMAIN_OV_TIMESLOTS_32) {
-        if (NULL ==
-            (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer32(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pOverlapBuffer == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer32(ch)))
+            goto bail;
+        }
       } else {
-        if (NULL ==
-            (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer(ch)))
-          goto bail;
+        if (qd->QmfDomainIn[ch].pOverlapBuffer == NULL) {
+          if (NULL ==
+              (qd->QmfDomainIn[ch].pOverlapBuffer = GetQmfOverlapBuffer(ch)))
+            goto bail;
+        }
       }
     } else {
       qd->QmfDomainIn[ch].pOverlapBuffer = NULL;
@@ -336,8 +369,10 @@ static int FDK_QmfDomain_AllocatePersistentMemory(HANDLE_FDK_QMF_DOMAIN qd) {
   for (ch = 0; ch < gc->nOutputChannels; ch++) {
     int size = gc->nBandsSynthesis * 9;
     if (size > 0) {
-      if (NULL == (qd->QmfDomainOut[ch].pSynQmfStates = GetSynQmfStates(ch)))
-        goto bail;
+      if (qd->QmfDomainOut[ch].pSynQmfStates == NULL) {
+        if (NULL == (qd->QmfDomainOut[ch].pSynQmfStates = GetSynQmfStates(ch)))
+          goto bail;
+      }
     } else {
       qd->QmfDomainOut[ch].pSynQmfStates = NULL;
     }
