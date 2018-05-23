@@ -861,14 +861,16 @@ typedef struct {
                                returns AAC_DEC_TRANSPORT_SYNC_ERROR. It will be
                              < 0 if the estimation failed. */
 
-  UINT numTotalBytes; /*!< This is the number of total bytes that have passed
-                         through the decoder. */
-  UINT numBadBytes; /*!< This is the number of total bytes that were considered
-                       with errors from numTotalBytes. */
-  UINT numTotalAccessUnits; /*!< This is the number of total access units that
-                               have passed through the decoder. */
-  UINT numBadAccessUnits;   /*!< This is the number of total access units that
-                               were considered with errors from numTotalBytes. */
+  INT64 numTotalBytes; /*!< This is the number of total bytes that have passed
+                          through the decoder. */
+  INT64
+  numBadBytes; /*!< This is the number of total bytes that were considered
+                  with errors from numTotalBytes. */
+  INT64
+  numTotalAccessUnits;     /*!< This is the number of total access units that
+                              have passed through the decoder. */
+  INT64 numBadAccessUnits; /*!< This is the number of total access units that
+                              were considered with errors from numTotalBytes. */
 
   /* Metadata */
   SCHAR drcProgRefLev; /*!< DRC program reference level. Defines the reference
