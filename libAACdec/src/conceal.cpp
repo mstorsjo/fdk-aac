@@ -158,8 +158,8 @@ amm-info@iis.fraunhofer.de
 #define CONCEAL_NOT_DEFINED ((UCHAR)-1)
 
 /* default settings */
-#define CONCEAL_DFLT_FADEOUT_FRAMES (0)
-#define CONCEAL_DFLT_FADEIN_FRAMES (0)
+#define CONCEAL_DFLT_FADEOUT_FRAMES (6)
+#define CONCEAL_DFLT_FADEIN_FRAMES (5)
 #define CONCEAL_DFLT_MUTE_RELEASE_FRAMES (0)
 
 #define CONCEAL_DFLT_FADE_FACTOR (0.707106781186548f) /* 1/sqrt(2) */

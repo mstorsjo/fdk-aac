@@ -269,23 +269,33 @@ static FIXP_DBL addLowbandEnergies(FIXP_DBL **Energies, int *scaleEnergies,
   FIXP_DBL accu1 = FL2FXCONST_DBL(0.0f);
   FIXP_DBL accu2 = FL2FXCONST_DBL(0.0f);
   int tran_offdiv2 = tran_off >> nrgSzShift;
+  const int sc1 =
+      DFRACT_BITS -
+      fNormz((FIXP_DBL)fMax(
+          1, (freqBandTable[0] * (YBufferWriteOffset - tran_offdiv2) - 1)));
+  const int sc2 =
+      DFRACT_BITS -
+      fNormz((FIXP_DBL)fMax(
+          1, (freqBandTable[0] *
+                  (tran_offdiv2 + (slots >> nrgSzShift) - YBufferWriteOffset) -
+              1)));
   int ts, k;
 
   /* Sum up lowband energy from one frame at offset tran_off */
   /* freqBandTable[LORES] has MAX_FREQ_COEFFS/2 +1 coeefs max. */
   for (ts = tran_offdiv2; ts < YBufferWriteOffset; ts++) {
     for (k = 0; k < freqBandTable[0]; k++) {
-      accu1 += Energies[ts][k] >> 6;
+      accu1 += Energies[ts][k] >> sc1;
     }
   }
   for (; ts < tran_offdiv2 + (slots >> nrgSzShift); ts++) {
     for (k = 0; k < freqBandTable[0]; k++) {
-      accu2 += Energies[ts][k] >> 9;
+      accu2 += Energies[ts][k] >> sc2;
     }
   }
 
-  nrgTotal_m = fAddNorm(accu1, 1 - scaleEnergies[0], accu2,
-                        4 - scaleEnergies[1], &nrgTotal_e);
+  nrgTotal_m = fAddNorm(accu1, (sc1 - 5) - scaleEnergies[0], accu2,
+                        (sc2 - 5) - scaleEnergies[1], &nrgTotal_e);
   nrgTotal_m = scaleValueSaturate(nrgTotal_m, nrgTotal_e);
 
   return (nrgTotal_m);

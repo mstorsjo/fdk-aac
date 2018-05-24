@@ -541,11 +541,16 @@ INT imlt_block(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *spectrum,
      */
     /* and de-scale current spectrum signal (time domain, no yet windowed) */
     if (gain != (FIXP_DBL)0) {
-      scaleValuesWithFactor(pSpec, gain, tl, scalefactor[w] + specShiftScale);
-    } else {
-      int loc_scale = scalefactor[w] + specShiftScale;
+      for (i = 0; i < tl; i++) {
+        pSpec[i] = fMult(pSpec[i], gain);
+      }
+    }
+
+    {
+      int loc_scale =
+          fixmin_I(scalefactor[w] + specShiftScale, (INT)DFRACT_BITS - 1);
       DWORD_ALIGNED(pSpec);
-      scaleValues(pSpec, tl, loc_scale);
+      scaleValuesSaturate(pSpec, tl, loc_scale);
     }
 
     if (noOutSamples <= nrSamples) {
@@ -614,59 +619,34 @@ INT imlt_block(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *spectrum,
         if (!hMdct->pAsymOvlp) {
           for (i = 0; i < fl / 2; i++) {
             FIXP_DBL x0, x1;
-#ifdef FUNCTION_cplxMult_nIm
-            /* This macro negates 4th parameter (*pOvl--) */
-            /* and inverts the sign of result x1          */
-
-            /* This subroutine calculates the two output segments (C,D) from the
-            two availabe  DCT IV data blocks, namely, (-D-Cr,A-Br) and
-            (-F-Er,C-Dr). "pOvl" is the pointer to the overlap block and points
-            to the end of the (-D-Cr) part of the overlap buffer (-D-Cr,A-Br).
-            It points to the end of the (-D-Cr) because it will read this part
-            in a flipped order. "pCurr" is the pointer to the current block
-            (-F-Er,C-Dr) and points to the beginning of the (C-Dr) block,
-            because this block will be read consequitively. "pWindow" is a
-            pointer to the used window coefficients. In pointer "x1" we get the
-            already computed from the function "Dr" segment. In pointer "x0" we
-            get the "C" segment. Since we have to output them sequentially the
-            "x0" pointer points to the beginnig of the output buffer (X,X), and
-            pointer "x1" points to the end of the output buffer (X,X). When we
-            get the output of the cplxMult_nIm function we write it sequentially
-            in the output buffer from the left to right ("x0"=>C) and right to
-            left ("x1"=>Dr) implementing flipping. At the end we get an output
-            in the form (C,D).      */
-            cplxMult_nIm(&x1, &x0, *pCurr++, *pOvl--, pWindow[i]);
-            *pOut0++ = IMDCT_SCALE_DBL(x0);
-            *pOut1-- = IMDCT_SCALE_DBL(x1);
-#else
-            cplxMult(&x1, &x0, *pCurr++, -*pOvl--, pWindow[i]);
-            *pOut0 = IMDCT_SCALE_DBL(x0);
-            *pOut1 = IMDCT_SCALE_DBL(-x1);
+            cplxMultDiv2(&x1, &x0, *pCurr++, -*pOvl--, pWindow[i]);
+            *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+            *pOut1 = IMDCT_SCALE_DBL_LSH1(-x1);
             pOut0++;
             pOut1--;
-#endif /* #ifdef FUNCTION_cplxMult_nIm */
           }
         } else {
           FIXP_DBL *pAsymOvl = hMdct->pAsymOvlp + fl / 2 - 1;
           for (i = 0; i < fl / 2; i++) {
             FIXP_DBL x0, x1;
-            x1 = -fMult(*pCurr, pWindow[i].v.re) +
-                 fMult(*pAsymOvl, pWindow[i].v.im);
-            x0 = fMult(*pCurr, pWindow[i].v.im) - fMult(*pOvl, pWindow[i].v.re);
+            x1 = -fMultDiv2(*pCurr, pWindow[i].v.re) +
+                 fMultDiv2(*pAsymOvl, pWindow[i].v.im);
+            x0 = fMultDiv2(*pCurr, pWindow[i].v.im) -
+                 fMultDiv2(*pOvl, pWindow[i].v.re);
             pCurr++;
             pOvl--;
             pAsymOvl--;
-            *pOut0++ = IMDCT_SCALE_DBL(x0);
-            *pOut1-- = IMDCT_SCALE_DBL(x1);
+            *pOut0++ = IMDCT_SCALE_DBL_LSH1(x0);
+            *pOut1-- = IMDCT_SCALE_DBL_LSH1(x1);
           }
           hMdct->pAsymOvlp = NULL;
         }
       } else { /* prevAliasingSymmetry == 1 */
         for (i = 0; i < fl / 2; i++) {
           FIXP_DBL x0, x1;
-          cplxMult(&x1, &x0, *pCurr++, -*pOvl--, pWindow[i]);
-          *pOut0 = IMDCT_SCALE_DBL(x0);
-          *pOut1 = IMDCT_SCALE_DBL(x1);
+          cplxMultDiv2(&x1, &x0, *pCurr++, -*pOvl--, pWindow[i]);
+          *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+          *pOut1 = IMDCT_SCALE_DBL_LSH1(x1);
           pOut0++;
           pOut1--;
         }
@@ -675,18 +655,18 @@ INT imlt_block(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *spectrum,
       if (hMdct->prevAliasSymmetry == 0) {
         for (i = 0; i < fl / 2; i++) {
           FIXP_DBL x0, x1;
-          cplxMult(&x1, &x0, *pCurr++, *pOvl--, pWindow[i]);
-          *pOut0 = IMDCT_SCALE_DBL(x0);
-          *pOut1 = IMDCT_SCALE_DBL(-x1);
+          cplxMultDiv2(&x1, &x0, *pCurr++, *pOvl--, pWindow[i]);
+          *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+          *pOut1 = IMDCT_SCALE_DBL_LSH1(-x1);
           pOut0++;
           pOut1--;
         }
       } else { /* prevAliasingSymmetry == 1 */
         for (i = 0; i < fl / 2; i++) {
           FIXP_DBL x0, x1;
-          cplxMult(&x1, &x0, *pCurr++, *pOvl--, pWindow[i]);
-          *pOut0 = IMDCT_SCALE_DBL(x0);
-          *pOut1 = IMDCT_SCALE_DBL(x1);
+          cplxMultDiv2(&x1, &x0, *pCurr++, *pOvl--, pWindow[i]);
+          *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+          *pOut1 = IMDCT_SCALE_DBL_LSH1(x1);
           pOut0++;
           pOut1--;
         }

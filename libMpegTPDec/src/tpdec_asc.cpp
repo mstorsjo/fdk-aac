@@ -1618,7 +1618,7 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
     usacConfigExtLength = (int)escapedValue(hBs, 4, 8, 16);
 
     /* Start bit position of config extension */
-    nbits = FDKgetValidBits(hBs);
+    nbits = (INT)FDKgetValidBits(hBs);
 
     /* Return an error in case the bitbuffer fill level is too low. */
     if (nbits < usacConfigExtLength * 8) {
@@ -1650,7 +1650,7 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
 
     /* Skip remaining bits. If too many bits were parsed, assume error. */
     usacConfigExtLength =
-        8 * usacConfigExtLength - (nbits - FDKgetValidBits(hBs));
+        8 * usacConfigExtLength - (nbits - (INT)FDKgetValidBits(hBs));
     if (usacConfigExtLength < 0) {
       return TRANSPORTDEC_PARSE_ERROR;
     }
