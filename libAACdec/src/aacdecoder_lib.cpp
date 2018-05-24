@@ -1082,15 +1082,15 @@ static void aacDecoder_UpdateBitStreamCounters(CStreamInfo *pSi,
 
   /* bit/byte counters */
   {
-    int nBytes;
+    INT nBytes;
 
     nBytes = nBits >> 3;
-    pSi->numTotalBytes += nBytes;
+    pSi->numTotalBytes = (UINT)((INT)pSi->numTotalBytes + nBytes);
     if (IS_OUTPUT_VALID(ErrorStatus)) {
       pSi->numTotalAccessUnits++;
     }
     if (IS_DECODE_ERROR(ErrorStatus)) {
-      pSi->numBadBytes += nBytes;
+      pSi->numBadBytes = (UINT)((INT)pSi->numBadBytes + nBytes);
       pSi->numBadAccessUnits++;
     }
   }
