@@ -238,7 +238,8 @@ void CLpd_AcelpPrepareInternalMem(const FIXP_DBL *synth, UCHAR last_lpd_mode,
                                   const FIXP_LPC *A_new, const INT A_new_exp,
                                   const FIXP_LPC *A_old, const INT A_old_exp,
                                   CAcelpStaticMem *acelp_mem,
-                                  INT coreCoderFrameLength, UCHAR lpd_mode);
+                                  INT coreCoderFrameLength, INT clearOldExc,
+                                  UCHAR lpd_mode);
 
 /**
  * \brief Calculate zero input response (zir) of the acelp synthesis filter

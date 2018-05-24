@@ -260,26 +260,6 @@ inline void cplxMult(FIXP_DBL *c_Re, FIXP_DBL *c_Im, const FIXP_DBL a_Re,
 }
 #endif
 
-#if !defined(FUNCTION_cplxMult_nIm)
-#define FUNCTION_cplxMult_nIm
-
-/* Same as cplxMult, but
-   a_Im must be negated, when used
-   c_re must be negated, when output
-*/
-inline void cplxMult_nIm(FIXP_DBL *c_Re, FIXP_DBL *c_Im, const FIXP_DBL a_Re,
-                         const FIXP_DBL a_Im, const FIXP_SPK w) {
-  *c_Re = -(fMult(a_Re, w.v.re) + fMult(a_Im, w.v.im));
-  *c_Im = fMult(a_Re, w.v.im) - fMult(a_Im, w.v.re);
-}
-
-inline void cplxMult_nIm(FIXP_DBL *c_Re, FIXP_DBL *c_Im, const FIXP_DBL a_Re,
-                         const FIXP_DBL a_Im, const FIXP_DPK w) {
-  *c_Re = -(fMult(a_Re, w.v.re) + fMult(a_Im, w.v.im));
-  *c_Im = fMult(a_Re, w.v.im) - fMult(a_Im, w.v.re);
-}
-#endif
-
   /* #############################################################################
    */
 

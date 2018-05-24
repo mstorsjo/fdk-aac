@@ -1776,7 +1776,7 @@ AAC_DECODER_ERROR CLpd_RenderTimeSignal(
               pAacDecoderChannelInfo->data.usac.lp_coeff[k],
               pAacDecoderChannelInfo->data.usac.lp_coeff_exp[k], lp_prev,
               lp_prev_exp, &pAacDecoderStaticChannelInfo->acelp, lFrame,
-              mod[k]);
+              (last_frame_lost && k < 2), mod[k]);
         }
       } else {
         if (k == 0 && pAacDecoderStaticChannelInfo->IMdct.ov_offset !=
