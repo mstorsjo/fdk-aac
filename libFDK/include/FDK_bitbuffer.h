@@ -113,7 +113,6 @@ typedef struct {
   UINT ValidBits;
   UINT ReadOffset;
   UINT WriteOffset;
-  UINT BitCnt;
   UINT BitNdx;
 
   UCHAR *Buffer;
@@ -159,14 +158,9 @@ void FDK_pushBack(HANDLE_FDK_BITBUF hBitBuffer, const UINT numberOfBits,
 void FDK_pushForward(HANDLE_FDK_BITBUF hBitBuffer, const UINT numberOfBits,
                      UCHAR config);
 
-void FDK_byteAlign(HANDLE_FDK_BITBUF hBitBuffer, UCHAR config);
-
 UINT FDK_getValidBits(HANDLE_FDK_BITBUF hBitBuffer);
 
 INT FDK_getFreeBits(HANDLE_FDK_BITBUF hBitBuffer);
-
-void FDK_setBitCnt(HANDLE_FDK_BITBUF hBitBuffer, const UINT value);
-INT FDK_getBitCnt(HANDLE_FDK_BITBUF hBitBuffer);
 
 void FDK_Feed(HANDLE_FDK_BITBUF hBitBuffer, const UCHAR inputBuffer[],
               const UINT bufferSize, UINT *bytesValid);
