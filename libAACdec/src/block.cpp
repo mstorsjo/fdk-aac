@@ -127,9 +127,11 @@ amm-info@iis.fraunhofer.de
   The function reads the escape sequence from the bitstream,
   if the absolute value of the quantized coefficient has the
   value 16.
-  A limitation is implemented to maximal 31 bits to prevent endless loops.
-  If it strikes, MAX_QUANTIZED_VALUE + 1 is returned, independent of the sign of
-  parameter q.
+  A limitation is implemented to maximal 21 bits according to
+  ISO/IEC 14496-3:2009(E) 4.6.3.3.
+  This limits the escape prefix to a maximum of eight 1's.
+  If more than eight 1's are read, MAX_QUANTIZED_VALUE + 1 is
+  returned, independent of the sign of parameter q.
 
   \return  quantized coefficient
 */
@@ -139,11 +141,11 @@ LONG CBlock_GetEscape(HANDLE_FDK_BITSTREAM bs, /*!< pointer to bitstream */
   if (fAbs(q) != 16) return (q);
 
   LONG i, off;
-  for (i = 4; i < 32; i++) {
+  for (i = 4; i < 13; i++) {
     if (FDKreadBit(bs) == 0) break;
   }
 
-  if (i == 32) return (MAX_QUANTIZED_VALUE + 1);
+  if (i == 13) return (MAX_QUANTIZED_VALUE + 1);
 
   off = FDKreadBits(bs, i);
   i = off + (1 << i);

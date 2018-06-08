@@ -1630,14 +1630,14 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   aacChannelsOffset = 0;
   aacChannelsOffsetIdx = 0;
   elementOffset = 0;
+  if ((ascChannels <= 0) ||
+      (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
+    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+  }
+  if ((ascChannels + aacChannelsOffsetIdx) > ((8) * 2)) {
+    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+  }
   if (configMode & AC_CM_ALLOC_MEM) {
-    if ((ascChannels <= 0) ||
-        (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
-    if ((ascChannels + aacChannelsOffsetIdx) > ((8) * 2)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
     if ((ascChannels + aacChannelsOffset) > (8)) {
       return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
     }

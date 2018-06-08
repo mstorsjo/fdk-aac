@@ -736,9 +736,9 @@ static TRANSPORTDEC_ERROR transportDec_AdjustEndOfAccessUnit(
             hTp->parser.latm.m_audioMuxLengthBytes > 0) {
           int loasOffset;
 
-          loasOffset = (hTp->parser.latm.m_audioMuxLengthBytes * 8 +
-                        FDKgetValidBits(hBs)) -
-                       hTp->globalFramePos;
+          loasOffset = ((INT)hTp->parser.latm.m_audioMuxLengthBytes * 8 +
+                        (INT)FDKgetValidBits(hBs)) -
+                       (INT)hTp->globalFramePos;
           if (loasOffset != 0) {
             FDKpushBiDirectional(hBs, loasOffset);
             /* For ELD and other payloads there is an unknown amount of padding,
@@ -871,7 +871,7 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
   int fConfigFound = (pfConfigFound != NULL) ? *pfConfigFound : 0;
   int startPos;
 
-  startPos = FDKgetValidBits(hBs);
+  startPos = (INT)FDKgetValidBits(hBs);
 
   switch (hTp->transportFmt) {
     case TT_MP4_ADTS:
@@ -941,7 +941,7 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
           fTraverseMoreFrames = 0;
         }
         syncLayerFrameBits = (hTp->parser.adts.bs.frame_length << 3) -
-                             ((INT)startPos - (INT)FDKgetValidBits(hBs)) -
+                             (startPos - (INT)FDKgetValidBits(hBs)) -
                              syncLength;
         if (syncLayerFrameBits <= 0) {
           err = TRANSPORTDEC_SYNC_ERROR;
@@ -952,7 +952,7 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
       break;
     case TT_MP4_LOAS:
       if (hTp->numberOfRawDataBlocks <= 0) {
-        syncLayerFrameBits = FDKreadBits(hBs, 13);
+        syncLayerFrameBits = (INT)FDKreadBits(hBs, 13);
         hTp->parser.latm.m_audioMuxLengthBytes = syncLayerFrameBits;
         syncLayerFrameBits <<= 3;
       }
@@ -974,7 +974,7 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
           hTp->numberOfRawDataBlocks =
               CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
           if (hTp->transportFmt == TT_MP4_LOAS) {
-            syncLayerFrameBits -= startPos - FDKgetValidBits(hBs) - (13);
+            syncLayerFrameBits -= startPos - (INT)FDKgetValidBits(hBs) - (13);
           }
         }
       } else {
