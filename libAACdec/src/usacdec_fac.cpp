@@ -538,7 +538,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
   if (total_gain != (FIXP_DBL)0) {
     scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[0] + scale);
   } else {
-    scaleValues(pSpec, tl, spec_scale[0] + scale);
+    scaleValuesSaturate(pSpec, tl, spec_scale[0] + scale);
   }
 
   pOut1 += fl / 2 - 1;
@@ -627,7 +627,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
     if (total_gain != (FIXP_DBL)0) {
       scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[w] + scale);
     } else {
-      scaleValues(pSpec, tl, spec_scale[w] + scale);
+      scaleValuesSaturate(pSpec, tl, spec_scale[w] + scale);
     }
 
     if (noOutSamples <= nrSamples) {
