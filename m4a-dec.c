@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Fill failed: %x\n", err);
 			break;
 		}
-		err = aacDecoder_DecodeFrame(handle, decode_buf, output_size, 0);
+		err = aacDecoder_DecodeFrame(handle, decode_buf, output_size / sizeof(INT_PCM), 0);
 		av_free_packet(&pkt);
 		if (err == AAC_DEC_NOT_ENOUGH_BITS)
 			continue;
