@@ -142,7 +142,7 @@ FIXP_DBL *CLpd_FAC_GetMemory(CAacDecoderChannelInfo *pAacDecoderChannelInfo,
   return ptr;
 }
 
-int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, UCHAR *pFacScale,
+int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, SCHAR *pFacScale,
                   int length, int use_gain, int frame) {
   FIXP_DBL fac_gain;
   int fac_gain_e = 0;
