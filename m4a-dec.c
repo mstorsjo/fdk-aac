@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
 	av_register_all();
 	avformat_network_init();
 	ret = avformat_open_input(&in, infile, NULL, NULL);
+#ifdef AVFMT_FLAG_KEEP_SIDE_DATA
+	in->flags |= AVFMT_FLAG_KEEP_SIDE_DATA;
+#endif
 	if (ret < 0) {
 		char buf[100];
 		av_strerror(ret, buf, sizeof(buf));
