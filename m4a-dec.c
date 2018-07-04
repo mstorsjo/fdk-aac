@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	output_size = 8*2*1024;
+	output_size = 8*2*2048;
 	output_buf = (uint8_t*) malloc(output_size);
 	decode_buf = (int16_t*) malloc(output_size);
 
