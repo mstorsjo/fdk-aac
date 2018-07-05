@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 	}
-	if (aacEncoder_SetParam(handle, AACENC_TRANSMUX, 2) != AACENC_OK) {
+	if (aacEncoder_SetParam(handle, AACENC_TRANSMUX, TT_MP4_ADTS) != AACENC_OK) {
 		fprintf(stderr, "Unable to set the ADTS transmux\n");
 		return 1;
 	}
