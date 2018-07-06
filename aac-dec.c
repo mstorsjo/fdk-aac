@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	infile = argv[1];
 	outfile = argv[2];
 
-	handle = aacDecoder_Open(TT_MP4_ADTS, 1);
+	handle = aacDecoder_Open(TT_MP4_LOAS, 1);
 	in = fopen(infile, "rb");
 	if (!in) {
 		perror(infile);
