@@ -2055,17 +2055,12 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       if (self->flags[streamIndex] & (AC_RSV603DA | AC_USAC)) {
         _numElements = (int)asc->m_sc.m_usacConfig.m_usacNumElements;
       }
-      if (self->flags[streamIndex] & (AC_ER | AC_LD | AC_ELD)) {
-        _numElements = (asc->m_channelConfiguration == 7)
-                           ? 8
-                           : asc->m_channelConfiguration;
-      }
       for (int _el = 0; _el < _numElements; _el++) {
         int el_channels = 0;
         int el = elementOffset + _el;
 
         if (self->flags[streamIndex] &
-            (AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
+            (AC_ER | AC_LD | AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
           if (ch >= ascChannels) {
             break;
           }
@@ -2115,7 +2110,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
                   (SPECTRAL_PTR)&self->workBufferCore2[ch * 1024];
 
               if (el_channels == 2) {
-                FDK_ASSERT(ch < (8) - 1);
+                if (ch >= (8) - 1) {
+                  return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+                }
                 self->pAacDecoderChannelInfo[ch + 1]->pComData =
                     self->pAacDecoderChannelInfo[ch]->pComData;
                 self->pAacDecoderChannelInfo[ch + 1]->pComStaticData =
