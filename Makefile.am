@@ -212,7 +212,6 @@ EXTRA_DIST = \
     $(top_srcdir)/libMpegTPDec/src/*.h \
     $(top_srcdir)/libMpegTPDec/src/version \
     $(top_srcdir)/libFDK/include/*.h \
-    $(top_srcdir)/libFDK/include/aarch64/*.h \
     $(top_srcdir)/libFDK/include/arm/*.h \
     $(top_srcdir)/libFDK/include/mips/*.h \
     $(top_srcdir)/libFDK/include/ppc/*.h \
