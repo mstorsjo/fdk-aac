@@ -4,6 +4,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = \
     -I$(top_srcdir)/libAACdec/include \
     -I$(top_srcdir)/libAACenc/include \
+    -I$(top_srcdir)/libArithCoding/include \
+    -I$(top_srcdir)/libDRCdec/include \
+    -I$(top_srcdir)/libSACdec/include \
+    -I$(top_srcdir)/libSACenc/include \
     -I$(top_srcdir)/libSBRdec/include \
     -I$(top_srcdir)/libSBRenc/include \
     -I$(top_srcdir)/libMpegTPDec/include \
@@ -22,6 +26,7 @@ fdk_aacinclude_HEADERS = \
     $(top_srcdir)/libSYS/include/machine_type.h \
     $(top_srcdir)/libSYS/include/genericStds.h \
     $(top_srcdir)/libSYS/include/FDK_audio.h \
+    $(top_srcdir)/libSYS/include/syslib_channelMapDescr.h \
     $(top_srcdir)/libAACenc/include/aacenc_lib.h \
     $(top_srcdir)/libAACdec/include/aacdecoder_lib.h
 
@@ -62,7 +67,15 @@ AACDEC_SRC = \
     libAACdec/src/conceal.cpp \
     libAACdec/src/pulsedata.cpp \
     libAACdec/src/rvlcconceal.cpp \
-    libAACdec/src/stereo.cpp
+    libAACdec/src/stereo.cpp \
+    libAACdec/src/usacdec_lpd.cpp \
+    libAACdec/src/FDK_delay.cpp \
+    libAACdec/src/usacdec_lpc.cpp \
+    libAACdec/src/usacdec_ace_d4t64.cpp \
+    libAACdec/src/usacdec_fac.cpp \
+    libAACdec/src/usacdec_ace_ltp.cpp \
+    libAACdec/src/usacdec_acelp.cpp \
+    libAACdec/src/usacdec_rom.cpp
 
 AACENC_SRC = \
     libAACenc/src/aacenc.cpp \
@@ -96,7 +109,22 @@ AACENC_SRC = \
     libAACenc/src/dyn_bits.cpp \
     libAACenc/src/metadata_compressor.cpp \
     libAACenc/src/pnsparam.cpp \
-    libAACenc/src/qc_main.cpp
+    libAACenc/src/qc_main.cpp \
+    libAACenc/src/mps_main.cpp
+
+ARITHCODING_SRC = \
+    libArithCoding/src/ac_arith_coder.cpp
+
+DRCDEC_SRC = \
+    libDRCdec/src/FDK_drcDecLib.cpp \
+    libDRCdec/src/drcDec_gainDecoder.cpp \
+    libDRCdec/src/drcDec_reader.cpp \
+    libDRCdec/src/drcDec_rom.cpp \
+    libDRCdec/src/drcDec_selectionProcess.cpp \
+    libDRCdec/src/drcDec_tools.cpp \
+    libDRCdec/src/drcGainDec_init.cpp \
+    libDRCdec/src/drcGainDec_preprocess.cpp \
+    libDRCdec/src/drcGainDec_process.cpp
 
 FDK_SRC = \
     libFDK/src/autocorr2nd.cpp \
@@ -104,13 +132,19 @@ FDK_SRC = \
     libFDK/src/FDK_bitbuffer.cpp \
     libFDK/src/FDK_core.cpp \
     libFDK/src/FDK_crc.cpp \
+    libFDK/src/FDK_decorrelate.cpp \
     libFDK/src/FDK_hybrid.cpp \
+    libFDK/src/FDK_lpc.cpp \
+    libFDK/src/FDK_matrixCalloc.cpp \
+    libFDK/src/FDK_qmf_domain.cpp \
     libFDK/src/FDK_tools_rom.cpp \
     libFDK/src/FDK_trigFcts.cpp \
     libFDK/src/fft.cpp \
     libFDK/src/fft_rad2.cpp \
     libFDK/src/fixpoint_math.cpp \
+    libFDK/src/huff_nodes.cpp \
     libFDK/src/mdct.cpp \
+    libFDK/src/nlc_dec.cpp \
     libFDK/src/qmf.cpp \
     libFDK/src/scale.cpp
 
@@ -131,7 +165,37 @@ MPEGTPENC_SRC = \
 
 PCMUTILS_SRC = \
     libPCMutils/src/limiter.cpp \
-    libPCMutils/src/pcmutils_lib.cpp
+    libPCMutils/src/pcmdmx_lib.cpp \
+    libPCMutils/src/pcm_utils.cpp
+
+SACDEC_SRC = \
+    libSACdec/src/sac_bitdec.cpp \
+    libSACdec/src/sac_calcM1andM2.cpp \
+    libSACdec/src/sac_dec.cpp \
+    libSACdec/src/sac_dec_conceal.cpp \
+    libSACdec/src/sac_dec_lib.cpp \
+    libSACdec/src/sac_process.cpp \
+    libSACdec/src/sac_qmf.cpp \
+    libSACdec/src/sac_reshapeBBEnv.cpp \
+    libSACdec/src/sac_rom.cpp \
+    libSACdec/src/sac_smoothing.cpp \
+    libSACdec/src/sac_stp.cpp \
+    libSACdec/src/sac_tsd.cpp
+
+SACENC_SRC = \
+    libSACenc/src/sacenc_bitstream.cpp \
+    libSACenc/src/sacenc_delay.cpp \
+    libSACenc/src/sacenc_dmx_tdom_enh.cpp \
+    libSACenc/src/sacenc_filter.cpp \
+    libSACenc/src/sacenc_framewindowing.cpp \
+    libSACenc/src/sacenc_huff_tab.cpp \
+    libSACenc/src/sacenc_lib.cpp \
+    libSACenc/src/sacenc_nlc_enc.cpp \
+    libSACenc/src/sacenc_onsetdetect.cpp \
+    libSACenc/src/sacenc_paramextract.cpp \
+    libSACenc/src/sacenc_staticgain.cpp \
+    libSACenc/src/sacenc_tree.cpp \
+    libSACenc/src/sacenc_vectorfunctions.cpp
 
 SBRDEC_SRC = \
     libSBRdec/src/env_calc.cpp \
@@ -141,7 +205,6 @@ SBRDEC_SRC = \
     libSBRdec/src/lpp_tran.cpp \
     libSBRdec/src/psbitdec.cpp \
     libSBRdec/src/psdec.cpp \
-    libSBRdec/src/psdec_hybrid.cpp \
     libSBRdec/src/sbr_crc.cpp \
     libSBRdec/src/sbr_deb.cpp \
     libSBRdec/src/sbr_dec.cpp \
@@ -149,7 +212,12 @@ SBRDEC_SRC = \
     libSBRdec/src/sbrdec_freq_sca.cpp \
     libSBRdec/src/sbrdecoder.cpp \
     libSBRdec/src/sbr_ram.cpp \
-    libSBRdec/src/sbr_rom.cpp
+    libSBRdec/src/sbr_rom.cpp \
+    libSBRdec/src/hbe.cpp \
+    libSBRdec/src/pvc_dec.cpp \
+    libSBRdec/src/psdecrom_drm.cpp \
+    libSBRdec/src/psdec_drm.cpp \
+    libSBRdec/src/HFgen_preFlat.cpp
 
 SBRENC_SRC = \
     libSBRenc/src/bit_sbr.cpp \
@@ -160,7 +228,6 @@ SBRENC_SRC = \
     libSBRenc/src/ps_encode.cpp \
     libSBRenc/src/resampler.cpp \
     libSBRenc/src/sbr_encoder.cpp \
-    libSBRenc/src/sbr_ram.cpp \
     libSBRenc/src/ton_corr.cpp \
     libSBRenc/src/code_env.cpp \
     libSBRenc/src/env_est.cpp \
@@ -169,22 +236,25 @@ SBRENC_SRC = \
     libSBRenc/src/ps_main.cpp \
     libSBRenc/src/sbrenc_freq_sca.cpp \
     libSBRenc/src/sbr_misc.cpp \
-    libSBRenc/src/sbr_rom.cpp \
-    libSBRenc/src/tran_det.cpp
+    libSBRenc/src/tran_det.cpp \
+    libSBRenc/src/sbrenc_rom.cpp \
+    libSBRenc/src/sbrenc_ram.cpp
 
 SYS_SRC = \
-    libSYS/src/cmdl_parser.cpp \
-    libSYS/src/conv_string.cpp \
     libSYS/src/genericStds.cpp \
-    libSYS/src/wav_file.cpp
+    libSYS/src/syslib_channelMapDescr.cpp
 
 libfdk_aac_la_SOURCES = \
     $(AACDEC_SRC) $(AACENC_SRC) \
+    $(ARITHCODING_SRC) \
+    $(DRCDEC_SRC) \
     $(MPEGTPDEC_SRC) $(MPEGTPENC_SRC) \
+    $(SACDEC_SRC) $(SACENC_SRC) \
     $(SBRDEC_SRC) $(SBRENC_SRC) \
     $(PCMUTILS_SRC) $(FDK_SRC) $(SYS_SRC)
 
 EXTRA_DIST = \
+    $(top_srcdir)/.clang-format \
     $(top_srcdir)/autogen.sh \
     $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
     $(top_srcdir)/NOTICE \
@@ -196,21 +266,25 @@ EXTRA_DIST = \
     $(top_srcdir)/libAACdec/src/*.h \
     $(top_srcdir)/libAACdec/src/arm/*.cpp \
     $(top_srcdir)/libAACenc/src/*.h \
+    $(top_srcdir)/libArithCoding/include/*.h \
+    $(top_srcdir)/libDRCdec/include/*.h \
+    $(top_srcdir)/libDRCdec/src/*.h \
+    $(top_srcdir)/libSACdec/include/*.h \
+    $(top_srcdir)/libSACdec/src/*.h \
+    $(top_srcdir)/libSACenc/include/*.h \
+    $(top_srcdir)/libSACenc/src/*.h \
     $(top_srcdir)/libSBRenc/src/*.h \
     $(top_srcdir)/libSBRenc/include/*.h \
     $(top_srcdir)/libSBRdec/src/*.h \
     $(top_srcdir)/libSBRdec/src/arm/*.cpp \
     $(top_srcdir)/libSBRdec/include/*.h \
     $(top_srcdir)/libSYS/include/*.h \
-    $(top_srcdir)/libSYS/src/linux/*.cpp \
-    $(top_srcdir)/libSYS/src/mips/*.cpp \
     $(top_srcdir)/libPCMutils/include/*.h \
+    $(top_srcdir)/libPCMutils/src/*.h \
     $(top_srcdir)/libMpegTPEnc/include/*.h \
     $(top_srcdir)/libMpegTPEnc/src/*.h \
-    $(top_srcdir)/libMpegTPEnc/src/version \
     $(top_srcdir)/libMpegTPDec/include/*.h \
     $(top_srcdir)/libMpegTPDec/src/*.h \
-    $(top_srcdir)/libMpegTPDec/src/version \
     $(top_srcdir)/libFDK/include/*.h \
     $(top_srcdir)/libFDK/include/arm/*.h \
     $(top_srcdir)/libFDK/include/mips/*.h \
