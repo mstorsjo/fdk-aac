@@ -196,20 +196,17 @@ int main(int argc, char *argv[]) {
 			const uint8_t* in = &input_buf[2*i];
 			convert_buf[i] = in[0] | (in[1] << 8);
 		}
-		if (read <= 0) {
-			in_args.numInSamples = -1;
-		} else {
-			in_ptr = convert_buf;
-			in_size = read;
-			in_elem_size = 2;
+		in_ptr = convert_buf;
+		in_size = read;
+		in_elem_size = 2;
 
-			in_args.numInSamples = read/2;
-			in_buf.numBufs = 1;
-			in_buf.bufs = &in_ptr;
-			in_buf.bufferIdentifiers = &in_identifier;
-			in_buf.bufSizes = &in_size;
-			in_buf.bufElSizes = &in_elem_size;
-		}
+		in_args.numInSamples = read <= 0 ? -1 : read/2;
+		in_buf.numBufs = 1;
+		in_buf.bufs = &in_ptr;
+		in_buf.bufferIdentifiers = &in_identifier;
+		in_buf.bufSizes = &in_size;
+		in_buf.bufElSizes = &in_elem_size;
+
 		out_ptr = outbuf;
 		out_size = sizeof(outbuf);
 		out_elem_size = 1;
