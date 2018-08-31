@@ -267,9 +267,9 @@ static void D_gain2_plus(int index, FIXP_COD code[], FIXP_SGL *gain_pit,
   gcode0_e = gcode0_e + SF_MEAN_ENER_LG10 - (ener_code_e >> 1) + 1;
 
   i = index << 1;
-  *gain_pit = t_qua_gain7b[i]; /* adaptive codebook gain */
+  *gain_pit = fdk_t_qua_gain7b[i]; /* adaptive codebook gain */
   /* t_qua_gain[ind2p1] : fixed codebook gain correction factor */
-  Ltmp = fMult(t_qua_gain7b[i + 1], gcode0);
+  Ltmp = fMult(fdk_t_qua_gain7b[i + 1], gcode0);
   *gain_code = scaleValue(Ltmp, gcode0_e - SF_GAIN_C + SF_QUA_GAIN7B);
 
   /* update bad frame handler */
