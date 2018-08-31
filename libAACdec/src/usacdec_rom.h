@@ -132,7 +132,7 @@ extern const FIXP_LPC fdk_dec_dico_lsf_abs_8b[16 * 256];
 
 /* ACELP tables */
 #define SF_QUA_GAIN7B 4
-extern const FIXP_SGL t_qua_gain7b[128 * 2];
+extern const FIXP_SGL fdk_t_qua_gain7b[128 * 2];
 extern const FIXP_SGL lsp_interpol_factor[2][NB_SUBFR];
 
 /* For bass post filter */
