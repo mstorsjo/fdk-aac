@@ -196,6 +196,23 @@ FDK_INLINE void FDKdeleteBitStream(HANDLE_FDK_BITSTREAM hBitStream) {
   FDKfree(hBitStream);
 }
 
+FDK_INLINE void FDKrefillCache(HANDLE_FDK_BITSTREAM hBitStream,
+                               INT missingBits) {
+  INT validBits = FDK_getValidBits(&hBitStream->hBitBuf);
+  if (validBits >= CACHE_BITS) {
+    hBitStream->CacheWord = FDK_get32(&hBitStream->hBitBuf);
+    hBitStream->BitsInCache += CACHE_BITS;
+    return;
+  }
+  hBitStream->CacheWord <<= validBits;
+  hBitStream->CacheWord |= FDK_get(&hBitStream->hBitBuf, validBits);
+  hBitStream->BitsInCache += validBits;
+  if (missingBits > validBits) {
+    hBitStream->CacheWord <<= missingBits - validBits;
+    hBitStream->BitsInCache += missingBits - validBits;
+  }
+}
+
 /**
  * \brief ReadBits Function (forward). This function returns a number of
  * sequential bits from the input bitstream.
@@ -215,8 +232,7 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
   FDK_ASSERT(numberOfBits <= 32);
   if (missingBits > 0) {
     if (missingBits != 32) bits = hBitStream->CacheWord << missingBits;
-    hBitStream->CacheWord = FDK_get32(&hBitStream->hBitBuf);
-    hBitStream->BitsInCache += CACHE_BITS;
+    FDKrefillCache(hBitStream, missingBits);
   }
 
   hBitStream->BitsInCache -= numberOfBits;
@@ -227,9 +243,7 @@ FDK_INLINE UINT FDKreadBits(HANDLE_FDK_BITSTREAM hBitStream,
 
 FDK_INLINE UINT FDKreadBit(HANDLE_FDK_BITSTREAM hBitStream) {
   if (!hBitStream->BitsInCache) {
-    hBitStream->CacheWord = FDK_get32(&hBitStream->hBitBuf);
-    hBitStream->BitsInCache = CACHE_BITS - 1;
-    return hBitStream->CacheWord >> 31;
+    FDKrefillCache(hBitStream, 1);
   }
   hBitStream->BitsInCache--;
 
@@ -254,8 +268,7 @@ FDK_INLINE UINT FDKread2Bits(HANDLE_FDK_BITSTREAM hBitStream) {
   INT missingBits = 2 - (INT)hBitStream->BitsInCache;
   if (missingBits > 0) {
     bits = hBitStream->CacheWord << missingBits;
-    hBitStream->CacheWord = FDK_get32(&hBitStream->hBitBuf);
-    hBitStream->BitsInCache += CACHE_BITS;
+    FDKrefillCache(hBitStream, 2);
   }
 
   hBitStream->BitsInCache -= 2;
