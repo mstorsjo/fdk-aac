@@ -1,3 +1,9 @@
+2.0.0
+ - Major update in the upstream source base, with support for new
+   profiles and features, and numerous crash/fuzz fixes. The new
+   upstream version is referred to as FDKv2, thus skipping the
+   major version 1 and syncing the fdk-aac major version number to 2.
+
 0.1.6
  - Lots of minor assorted crash/fuzz fixes, mostly for the decoder but
    also some for the encoder
