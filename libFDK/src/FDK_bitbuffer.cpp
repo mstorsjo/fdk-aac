@@ -106,6 +106,8 @@ amm-info@iis.fraunhofer.de
 #include "common_fix.h"
 #include "fixminmax.h"
 
+#include <stdlib.h>
+
 const UINT BitMask[32 + 1] = {
     0x0,        0x1,        0x3,       0x7,       0xf,       0x1f,
     0x3f,       0x7f,       0xff,      0x1ff,     0x3ff,     0x7ff,
@@ -157,7 +159,11 @@ void FDK_ResetBitBuffer(HANDLE_FDK_BITBUF hBitBuf) {
 
 #ifndef FUNCTION_FDK_get
 INT FDK_get(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits) {
-  if (numberOfBits == 0 || numberOfBits > hBitBuf->ValidBits) return 0;
+  if (numberOfBits == 0 || numberOfBits > hBitBuf->ValidBits) {
+if (numberOfBits > hBitBuf->ValidBits)
+abort();
+return 0;
+}
 
   UINT byteOffset = hBitBuf->BitNdx >> 3;
   UINT bitOffset = hBitBuf->BitNdx & 0x07;
@@ -181,7 +187,10 @@ INT FDK_get(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits) {
 
 #ifndef FUNCTION_FDK_get32
 INT FDK_get32(HANDLE_FDK_BITBUF hBitBuf) {
-  if (hBitBuf->ValidBits < 32) return 0;
+  if (hBitBuf->ValidBits < 32) {
+abort();
+return 0;
+}
 
   UINT BitNdx = hBitBuf->BitNdx + 32;
   hBitBuf->BitNdx = BitNdx & (hBitBuf->bufBits - 1);
