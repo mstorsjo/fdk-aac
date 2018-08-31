@@ -1249,7 +1249,7 @@ const FIXP_LPC fdk_dec_dico_lsf_abs_8b[] = {
    adaptive codebook gain g_p (left column). Scaled by 2.0f.
    innovative codebook gain g_c (right column). Scaled by 16.0f.
 */
-const FIXP_SGL t_qua_gain7b[128 * 2] = {
+const FIXP_SGL fdk_t_qua_gain7b[128 * 2] = {
     204,   441,   464,   1977,  869,   1077,  1072,  3062,  1281,  4759,  1647,
     1539,  1845,  7020,  1853,  634,   1995,  2336,  2351,  15400, 2661,  1165,
     2702,  3900,  2710,  10133, 3195,  1752,  3498,  2624,  3663,  849,   3984,
