@@ -641,7 +641,7 @@ static const FIXP_DBL invCubeRootCorrection[3] = {0x40000000, 0x50A28BE6,
  */
 static
 #ifdef __arm__
-    FIXP_DBL __attribute__((always_inline))
+    FIXP_DBL FDK_FORCEINLINE
     invCubeRootNorm2(FIXP_DBL op_m, INT* op_e)
 #else
     FIXP_DBL
@@ -763,7 +763,7 @@ static const FIXP_DBL invFourthRootCorrection[4] = {0x40000000, 0x4C1BF829,
 
 static
 #ifdef __arm__
-    FIXP_DBL __attribute__((always_inline))
+    FIXP_DBL FDK_FORCEINLINE
     invFourthRootNorm2(FIXP_DBL op_m, INT* op_e)
 #else
     FIXP_DBL
@@ -879,7 +879,7 @@ static const FIXP_DBL inv3EigthRootCorrection[8] = {
 
 static
 #ifdef __arm__
-    FIXP_DBL __attribute__((always_inline))
+    FIXP_DBL FDK_FORCEINLINE
     inv3EigthRootNorm2(FIXP_DBL op_m, INT* op_e)
 #else
     FIXP_DBL
