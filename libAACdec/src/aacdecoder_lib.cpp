@@ -968,6 +968,8 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt,
     return NULL;
   }
 
+  transportDec_SetParam(pIn, TPDEC_PARAM_IGNORE_BUFFERFULLNESS, 1);
+
   /* Allocate AAC decoder core struct. */
   aacDec = CAacDecoder_Open(transportFmt);
 
