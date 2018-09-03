@@ -406,10 +406,6 @@ FDK_INLINE FIXP_SGL fMax(FIXP_SGL a, FIXP_SGL b) { return fixmax_S(a, b); }
 #if !defined(__LP64__)
 FDK_INLINE INT fMax(INT a, INT b) { return fixmax_I(a, b); }
 FDK_INLINE INT fMin(INT a, INT b) { return fixmin_I(a, b); }
-#if !defined(_MSC_VER) && defined(__x86_64__)
-FDK_INLINE SHORT fMax(SHORT a, SHORT b) { return fixmax_S(a, b); }
-FDK_INLINE SHORT fMin(SHORT a, SHORT b) { return fixmin_S(a, b); }
-#endif
 #endif
 
 inline UINT fMax(UINT a, UINT b) { return fixmax_UI(a, b); }
