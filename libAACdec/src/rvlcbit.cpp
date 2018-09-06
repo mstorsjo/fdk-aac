@@ -123,10 +123,10 @@ read direction. It is called very often, therefore it makes sense to inline it
 --------------------------------------------------------------------------------------------
 */
 
-UCHAR rvlcReadBitFromBitstream(HANDLE_FDK_BITSTREAM bs, INT *pPosition,
-                               UCHAR readDirection) {
+UCHAR rvlcReadBitFromBitstream(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
+                               INT *pPosition, UCHAR readDirection) {
   UINT bit;
-  INT readBitOffset = *pPosition - FDKgetBitCnt(bs);
+  INT readBitOffset = (INT)FDKgetValidBits(bs) - bsAnchor + *pPosition;
 
   if (readBitOffset) {
     FDKpushBiDirectional(bs, readBitOffset);
