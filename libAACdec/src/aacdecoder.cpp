@@ -2519,8 +2519,14 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     if (!(self->flags[0] &
           (AC_USAC | AC_RSVD50 | AC_RSV603DA | AC_ELD | AC_SCALABLE | AC_ER)))
       type = (MP4_ELEMENT_ID)FDKreadBits(bs, 3);
-    else
+    else {
+      if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+        self->frameOK = 0;
+        ErrorStatus = AAC_DEC_PARSE_ERROR;
+        break;
+      }
       type = self->elements[element_count];
+    }
 
     if ((self->flags[streamIndex] & (AC_USAC | AC_RSVD50) &&
          element_count == 0) ||
@@ -2564,6 +2570,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       case ID_USAC_SCE:
       case ID_USAC_CPE:
       case ID_USAC_LFE:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
 
         el_channels = CAacDecoder_GetELChannels(
             type, self->usacStereoConfigIndex[element_count]);
@@ -2795,12 +2806,24 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       } break;
 
       case ID_EXT:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
+
         ErrorStatus = aacDecoder_ParseExplicitMpsAndSbr(
             self, bs, previous_element, previous_element_index, element_count,
             el_cnt);
         break;
 
       case ID_USAC_EXT: {
+        if ((element_count - element_count_prev_streams) >=
+            TP_USAC_MAX_ELEMENTS) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
         /* parse extension element payload
            q.v. rsv603daExtElement() ISO/IEC DIS 23008-3  Table 30
            or   UsacExElement() ISO/IEC FDIS 23003-3:2011(E)  Table 21
