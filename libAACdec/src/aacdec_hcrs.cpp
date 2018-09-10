@@ -615,9 +615,9 @@ UINT Hcr_State_BODY_ONLY(HANDLE_FDK_BITSTREAM bs, void *ptr) {
 
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     CarryBitToBranchValue(carryBit, /* make a step in decoding tree */
                           treeNode, &branchValue, &branchNode);
@@ -749,9 +749,9 @@ UINT Hcr_State_BODY_SIGN__BODY(HANDLE_FDK_BITSTREAM bs, void *ptr) {
 
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     CarryBitToBranchValue(carryBit, /* make a step in decoding tree */
                           treeNode, &branchValue, &branchNode);
@@ -884,9 +884,9 @@ UINT Hcr_State_BODY_SIGN__SIGN(HANDLE_FDK_BITSTREAM bs, void *ptr) {
   /* loop for sign bit decoding */
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
     cntSign -=
         1; /* decrement sign counter because one sign bit has been read */
 
@@ -997,9 +997,9 @@ UINT Hcr_State_BODY_SIGN_ESC__BODY(HANDLE_FDK_BITSTREAM bs, void *ptr) {
 
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     /* make a step in tree */
     CarryBitToBranchValue(carryBit, treeNode, &branchValue, &branchNode);
@@ -1159,9 +1159,9 @@ UINT Hcr_State_BODY_SIGN_ESC__SIGN(HANDLE_FDK_BITSTREAM bs, void *ptr) {
   /* loop for sign bit decoding */
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     /* decrement sign counter because one sign bit has been read */
     cntSign -= 1;
@@ -1314,9 +1314,9 @@ UINT Hcr_State_BODY_SIGN_ESC__ESC_PREFIX(HANDLE_FDK_BITSTREAM bs, void *ptr) {
   /* decode escape prefix */
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     /* count ones and store sum in escapePrefixUp */
     if (carryBit == 1) {
@@ -1435,9 +1435,9 @@ UINT Hcr_State_BODY_SIGN_ESC__ESC_WORD(HANDLE_FDK_BITSTREAM bs, void *ptr) {
   /* decode escape word */
   for (; pRemainingBitsInSegment[segmentOffset] > 0;
        pRemainingBitsInSegment[segmentOffset] -= 1) {
-    carryBit = HcrGetABitFromBitstream(bs, &pLeftStartOfSegment[segmentOffset],
-                                       &pRightStartOfSegment[segmentOffset],
-                                       readDirection);
+    carryBit = HcrGetABitFromBitstream(
+        bs, pHcr->decInOut.bitstreamAnchor, &pLeftStartOfSegment[segmentOffset],
+        &pRightStartOfSegment[segmentOffset], readDirection);
 
     /* build escape word */
     escapeWord <<=
