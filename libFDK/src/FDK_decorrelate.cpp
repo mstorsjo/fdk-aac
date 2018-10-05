@@ -1086,8 +1086,9 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
     pb = SpatialDecGetProcessingBand(maxHybBand, self->mapHybBands2ProcBands);
     for (qs = startHybBand; qs <= maxHybBand; qs++) {
       pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
-      energy[pb] +=
-          (fPow2Div2(inputReal[qs] << clz) + fPow2Div2(inputImag[qs] << clz));
+      energy[pb] =
+          fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz) +
+                                       fPow2Div2(inputImag[qs] << clz));
     }
     pb++;
 
@@ -1100,7 +1101,7 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
       FIXP_DBL nrg = 0;
       qs_next = (int)self->qs_next[pb];
       for (; qs < qs_next; qs++) {
-        nrg += fPow2Div2(inputReal[qs] << clz);
+        nrg = fAddSaturate(nrg, fPow2Div2(inputReal[qs] << clz));
       }
       energy[pb] = nrg;
     }
@@ -1138,13 +1139,14 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
 #else
     for (qs = startHybBand; qs <= maxHybBand; qs++) {
       int pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
-      energy[pb] +=
-          (fPow2Div2(inputReal[qs] << clz) + fPow2Div2(inputImag[qs] << clz));
+      energy[pb] =
+          fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz) +
+                                       fPow2Div2(inputImag[qs] << clz));
     }
 
     for (; qs <= maxHybridBand; qs++) {
       int pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
-      energy[pb] += fPow2Div2(inputReal[qs] << clz);
+      energy[pb] = fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz));
     }
 #endif /* FUNCTION_DuckerCalcEnergy_func4 */
   }
@@ -1237,9 +1239,9 @@ static INT DuckerApply(DUCKER_INSTANCE *const self,
 
       tmp1 = scaleValue(tmp1, scaleSmoothDirRevNrg_asExponent);
       tmp2 = scaleValue(tmp2, scaleSmoothDirRevNrg_asExponent);
-      tmp1 = fMultAddDiv2(tmp1, directNrg[pb] >> scaleDirectNrg,
+      tmp1 = fMultAddDiv2(tmp1, scaleValue(directNrg[pb], -scaleDirectNrg),
                           DUCK_ONE_MINUS_ALPHA_X4_FDK);
-      tmp2 = fMultAddDiv2(tmp2, reverbNrg[pb] >> scaleReverbNrg,
+      tmp2 = fMultAddDiv2(tmp2, scaleValue(reverbNrg[pb], -scaleReverbNrg),
                           DUCK_ONE_MINUS_ALPHA_X4_FDK);
     } else {
       tmp1 = fMultAddDiv2(tmp1, directNrg[pb], DUCK_ONE_MINUS_ALPHA_X4_FDK);
