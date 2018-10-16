@@ -368,6 +368,23 @@ static INT aacDecoder_CtrlCFGChangeCallback(
   return errTp;
 }
 
+static INT aacDecoder_SbrCallback(
+    void *handle, HANDLE_FDK_BITSTREAM hBs, const INT sampleRateIn,
+    const INT sampleRateOut, const INT samplesPerFrame,
+    const AUDIO_OBJECT_TYPE coreCodec, const MP4_ELEMENT_ID elementID,
+    const INT elementIndex, const UCHAR harmonicSBR,
+    const UCHAR stereoConfigIndex, const UCHAR configMode, UCHAR *configChanged,
+    const INT downscaleFactor) {
+  HANDLE_SBRDECODER self = (HANDLE_SBRDECODER)handle;
+
+  INT errTp = sbrDecoder_Header(self, hBs, sampleRateIn, sampleRateOut,
+                                samplesPerFrame, coreCodec, elementID,
+                                elementIndex, harmonicSBR, stereoConfigIndex,
+                                configMode, configChanged, downscaleFactor);
+
+  return errTp;
+}
+
 static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
                                   const AUDIO_OBJECT_TYPE coreCodec,
                                   const INT samplingRate,
@@ -961,7 +978,7 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt,
     goto bail;
   }
   aacDec->qmfModeUser = NOT_DEFINED;
-  transportDec_RegisterSbrCallback(aacDec->hInput, (cbSbr_t)sbrDecoder_Header,
+  transportDec_RegisterSbrCallback(aacDec->hInput, aacDecoder_SbrCallback,
                                    (void *)aacDec->hSbrDecoder);
 
   if (mpegSurroundDecoder_Open(
