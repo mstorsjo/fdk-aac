@@ -1150,6 +1150,11 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
 
   int lastSlot, lastHdrSlot = 0, thisHdrSlot = 0;
 
+  if (*count <= 0) {
+    setFrameErrorFlag(self->pSbrElement[elementIndex], FRAME_ERROR);
+    return SBRDEC_OK;
+  }
+
   /* SBR sanity checks */
   if (self == NULL) {
     errorStatus = SBRDEC_NOT_INITIALIZED;
