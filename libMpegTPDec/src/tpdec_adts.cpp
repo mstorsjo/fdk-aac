@@ -180,7 +180,11 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
      have channelConfig=0 and no PCE in this frame. */
   FDKmemcpy(&oldPce, &pAsc->m_progrConfigElement, sizeof(CProgramConfig));
 
-  valBits = FDKgetValidBits(hBs);
+  valBits = FDKgetValidBits(hBs) + ADTS_SYNCLENGTH;
+
+  if (valBits < ADTS_HEADERLENGTH) {
+    return TRANSPORTDEC_NOT_ENOUGH_BITS;
+  }
 
   /* adts_fixed_header */
   bs.mpeg_id = FDKreadBits(hBs, Adts_Length_Id);
@@ -205,6 +209,10 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
 
   adtsHeaderLength = ADTS_HEADERLENGTH;
 
+  if (valBits < bs.frame_length * 8) {
+    goto bail;
+  }
+
   if (!bs.protection_absent) {
     FDKcrcReset(&pAdts->crcInfo);
     FDKpushBack(hBs, 56); /* complete fixed and variable header! */
@@ -213,6 +221,9 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
   }
 
   if (!bs.protection_absent && bs.num_raw_blocks > 0) {
+    if ((INT)FDKgetValidBits(hBs) < bs.num_raw_blocks * 16) {
+      goto bail;
+    }
     for (i = 0; i < bs.num_raw_blocks; i++) {
       pAdts->rawDataBlockDist[i] = (USHORT)FDKreadBits(hBs, 16);
       adtsHeaderLength += 16;
@@ -230,6 +241,11 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
     USHORT crc_check;
 
     FDKcrcEndReg(&pAdts->crcInfo, hBs, crcReg);
+
+    if ((INT)FDKgetValidBits(hBs) < Adts_Length_CrcCheck) {
+      goto bail;
+    }
+
     crc_check = FDKreadBits(hBs, Adts_Length_CrcCheck);
     adtsHeaderLength += Adts_Length_CrcCheck;
 
@@ -343,6 +359,10 @@ TRANSPORTDEC_ERROR adtsRead_DecodeHeader(HANDLE_ADTS pAdts,
   FDKmemcpy(&pAdts->bs, &bs, sizeof(STRUCT_ADTS_BS));
 
   return TRANSPORTDEC_OK;
+
+bail:
+  FDKpushBack(hBs, adtsHeaderLength);
+  return TRANSPORTDEC_NOT_ENOUGH_BITS;
 }
 
 int adtsRead_GetRawDataBlockLength(HANDLE_ADTS pAdts, INT blockNum) {
