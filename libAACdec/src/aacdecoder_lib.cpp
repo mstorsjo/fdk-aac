@@ -634,6 +634,7 @@ static AAC_DECODER_ERROR setConcealMethod(
     switch (err) {
       case PCMDMX_INVALID_HANDLE:
         errorStatus = AAC_DEC_INVALID_HANDLE;
+        break;
       case PCMDMX_OK:
         break;
       default:
