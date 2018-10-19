@@ -1677,6 +1677,9 @@ static SBR_ERROR sbrDecoder_DecodeElement(
   /* reset */
   if (hSbrHeader->status & SBRDEC_HDR_STAT_RESET) {
     int ch;
+    int applySbrProc = (hSbrHeader->syncState == SBR_ACTIVE ||
+                        (hSbrHeader->frameErrorFlag == 0 &&
+                         hSbrHeader->syncState == SBR_HEADER));
     for (ch = 0; ch < numElementChannels; ch++) {
       SBR_ERROR errorStatusTmp = SBRDEC_OK;
 
@@ -1688,7 +1691,9 @@ static SBR_ERROR sbrDecoder_DecodeElement(
         hSbrHeader->syncState = UPSAMPLING;
       }
     }
-    hSbrHeader->status &= ~SBRDEC_HDR_STAT_RESET;
+    if (applySbrProc) {
+      hSbrHeader->status &= ~SBRDEC_HDR_STAT_RESET;
+    }
   }
 
   /* decoding */
