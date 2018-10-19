@@ -592,6 +592,7 @@ AAC_DECODER_ERROR CChannelElement_Read(
                                             line: ~599 */
         /* Note: The missing "break" is intentional here, since we need to call
          * CBlock_ReadScaleFactorData(). */
+        FDK_FALLTHROUGH;
 
       case scale_factor_data:
         if (flags & AC_ER_RVLC) {

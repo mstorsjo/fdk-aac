@@ -234,7 +234,8 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self) {
               MODE_HQ))) { /* MPS decoder does support the requested mode. */
           break;
         }
-      } /* Fall-through: */
+      }
+        FDK_FALLTHROUGH;
       default:
         if (self->qmfModeUser == NOT_DEFINED) {
           /* Revert in case mpegSurroundDecoder_SetParam() fails. */
@@ -938,6 +939,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
 
     case EXT_SBR_DATA_CRC:
       crcFlag = 1;
+      FDK_FALLTHROUGH;
     case EXT_SBR_DATA:
       if (IS_CHANNEL_ELEMENT(previous_element)) {
         SBR_ERROR sbrError;
@@ -1076,6 +1078,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
          * intentional. */
         break;
       }
+      FDK_FALLTHROUGH;
 
     case EXT_FIL:
 
@@ -1495,11 +1498,13 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   switch (asc->m_aot) {
     case AOT_AAC_LC:
       self->streamInfo.profile = 1;
+      FDK_FALLTHROUGH;
     case AOT_ER_AAC_SCAL:
       if (asc->m_sc.m_gaSpecificConfig.m_layer > 0) {
         /* aac_scalable_extension_element() currently not supported. */
         return AAC_DEC_UNSUPPORTED_FORMAT;
       }
+      FDK_FALLTHROUGH;
     case AOT_SBR:
     case AOT_PS:
     case AOT_ER_AAC_LC:
