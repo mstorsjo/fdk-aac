@@ -747,9 +747,9 @@ void FDKaacEnc_IntensityStereoProcessing(
              j++) {
           s = ((mdctSpectrumLeft[j] << s0) >> 1) +
               ((mdctSpectrumRight[j] << s0) >> 1);
-          es += fMultDiv2(s, s) >>
+          es = fAddSaturate(es, fMultDiv2(s, s) >>
                 (MDCT_SPEC_SF -
-                 1);  // scaled 2*(mdctScale - s0 + 1) + MDCT_SPEC_SF
+                 1));  // scaled 2*(mdctScale - s0 + 1) + MDCT_SPEC_SF
         }
         msMask[sfb + sfboffs] = 0;
         tmp = fDivNorm(sfbEnergyLeft[sfb + sfboffs], es, &s1);
