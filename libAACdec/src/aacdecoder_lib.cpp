@@ -1882,7 +1882,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
 
     } /* USAC DASH IPF flushing possible end */
     if (accessUnit < numPrerollAU) {
-      FDKpushBack(hBsAu, auStartAnchor - FDKgetValidBits(hBsAu));
+      FDKpushBack(hBsAu, auStartAnchor - (INT)FDKgetValidBits(hBsAu));
     } else {
       if ((self->buildUpStatus == AACDEC_RSV60_BUILD_UP_ON) ||
           (self->buildUpStatus == AACDEC_RSV60_BUILD_UP_ON_IN_BAND) ||
