@@ -291,13 +291,13 @@ SACDEC_ERROR SpatialDecParseSpecificConfigHeader(
   if (sacHeaderLen == 127) {
     sacHeaderLen += FDKreadBits(bitstream, 16);
   }
-  numFillBits = FDKgetValidBits(bitstream);
+  numFillBits = (INT)FDKgetValidBits(bitstream);
 
   err = SpatialDecParseSpecificConfig(bitstream, pSpatialSpecificConfig,
                                       sacHeaderLen, coreCodec);
 
   numFillBits -=
-      FDKgetValidBits(bitstream); /* the number of read bits (tmpBits) */
+      (INT)FDKgetValidBits(bitstream); /* the number of read bits (tmpBits) */
   numFillBits = (8 * sacHeaderLen) - numFillBits;
   if (numFillBits < 0) {
     /* Parsing went wrong */
