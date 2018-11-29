@@ -132,13 +132,14 @@ read direction. It is called very often, therefore it makes sense to inline it
         return:   - bit from bitstream
 --------------------------------------------------------------------------------------------
 */
-UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM bs, INT *pLeftStartOfSegment,
+UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
+                             INT *pLeftStartOfSegment,
                              INT *pRightStartOfSegment, UCHAR readDirection) {
   UINT bit;
   INT readBitOffset;
 
   if (readDirection == FROM_LEFT_TO_RIGHT) {
-    readBitOffset = *pLeftStartOfSegment - FDKgetBitCnt(bs);
+    readBitOffset = (INT)FDKgetValidBits(bs) - bsAnchor + *pLeftStartOfSegment;
     if (readBitOffset) {
       FDKpushBiDirectional(bs, readBitOffset);
     }
@@ -147,7 +148,7 @@ UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM bs, INT *pLeftStartOfSegment,
 
     *pLeftStartOfSegment += 1;
   } else {
-    readBitOffset = *pRightStartOfSegment - FDKgetBitCnt(bs);
+    readBitOffset = (INT)FDKgetValidBits(bs) - bsAnchor + *pRightStartOfSegment;
     if (readBitOffset) {
       FDKpushBiDirectional(bs, readBitOffset);
     }
