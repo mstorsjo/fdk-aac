@@ -27,6 +27,9 @@ cc_library_static {
         misc_undefined:["unsigned-integer-overflow", "signed-integer-overflow"],
         cfi: true,
     },
+    shared_libs: [
+        "liblog",
+    ],
     export_include_dirs: [
         "libAACdec/include",
         "libAACenc/include",
