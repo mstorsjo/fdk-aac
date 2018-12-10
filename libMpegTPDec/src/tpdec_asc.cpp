@@ -2102,7 +2102,9 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
     self->m_aot = getAOT(bs);
     self->m_samplingFrequency =
         getSampleRate(bs, &self->m_samplingFrequencyIndex, 4);
-    if (self->m_samplingFrequency <= 0) {
+    if (self->m_samplingFrequency <= 0 ||
+        (self->m_samplingFrequency > 96000 && self->m_aot != 39) ||
+        self->m_samplingFrequency > 4 * 96000) {
       return TRANSPORTDEC_PARSE_ERROR;
     }
 
