@@ -128,7 +128,6 @@ void FDK_InitBitBuffer(HANDLE_FDK_BITBUF hBitBuf, UCHAR *pBuffer, UINT bufSize,
   hBitBuf->ValidBits = validBits;
   hBitBuf->ReadOffset = 0;
   hBitBuf->WriteOffset = 0;
-  hBitBuf->BitCnt = 0;
   hBitBuf->BitNdx = 0;
 
   hBitBuf->Buffer = pBuffer;
@@ -151,7 +150,6 @@ void FDK_ResetBitBuffer(HANDLE_FDK_BITBUF hBitBuf) {
   hBitBuf->ValidBits = 0;
   hBitBuf->ReadOffset = 0;
   hBitBuf->WriteOffset = 0;
-  hBitBuf->BitCnt = 0;
   hBitBuf->BitNdx = 0;
 }
 
@@ -161,7 +159,6 @@ INT FDK_get(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits) {
   UINT bitOffset = hBitBuf->BitNdx & 0x07;
 
   hBitBuf->BitNdx = (hBitBuf->BitNdx + numberOfBits) & (hBitBuf->bufBits - 1);
-  hBitBuf->BitCnt += numberOfBits;
   hBitBuf->ValidBits -= numberOfBits;
 
   UINT byteMask = hBitBuf->bufSize - 1;
@@ -184,7 +181,6 @@ INT FDK_get(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits) {
 INT FDK_get32(HANDLE_FDK_BITBUF hBitBuf) {
   UINT BitNdx = hBitBuf->BitNdx + 32;
   hBitBuf->BitNdx = BitNdx & (hBitBuf->bufBits - 1);
-  hBitBuf->BitCnt += 32;
   hBitBuf->ValidBits = (UINT)((INT)hBitBuf->ValidBits - (INT)32);
 
   UINT byteOffset = (BitNdx - 1) >> 3;
@@ -223,7 +219,6 @@ INT FDK_getBwd(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits) {
   int i;
 
   hBitBuf->BitNdx = (hBitBuf->BitNdx - numberOfBits) & (hBitBuf->bufBits - 1);
-  hBitBuf->BitCnt -= numberOfBits;
   hBitBuf->ValidBits += numberOfBits;
 
   UINT tx = hBitBuf->Buffer[(byteOffset - 3) & byteMask] << 24 |
@@ -256,7 +251,6 @@ void FDK_put(HANDLE_FDK_BITBUF hBitBuf, UINT value, const UINT numberOfBits) {
     UINT bitOffset = hBitBuf->BitNdx & 0x7;
 
     hBitBuf->BitNdx = (hBitBuf->BitNdx + numberOfBits) & (hBitBuf->bufBits - 1);
-    hBitBuf->BitCnt += numberOfBits;
     hBitBuf->ValidBits += numberOfBits;
 
     UINT byteMask = hBitBuf->bufSize - 1;
@@ -307,7 +301,6 @@ void FDK_putBwd(HANDLE_FDK_BITBUF hBitBuf, UINT value,
   int i;
 
   hBitBuf->BitNdx = (hBitBuf->BitNdx - numberOfBits) & (hBitBuf->bufBits - 1);
-  hBitBuf->BitCnt -= numberOfBits;
   hBitBuf->ValidBits -= numberOfBits;
 
   /* in place turn around */
@@ -344,7 +337,6 @@ void FDK_putBwd(HANDLE_FDK_BITBUF hBitBuf, UINT value,
 #ifndef FUNCTION_FDK_pushBack
 void FDK_pushBack(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits,
                   UCHAR config) {
-  hBitBuf->BitCnt = (UINT)((INT)hBitBuf->BitCnt - (INT)numberOfBits);
   hBitBuf->ValidBits =
       (config == 0) ? (UINT)((INT)hBitBuf->ValidBits + (INT)numberOfBits)
                     : ((UINT)((INT)hBitBuf->ValidBits - (INT)numberOfBits));
@@ -355,25 +347,11 @@ void FDK_pushBack(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits,
 
 void FDK_pushForward(HANDLE_FDK_BITBUF hBitBuf, const UINT numberOfBits,
                      UCHAR config) {
-  hBitBuf->BitCnt = (UINT)((INT)hBitBuf->BitCnt + (INT)numberOfBits);
   hBitBuf->ValidBits =
       (config == 0) ? ((UINT)((INT)hBitBuf->ValidBits - (INT)numberOfBits))
                     : (UINT)((INT)hBitBuf->ValidBits + (INT)numberOfBits);
   hBitBuf->BitNdx =
       (UINT)((INT)hBitBuf->BitNdx + (INT)numberOfBits) & (hBitBuf->bufBits - 1);
-}
-
-void FDK_byteAlign(HANDLE_FDK_BITBUF hBitBuf, UCHAR config) {
-  INT alignment = hBitBuf->BitCnt & 0x07;
-
-  if (alignment) {
-    if (config == 0)
-      FDK_pushForward(hBitBuf, 8 - alignment, config); /* BS_READER */
-    else
-      FDK_put(hBitBuf, 0, 8 - alignment); /* BS_WRITER */
-  }
-
-  hBitBuf->BitCnt = 0;
 }
 
 #ifndef FUNCTION_FDK_getValidBits
@@ -383,12 +361,6 @@ UINT FDK_getValidBits(HANDLE_FDK_BITBUF hBitBuf) { return hBitBuf->ValidBits; }
 INT FDK_getFreeBits(HANDLE_FDK_BITBUF hBitBuf) {
   return (hBitBuf->bufBits - hBitBuf->ValidBits);
 }
-
-void FDK_setBitCnt(HANDLE_FDK_BITBUF hBitBuf, const UINT value) {
-  hBitBuf->BitCnt = value;
-}
-
-INT FDK_getBitCnt(HANDLE_FDK_BITBUF hBitBuf) { return hBitBuf->BitCnt; }
 
 void FDK_Feed(HANDLE_FDK_BITBUF hBitBuf, const UCHAR *RESTRICT inputBuffer,
               const UINT bufferSize, UINT *bytesValid) {
@@ -438,7 +410,6 @@ void CopyAlignedBlock(HANDLE_FDK_BITBUF h_BitBufSrc, UCHAR *RESTRICT dstBuffer,
 
   h_BitBufSrc->BitNdx =
       (h_BitBufSrc->BitNdx + bToRead) & (h_BitBufSrc->bufBits - 1);
-  h_BitBufSrc->BitCnt += bToRead;
   h_BitBufSrc->ValidBits -= bToRead;
 }
 
