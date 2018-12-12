@@ -25,7 +25,11 @@ cc_library_static {
         "-Wno-implicit-fallthrough",
     ],
     sanitize: {
-        misc_undefined:["unsigned-integer-overflow", "signed-integer-overflow"],
+        misc_undefined:[
+           "unsigned-integer-overflow",
+           "signed-integer-overflow",
+           "bounds",
+        ],
         cfi: true,
     },
     shared_libs: [
