@@ -1630,17 +1630,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   aacChannelsOffset = 0;
   aacChannelsOffsetIdx = 0;
   elementOffset = 0;
-  if (configMode & AC_CM_ALLOC_MEM) {
-    if ((ascChannels <= 0) ||
-        (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
-    if ((ascChannels + aacChannelsOffsetIdx) > ((8) * 2)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
-    if ((ascChannels + aacChannelsOffset) > (8)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
+  if ((ascChannels <= 0) || (ascChannels > (8)) ||
+      (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
+    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
   }
 
   /* Set syntax flags */
@@ -2055,17 +2047,12 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       if (self->flags[streamIndex] & (AC_RSV603DA | AC_USAC)) {
         _numElements = (int)asc->m_sc.m_usacConfig.m_usacNumElements;
       }
-      if (self->flags[streamIndex] & (AC_ER | AC_LD | AC_ELD)) {
-        _numElements = (asc->m_channelConfiguration == 7)
-                           ? 8
-                           : asc->m_channelConfiguration;
-      }
       for (int _el = 0; _el < _numElements; _el++) {
         int el_channels = 0;
         int el = elementOffset + _el;
 
         if (self->flags[streamIndex] &
-            (AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
+            (AC_ER | AC_LD | AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
           if (ch >= ascChannels) {
             break;
           }
@@ -2115,7 +2102,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
                   (SPECTRAL_PTR)&self->workBufferCore2[ch * 1024];
 
               if (el_channels == 2) {
-                FDK_ASSERT(ch < (8) - 1);
+                if (ch >= (8) - 1) {
+                  return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+                }
                 self->pAacDecoderChannelInfo[ch + 1]->pComData =
                     self->pAacDecoderChannelInfo[ch]->pComData;
                 self->pAacDecoderChannelInfo[ch + 1]->pComStaticData =
@@ -2519,8 +2508,14 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     if (!(self->flags[0] &
           (AC_USAC | AC_RSVD50 | AC_RSV603DA | AC_ELD | AC_SCALABLE | AC_ER)))
       type = (MP4_ELEMENT_ID)FDKreadBits(bs, 3);
-    else
+    else {
+      if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+        self->frameOK = 0;
+        ErrorStatus = AAC_DEC_PARSE_ERROR;
+        break;
+      }
       type = self->elements[element_count];
+    }
 
     if ((self->flags[streamIndex] & (AC_USAC | AC_RSVD50) &&
          element_count == 0) ||
@@ -2564,6 +2559,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       case ID_USAC_SCE:
       case ID_USAC_CPE:
       case ID_USAC_LFE:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
 
         el_channels = CAacDecoder_GetELChannels(
             type, self->usacStereoConfigIndex[element_count]);
@@ -2795,12 +2795,24 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       } break;
 
       case ID_EXT:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
+
         ErrorStatus = aacDecoder_ParseExplicitMpsAndSbr(
             self, bs, previous_element, previous_element_index, element_count,
             el_cnt);
         break;
 
       case ID_USAC_EXT: {
+        if ((element_count - element_count_prev_streams) >=
+            TP_USAC_MAX_ELEMENTS) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
         /* parse extension element payload
            q.v. rsv603daExtElement() ISO/IEC DIS 23008-3  Table 30
            or   UsacExElement() ISO/IEC FDIS 23003-3:2011(E)  Table 21

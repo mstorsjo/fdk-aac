@@ -32,6 +32,9 @@ cc_library_static {
         ],
         cfi: true,
     },
+    shared_libs: [
+        "liblog",
+    ],
     export_include_dirs: [
         "libAACdec/include",
         "libAACenc/include",
