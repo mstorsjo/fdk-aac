@@ -983,9 +983,8 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
   }
 
 bail:
-  if (err == QMF_DOMAIN_OUT_OF_MEMORY) {
-    FDK_QmfDomain_FreePersistentMemory(hqd);
-    FDK_QmfDomain_ClearConfigured(&hqd->globalConf);
+  if (err) {
+    FDK_QmfDomain_FreeMem(hqd);
   }
   return err;
 }
