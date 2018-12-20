@@ -1216,7 +1216,8 @@ static INT aacenc_SbrCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
 
 INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
                        const AUDIO_OBJECT_TYPE coreCodec,
-                       const INT samplingRate, const INT stereoConfigIndex,
+                       const INT samplingRate, const INT frameSize,
+                       const INT stereoConfigIndex,
                        const INT coreSbrFrameLengthIndex, const INT configBytes,
                        const UCHAR configMode, UCHAR *configChanged) {
   HANDLE_AACENCODER hAacEncoder = (HANDLE_AACENCODER)self;

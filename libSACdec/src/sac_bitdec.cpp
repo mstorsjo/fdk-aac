@@ -517,6 +517,10 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
 
   pSpatialSpecificConfig->tempShapeConfig =
       (SPATIALDEC_TS_CONF)FDKreadBits(bitstream, 2);
+  if (pSpatialSpecificConfig->tempShapeConfig > 2) {
+    return MPS_PARSE_ERROR; /* reserved value */
+  }
+
   pSpatialSpecificConfig->decorrConfig =
       (SPATIALDEC_DECORR_CONF)FDKreadBits(bitstream, 2);
   if (pSpatialSpecificConfig->decorrConfig > 2) {
