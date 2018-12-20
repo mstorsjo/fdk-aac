@@ -2173,6 +2173,9 @@ static DRCDEC_SELECTION_PROCESS_RETURN _selectDownmixMatrix(
   if (hSelProcOutput->activeDownmixId != 0) {
     for (i = 0; i < hUniDrcConfig->downmixInstructionsCount; i++) {
       DOWNMIX_INSTRUCTIONS* pDown = &(hUniDrcConfig->downmixInstructions[i]);
+      if (pDown->targetChannelCount > 8) {
+        continue;
+      }
 
       if (hSelProcOutput->activeDownmixId == pDown->downmixId) {
         hSelProcOutput->targetChannelCount = pDown->targetChannelCount;
@@ -2825,6 +2828,8 @@ static int _downmixCoefficientsArePresent(HANDLE_UNI_DRC_CONFIG hUniDrcConfig,
   for (i = 0; i < hUniDrcConfig->downmixInstructionsCount; i++) {
     if (hUniDrcConfig->downmixInstructions[i].downmixId == downmixId) {
       if (hUniDrcConfig->downmixInstructions[i].downmixCoefficientsPresent) {
+        if (hUniDrcConfig->downmixInstructions[i].targetChannelCount > 8)
+          return 0;
         *pIndex = i;
         return 1;
       }

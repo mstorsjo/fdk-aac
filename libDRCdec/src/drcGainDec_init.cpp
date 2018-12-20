@@ -336,9 +336,11 @@ initActiveDrcOffset(HANDLE_DRC_GAIN_DECODER hGainDec) {
   for (a = 0; a < hGainDec->nActiveDrcs; a++) {
     hGainDec->activeDrc[a].activeDrcOffset = accGainElementCount;
     accGainElementCount += hGainDec->activeDrc[a].gainElementCount;
+    if (accGainElementCount > 12) {
+      hGainDec->nActiveDrcs = a;
+      return DE_NOT_OK;
+    }
   }
-
-  if (accGainElementCount > 12) return DE_NOT_OK;
 
   return DE_OK;
 }
