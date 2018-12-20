@@ -185,10 +185,18 @@ drcDec_readUniDrc(HANDLE_FDK_BITSTREAM hBs, HANDLE_UNI_DRC_CONFIG hUniDrcConfig,
     uniDrcConfigPresent = FDKreadBits(hBs, 1);
     if (uniDrcConfigPresent) {
       err = drcDec_readUniDrcConfig(hBs, hUniDrcConfig);
-      if (err) return err;
+      if (err) {
+        /* clear config, if parsing error occured */
+        FDKmemclear(hUniDrcConfig, sizeof(UNI_DRC_CONFIG));
+        hUniDrcConfig->diff = 1;
+      }
     }
     err = drcDec_readLoudnessInfoSet(hBs, hLoudnessInfoSet);
-    if (err) return err;
+    if (err) {
+      /* clear config, if parsing error occured */
+      FDKmemclear(hLoudnessInfoSet, sizeof(LOUDNESS_INFO_SET));
+      hLoudnessInfoSet->diff = 1;
+    }
   }
 
   if (hUniDrcGain != NULL) {
