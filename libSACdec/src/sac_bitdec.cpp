@@ -572,16 +572,18 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
 
   numHeaderBits = cfgStartPos - (INT)FDKgetValidBits(bitstream);
   bitsAvailable -= numHeaderBits;
+  if (bitsAvailable < 0) {
+    err = MPS_PARSE_ERROR;
+    goto bail;
+  }
 
   pSpatialSpecificConfig->sacExtCnt = 0;
   pSpatialSpecificConfig->bResidualCoding = 0;
 
-  if ((err == MPS_OK) && (bitsAvailable > 0)) {
-    err = SpatialDecParseExtensionConfig(
-        bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
-        pSpatialSpecificConfig->nTttBoxes,
-        pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
-  }
+  err = SpatialDecParseExtensionConfig(
+      bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
+      pSpatialSpecificConfig->nTttBoxes,
+      pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
 
   FDKbyteAlign(
       bitstream,
