@@ -647,6 +647,10 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
             }
             df_rest_flag_1 = num_val_1_int % 2;
             if (df_rest_flag_1) num_val_1_int -= 1;
+            if (num_val_1_int < 0) {
+              err = HUFFDEC_NOTOK;
+              goto bail;
+            }
           }
           if (out_data_2 != NULL) {
             if (diff_type_2 == DIFF_FREQ) {
@@ -658,6 +662,10 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
             }
             df_rest_flag_2 = num_val_2_int % 2;
             if (df_rest_flag_2) num_val_2_int -= 1;
+            if (num_val_2_int < 0) {
+              err = HUFFDEC_NOTOK;
+              goto bail;
+            }
           }
 
           if (out_data_1 != NULL) {
