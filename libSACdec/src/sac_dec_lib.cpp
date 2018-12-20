@@ -1658,6 +1658,10 @@ int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
   initControlFlags = controlFlags;
 
   /* Check that provided output buffer is large enough. */
+  if (pMpegSurroundDecoder->pQmfDomain->globalConf.nBandsAnalysis == 0) {
+    err = MPS_UNSUPPORTED_FORMAT;
+    goto bail;
+  }
   timeDataRequiredSize =
       (timeDataFrameSize *
        pMpegSurroundDecoder->pSpatialDec->numOutputChannelsAT *
