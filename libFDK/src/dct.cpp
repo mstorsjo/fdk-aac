@@ -124,10 +124,6 @@ amm-info@iis.fraunhofer.de
 #include "FDK_tools_rom.h"
 #include "fft.h"
 
-#if defined(__arm__)
-#include "arm/dct_arm.cpp"
-#endif
-
 void dct_getTables(const FIXP_WTP **ptwiddle, const FIXP_STP **sin_twiddle,
                    int *sin_step, int length) {
   const FIXP_WTP *twiddle;
@@ -387,12 +383,6 @@ void dct_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
   dct_getTables(&twiddle, &sin_twiddle, &sin_step, L);
 
-#ifdef FUNCTION_dct_IV_func1
-  if (M >= 4 && (M & 3) == 0) {
-    /* ARM926: 44 cycles for 2 iterations = 22 cycles/iteration */
-    dct_IV_func1(M >> 2, twiddle, &pDat[0], &pDat[L - 1]);
-  } else
-#endif /* FUNCTION_dct_IV_func1 */
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
@@ -410,10 +400,10 @@ void dct_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
       cplxMultDiv2(&accu3, &accu4, accu4, accu3, twiddle[i + 1]);
 
-      pDat_0[0] = accu2;
-      pDat_0[1] = accu1;
-      pDat_1[0] = accu4;
-      pDat_1[1] = -accu3;
+      pDat_0[0] = accu2 >> 1;
+      pDat_0[1] = accu1 >> 1;
+      pDat_1[0] = accu4 >> 1;
+      pDat_1[1] = -(accu3 >> 1);
     }
     if (M & 1) {
       FIXP_DBL accu1, accu2;
@@ -423,19 +413,13 @@ void dct_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
 
-      pDat_0[0] = accu2;
-      pDat_0[1] = accu1;
+      pDat_0[0] = accu2 >> 1;
+      pDat_0[1] = accu1 >> 1;
     }
   }
 
   fft(M, pDat, pDat_e);
 
-#ifdef FUNCTION_dct_IV_func2
-  if (M >= 4 && (M & 3) == 0) {
-    /* ARM926: 42 cycles for 2 iterations = 21 cycles/iteration */
-    dct_IV_func2(M >> 2, sin_twiddle, &pDat[0], &pDat[L], sin_step);
-  } else
-#endif /* FUNCTION_dct_IV_func2 */
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
@@ -446,20 +430,19 @@ void dct_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
     accu1 = pDat_1[0];
     accu2 = pDat_1[1];
 
-    pDat_1[1] = -(pDat_0[1] >> 1);
-    pDat_0[0] = (pDat_0[0] >> 1);
+    pDat_1[1] = -pDat_0[1];
 
     /* 28 cycles for ARM926 */
     for (idx = sin_step, i = 1; i<(M + 1)>> 1; i++, idx += sin_step) {
       FIXP_STP twd = sin_twiddle[idx];
-      cplxMultDiv2(&accu3, &accu4, accu1, accu2, twd);
+      cplxMult(&accu3, &accu4, accu1, accu2, twd);
       pDat_0[1] = accu3;
       pDat_1[0] = accu4;
 
       pDat_0 += 2;
       pDat_1 -= 2;
 
-      cplxMultDiv2(&accu3, &accu4, pDat_0[1], pDat_0[0], twd);
+      cplxMult(&accu3, &accu4, pDat_0[1], pDat_0[0], twd);
 
       accu1 = pDat_1[0];
       accu2 = pDat_1[1];
@@ -470,8 +453,8 @@ void dct_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
     if ((M & 1) == 0) {
       /* Last Sin and Cos value pair are the same */
-      accu1 = fMultDiv2(accu1, WTC(0x5a82799a));
-      accu2 = fMultDiv2(accu2, WTC(0x5a82799a));
+      accu1 = fMult(accu1, WTC(0x5a82799a));
+      accu2 = fMult(accu2, WTC(0x5a82799a));
 
       pDat_1[0] = accu1 + accu2;
       pDat_0[1] = accu1 - accu2;
@@ -497,11 +480,6 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
   dct_getTables(&twiddle, &sin_twiddle, &sin_step, L);
 
-#ifdef FUNCTION_dst_IV_func1
-  if ((M >= 4) && ((M & 3) == 0)) {
-    dst_IV_func1(M, twiddle, &pDat[0], &pDat[L]);
-  } else
-#endif
   {
     FIXP_DBL *RESTRICT pDat_0 = &pDat[0];
     FIXP_DBL *RESTRICT pDat_1 = &pDat[L - 2];
@@ -519,10 +497,10 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
       cplxMultDiv2(&accu3, &accu4, accu4, accu3, twiddle[i + 1]);
 
-      pDat_0[0] = accu2;
-      pDat_0[1] = accu1;
-      pDat_1[0] = accu4;
-      pDat_1[1] = -accu3;
+      pDat_0[0] = accu2 >> 1;
+      pDat_0[1] = accu1 >> 1;
+      pDat_1[0] = accu4 >> 1;
+      pDat_1[1] = -(accu3 >> 1);
     }
     if (M & 1) {
       FIXP_DBL accu1, accu2;
@@ -532,19 +510,13 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
 
-      pDat_0[0] = accu2;
-      pDat_0[1] = accu1;
+      pDat_0[0] = accu2 >> 1;
+      pDat_0[1] = accu1 >> 1;
     }
   }
 
   fft(M, pDat, pDat_e);
 
-#ifdef FUNCTION_dst_IV_func2
-  if ((M >= 4) && ((M & 3) == 0)) {
-    dst_IV_func2(M >> 2, sin_twiddle + sin_step, &pDat[0], &pDat[L - 1],
-                 sin_step);
-  } else
-#endif /* FUNCTION_dst_IV_func2 */
   {
     FIXP_DBL *RESTRICT pDat_0;
     FIXP_DBL *RESTRICT pDat_1;
@@ -558,20 +530,20 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
     accu1 = pDat_1[0];
     accu2 = pDat_1[1];
 
-    pDat_1[1] = -(pDat_0[0] >> 1);
-    pDat_0[0] = (pDat_0[1] >> 1);
+    pDat_1[1] = -pDat_0[0];
+    pDat_0[0] = pDat_0[1];
 
     for (idx = sin_step, i = 1; i<(M + 1)>> 1; i++, idx += sin_step) {
       FIXP_STP twd = sin_twiddle[idx];
 
-      cplxMultDiv2(&accu3, &accu4, accu1, accu2, twd);
+      cplxMult(&accu3, &accu4, accu1, accu2, twd);
       pDat_1[0] = -accu3;
       pDat_0[1] = -accu4;
 
       pDat_0 += 2;
       pDat_1 -= 2;
 
-      cplxMultDiv2(&accu3, &accu4, pDat_0[1], pDat_0[0], twd);
+      cplxMult(&accu3, &accu4, pDat_0[1], pDat_0[0], twd);
 
       accu1 = pDat_1[0];
       accu2 = pDat_1[1];
@@ -582,8 +554,8 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
 
     if ((M & 1) == 0) {
       /* Last Sin and Cos value pair are the same */
-      accu1 = fMultDiv2(accu1, WTC(0x5a82799a));
-      accu2 = fMultDiv2(accu2, WTC(0x5a82799a));
+      accu1 = fMult(accu1, WTC(0x5a82799a));
+      accu2 = fMult(accu2, WTC(0x5a82799a));
 
       pDat_0[1] = -accu1 - accu2;
       pDat_1[0] = accu2 - accu1;
