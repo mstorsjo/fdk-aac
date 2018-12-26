@@ -736,9 +736,9 @@ static TRANSPORTDEC_ERROR transportDec_AdjustEndOfAccessUnit(
             hTp->parser.latm.m_audioMuxLengthBytes > 0) {
           int loasOffset;
 
-          loasOffset = (hTp->parser.latm.m_audioMuxLengthBytes * 8 +
-                        FDKgetValidBits(hBs)) -
-                       hTp->globalFramePos;
+          loasOffset = ((INT)hTp->parser.latm.m_audioMuxLengthBytes * 8 +
+                        (INT)FDKgetValidBits(hBs)) -
+                       (INT)hTp->globalFramePos;
           if (loasOffset != 0) {
             FDKpushBiDirectional(hBs, loasOffset);
             /* For ELD and other payloads there is an unknown amount of padding,
