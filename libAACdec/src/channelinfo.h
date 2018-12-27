@@ -359,7 +359,7 @@ typedef struct {
   shouldBeUnion {
     struct {
       FIXP_DBL fac_data0[LFAC];
-      UCHAR fac_data_e[4];
+      SCHAR fac_data_e[4];
       FIXP_DBL
       *fac_data[4]; /* Pointers to unused parts of pSpectralCoefficient */
 
