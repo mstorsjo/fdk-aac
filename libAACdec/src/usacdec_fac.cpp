@@ -191,13 +191,11 @@ static void Syn_filt_zero(const FIXP_LPC a[], const INT a_exp, INT length,
     L_tmp = (FIXP_DBL)0;
 
     for (j = 0; j < fMin(i, M_LP_FILTER_ORDER); j++) {
-      L_tmp -= fMultDiv2(a[j], x[i - (j + 1)]);
+      L_tmp -= fMultDiv2(a[j], x[i - (j + 1)]) >> (LP_FILTER_SCALE - 1);
     }
 
-    L_tmp = scaleValue(L_tmp, a_exp + 1);
-
-    x[i] = scaleValueSaturate((x[i] >> 1) + (L_tmp >> 1),
-                              1); /* Avoid overflow issues and saturate. */
+    L_tmp = scaleValue(L_tmp, a_exp + LP_FILTER_SCALE);
+    x[i] = fAddSaturate(x[i], L_tmp);
   }
 }
 
