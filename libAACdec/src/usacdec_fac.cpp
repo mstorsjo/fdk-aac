@@ -534,10 +534,12 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
 
   /* Optional scaling of time domain - no yet windowed - of current spectrum */
   if (total_gain != (FIXP_DBL)0) {
-    scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[0] + scale);
-  } else {
-    scaleValuesSaturate(pSpec, tl, spec_scale[0] + scale);
+    for (i = 0; i < tl; i++) {
+      pSpec[i] = fMult(pSpec[i], total_gain);
+    }
   }
+  int loc_scale = fixmin_I(spec_scale[0] + scale, (INT)DFRACT_BITS - 1);
+  scaleValuesSaturate(pSpec, tl, loc_scale);
 
   pOut1 += fl / 2 - 1;
   pCurr = pSpec + tl - fl / 2;
@@ -623,10 +625,12 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
      */
     /* and de-scale current spectrum signal (time domain, no yet windowed) */
     if (total_gain != (FIXP_DBL)0) {
-      scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[w] + scale);
-    } else {
-      scaleValuesSaturate(pSpec, tl, spec_scale[w] + scale);
+      for (i = 0; i < tl; i++) {
+        pSpec[i] = fMult(pSpec[i], total_gain);
+      }
     }
+    loc_scale = fixmin_I(spec_scale[w] + scale, (INT)DFRACT_BITS - 1);
+    scaleValuesSaturate(pSpec, tl, loc_scale);
 
     if (noOutSamples <= nrSamples) {
       /* Divert output first half to overlap buffer if we already got enough
