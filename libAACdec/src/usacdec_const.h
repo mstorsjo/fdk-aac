@@ -115,6 +115,7 @@ amm-info@iis.fraunhofer.de
 
 /* definitions which are independent of coreCoderFrameLength */
 #define M_LP_FILTER_ORDER 16 /* LP filter order */
+#define LP_FILTER_SCALE 4    /* LP filter scale */
 
 #define PIT_MIN_12k8 34    /* Minimum pitch lag with resolution 1/4 */
 #define PIT_MAX_12k8 231   /* Maximum pitch lag for fs=12.8kHz */
