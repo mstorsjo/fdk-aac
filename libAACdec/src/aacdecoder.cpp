@@ -775,7 +775,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PreRollExtensionPayloadParse(
     /* For every AU get length and offset in the bitstream */
     prerollAULength[i] = escapedValue(hBs, 16, 16, 0);
     if (prerollAULength[i] > 0) {
-      prerollAUOffset[i] = auStartAnchor - FDKgetValidBits(hBs);
+      prerollAUOffset[i] = auStartAnchor - (INT)FDKgetValidBits(hBs);
       independencyFlag = FDKreadBit(hBs);
       if (i == 0 && !independencyFlag) {
         *numPrerollAU = 0;
