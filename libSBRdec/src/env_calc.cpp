@@ -1561,13 +1561,14 @@ void calculateSbrEnvelope(
             adjustTimeSlotHQ_GainAndNoise(
                 &analysBufferReal[j][lowSubband],
                 &analysBufferImag[j][lowSubband], h_sbr_cal_env, pNrgs,
-                lowSubband, noSubbands, scale_change, smooth_ratio, noNoiseFlag,
-                filtBufferNoiseShift);
+                lowSubband, noSubbands, fMin(scale_change, DFRACT_BITS - 1),
+                smooth_ratio, noNoiseFlag, filtBufferNoiseShift);
           } else {
             adjustTimeSlotHQ(&analysBufferReal[j][lowSubband],
                              &analysBufferImag[j][lowSubband], h_sbr_cal_env,
-                             pNrgs, lowSubband, noSubbands, scale_change,
-                             smooth_ratio, noNoiseFlag, filtBufferNoiseShift);
+                             pNrgs, lowSubband, noSubbands,
+                             fMin(scale_change, DFRACT_BITS - 1), smooth_ratio,
+                             noNoiseFlag, filtBufferNoiseShift);
           }
         } else {
           FDK_ASSERT(!iTES_enable); /* not supported */
@@ -1575,13 +1576,14 @@ void calculateSbrEnvelope(
             /* FDKmemset(analysBufferReal[j], 0, 64 * sizeof(FIXP_DBL)); */
             adjustTimeSlot_EldGrid(&analysBufferReal[j][lowSubband], pNrgs,
                                    &h_sbr_cal_env->harmIndex, lowSubband,
-                                   noSubbands, scale_change, noNoiseFlag,
-                                   &h_sbr_cal_env->phaseIndex,
+                                   noSubbands,
+                                   fMin(scale_change, DFRACT_BITS - 1),
+                                   noNoiseFlag, &h_sbr_cal_env->phaseIndex,
                                    EXP2SCALE(adj_e) - sbrScaleFactor->lb_scale);
           } else {
             adjustTimeSlotLC(&analysBufferReal[j][lowSubband], pNrgs,
                              &h_sbr_cal_env->harmIndex, lowSubband, noSubbands,
-                             scale_change, noNoiseFlag,
+                             fMin(scale_change, DFRACT_BITS - 1), noNoiseFlag,
                              &h_sbr_cal_env->phaseIndex);
           }
         }
