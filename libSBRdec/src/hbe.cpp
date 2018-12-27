@@ -1056,6 +1056,10 @@ SBR_ERROR QmfTransposerReInit(HANDLE_HBE_TRANSPOSER hQmfTransposer,
     const FIXP_QTW* tmp_t_sin;
 
     hQmfTransposer->startBand = FreqBandTable[0][0];
+    FDK_ASSERT((!hQmfTransposer->bSbr41 && hQmfTransposer->startBand <= 32) ||
+               (hQmfTransposer->bSbr41 &&
+                hQmfTransposer->startBand <=
+                    16)); /* is checked by resetFreqBandTables() */
     hQmfTransposer->stopBand = FreqBandTable[0][NSfb[0]];
 
     hQmfTransposer->synthSize =
