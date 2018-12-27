@@ -1894,6 +1894,7 @@ INT CConcealment_TDFading(
     case ConcealState_FadeIn:
       idx = cntFadeFrames;
       idx -= TDFadeInStopBeforeFullLevel;
+      FDK_FALLTHROUGH;
     case ConcealState_Ok:
       fadeFactor = pConcealParams->fadeInFactor;
       idx = (concealState == ConcealState_Ok) ? -1 : idx;

@@ -212,6 +212,7 @@ static INT getPceRepetitionRate(const CHANNEL_MODE channelMode,
                                                  for potential matrix mixdown */
               break;
             }
+            FDK_FALLTHROUGH;
           case TT_MP4_LOAS:      /* PCE in ASC if chChonfig==0 */
           case TT_MP4_LATM_MCP1: /* PCE in ASC if chChonfig==0 */
           default:
