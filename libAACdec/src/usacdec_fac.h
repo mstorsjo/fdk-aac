@@ -131,7 +131,7 @@ FIXP_DBL *CLpd_FAC_GetMemory(CAacDecoderChannelInfo *pAacDecoderChannelInfo,
  * Always 0 for FD case.
  * \return 0 on success, -1 on error.
  */
-int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, UCHAR *pFacScale,
+int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, SCHAR *pFacScale,
                   int length, int use_gain, int frame);
 
 /**
