@@ -1248,7 +1248,7 @@ resetSbrDec(HANDLE_SBR_DEC hSbrDec, HANDLE_SBR_HEADER_DATA hHeaderData,
 
   hSbrDec->savedStates = 0;
 
-  if (flags & SBRDEC_USAC_HARMONICSBR) {
+  if ((flags & SBRDEC_USAC_HARMONICSBR) && applySbrProc) {
     sbrError = QmfTransposerReInit(hSbrDec->hHBE,
                                    hHeaderData->freqBandData.freqBandTable,
                                    hHeaderData->freqBandData.nSfb);
