@@ -234,7 +234,8 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self) {
               MODE_HQ))) { /* MPS decoder does support the requested mode. */
           break;
         }
-      } /* Fall-through: */
+      }
+        FDK_FALLTHROUGH;
       default:
         if (self->qmfModeUser == NOT_DEFINED) {
           /* Revert in case mpegSurroundDecoder_SetParam() fails. */
@@ -938,6 +939,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
 
     case EXT_SBR_DATA_CRC:
       crcFlag = 1;
+      FDK_FALLTHROUGH;
     case EXT_SBR_DATA:
       if (IS_CHANNEL_ELEMENT(previous_element)) {
         SBR_ERROR sbrError;
@@ -1076,6 +1078,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
          * intentional. */
         break;
       }
+      FDK_FALLTHROUGH;
 
     case EXT_FIL:
 
@@ -1108,12 +1111,13 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
   /* get the remaining bits of this frame */
   bitCnt = transportDec_GetAuBitsRemaining(self->hInput, 0);
 
-  if ((bitCnt > 0) && (self->flags[0] & AC_SBR_PRESENT) &&
+  if ((self->flags[0] & AC_SBR_PRESENT) &&
       (self->flags[0] & (AC_USAC | AC_RSVD50 | AC_ELD | AC_DRM))) {
     SBR_ERROR err = SBRDEC_OK;
     int chElIdx, numChElements = el_cnt[ID_SCE] + el_cnt[ID_CPE] +
                                  el_cnt[ID_LFE] + el_cnt[ID_USAC_SCE] +
                                  el_cnt[ID_USAC_CPE] + el_cnt[ID_USAC_LFE];
+    INT bitCntTmp = bitCnt;
 
     if (self->flags[0] & AC_USAC) {
       chElIdx = numChElements - 1;
@@ -1123,6 +1127,7 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
 
     for (; chElIdx < numChElements; chElIdx += 1) {
       MP4_ELEMENT_ID sbrType;
+      SBR_ERROR errTmp;
       if (self->flags[0] & (AC_USAC)) {
         FDK_ASSERT((self->elements[element_index] == ID_USAC_SCE) ||
                    (self->elements[element_index] == ID_USAC_CPE));
@@ -1132,19 +1137,21 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
                       : ID_SCE;
       } else
         sbrType = self->elements[chElIdx];
-      err = sbrDecoder_Parse(self->hSbrDecoder, bs, self->pDrmBsBuffer,
-                             self->drmBsBufferSize, &bitCnt, -1,
-                             self->flags[0] & AC_SBRCRC, sbrType, chElIdx,
-                             self->flags[0], self->elFlags);
-      if (err != SBRDEC_OK) {
-        break;
+      errTmp = sbrDecoder_Parse(self->hSbrDecoder, bs, self->pDrmBsBuffer,
+                                self->drmBsBufferSize, &bitCnt, -1,
+                                self->flags[0] & AC_SBRCRC, sbrType, chElIdx,
+                                self->flags[0], self->elFlags);
+      if (errTmp != SBRDEC_OK) {
+        err = errTmp;
+        bitCntTmp = bitCnt;
+        bitCnt = 0;
       }
     }
     switch (err) {
       case SBRDEC_PARSE_ERROR:
         /* Can not go on parsing because we do not
             know the length of the SBR extension data. */
-        FDKpushFor(bs, bitCnt);
+        FDKpushFor(bs, bitCntTmp);
         bitCnt = 0;
         break;
       case SBRDEC_OK:
@@ -1495,11 +1502,13 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   switch (asc->m_aot) {
     case AOT_AAC_LC:
       self->streamInfo.profile = 1;
+      FDK_FALLTHROUGH;
     case AOT_ER_AAC_SCAL:
       if (asc->m_sc.m_gaSpecificConfig.m_layer > 0) {
         /* aac_scalable_extension_element() currently not supported. */
         return AAC_DEC_UNSUPPORTED_FORMAT;
       }
+      FDK_FALLTHROUGH;
     case AOT_SBR:
     case AOT_PS:
     case AOT_ER_AAC_LC:

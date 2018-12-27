@@ -643,6 +643,7 @@ static INT FDKaacEnc_writeExtensionPayload(HANDLE_FDK_BITSTREAM hBitStream,
           FDKwriteBits(hBitStream, *extPayloadData++, 4); /* nibble */
         }
         extBitsUsed += 4;
+        FDK_FALLTHROUGH;
       case EXT_DYNAMIC_RANGE:
       case EXT_SBR_DATA:
       case EXT_SBR_DATA_CRC:
@@ -690,6 +691,7 @@ static INT FDKaacEnc_writeExtensionPayload(HANDLE_FDK_BITSTREAM hBitStream,
 
       case EXT_FILL_DATA:
         fillByte = 0xA5;
+        FDK_FALLTHROUGH;
       case EXT_FIL:
       default:
         if (hBitStream != NULL) {

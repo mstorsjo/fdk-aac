@@ -907,6 +907,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     case AOT_MP2_AAC_LC:
     case AOT_MP2_SBR:
       hAacConfig->usePns = 0;
+      FDK_FALLTHROUGH;
     case AOT_AAC_LC:
     case AOT_SBR:
     case AOT_PS:
@@ -2091,12 +2092,14 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
               err = AACENC_INVALID_CONFIG;
               goto bail;
             }
+            FDK_FALLTHROUGH;
           case AOT_SBR:
           case AOT_MP2_SBR:
             if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_SBR))) {
               err = AACENC_INVALID_CONFIG;
               goto bail;
             }
+            FDK_FALLTHROUGH;
           case AOT_AAC_LC:
           case AOT_MP2_AAC_LC:
           case AOT_ER_AAC_LD:
