@@ -139,7 +139,7 @@ static const MP4_ELEMENT_ID channel_configuration_13[] = {
     ID_SCE, ID_CPE, ID_CPE, ID_CPE, ID_CPE, ID_SCE, ID_LFE, ID_LFE, ID_SCE,
     ID_CPE, ID_CPE, ID_SCE, ID_CPE, ID_SCE, ID_SCE, ID_CPE, ID_NONE};
 static const MP4_ELEMENT_ID channel_configuration_14[] = {
-    ID_SCE, ID_CPE, ID_CPE, ID_LAST, ID_CPE, ID_NONE};
+    ID_SCE, ID_CPE, ID_CPE, ID_LFE, ID_CPE, ID_NONE};
 
 static const MP4_ELEMENT_ID *channel_configuration_array[] = {
     channel_configuration_0,  channel_configuration_1,
