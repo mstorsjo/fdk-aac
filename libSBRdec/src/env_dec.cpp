@@ -435,8 +435,8 @@ static void leanSbrConcealment(
   /* Noisefloor levels are always cleared ... */
 
   h_sbr_data->domain_vec_noise[0] = 1;
-  for (i = 0; i < hHeaderData->freqBandData.nNfb; i++)
-    h_sbr_data->sbrNoiseFloorLevel[i] = FL2FXCONST_SGL(0.0f);
+  FDKmemclear(h_sbr_data->sbrNoiseFloorLevel,
+              sizeof(h_sbr_data->sbrNoiseFloorLevel));
 
   /* ... and so are the sines */
   FDKmemclear(h_sbr_data->addHarmonics,
