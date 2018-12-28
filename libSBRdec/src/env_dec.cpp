@@ -506,15 +506,20 @@ static void decodeEnvelope(
          */
         for (i = 0; i < hHeaderData->freqBandData.nSfb[1]; i++) {
           /* Former Level-Channel will be used for both channels */
-          if (h_prev_data->coupling == COUPLING_BAL)
-            h_prev_data->sfb_nrg_prev[i] = otherChannel->sfb_nrg_prev[i];
+          if (h_prev_data->coupling == COUPLING_BAL) {
+            h_prev_data->sfb_nrg_prev[i] =
+                (otherChannel != NULL) ? otherChannel->sfb_nrg_prev[i]
+                                       : (FIXP_SGL)SBR_ENERGY_PAN_OFFSET;
+          }
           /* Former L/R will be combined as the new Level-Channel */
-          else if (h_sbr_data->coupling == COUPLING_LEVEL)
+          else if (h_sbr_data->coupling == COUPLING_LEVEL &&
+                   otherChannel != NULL) {
             h_prev_data->sfb_nrg_prev[i] = (h_prev_data->sfb_nrg_prev[i] +
                                             otherChannel->sfb_nrg_prev[i]) >>
                                            1;
-          else if (h_sbr_data->coupling == COUPLING_BAL)
+          } else if (h_sbr_data->coupling == COUPLING_BAL) {
             h_prev_data->sfb_nrg_prev[i] = (FIXP_SGL)SBR_ENERGY_PAN_OFFSET;
+          }
         }
       }
     }
