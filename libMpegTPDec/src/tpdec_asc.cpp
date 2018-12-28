@@ -1300,7 +1300,11 @@ static INT ld_sbr_header(CSAudioSpecificConfig *asc, const INT dsFactor,
   /* read elements of the passed channel_configuration until there is ID_NONE */
   while ((element = channel_configuration_array[channelConfiguration][j]) !=
          ID_NONE) {
-    if (element == ID_SCE || element == ID_CPE) {
+    /* Setup LFE element for upsampling too. This is essential especially for
+     * channel configs where the LFE element is not at the last position for
+     * example in channel config 13 or 14. It leads to memory leaks if the setup
+     * of the LFE element would be done later in the core. */
+    if (element == ID_SCE || element == ID_CPE || element == ID_LFE) {
       error |= cb->cbSbr(
           cb->cbSbrData, hBs, asc->m_samplingFrequency / dsFactor,
           asc->m_extensionSamplingFrequency / dsFactor,
