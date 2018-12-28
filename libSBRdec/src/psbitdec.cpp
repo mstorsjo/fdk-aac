@@ -312,6 +312,7 @@ int DecodePs(struct PS_DEC *h_ps_d,  /*!< PS handle */
 
     if (pBsData->bEnableIid) {
       pBsData->bFineIidQ = h_ps_d->specificTo.mpeg.bPrevFrameFineIidQ;
+      pBsData->freqResIid = h_ps_d->specificTo.mpeg.prevFreqResIid;
       for (gr = 0; gr < NO_HI_RES_IID_BINS; gr++) {
         pBsData->aaIidIndex[pBsData->noEnv - 1][gr] =
             h_ps_d->specificTo.mpeg.aIidPrevFrameIndex[gr];
@@ -323,6 +324,7 @@ int DecodePs(struct PS_DEC *h_ps_d,  /*!< PS handle */
     }
 
     if (pBsData->bEnableIcc) {
+      pBsData->freqResIcc = h_ps_d->specificTo.mpeg.prevFreqResIcc;
       for (gr = 0; gr < NO_HI_RES_ICC_BINS; gr++) {
         pBsData->aaIccIndex[pBsData->noEnv - 1][gr] =
             h_ps_d->specificTo.mpeg.aIccPrevFrameIndex[gr];
@@ -336,6 +338,12 @@ int DecodePs(struct PS_DEC *h_ps_d,  /*!< PS handle */
 
   /* Update previous frame Iid quantization */
   h_ps_d->specificTo.mpeg.bPrevFrameFineIidQ = pBsData->bFineIidQ;
+
+  /* Update previous frequency resolution for IID */
+  h_ps_d->specificTo.mpeg.prevFreqResIid = pBsData->freqResIid;
+
+  /* Update previous frequency resolution for ICC */
+  h_ps_d->specificTo.mpeg.prevFreqResIcc = pBsData->freqResIcc;
 
   /* Update previous frame index buffers */
   for (gr = 0; gr < NO_HI_RES_IID_BINS; gr++) {
