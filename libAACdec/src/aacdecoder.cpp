@@ -3033,9 +3033,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     aacChannels = 0;
   }
 
-  if (TRANSPORTDEC_OK != transportDec_CrcCheck(self->hInput)) {
-    ErrorStatus = AAC_DEC_CRC_ERROR;
-    self->frameOK = 0;
+  if (!(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
+    if (TRANSPORTDEC_OK != transportDec_CrcCheck(self->hInput)) {
+      ErrorStatus = AAC_DEC_CRC_ERROR;
+      self->frameOK = 0;
+    }
   }
 
   /* Ensure that in case of concealment a proper error status is set. */
