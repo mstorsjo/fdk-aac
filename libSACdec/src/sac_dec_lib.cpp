@@ -1087,6 +1087,7 @@ mpegSurroundDecoder_ConfigureQmfDomain(
 
   if (coreCodec == AOT_ER_AAC_ELD) {
     pGC->flags_requested |= QMF_FLAG_MPSLDFB;
+    pGC->flags_requested &= ~QMF_FLAG_CLDFB;
   }
 
   return err;
