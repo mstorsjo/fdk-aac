@@ -889,10 +889,6 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
         !(hgc->flags & (QMF_FLAG_CLDFB | QMF_FLAG_MPSLDFB))) {
       hgc->flags_requested |= QMF_FLAG_DOWNSAMPLED;
     }
-    if ((hgc->flags_requested & QMF_FLAG_MPSLDFB) &&
-        (hgc->flags_requested & QMF_FLAG_CLDFB)) {
-      hgc->flags_requested &= ~QMF_FLAG_CLDFB;
-    }
 
     hasChanged = 1;
   }
@@ -901,6 +897,10 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
 
   /* 5. set requested flags */
   if (hgc->flags != hgc->flags_requested) {
+    if ((hgc->flags_requested & QMF_FLAG_MPSLDFB) &&
+        (hgc->flags_requested & QMF_FLAG_CLDFB)) {
+      hgc->flags_requested &= ~QMF_FLAG_CLDFB;
+    }
     hgc->flags = hgc->flags_requested;
     hasChanged = 1;
   }
