@@ -309,7 +309,7 @@ static FIXP_DBL calc_period_factor(FIXP_DBL exc[], FIXP_SGL gain_pit,
   ener_exc = (FIXP_DBL)0;
   for (int i = 0; i < L_SUBFR; i++) {
     ener_exc += fPow2Div2(exc[i]) >> s;
-    if (ener_exc > FL2FXCONST_DBL(0.5f)) {
+    if (ener_exc >= FL2FXCONST_DBL(0.5f)) {
       ener_exc >>= 1;
       s++;
     }
