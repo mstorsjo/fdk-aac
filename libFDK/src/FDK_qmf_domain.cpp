@@ -786,6 +786,7 @@ void FDK_QmfDomain_ClearRequested(HANDLE_FDK_QMF_DOMAIN_GC hgc) {
   hgc->flags_requested = 0;
   hgc->nInputChannels_requested = 0;
   hgc->nOutputChannels_requested = 0;
+  hgc->parkChannel_requested = 0;
   hgc->nBandsAnalysis_requested = 0;
   hgc->nBandsSynthesis_requested = 0;
   hgc->nQmfTimeSlots_requested = 0;
@@ -798,6 +799,7 @@ static void FDK_QmfDomain_ClearConfigured(HANDLE_FDK_QMF_DOMAIN_GC hgc) {
   hgc->flags = 0;
   hgc->nInputChannels = 0;
   hgc->nOutputChannels = 0;
+  hgc->parkChannel = 0;
   hgc->nBandsAnalysis = 0;
   hgc->nBandsSynthesis = 0;
   hgc->nQmfTimeSlots = 0;
