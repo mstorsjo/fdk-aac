@@ -1420,6 +1420,10 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
           if (ErrorStatus != TRANSPORTDEC_OK) {
             return TRANSPORTDEC_PARSE_ERROR;
           }
+          if (esc->m_downscaledSamplingFrequency != asc->m_samplingFrequency) {
+            return TRANSPORTDEC_UNSUPPORTED_FORMAT; /* ELDv2 w/ ELD downscaled
+                                                       mode not allowed */
+          }
           break;
         }
 
@@ -1440,6 +1444,10 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
         downscale_fill_nibble = FDKreadBits(hBs, 4);
         if (downscale_fill_nibble != 0x0) {
           return TRANSPORTDEC_PARSE_ERROR;
+        }
+        if (esc->m_useLdQmfTimeAlign == 1) {
+          return TRANSPORTDEC_UNSUPPORTED_FORMAT; /* ELDv2 w/ ELD downscaled
+                                                     mode not allowed */
         }
         break;
     }
