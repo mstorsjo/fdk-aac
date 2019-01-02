@@ -572,16 +572,18 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
 
   numHeaderBits = cfgStartPos - (INT)FDKgetValidBits(bitstream);
   bitsAvailable -= numHeaderBits;
+  if (bitsAvailable < 0) {
+    err = MPS_PARSE_ERROR;
+    goto bail;
+  }
 
   pSpatialSpecificConfig->sacExtCnt = 0;
   pSpatialSpecificConfig->bResidualCoding = 0;
 
-  if ((err == MPS_OK) && (bitsAvailable > 0)) {
-    err = SpatialDecParseExtensionConfig(
-        bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
-        pSpatialSpecificConfig->nTttBoxes,
-        pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
-  }
+  err = SpatialDecParseExtensionConfig(
+      bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
+      pSpatialSpecificConfig->nTttBoxes,
+      pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
 
   FDKbyteAlign(
       bitstream,
@@ -1868,6 +1870,16 @@ SACDEC_ERROR SpatialDecDecodeFrame(spatialDec *self, SPATIAL_BS_FRAME *frame) {
     frame->numParameterSets =
         fixMin(MAX_PARAMETER_SETS, frame->numParameterSets + 1);
     frame->paramSlot[frame->numParameterSets - 1] = self->timeSlots - 1;
+
+    for (int p = 0; p < frame->numParameterSets; p++) {
+      if (frame->paramSlot[p] > self->timeSlots - 1) {
+        frame->paramSlot[p] = self->timeSlots - 1;
+        err = MPS_PARSE_ERROR;
+      }
+    }
+    if (err != MPS_OK) {
+      goto bail;
+    }
   }
 
 bail:
