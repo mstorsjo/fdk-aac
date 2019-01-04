@@ -367,7 +367,8 @@ typedef INT (*cbFreeMem_t)(void *, const CSAudioSpecificConfig *);
 typedef INT (*cbCtrlCFGChange_t)(void *, const CCtrlCFGChange *);
 typedef INT (*cbSsc_t)(void *, HANDLE_FDK_BITSTREAM,
                        const AUDIO_OBJECT_TYPE coreCodec,
-                       const INT samplingRate, const INT stereoConfigIndex,
+                       const INT samplingRate, const INT frameSize,
+                       const INT stereoConfigIndex,
                        const INT coreSbrFrameLengthIndex, const INT configBytes,
                        const UCHAR configMode, UCHAR *configChanged);
 
