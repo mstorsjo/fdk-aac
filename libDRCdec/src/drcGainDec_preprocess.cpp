@@ -300,8 +300,9 @@ static DRC_ERROR _compressorIO_sigmoid(const CUSTOM_DRC_CHAR_SIGMOID* pCChar,
   FIXP_SGL exp = pCChar->exp;
   DRC_ERROR err = DE_OK;
 
-  tmp = fMultDiv2(DRC_INPUT_LOUDNESS_TARGET - inLevelDb, pCChar->ioRatio);
-  tmp = SATURATE_LEFT_SHIFT(tmp, 2 + 1, DFRACT_BITS);
+  tmp = fMultDiv2((DRC_INPUT_LOUDNESS_TARGET >> 1) - (inLevelDb >> 1),
+                  pCChar->ioRatio);
+  tmp = SATURATE_LEFT_SHIFT(tmp, 2 + 1 + 1, DFRACT_BITS);
   if (exp < (FIXP_SGL)MAXVAL_SGL) {
     /* x = tmp / gainDbLimit; */
     /* *outGainDb = tmp / pow(1.0f + pow(x, exp), 1.0f/exp); */
