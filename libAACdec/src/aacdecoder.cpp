@@ -539,13 +539,7 @@ static int CProgramConfigElement_Read(HANDLE_FDK_BITSTREAM bs,
                     sizeof(CProgramConfig)); /* Store the complete PCE */
           pceStatus = 1; /* New PCE but no change of config */
           break;
-        case 2: /* The number of channels are identical but not the config */
-          if (channelConfig == 0) {
-            FDKmemcpy(pce, tmpPce,
-                      sizeof(CProgramConfig)); /* Store the complete PCE */
-            pceStatus = 2; /* Decoder needs re-configuration */
-          }
-          break;
+        case 2:  /* The number of channels are identical but not the config */
         case -1: /* The channel configuration is completely different */
           pceStatus = -1; /* Not supported! */
           break;
