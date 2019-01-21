@@ -382,12 +382,21 @@ it. Hence, a fully platform-independant way to use alignment is not supported.
 /**************************************************
  * Macros regarding static code analysis
  **************************************************/
-#if defined(__clang__)
+#ifdef __cplusplus
+#if !defined(__has_cpp_attribute)
+#define __has_cpp_attribute(x) 0
+#endif
+#if defined(__clang__) && __has_cpp_attribute(clang::fallthrough)
 #define FDK_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__GNUC__) && (__GNUC__ >= 7)
+#endif
+#endif
+
+#ifndef FDK_FALLTHROUGH
+#if defined(__GNUC__) && (__GNUC__ >= 7)
 #define FDK_FALLTHROUGH __attribute__((fallthrough))
 #else
 #define FDK_FALLTHROUGH
+#endif
 #endif
 
 #ifdef _MSC_VER
