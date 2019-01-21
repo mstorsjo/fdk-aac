@@ -786,6 +786,7 @@ void FDK_QmfDomain_ClearRequested(HANDLE_FDK_QMF_DOMAIN_GC hgc) {
   hgc->flags_requested = 0;
   hgc->nInputChannels_requested = 0;
   hgc->nOutputChannels_requested = 0;
+  hgc->parkChannel_requested = 0;
   hgc->nBandsAnalysis_requested = 0;
   hgc->nBandsSynthesis_requested = 0;
   hgc->nQmfTimeSlots_requested = 0;
@@ -798,6 +799,7 @@ static void FDK_QmfDomain_ClearConfigured(HANDLE_FDK_QMF_DOMAIN_GC hgc) {
   hgc->flags = 0;
   hgc->nInputChannels = 0;
   hgc->nOutputChannels = 0;
+  hgc->parkChannel = 0;
   hgc->nBandsAnalysis = 0;
   hgc->nBandsSynthesis = 0;
   hgc->nQmfTimeSlots = 0;
@@ -887,10 +889,6 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
         !(hgc->flags & (QMF_FLAG_CLDFB | QMF_FLAG_MPSLDFB))) {
       hgc->flags_requested |= QMF_FLAG_DOWNSAMPLED;
     }
-    if ((hgc->flags_requested & QMF_FLAG_MPSLDFB) &&
-        (hgc->flags_requested & QMF_FLAG_CLDFB)) {
-      hgc->flags_requested &= ~QMF_FLAG_CLDFB;
-    }
 
     hasChanged = 1;
   }
@@ -899,6 +897,10 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
 
   /* 5. set requested flags */
   if (hgc->flags != hgc->flags_requested) {
+    if ((hgc->flags_requested & QMF_FLAG_MPSLDFB) &&
+        (hgc->flags_requested & QMF_FLAG_CLDFB)) {
+      hgc->flags_requested &= ~QMF_FLAG_CLDFB;
+    }
     hgc->flags = hgc->flags_requested;
     hasChanged = 1;
   }
@@ -981,9 +983,8 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
   }
 
 bail:
-  if (err == QMF_DOMAIN_OUT_OF_MEMORY) {
-    FDK_QmfDomain_FreePersistentMemory(hqd);
-    FDK_QmfDomain_ClearConfigured(&hqd->globalConf);
+  if (err) {
+    FDK_QmfDomain_FreeMem(hqd);
   }
   return err;
 }

@@ -291,13 +291,13 @@ SACDEC_ERROR SpatialDecParseSpecificConfigHeader(
   if (sacHeaderLen == 127) {
     sacHeaderLen += FDKreadBits(bitstream, 16);
   }
-  numFillBits = FDKgetValidBits(bitstream);
+  numFillBits = (INT)FDKgetValidBits(bitstream);
 
   err = SpatialDecParseSpecificConfig(bitstream, pSpatialSpecificConfig,
                                       sacHeaderLen, coreCodec);
 
   numFillBits -=
-      FDKgetValidBits(bitstream); /* the number of read bits (tmpBits) */
+      (INT)FDKgetValidBits(bitstream); /* the number of read bits (tmpBits) */
   numFillBits = (8 * sacHeaderLen) - numFillBits;
   if (numFillBits < 0) {
     /* Parsing went wrong */
@@ -324,6 +324,8 @@ SACDEC_ERROR SpatialDecParseMps212Config(
     AUDIO_OBJECT_TYPE coreCodec, INT stereoConfigIndex,
     INT coreSbrFrameLengthIndex) {
   int i;
+
+  FDKmemclear(pSpatialSpecificConfig, sizeof(SPATIAL_SPECIFIC_CONFIG));
 
   pSpatialSpecificConfig->stereoConfigIndex = stereoConfigIndex;
   pSpatialSpecificConfig->coreSbrFrameLengthIndex = coreSbrFrameLengthIndex;
@@ -447,6 +449,8 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
   int numHeaderBits;
   int cfgStartPos, bitsAvailable;
 
+  FDKmemclear(pSpatialSpecificConfig, sizeof(SPATIAL_SPECIFIC_CONFIG));
+
   cfgStartPos = FDKgetValidBits(bitstream);
   /* It might be that we do not know the SSC length beforehand. */
   if (sacHeaderLen == 0) {
@@ -513,6 +517,10 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
 
   pSpatialSpecificConfig->tempShapeConfig =
       (SPATIALDEC_TS_CONF)FDKreadBits(bitstream, 2);
+  if (pSpatialSpecificConfig->tempShapeConfig > 2) {
+    return MPS_PARSE_ERROR; /* reserved value */
+  }
+
   pSpatialSpecificConfig->decorrConfig =
       (SPATIALDEC_DECORR_CONF)FDKreadBits(bitstream, 2);
   if (pSpatialSpecificConfig->decorrConfig > 2) {
@@ -568,16 +576,18 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
 
   numHeaderBits = cfgStartPos - (INT)FDKgetValidBits(bitstream);
   bitsAvailable -= numHeaderBits;
+  if (bitsAvailable < 0) {
+    err = MPS_PARSE_ERROR;
+    goto bail;
+  }
 
   pSpatialSpecificConfig->sacExtCnt = 0;
   pSpatialSpecificConfig->bResidualCoding = 0;
 
-  if ((err == MPS_OK) && (bitsAvailable > 0)) {
-    err = SpatialDecParseExtensionConfig(
-        bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
-        pSpatialSpecificConfig->nTttBoxes,
-        pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
-  }
+  err = SpatialDecParseExtensionConfig(
+      bitstream, pSpatialSpecificConfig, pSpatialSpecificConfig->nOttBoxes,
+      pSpatialSpecificConfig->nTttBoxes,
+      pSpatialSpecificConfig->nOutputChannels, bitsAvailable);
 
   FDKbyteAlign(
       bitstream,
@@ -1864,6 +1874,16 @@ SACDEC_ERROR SpatialDecDecodeFrame(spatialDec *self, SPATIAL_BS_FRAME *frame) {
     frame->numParameterSets =
         fixMin(MAX_PARAMETER_SETS, frame->numParameterSets + 1);
     frame->paramSlot[frame->numParameterSets - 1] = self->timeSlots - 1;
+
+    for (int p = 0; p < frame->numParameterSets; p++) {
+      if (frame->paramSlot[p] > self->timeSlots - 1) {
+        frame->paramSlot[p] = self->timeSlots - 1;
+        err = MPS_PARSE_ERROR;
+      }
+    }
+    if (err != MPS_OK) {
+      goto bail;
+    }
   }
 
 bail:

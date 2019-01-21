@@ -315,9 +315,9 @@ SACDEC_ERROR mpegSurroundDecoder_Init(
  */
 SACDEC_ERROR mpegSurroundDecoder_Config(
     CMpegSurroundDecoder *pMpegSurroundDecoder, HANDLE_FDK_BITSTREAM hBs,
-    AUDIO_OBJECT_TYPE coreCodec, INT samplingRate, INT stereoConfigIndex,
-    INT coreSbrFrameLengthIndex, INT configBytes, const UCHAR configMode,
-    UCHAR *configChanged);
+    AUDIO_OBJECT_TYPE coreCodec, INT samplingRate, INT frameSize,
+    INT stereoConfigIndex, INT coreSbrFrameLengthIndex, INT configBytes,
+    const UCHAR configMode, UCHAR *configChanged);
 
 SACDEC_ERROR
 mpegSurroundDecoder_ConfigureQmfDomain(

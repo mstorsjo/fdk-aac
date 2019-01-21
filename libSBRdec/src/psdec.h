@@ -275,7 +275,11 @@ struct PS_DEC {
       SCHAR aIccPrevFrameIndex[NO_HI_RES_ICC_BINS]; /*!< The ICC index for
                                                        previous frame */
       UCHAR
-      bPrevFrameFineIidQ; /*!< The IID quantization of the previous frame */
+      bPrevFrameFineIidQ;   /*!< The IID quantization of the previous frame */
+      UCHAR prevFreqResIid; /*!< Frequency resolution for IID of the previous
+                               frame            */
+      UCHAR prevFreqResIcc; /*!< Frequency resolution for ICC of the previous
+                               frame            */
       UCHAR lastUsb; /*!< uppermost WMF delay band of last frame          */
 
       FIXP_DBL pHybridAnaStatesLFdmx

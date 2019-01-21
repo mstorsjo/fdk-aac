@@ -387,7 +387,7 @@ static INT aacDecoder_SbrCallback(
 
 static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
                                   const AUDIO_OBJECT_TYPE coreCodec,
-                                  const INT samplingRate,
+                                  const INT samplingRate, const INT frameSize,
                                   const INT stereoConfigIndex,
                                   const INT coreSbrFrameLengthIndex,
                                   const INT configBytes, const UCHAR configMode,
@@ -398,8 +398,8 @@ static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
 
   err = mpegSurroundDecoder_Config(
       (CMpegSurroundDecoder *)hAacDecoder->pMpegSurroundDecoder, hBs, coreCodec,
-      samplingRate, stereoConfigIndex, coreSbrFrameLengthIndex, configBytes,
-      configMode, configChanged);
+      samplingRate, frameSize, stereoConfigIndex, coreSbrFrameLengthIndex,
+      configBytes, configMode, configChanged);
 
   switch (err) {
     case MPS_UNSUPPORTED_CONFIG:
@@ -634,6 +634,7 @@ static AAC_DECODER_ERROR setConcealMethod(
     switch (err) {
       case PCMDMX_INVALID_HANDLE:
         errorStatus = AAC_DEC_INVALID_HANDLE;
+        break;
       case PCMDMX_OK:
         break;
       default:
@@ -1884,7 +1885,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
 
     } /* USAC DASH IPF flushing possible end */
     if (accessUnit < numPrerollAU) {
-      FDKpushBack(hBsAu, auStartAnchor - FDKgetValidBits(hBsAu));
+      FDKpushBack(hBsAu, auStartAnchor - (INT)FDKgetValidBits(hBsAu));
     } else {
       if ((self->buildUpStatus == AACDEC_RSV60_BUILD_UP_ON) ||
           (self->buildUpStatus == AACDEC_RSV60_BUILD_UP_ON_IN_BAND) ||

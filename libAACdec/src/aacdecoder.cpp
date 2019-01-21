@@ -234,7 +234,8 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self) {
               MODE_HQ))) { /* MPS decoder does support the requested mode. */
           break;
         }
-      } /* Fall-through: */
+      }
+        FDK_FALLTHROUGH;
       default:
         if (self->qmfModeUser == NOT_DEFINED) {
           /* Revert in case mpegSurroundDecoder_SetParam() fails. */
@@ -538,13 +539,7 @@ static int CProgramConfigElement_Read(HANDLE_FDK_BITSTREAM bs,
                     sizeof(CProgramConfig)); /* Store the complete PCE */
           pceStatus = 1; /* New PCE but no change of config */
           break;
-        case 2: /* The number of channels are identical but not the config */
-          if (channelConfig == 0) {
-            FDKmemcpy(pce, tmpPce,
-                      sizeof(CProgramConfig)); /* Store the complete PCE */
-            pceStatus = 2; /* Decoder needs re-configuration */
-          }
-          break;
+        case 2:  /* The number of channels are identical but not the config */
         case -1: /* The channel configuration is completely different */
           pceStatus = -1; /* Not supported! */
           break;
@@ -775,7 +770,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PreRollExtensionPayloadParse(
     /* For every AU get length and offset in the bitstream */
     prerollAULength[i] = escapedValue(hBs, 16, 16, 0);
     if (prerollAULength[i] > 0) {
-      prerollAUOffset[i] = auStartAnchor - FDKgetValidBits(hBs);
+      prerollAUOffset[i] = auStartAnchor - (INT)FDKgetValidBits(hBs);
       independencyFlag = FDKreadBit(hBs);
       if (i == 0 && !independencyFlag) {
         *numPrerollAU = 0;
@@ -938,6 +933,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
 
     case EXT_SBR_DATA_CRC:
       crcFlag = 1;
+      FDK_FALLTHROUGH;
     case EXT_SBR_DATA:
       if (IS_CHANNEL_ELEMENT(previous_element)) {
         SBR_ERROR sbrError;
@@ -1076,6 +1072,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
          * intentional. */
         break;
       }
+      FDK_FALLTHROUGH;
 
     case EXT_FIL:
 
@@ -1108,12 +1105,13 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
   /* get the remaining bits of this frame */
   bitCnt = transportDec_GetAuBitsRemaining(self->hInput, 0);
 
-  if ((bitCnt > 0) && (self->flags[0] & AC_SBR_PRESENT) &&
+  if ((self->flags[0] & AC_SBR_PRESENT) &&
       (self->flags[0] & (AC_USAC | AC_RSVD50 | AC_ELD | AC_DRM))) {
     SBR_ERROR err = SBRDEC_OK;
     int chElIdx, numChElements = el_cnt[ID_SCE] + el_cnt[ID_CPE] +
                                  el_cnt[ID_LFE] + el_cnt[ID_USAC_SCE] +
                                  el_cnt[ID_USAC_CPE] + el_cnt[ID_USAC_LFE];
+    INT bitCntTmp = bitCnt;
 
     if (self->flags[0] & AC_USAC) {
       chElIdx = numChElements - 1;
@@ -1123,6 +1121,7 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
 
     for (; chElIdx < numChElements; chElIdx += 1) {
       MP4_ELEMENT_ID sbrType;
+      SBR_ERROR errTmp;
       if (self->flags[0] & (AC_USAC)) {
         FDK_ASSERT((self->elements[element_index] == ID_USAC_SCE) ||
                    (self->elements[element_index] == ID_USAC_CPE));
@@ -1132,19 +1131,21 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
                       : ID_SCE;
       } else
         sbrType = self->elements[chElIdx];
-      err = sbrDecoder_Parse(self->hSbrDecoder, bs, self->pDrmBsBuffer,
-                             self->drmBsBufferSize, &bitCnt, -1,
-                             self->flags[0] & AC_SBRCRC, sbrType, chElIdx,
-                             self->flags[0], self->elFlags);
-      if (err != SBRDEC_OK) {
-        break;
+      errTmp = sbrDecoder_Parse(self->hSbrDecoder, bs, self->pDrmBsBuffer,
+                                self->drmBsBufferSize, &bitCnt, -1,
+                                self->flags[0] & AC_SBRCRC, sbrType, chElIdx,
+                                self->flags[0], self->elFlags);
+      if (errTmp != SBRDEC_OK) {
+        err = errTmp;
+        bitCntTmp = bitCnt;
+        bitCnt = 0;
       }
     }
     switch (err) {
       case SBRDEC_PARSE_ERROR:
         /* Can not go on parsing because we do not
             know the length of the SBR extension data. */
-        FDKpushFor(bs, bitCnt);
+        FDKpushFor(bs, bitCntTmp);
         bitCnt = 0;
         break;
       case SBRDEC_OK:
@@ -1495,11 +1496,13 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   switch (asc->m_aot) {
     case AOT_AAC_LC:
       self->streamInfo.profile = 1;
+      FDK_FALLTHROUGH;
     case AOT_ER_AAC_SCAL:
       if (asc->m_sc.m_gaSpecificConfig.m_layer > 0) {
         /* aac_scalable_extension_element() currently not supported. */
         return AAC_DEC_UNSUPPORTED_FORMAT;
       }
+      FDK_FALLTHROUGH;
     case AOT_SBR:
     case AOT_PS:
     case AOT_ER_AAC_LC:
@@ -1630,17 +1633,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   aacChannelsOffset = 0;
   aacChannelsOffsetIdx = 0;
   elementOffset = 0;
-  if (configMode & AC_CM_ALLOC_MEM) {
-    if ((ascChannels <= 0) ||
-        (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
-    if ((ascChannels + aacChannelsOffsetIdx) > ((8) * 2)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
-    if ((ascChannels + aacChannelsOffset) > (8)) {
-      return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
-    }
+  if ((ascChannels <= 0) || (ascChannels > (8)) ||
+      (asc->m_channelConfiguration > AACDEC_MAX_CH_CONF)) {
+    return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
   }
 
   /* Set syntax flags */
@@ -2055,17 +2050,12 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       if (self->flags[streamIndex] & (AC_RSV603DA | AC_USAC)) {
         _numElements = (int)asc->m_sc.m_usacConfig.m_usacNumElements;
       }
-      if (self->flags[streamIndex] & (AC_ER | AC_LD | AC_ELD)) {
-        _numElements = (asc->m_channelConfiguration == 7)
-                           ? 8
-                           : asc->m_channelConfiguration;
-      }
       for (int _el = 0; _el < _numElements; _el++) {
         int el_channels = 0;
         int el = elementOffset + _el;
 
         if (self->flags[streamIndex] &
-            (AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
+            (AC_ER | AC_LD | AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
           if (ch >= ascChannels) {
             break;
           }
@@ -2115,7 +2105,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
                   (SPECTRAL_PTR)&self->workBufferCore2[ch * 1024];
 
               if (el_channels == 2) {
-                FDK_ASSERT(ch < (8) - 1);
+                if (ch >= (8) - 1) {
+                  return AAC_DEC_UNSUPPORTED_CHANNELCONFIG;
+                }
                 self->pAacDecoderChannelInfo[ch + 1]->pComData =
                     self->pAacDecoderChannelInfo[ch]->pComData;
                 self->pAacDecoderChannelInfo[ch + 1]->pComStaticData =
@@ -2519,8 +2511,14 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     if (!(self->flags[0] &
           (AC_USAC | AC_RSVD50 | AC_RSV603DA | AC_ELD | AC_SCALABLE | AC_ER)))
       type = (MP4_ELEMENT_ID)FDKreadBits(bs, 3);
-    else
+    else {
+      if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+        self->frameOK = 0;
+        ErrorStatus = AAC_DEC_PARSE_ERROR;
+        break;
+      }
       type = self->elements[element_count];
+    }
 
     if ((self->flags[streamIndex] & (AC_USAC | AC_RSVD50) &&
          element_count == 0) ||
@@ -2564,6 +2562,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       case ID_USAC_SCE:
       case ID_USAC_CPE:
       case ID_USAC_LFE:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
 
         el_channels = CAacDecoder_GetELChannels(
             type, self->usacStereoConfigIndex[element_count]);
@@ -2795,12 +2798,24 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       } break;
 
       case ID_EXT:
+        if (element_count >= (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
+
         ErrorStatus = aacDecoder_ParseExplicitMpsAndSbr(
             self, bs, previous_element, previous_element_index, element_count,
             el_cnt);
         break;
 
       case ID_USAC_EXT: {
+        if ((element_count - element_count_prev_streams) >=
+            TP_USAC_MAX_ELEMENTS) {
+          self->frameOK = 0;
+          ErrorStatus = AAC_DEC_PARSE_ERROR;
+          break;
+        }
         /* parse extension element payload
            q.v. rsv603daExtElement() ISO/IEC DIS 23008-3  Table 30
            or   UsacExElement() ISO/IEC FDIS 23003-3:2011(E)  Table 21
@@ -3012,9 +3027,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     aacChannels = 0;
   }
 
-  if (TRANSPORTDEC_OK != transportDec_CrcCheck(self->hInput)) {
-    ErrorStatus = AAC_DEC_CRC_ERROR;
-    self->frameOK = 0;
+  if (!(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
+    if (TRANSPORTDEC_OK != transportDec_CrcCheck(self->hInput)) {
+      ErrorStatus = AAC_DEC_CRC_ERROR;
+      self->frameOK = 0;
+    }
   }
 
   /* Ensure that in case of concealment a proper error status is set. */

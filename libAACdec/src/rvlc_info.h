@@ -164,6 +164,7 @@ typedef struct {
   UCHAR direction;
 
   /* bitstream indices */
+  INT bsAnchor;             /* hcr bit buffer reference index */
   INT bitstreamIndexRvlFwd; /* base address of RVL-coded-scalefactor data (ESC
                                2) for forward  decoding */
   INT bitstreamIndexRvlBwd; /* base address of RVL-coded-scalefactor data (ESC

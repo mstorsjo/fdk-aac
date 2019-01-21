@@ -142,7 +142,7 @@ FIXP_DBL *CLpd_FAC_GetMemory(CAacDecoderChannelInfo *pAacDecoderChannelInfo,
   return ptr;
 }
 
-int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, UCHAR *pFacScale,
+int CLpd_FAC_Read(HANDLE_FDK_BITSTREAM hBs, FIXP_DBL *pFac, SCHAR *pFacScale,
                   int length, int use_gain, int frame) {
   FIXP_DBL fac_gain;
   int fac_gain_e = 0;
@@ -191,13 +191,11 @@ static void Syn_filt_zero(const FIXP_LPC a[], const INT a_exp, INT length,
     L_tmp = (FIXP_DBL)0;
 
     for (j = 0; j < fMin(i, M_LP_FILTER_ORDER); j++) {
-      L_tmp -= fMultDiv2(a[j], x[i - (j + 1)]);
+      L_tmp -= fMultDiv2(a[j], x[i - (j + 1)]) >> (LP_FILTER_SCALE - 1);
     }
 
-    L_tmp = scaleValue(L_tmp, a_exp + 1);
-
-    x[i] = scaleValueSaturate((x[i] >> 1) + (L_tmp >> 1),
-                              1); /* Avoid overflow issues and saturate. */
+    L_tmp = scaleValue(L_tmp, a_exp + LP_FILTER_SCALE);
+    x[i] = fAddSaturate(x[i], L_tmp);
   }
 }
 
@@ -536,10 +534,12 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
 
   /* Optional scaling of time domain - no yet windowed - of current spectrum */
   if (total_gain != (FIXP_DBL)0) {
-    scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[0] + scale);
-  } else {
-    scaleValues(pSpec, tl, spec_scale[0] + scale);
+    for (i = 0; i < tl; i++) {
+      pSpec[i] = fMult(pSpec[i], total_gain);
+    }
   }
+  int loc_scale = fixmin_I(spec_scale[0] + scale, (INT)DFRACT_BITS - 1);
+  scaleValuesSaturate(pSpec, tl, loc_scale);
 
   pOut1 += fl / 2 - 1;
   pCurr = pSpec + tl - fl / 2;
@@ -625,10 +625,12 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
      */
     /* and de-scale current spectrum signal (time domain, no yet windowed) */
     if (total_gain != (FIXP_DBL)0) {
-      scaleValuesWithFactor(pSpec, total_gain, tl, spec_scale[w] + scale);
-    } else {
-      scaleValues(pSpec, tl, spec_scale[w] + scale);
+      for (i = 0; i < tl; i++) {
+        pSpec[i] = fMult(pSpec[i], total_gain);
+      }
     }
+    loc_scale = fixmin_I(spec_scale[w] + scale, (INT)DFRACT_BITS - 1);
+    scaleValuesSaturate(pSpec, tl, loc_scale);
 
     if (noOutSamples <= nrSamples) {
       /* Divert output first half to overlap buffer if we already got enough

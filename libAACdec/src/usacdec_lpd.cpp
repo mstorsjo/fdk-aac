@@ -418,6 +418,7 @@ void CLpd_AdaptLowFreqDeemph(FIXP_DBL x[], int lg, FIXP_DBL alfd_gains[],
     FIXP_DBL tmp_pow2[32];
 
     s = s * 2 + ALFDPOW2_SCALE;
+    s = fMin(31, s);
 
     k = 8;
     i_max = lg / 4; /* ALFD range = 1600Hz (lg = 6400Hz) */
@@ -1221,8 +1222,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read(
       (INT)(samplingRate * PIT_MIN_12k8 + (FSCALE_DENOM / 2)) / FSCALE_DENOM -
       (INT)PIT_MIN_12k8;
 
-  if (pSamplingRateInfo->samplingRate >
-      FAC_FSCALE_MAX /* maximum allowed core sampling frequency */) {
+  if ((samplingRate < FAC_FSCALE_MIN) || (samplingRate > FAC_FSCALE_MAX)) {
     error = AAC_DEC_PARSE_ERROR;
     goto bail;
   }

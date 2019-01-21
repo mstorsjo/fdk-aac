@@ -1145,10 +1145,10 @@ static int sbrGetEnvelope(
   \brief    Generates frame info for FIXFIXonly frame class used for low delay
  version
 
-  \return   nothing
+  \return   zero for error, one for correct.
  ****************************************************************************/
-static void generateFixFixOnly(FRAME_INFO *hSbrFrameInfo, int tranPosInternal,
-                               int numberTimeSlots, const UINT flags) {
+static int generateFixFixOnly(FRAME_INFO *hSbrFrameInfo, int tranPosInternal,
+                              int numberTimeSlots, const UINT flags) {
   int nEnv, i, tranIdx;
   const int *pTable;
 
@@ -1159,12 +1159,11 @@ static void generateFixFixOnly(FRAME_INFO *hSbrFrameInfo, int tranPosInternal,
     case 15:
       pTable = FDK_sbrDecoder_envelopeTable_15[tranPosInternal];
       break;
-    default:
-      FDK_ASSERT(0);
-      /* fall through */
     case 16:
       pTable = FDK_sbrDecoder_envelopeTable_16[tranPosInternal];
       break;
+    default:
+      return 0;
   }
 
   /* look number of envelopes in table */
@@ -1187,6 +1186,8 @@ static void generateFixFixOnly(FRAME_INFO *hSbrFrameInfo, int tranPosInternal,
   /* nEnv is always > 1, so nNoiseEnvelopes is always 2 (IEC 14496-3 4.6.19.3.2)
    */
   hSbrFrameInfo->nNoiseEnvelopes = 2;
+
+  return 1;
 }
 
 /*!
@@ -1230,7 +1231,9 @@ static int extractLowDelayGrid(
   }
 
   /* calculate borders according to the transient position */
-  generateFixFixOnly(pFrameInfo, temp, numberTimeSlots, flags);
+  if (!generateFixFixOnly(pFrameInfo, temp, numberTimeSlots, flags)) {
+    return 0;
+  }
 
   /* decode freq res: */
   for (k = 0; k < pFrameInfo->nEnvelopes; k++) {

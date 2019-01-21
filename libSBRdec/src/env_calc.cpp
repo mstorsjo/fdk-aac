@@ -626,7 +626,8 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
         total_power_low >>= diff;
         total_power_low_sf = new_summand_sf;
       } else if (new_summand_sf < total_power_low_sf) {
-        new_summand >>= total_power_low_sf - new_summand_sf;
+        new_summand >>=
+            fMin(DFRACT_BITS - 1, total_power_low_sf - new_summand_sf);
       }
 
       total_power_low += (new_summand >> preShift2);
@@ -638,7 +639,8 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
             fMin(DFRACT_BITS - 1, new_summand_sf - total_power_high_sf);
         total_power_high_sf = new_summand_sf;
       } else if (new_summand_sf < total_power_high_sf) {
-        new_summand >>= total_power_high_sf - new_summand_sf;
+        new_summand >>=
+            fMin(DFRACT_BITS - 1, total_power_high_sf - new_summand_sf);
       }
 
       total_power_high += (new_summand >> preShift2);
@@ -1561,13 +1563,14 @@ void calculateSbrEnvelope(
             adjustTimeSlotHQ_GainAndNoise(
                 &analysBufferReal[j][lowSubband],
                 &analysBufferImag[j][lowSubband], h_sbr_cal_env, pNrgs,
-                lowSubband, noSubbands, scale_change, smooth_ratio, noNoiseFlag,
-                filtBufferNoiseShift);
+                lowSubband, noSubbands, fMin(scale_change, DFRACT_BITS - 1),
+                smooth_ratio, noNoiseFlag, filtBufferNoiseShift);
           } else {
             adjustTimeSlotHQ(&analysBufferReal[j][lowSubband],
                              &analysBufferImag[j][lowSubband], h_sbr_cal_env,
-                             pNrgs, lowSubband, noSubbands, scale_change,
-                             smooth_ratio, noNoiseFlag, filtBufferNoiseShift);
+                             pNrgs, lowSubband, noSubbands,
+                             fMin(scale_change, DFRACT_BITS - 1), smooth_ratio,
+                             noNoiseFlag, filtBufferNoiseShift);
           }
         } else {
           FDK_ASSERT(!iTES_enable); /* not supported */
@@ -1575,13 +1578,14 @@ void calculateSbrEnvelope(
             /* FDKmemset(analysBufferReal[j], 0, 64 * sizeof(FIXP_DBL)); */
             adjustTimeSlot_EldGrid(&analysBufferReal[j][lowSubband], pNrgs,
                                    &h_sbr_cal_env->harmIndex, lowSubband,
-                                   noSubbands, scale_change, noNoiseFlag,
-                                   &h_sbr_cal_env->phaseIndex,
+                                   noSubbands,
+                                   fMin(scale_change, DFRACT_BITS - 1),
+                                   noNoiseFlag, &h_sbr_cal_env->phaseIndex,
                                    EXP2SCALE(adj_e) - sbrScaleFactor->lb_scale);
           } else {
             adjustTimeSlotLC(&analysBufferReal[j][lowSubband], pNrgs,
                              &h_sbr_cal_env->harmIndex, lowSubband, noSubbands,
-                             scale_change, noNoiseFlag,
+                             fMin(scale_change, DFRACT_BITS - 1), noNoiseFlag,
                              &h_sbr_cal_env->phaseIndex);
           }
         }

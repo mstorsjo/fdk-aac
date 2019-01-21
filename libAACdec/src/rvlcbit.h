@@ -105,7 +105,7 @@ amm-info@iis.fraunhofer.de
 
 #include "rvlc.h"
 
-UCHAR rvlcReadBitFromBitstream(HANDLE_FDK_BITSTREAM bs, INT *pPosition,
-                               UCHAR readDirection);
+UCHAR rvlcReadBitFromBitstream(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
+                               INT *pPosition, UCHAR readDirection);
 
 #endif /* RVLCBIT_H */
