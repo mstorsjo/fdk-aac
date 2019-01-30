@@ -6,8 +6,6 @@
 # Installing: nmake -f Makefile.vc prefix=\path\to\x install
 #
 
-VERSION=0.1.5
-
 # Linker and librarian commands
 LD = link
 AR = lib
