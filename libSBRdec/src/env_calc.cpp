@@ -493,7 +493,7 @@ static void mapSineFlags(
   }
 }
 
-#define INTER_TES_SF_CHANGE 3
+#define INTER_TES_SF_CHANGE 4
 
 typedef struct {
   FIXP_DBL subsample_power_low[(((1024) / (32) * (4) / 2) + (3 * (4)))];
