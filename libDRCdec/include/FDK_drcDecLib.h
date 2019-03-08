@@ -142,6 +142,8 @@ typedef enum {
                                              choosing an appropriate
                                              downmixInstruction */
   DRC_DEC_BASE_CHANNEL_COUNT,
+  DRC_DEC_FRAME_SIZE,
+  DRC_DEC_SAMPLE_RATE,
   /* get only system parameters */
   DRC_DEC_IS_MULTIBAND_DRC_1,
   DRC_DEC_IS_MULTIBAND_DRC_2,
