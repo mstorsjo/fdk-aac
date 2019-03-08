@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -554,6 +554,11 @@ drcDec_SelectionProcess_SetParam(HANDLE_DRC_SELECTION_PROCESS hInstance,
         return DRCDEC_SELECTION_PROCESS_PARAM_OUT_OF_RANGE;
       diff |= _compAssign(&pSelProcInput->loudnessMeasurementMethod,
                           requestValueInt);
+      break;
+    case SEL_PROC_ALBUM_MODE:
+      if ((requestValueInt < 0) || (requestValueInt > 1))
+        return DRCDEC_SELECTION_PROCESS_PARAM_OUT_OF_RANGE;
+      diff |= _compAssign(&pSelProcInput->albumMode, requestValueInt);
       break;
     case SEL_PROC_DOWNMIX_ID:
       diff |=
