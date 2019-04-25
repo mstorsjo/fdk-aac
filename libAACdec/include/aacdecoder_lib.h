@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -781,6 +781,12 @@ typedef enum {
                  to 127 (31.75 dB below full-scale). This parameter is used only
                  with ::AAC_DRC_PARAMETER_HANDLING_ENABLED and ignored
                  otherwise.\n Default: 127 (worst-case assumption).\n */
+  AAC_UNIDRC_ALBUM_MODE =
+      0x0207, /*!<  MPEG-D DRC: Enable album mode. 0: Disabled (default), 1:
+                 Enabled.\n Disabled album mode leads to application of gain
+                 sequences for fading in and out, if provided in the
+                 bitstream.\n Enabled album mode makes use of dedicated album
+                 loudness information, if provided in the bitstream.\n */
   AAC_QMF_LOWPOWER = 0x0300, /*!< Quadrature Mirror Filter (QMF) Bank processing
                                 mode. \n -1: Use internal default. Implies MPEG
                                 Surround partially complex accordingly. \n 0:
