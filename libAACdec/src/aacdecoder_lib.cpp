@@ -120,7 +120,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 3
 #define AACDECODER_LIB_VL1 1
-#define AACDECODER_LIB_VL2 0
+#define AACDECODER_LIB_VL2 2
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #ifdef __ANDROID__
 #define AACDECODER_LIB_BUILD_DATE ""
@@ -823,11 +823,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
     case AAC_DRC_ATTENUATION_FACTOR:
       /* DRC compression factor (where 0 is no and 127 is max compression) */
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_CUT_SCALE, value);
+      uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_COMPRESS,
+                                      value * (FL2FXCONST_DBL(0.5f / 127.0f)));
       break;
 
     case AAC_DRC_BOOST_FACTOR:
       /* DRC boost factor (where 0 is no and 127 is max boost) */
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_BOOST_SCALE, value);
+      uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_BOOST,
+                                      value * (FL2FXCONST_DBL(0.5f / 127.0f)));
       break;
 
     case AAC_DRC_REFERENCE_LEVEL:

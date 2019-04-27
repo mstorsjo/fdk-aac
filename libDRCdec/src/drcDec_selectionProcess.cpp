@@ -603,14 +603,21 @@ drcDec_SelectionProcess_SetParam(HANDLE_DRC_SELECTION_PROCESS hInstance,
       if ((requestValue < (FIXP_DBL)0) ||
           (requestValue > FL2FXCONST_DBL(1.0f / (float)(1 << 1))))
         return DRCDEC_SELECTION_PROCESS_PARAM_OUT_OF_RANGE;
-      diff |= _compAssign(&pSelProcInput->boost, FX_DBL2FX_SGL(requestValue));
+      diff |= _compAssign(
+          &pSelProcInput->boost,
+          FX_DBL2FX_SGL(
+              requestValue +
+              (FIXP_DBL)(1 << 15))); /* convert to FIXP_SGL with rounding */
       break;
     case SEL_PROC_COMPRESS:
       if ((requestValue < (FIXP_DBL)0) ||
           (requestValue > FL2FXCONST_DBL(1.0f / (float)(1 << 1))))
         return DRCDEC_SELECTION_PROCESS_PARAM_OUT_OF_RANGE;
-      diff |=
-          _compAssign(&pSelProcInput->compress, FX_DBL2FX_SGL(requestValue));
+      diff |= _compAssign(
+          &pSelProcInput->compress,
+          FX_DBL2FX_SGL(
+              requestValue +
+              (FIXP_DBL)(1 << 15))); /* convert to FIXP_SGL with rounding */
       break;
     default:
       return DRCDEC_SELECTION_PROCESS_INVALID_PARAM;
