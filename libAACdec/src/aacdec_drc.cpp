@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -174,9 +174,9 @@ void aacDecoder_drcInit(HANDLE_AAC_DRC self) {
   pParams->usrCut = FL2FXCONST_DBL(0.0f);
   pParams->boost = FL2FXCONST_DBL(0.0f);
   pParams->usrBoost = FL2FXCONST_DBL(0.0f);
-  pParams->targetRefLevel = -1;
+  pParams->targetRefLevel = 96;
   pParams->expiryFrame = AACDEC_DRC_DFLT_EXPIRY_FRAMES;
-  pParams->applyDigitalNorm = OFF;
+  pParams->applyDigitalNorm = ON;
   pParams->applyHeavyCompression = OFF;
   pParams->usrApplyHeavyCompression = OFF;
 
