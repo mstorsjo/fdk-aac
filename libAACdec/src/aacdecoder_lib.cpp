@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -119,8 +119,8 @@ amm-info@iis.fraunhofer.de
 
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 3
-#define AACDECODER_LIB_VL1 0
-#define AACDECODER_LIB_VL2 0
+#define AACDECODER_LIB_VL1 1
+#define AACDECODER_LIB_VL2 2
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #ifdef __ANDROID__
 #define AACDECODER_LIB_BUILD_DATE ""
@@ -823,11 +823,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
     case AAC_DRC_ATTENUATION_FACTOR:
       /* DRC compression factor (where 0 is no and 127 is max compression) */
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_CUT_SCALE, value);
+      uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_COMPRESS,
+                                      value * (FL2FXCONST_DBL(0.5f / 127.0f)));
       break;
 
     case AAC_DRC_BOOST_FACTOR:
       /* DRC boost factor (where 0 is no and 127 is max boost) */
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_BOOST_SCALE, value);
+      uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_BOOST,
+                                      value * (FL2FXCONST_DBL(0.5f / 127.0f)));
       break;
 
     case AAC_DRC_REFERENCE_LEVEL:
@@ -871,6 +875,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
       uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_EFFECT_TYPE,
                                       (FIXP_DBL)value);
       break;
+    case AAC_UNIDRC_ALBUM_MODE:
+      uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_ALBUM_MODE,
+                                      (FIXP_DBL)value);
+      break;
+
     case AAC_TPDEC_CLEAR_BUFFER:
       errTp = transportDec_SetParam(hTpDec, TPDEC_PARAM_RESET, 1);
       self->streamInfo.numLostAccessUnits = 0;
