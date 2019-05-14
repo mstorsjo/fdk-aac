@@ -1676,6 +1676,13 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
             reverseOutChannelMap[ch] = ch;
           }
 
+          /* Update sampleRate and frameSize. This may be necessary in case of
+           * implicit SBR signaling */
+          FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_SAMPLE_RATE,
+                              self->streamInfo.sampleRate);
+          FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_FRAME_SIZE,
+                              self->streamInfo.frameSize);
+
           /* If SBR and/or MPS is active, the DRC gains are aligned to the QMF
              domain signal before the QMF synthesis. Therefore the DRC gains
              need to be delayed by the QMF synthesis delay. */

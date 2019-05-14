@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -134,6 +134,8 @@ typedef enum {
   GAIN_DEC_DRC2_DRC3
 } GAIN_DEC_LOCATION;
 
+typedef enum { GAIN_DEC_FRAME_SIZE, GAIN_DEC_SAMPLE_RATE } GAIN_DEC_PARAM;
+
 typedef struct {
   FIXP_DBL gainLin; /* e = 7 */
   SHORT time;
@@ -195,8 +197,12 @@ DRC_ERROR
 drcDec_GainDecoder_Open(HANDLE_DRC_GAIN_DECODER* phGainDec);
 
 DRC_ERROR
-drcDec_GainDecoder_Init(HANDLE_DRC_GAIN_DECODER hGainDec, const int frameSize,
-                        const int sampleRate);
+drcDec_GainDecoder_Init(HANDLE_DRC_GAIN_DECODER hGainDec);
+
+DRC_ERROR
+drcDec_GainDecoder_SetParam(HANDLE_DRC_GAIN_DECODER hGainDec,
+                            const GAIN_DEC_PARAM paramType,
+                            const int paramValue);
 
 DRC_ERROR
 drcDec_GainDecoder_SetCodecDependentParameters(
