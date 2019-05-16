@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -2325,7 +2325,15 @@ static void calcSubbandGain(
     }
 
     /*  gain = nrgRef / B */
-    FDK_divide_MantExp(nrgRef, nrgRef_e, b, b_e, ptrNrgGain, ptrNrgGain_e);
+    INT result_exp = 0;
+    *ptrNrgGain = fDivNorm(nrgRef, b, &result_exp);
+    *ptrNrgGain_e = (SCHAR)result_exp + (nrgRef_e - b_e);
+
+    /* There could be a one bit diffs. This is important to compensate,
+       because later in the code values are compared by exponent only. */
+    int headroom = CountLeadingBits(*ptrNrgGain);
+    *ptrNrgGain <<= headroom;
+    *ptrNrgGain_e -= headroom;
   }
 }
 
