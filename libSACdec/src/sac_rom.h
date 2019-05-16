@@ -160,6 +160,7 @@ extern const FIXP_CFG dequantCLD__FDK[31];
   (FL2FXCONST_DBL(3.1415926535897932f / (float)(1 << (IPD_SCALE - 1))))
 
 extern const FIXP_CFG dequantIPD__FDK[16];
+extern const FIXP_DBL dequantIPD_CLD_ICC_splitAngle__FDK[15][31][8];
 
 extern const FIXP_CFG H11_nc[31][8];
 extern const FIXP_CFG H12_nc[31][8];
