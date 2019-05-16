@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -147,7 +147,7 @@ amm-info@iis.fraunhofer.de
 #define CLIP_PROTECT_GAIN_1(x) FL2FXCONST_CFG(((x) / (float)(1 << 1)))
 #define CLIP_PROTECT_GAIN_2(x) FL2FXCONST_CFG(((x) / (float)(1 << 2)))
 
-#define SF_CLD_C1C2 (8)
+#define SF_CLD_C1C2 (9)
 
 extern const FIXP_CFG dequantCPC__FDK[];
 extern const FIXP_CFG dequantICC__FDK[8];
@@ -160,6 +160,7 @@ extern const FIXP_CFG dequantCLD__FDK[31];
   (FL2FXCONST_DBL(3.1415926535897932f / (float)(1 << (IPD_SCALE - 1))))
 
 extern const FIXP_CFG dequantIPD__FDK[16];
+extern const FIXP_DBL dequantIPD_CLD_ICC_splitAngle__FDK[15][31][8];
 
 extern const FIXP_CFG H11_nc[31][8];
 extern const FIXP_CFG H12_nc[31][8];
