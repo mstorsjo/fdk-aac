@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -591,13 +591,11 @@ static void FDKaacEnc_initAvoidHoleFlag(
           if (sfbEn > avgEn) {
             FIXP_DBL tmpMinSnrLdData;
             if (psyOutChannel[ch]->lastWindowSequence == LONG_WINDOW)
-              tmpMinSnrLdData =
-                  fixMax(SnrLdFac + (FIXP_DBL)(avgEnLdData - sfbEnLdData),
-                         (FIXP_DBL)SnrLdMin1);
+              tmpMinSnrLdData = SnrLdFac + fixMax(avgEnLdData - sfbEnLdData,
+                                                  SnrLdMin1 - SnrLdFac);
             else
-              tmpMinSnrLdData =
-                  fixMax(SnrLdFac + (FIXP_DBL)(avgEnLdData - sfbEnLdData),
-                         (FIXP_DBL)SnrLdMin3);
+              tmpMinSnrLdData = SnrLdFac + fixMax(avgEnLdData - sfbEnLdData,
+                                                  SnrLdMin3 - SnrLdFac);
 
             qcOutChan->sfbMinSnrLdData[sfbGrp + sfb] = fixMin(
                 qcOutChan->sfbMinSnrLdData[sfbGrp + sfb], tmpMinSnrLdData);
