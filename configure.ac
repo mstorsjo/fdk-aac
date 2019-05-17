@@ -13,8 +13,14 @@ AC_ARG_ENABLE([example],
                 [enable example encoding program (default is no)])],
             [example=$enableval], [example=no])
 
+if test x$example = xyes; then
+	PKG_CHECK_MODULES([libavcodec], [libavcodec], [libavcodec=yes], [libavcodec=no])
+	PKG_CHECK_MODULES([libavutil], [libavutil], [libavutil=yes], [libavutil=no])
+fi
+
 dnl Automake conditionals to set
 AM_CONDITIONAL(EXAMPLE, test x$example = xyes)
+AM_CONDITIONAL(HAVE_LIBAVCODEC, test x$libavcodec = xyes)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -36,3 +42,6 @@ AC_SUBST(LIBS_PRIVATE)
 AC_CONFIG_FILES([Makefile
                  fdk-aac.pc])
 AC_OUTPUT
+if test x$example = xyes; then
+	AC_MSG_NOTICE([Found libavcodec: ${libavcodec}])
+fi

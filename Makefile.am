@@ -47,6 +47,14 @@ aac_enc_SOURCES = aac-enc.c wavreader.c
 fuzz_dec_LDADD = libfdk-aac.la
 fuzz_dec_SOURCES = fuzz-dec.c
 
+if HAVE_LIBAVCODEC
+bin_PROGRAMS += fuzz-dec-lavc$(EXEEXT)
+
+fuzz_dec_lavc_LDADD = $(libavcodec_LIBS) $(libavutil_LIBS) libfdk-aac.la
+fuzz_dec_lavc_CFLAGS = $(libavcodec_CFLAGS) $(libavutil_CFLAGS) -DHAVE_LIBAVCODEC
+fuzz_dec_lavc_SOURCES = fuzz-dec.c
+endif
+
 noinst_HEADERS = wavreader.h
 endif
 
