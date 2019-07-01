@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -446,8 +446,26 @@ void lppTransposer(
                                 pSettings->nCols) +
                      lowBandShift);
     }
-    dynamicScale = fixMax(
-        0, dynamicScale - 1); /* one additional bit headroom to prevent -1.0 */
+
+    if (dynamicScale == 0) {
+      /* In this special case the available headroom bits as well as
+         ovLowBandShift and lowBandShift are zero. The spectrum is limited to
+         prevent -1.0, so negative values for dynamicScale can be avoided. */
+      for (i = 0; i < (LPC_ORDER + pSettings->overlap + pSettings->nCols);
+           i++) {
+        lowBandReal[i] = fixMax(lowBandReal[i], (FIXP_DBL)0x80000001);
+      }
+      if (!useLP) {
+        for (i = 0; i < (LPC_ORDER + pSettings->overlap + pSettings->nCols);
+             i++) {
+          lowBandImag[i] = fixMax(lowBandImag[i], (FIXP_DBL)0x80000001);
+        }
+      }
+    } else {
+      dynamicScale =
+          fixMax(0, dynamicScale -
+                        1); /* one additional bit headroom to prevent -1.0 */
+    }
 
     /*
       Scale temporal QMF buffer.

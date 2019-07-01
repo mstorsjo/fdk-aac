@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -741,66 +741,77 @@ typedef enum {
                                   ::CONCEAL_INTER. only some AOTs are
                                   supported). \n */
   AAC_DRC_BOOST_FACTOR =
-      0x0200, /*!< Dynamic Range Control: Scaling factor for boosting gain
-                 values. Defines how the boosting DRC factors (conveyed in the
-                 bitstream) will be applied to the decoded signal. The valid
-                 values range from 0 (don't apply boost factors) to 127 (fully
-                   apply boost factors). Default value is 0. */
-  AAC_DRC_ATTENUATION_FACTOR =
-      0x0201, /*!< Dynamic Range Control: Scaling factor for attenuating gain
-                 values. Same as
-                   ::AAC_DRC_BOOST_FACTOR but for attenuating DRC factors. */
+      0x0200, /*!< MPEG-4 / MPEG-D Dynamic Range Control (DRC): Scaling factor
+                 for boosting gain values. Defines how the boosting DRC factors
+                 (conveyed in the bitstream) will be applied to the decoded
+                 signal. The valid values range from 0 (don't apply boost
+                 factors) to 127 (fully apply boost factors). Default value is 0
+                 for MPEG-4 DRC and 127 for MPEG-D DRC. */
+  AAC_DRC_ATTENUATION_FACTOR = 0x0201, /*!< MPEG-4 / MPEG-D DRC: Scaling factor
+                                          for attenuating gain values. Same as
+                                            ::AAC_DRC_BOOST_FACTOR but for
+                                          attenuating DRC factors. */
   AAC_DRC_REFERENCE_LEVEL =
-      0x0202, /*!< Dynamic Range Control (DRC): Target reference level. Defines
-                 the level below full-scale (quantized in steps of 0.25dB) to
-                 which the output audio signal will be normalized to by the DRC
-                 module. The parameter controls loudness normalization for both
-                 MPEG-4 DRC and MPEG-D DRC. The valid values range from 40 (-10
-                 dBFS) to 127 (-31.75 dBFS). Any value smaller than 0 switches
-                 off loudness normalization and MPEG-4 DRC. By default, loudness
-                 normalization and MPEG-4 DRC is switched off. */
+      0x0202, /*!< MPEG-4 / MPEG-D DRC: Target reference level / decoder target
+                 loudness.\n Defines the level below full-scale (quantized in
+                 steps of 0.25dB) to which the output audio signal will be
+                 normalized to by the DRC module.\n The parameter controls
+                 loudness normalization for both MPEG-4 DRC and MPEG-D DRC. The
+                 valid values range from 40 (-10 dBFS) to 127 (-31.75 dBFS).\n
+                   Example values:\n
+                   124 (-31 dBFS) for audio/video receivers (AVR) or other
+                 devices allowing audio playback with high dynamic range,\n 96
+                 (-24 dBFS) for TV sets or equivalent devices (default),\n 64
+                 (-16 dBFS) for mobile devices where the dynamic range of audio
+                 playback is restricted.\n Any value smaller than 0 switches off
+                 loudness normalization and MPEG-4 DRC. */
   AAC_DRC_HEAVY_COMPRESSION =
-      0x0203, /*!< Dynamic Range Control: En-/Disable DVB specific heavy
-                 compression (aka RF mode). If set to 1, the decoder will apply
-                 the compression values from the DVB specific ancillary data
-                 field. At the same time the MPEG-4 Dynamic Range Control tool
-                 will be disabled. By default, heavy compression is disabled. */
+      0x0203, /*!< MPEG-4 DRC: En-/Disable DVB specific heavy compression (aka
+                 RF mode). If set to 1, the decoder will apply the compression
+                 values from the DVB specific ancillary data field. At the same
+                 time the MPEG-4 Dynamic Range Control tool will be disabled. By
+                   default, heavy compression is disabled. */
   AAC_DRC_DEFAULT_PRESENTATION_MODE =
-      0x0204, /*!< Dynamic Range Control: Default presentation mode (DRC
-                 parameter handling). \n Defines the handling of the DRC
-                 parameters boost factor, attenuation factor and heavy
-                 compression, if no presentation mode is indicated in the
-                 bitstream.\n For options, see
-                 ::AAC_DRC_DEFAULT_PRESENTATION_MODE_OPTIONS.\n Default:
+      0x0204, /*!< MPEG-4 DRC: Default presentation mode (DRC parameter
+                 handling). \n Defines the handling of the DRC parameters boost
+                 factor, attenuation factor and heavy compression, if no
+                 presentation mode is indicated in the bitstream.\n For options,
+                 see ::AAC_DRC_DEFAULT_PRESENTATION_MODE_OPTIONS.\n Default:
                  ::AAC_DRC_PARAMETER_HANDLING_DISABLED */
   AAC_DRC_ENC_TARGET_LEVEL =
-      0x0205, /*!< Dynamic Range Control: Encoder target level for light (i.e.
-                 not heavy) compression.\n If known, this declares the target
-                 reference level that was assumed at the encoder for calculation
-                   of limiting gains. The valid values range from 0 (full-scale)
-                 to 127 (31.75 dB below full-scale). This parameter is used only
+      0x0205, /*!< MPEG-4 DRC: Encoder target level for light (i.e. not heavy)
+                 compression.\n If known, this declares the target reference
+                 level that was assumed at the encoder for calculation of
+                 limiting gains. The valid values range from 0 (full-scale) to
+                 127 (31.75 dB below full-scale). This parameter is used only
                  with ::AAC_DRC_PARAMETER_HANDLING_ENABLED and ignored
                  otherwise.\n Default: 127 (worst-case assumption).\n */
+  AAC_UNIDRC_SET_EFFECT = 0x0206, /*!< MPEG-D DRC: Request a DRC effect type for
+                                     selection of a DRC set.\n Supported indices
+                                     are:\n -1: DRC off. Completely disables
+                                     MPEG-D DRC.\n 0: None (default). Disables
+                                     MPEG-D DRC, but automatically enables DRC
+                                     if necessary to prevent clipping.\n 1: Late
+                                     night\n 2: Noisy environment\n 3: Limited
+                                     playback range\n 4: Low playback level\n 5:
+                                     Dialog enhancement\n 6: General
+                                     compression. Used for generally enabling
+                                     MPEG-D DRC without particular request.\n */
+  AAC_UNIDRC_ALBUM_MODE =
+      0x0207, /*!<  MPEG-D DRC: Enable album mode. 0: Disabled (default), 1:
+                 Enabled.\n Disabled album mode leads to application of gain
+                 sequences for fading in and out, if provided in the
+                 bitstream.\n Enabled album mode makes use of dedicated album
+                 loudness information, if provided in the bitstream.\n */
   AAC_QMF_LOWPOWER = 0x0300, /*!< Quadrature Mirror Filter (QMF) Bank processing
                                 mode. \n -1: Use internal default. Implies MPEG
                                 Surround partially complex accordingly. \n 0:
                                 Use complex QMF data mode. \n 1: Use real (low
                                 power) QMF data mode. \n */
   AAC_TPDEC_CLEAR_BUFFER =
-      0x0603, /*!< Clear internal bit stream buffer of transport layers. The
-                 decoder will start decoding at new data passed after this event
-                 and any previous data is discarded. */
-  AAC_UNIDRC_SET_EFFECT = 0x0903 /*!<  MPEG-D DRC: Request a DRC effect type for
-                                    selection of a DRC set.\n Supported indices
-                                    are:\n -1: DRC off. Completely disables
-                                    MPEG-D DRC.\n 0: None (default). Disables
-                                    MPEG-D DRC, but automatically enables DRC if
-                                    necessary to prevent clipping.\n 1: Late
-                                    night\n 2: Noisy environment\n 3: Limited
-                                    playback range\n 4: Low playback level\n 5:
-                                    Dialog enhancement\n 6: General compression.
-                                    Used for generally enabling MPEG-D DRC
-                                    without particular request.\n */
+      0x0603 /*!< Clear internal bit stream buffer of transport layers. The
+                decoder will start decoding at new data passed after this event
+                and any previous data is discarded. */
 
 } AACDEC_PARAM;
 
