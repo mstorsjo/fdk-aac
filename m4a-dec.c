@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 	AAC_DECODER_ERROR err;
 	unsigned frame_size = 0, i;
 	UINT input_length;
+	int status = 0;
 	if (argc < 3) {
 		fprintf(stderr, "%s in.m4a out.wav\n", argv[0]);
 		return 1;
@@ -104,6 +105,7 @@ int main(int argc, char *argv[]) {
 		err = aacDecoder_Fill(handle, &pkt.data, &input_length, &valid);
 		if (err != AAC_DEC_OK) {
 			fprintf(stderr, "Fill failed: %x\n", err);
+			status = 1;
 			break;
 		}
 		err = aacDecoder_DecodeFrame(handle, decode_buf, output_size / sizeof(INT_PCM), 0);
@@ -112,12 +114,14 @@ int main(int argc, char *argv[]) {
 			continue;
 		if (err != AAC_DEC_OK) {
 			fprintf(stderr, "Decode failed: %x\n", err);
-			continue;
+			status = 1;
+			break;
 		}
 		if (!wav) {
 			CStreamInfo *info = aacDecoder_GetStreamInfo(handle);
 			if (!info || info->sampleRate <= 0) {
 				fprintf(stderr, "No stream info\n");
+				status = 1;
 				break;
 			}
 			frame_size = info->frameSize * info->numChannels;
@@ -125,6 +129,7 @@ int main(int argc, char *argv[]) {
 			wav = wav_write_open(outfile, info->sampleRate, 16, info->numChannels);
 			if (!wav) {
 				perror(outfile);
+				status = 1;
 				break;
 			}
 		}
@@ -141,6 +146,6 @@ int main(int argc, char *argv[]) {
 	if (wav)
 		wav_write_close(wav);
 	aacDecoder_Close(handle);
-	return 0;
+	return status;
 }
 
