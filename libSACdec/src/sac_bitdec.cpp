@@ -1586,9 +1586,9 @@ static SACDEC_ERROR mapIndexData(
   for (ps = 0; ps < numParameterSets; ps++) {
     if (quantMode && (paramType == t_CLD)) {
       if (pOttVsTotDbIn == 0) return MPS_WRONG_OTT;
-      if ((pOttVsTotDb1 == 0) && (ottVsTotDbMode == ottVsTotDb1Activ))
+      if ((pOttVsTotDb1 == 0) && (ottVsTotDbMode & ottVsTotDb1Activ))
         return MPS_WRONG_OTT;
-      if ((pOttVsTotDb2 == 0) && (ottVsTotDbMode == ottVsTotDb2Activ))
+      if ((pOttVsTotDb2 == 0) && (ottVsTotDbMode & ottVsTotDb2Activ))
         return MPS_WRONG_OTT;
 
       for (pb = startBand; pb < stopBand; pb++) {
