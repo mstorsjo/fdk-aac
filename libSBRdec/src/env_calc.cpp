@@ -1576,12 +1576,13 @@ void calculateSbrEnvelope(
           FDK_ASSERT(!iTES_enable); /* not supported */
           if (flags & SBRDEC_ELD_GRID) {
             /* FDKmemset(analysBufferReal[j], 0, 64 * sizeof(FIXP_DBL)); */
-            adjustTimeSlot_EldGrid(&analysBufferReal[j][lowSubband], pNrgs,
-                                   &h_sbr_cal_env->harmIndex, lowSubband,
-                                   noSubbands,
-                                   fMin(scale_change, DFRACT_BITS - 1),
-                                   noNoiseFlag, &h_sbr_cal_env->phaseIndex,
-                                   EXP2SCALE(adj_e) - sbrScaleFactor->lb_scale);
+            adjustTimeSlot_EldGrid(
+                &analysBufferReal[j][lowSubband], pNrgs,
+                &h_sbr_cal_env->harmIndex, lowSubband, noSubbands,
+                fMin(scale_change, DFRACT_BITS - 1), noNoiseFlag,
+                &h_sbr_cal_env->phaseIndex,
+                fMax(EXP2SCALE(adj_e) - sbrScaleFactor->lb_scale,
+                     -(DFRACT_BITS - 1)));
           } else {
             adjustTimeSlotLC(&analysBufferReal[j][lowSubband], pNrgs,
                              &h_sbr_cal_env->harmIndex, lowSubband, noSubbands,
