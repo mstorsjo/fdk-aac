@@ -1477,7 +1477,7 @@ void calculateSbrEnvelope(
 
       for (k = 0; k < noSubbands; k++) {
         int sc = scale_change - pNrgs->nrgGain_e[k] + (sc_change - 1);
-        pNrgs->nrgGain[k] >>= sc;
+        pNrgs->nrgGain[k] >>= fixMin(sc, DFRACT_BITS - 1);
         pNrgs->nrgGain_e[k] += sc;
       }
 
@@ -1485,7 +1485,7 @@ void calculateSbrEnvelope(
         for (k = 0; k < noSubbands; k++) {
           int sc =
               scale_change - h_sbr_cal_env->filtBuffer_e[k] + (sc_change - 1);
-          h_sbr_cal_env->filtBuffer[k] >>= sc;
+          h_sbr_cal_env->filtBuffer[k] >>= fixMin(sc, DFRACT_BITS - 1);
         }
       }
 
