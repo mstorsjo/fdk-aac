@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -807,19 +807,17 @@ void CJointStereo_ApplyMS(
                   for (int i = 0; i < windowLen; i++) {
                     dmx_re_prev[i] =
                         ((staticSpectralCoeffsL[index_offset + i] >>
-                          srLeftChan) +
+                          fMin(DFRACT_BITS - 1, srLeftChan + 1)) +
                          (staticSpectralCoeffsR[index_offset + i] >>
-                          srRightChan)) >>
-                        1;
+                          fMin(DFRACT_BITS - 1, srRightChan + 1)));
                   }
                 } else {
                   for (int i = 0; i < windowLen; i++) {
                     dmx_re_prev[i] =
                         ((staticSpectralCoeffsL[index_offset + i] >>
-                          srLeftChan) -
+                          fMin(DFRACT_BITS - 1, srLeftChan + 1)) -
                          (staticSpectralCoeffsR[index_offset + i] >>
-                          srRightChan)) >>
-                        1;
+                          fMin(DFRACT_BITS - 1, srRightChan + 1)));
                   }
                 }
               }
@@ -854,12 +852,13 @@ void CJointStereo_ApplyMS(
           if (window == 0) {
             if (dmx_re_prev_e < frameMaxScale) {
               if (mainband_flag == 0) {
-                scaleValues(dmx_re_prev, store_dmx_re_prev, windowLen,
-                            -(frameMaxScale - dmx_re_prev_e));
+                scaleValues(
+                    dmx_re_prev, store_dmx_re_prev, windowLen,
+                    -fMin(DFRACT_BITS - 1, (frameMaxScale - dmx_re_prev_e)));
               } else {
-                for (int i = 0; i < windowLen; i++) {
-                  dmx_re_prev[i] >>= (frameMaxScale - dmx_re_prev_e);
-                }
+                scaleValues(
+                    dmx_re_prev, windowLen,
+                    -fMin(DFRACT_BITS - 1, (frameMaxScale - dmx_re_prev_e)));
               }
             } else {
               if (mainband_flag == 0) {
@@ -873,10 +872,9 @@ void CJointStereo_ApplyMS(
             FDK_ASSERT(pAacDecoderChannelInfo[L]->icsInfo.WindowSequence ==
                        BLOCK_SHORT);
             if (specScaleL[window - 1] < frameMaxScale) {
-              for (int i = 0; i < windowLen; i++) {
-                dmx_re[windowLen * (window - 1) + i] >>=
-                    (frameMaxScale - specScaleL[window - 1]);
-              }
+              scaleValues(&dmx_re[windowLen * (window - 1)], windowLen,
+                          -fMin(DFRACT_BITS - 1,
+                                (frameMaxScale - specScaleL[window - 1])));
             } else {
               specScaleL[window] = specScaleL[window - 1];
               specScaleR[window] = specScaleR[window - 1];
