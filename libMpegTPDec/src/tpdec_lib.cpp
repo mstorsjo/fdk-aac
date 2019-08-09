@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -663,10 +663,14 @@ TRANSPORTDEC_ERROR transportDec_FillData(const HANDLE_TRANSPORTDEC hTp,
     if (*pBytesValid == 0) {
       /* nothing to do */
       return TRANSPORTDEC_OK;
-    }
-
-    if (hTp->numberOfRawDataBlocks <= 0) {
+    } else {
+      const int bytesValid = *pBytesValid;
       FDKfeedBuffer(hBs, pBuffer, bufferSize, pBytesValid);
+
+      if (hTp->numberOfRawDataBlocks > 0) {
+        hTp->globalFramePos += (bytesValid - *pBytesValid) * 8;
+        hTp->accessUnitAnchor[layer] = FDKgetValidBits(hBs);
+      }
     }
   }
 
@@ -1151,6 +1155,11 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
                                     &rawDataBlockLength, &fTraverseMoreFrames,
                                     &syncLayerFrameBits, &fConfigFound,
                                     &headerBits);
+      if (headerBits > bitsAvail) {
+        err = (headerBits < (INT)hBs->hBitBuf.bufBits)
+                  ? TRANSPORTDEC_NOT_ENOUGH_BITS
+                  : TRANSPORTDEC_SYNC_ERROR;
+      }
       if (TPDEC_IS_FATAL_ERROR(err)) {
         /* Rewind - TPDEC_SYNCSKIP, in order to look for a synch one bit ahead
          * next time. Ensure that the bit amount lands at a multiple of
@@ -1181,8 +1190,6 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
     }
 
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
-      /* Enforce reading of new data */
-      hTp->numberOfRawDataBlocks = 0;
       break;
     }
 
@@ -1273,7 +1280,9 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
   /* Rewind for retry because of not enough bits */
   if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
     FDKpushBack(hBs, headerBits);
+    hTp->numberOfRawDataBlocks = numRawDataBlocksPrevious;
     headerBits = 0;
+    rawDataBlockLength = rawDataBlockLengthPrevious;
   } else {
     /* reset hold off frame counter */
     hTp->holdOffFrames = 0;
