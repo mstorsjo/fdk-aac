@@ -2144,6 +2144,24 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
 
     self->m_channelConfiguration = FDKreadBits(bs, 4);
 
+    /* MPEG-04 standard ISO/IEC 14496-3: channelConfiguration == 0 is reserved
+       in er_raw_data_block (table 4.19) and er_raw_data_block_eld (table 4.75)
+       MPEG-04 conformance ISO/IEC 14496-4: channelConfiguration == 0 is not
+       permitted for AOT_ER_AAC_LC, AOT_ER_AAC_LTP, AOT_ER_AAC_LD,
+       AOT_ER_AAC_SCAL (chapter 6.6.4.1.2.1.1) */
+    if ((self->m_channelConfiguration == 0) &&
+        ((self->m_aot == AOT_ER_AAC_LC) || (self->m_aot == AOT_ER_AAC_LTP) ||
+         (self->m_aot == AOT_ER_AAC_LD) || (self->m_aot == AOT_ER_AAC_SCAL) ||
+         (self->m_aot == AOT_ER_AAC_ELD))) {
+      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
+    }
+    /* MPEG-04 conformance ISO/IEC 14496-4: channelConfiguration > 2 is not
+     * permitted for AOT_AAC_SCAL and AOT_ER_AAC_SCAL (chapter 6.6.4.1.2.1.1) */
+    if ((self->m_channelConfiguration > 2) &&
+        ((self->m_aot == AOT_AAC_SCAL) || (self->m_aot == AOT_ER_AAC_SCAL))) {
+      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
+    }
+
     /* SBR extension ( explicit non-backwards compatible mode ) */
     self->m_sbrPresentFlag = 0;
     self->m_psPresentFlag = 0;
