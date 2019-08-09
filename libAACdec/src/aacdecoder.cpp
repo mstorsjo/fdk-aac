@@ -1928,6 +1928,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           self->samplingRateInfo[0].samplingRate / self->downscaleFactor;
       self->streamInfo.aacSamplesPerFrame =
           asc->m_samplesPerFrame / self->downscaleFactor;
+      if (self->streamInfo.aacSampleRate <= 0) {
+        return AAC_DEC_UNSUPPORTED_SAMPLINGRATE;
+      }
     }
   }
 
