@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1554,22 +1554,20 @@ static SACDEC_ERROR mapIndexData(
   /* Interpolate */
   i1 = 0;
   for (i = 0; i < numParameterSets; i++) {
-    int xi, i2, x1, x2;
-
     if (aInterpolate[i] != 1) {
       i1 = i;
-    }
-    i2 = i;
-    while (aInterpolate[i2] == 1) {
-      i2++;
-      if (i2 >= MAX_PARAMETER_SETS) return MPS_WRONG_PARAMETERSETS;
-    }
-    x1 = paramSlot[i1];
-    xi = paramSlot[i];
-    x2 = paramSlot[i2];
+    } else {
+      int xi, i2, x1, x2;
 
-    if (aInterpolate[i] == 1) {
+      for (i2 = i; i2 < numParameterSets; i2++) {
+        if (aInterpolate[i2] != 1) break;
+      }
       if (i2 >= numParameterSets) return MPS_WRONG_PARAMETERSETS;
+
+      x1 = paramSlot[i1];
+      xi = paramSlot[i];
+      x2 = paramSlot[i2];
+
       for (band = startBand; band < stopBand; band++) {
         int yi, y1, y2;
         y1 = outputIdxData[xttIdx][i1][band];
