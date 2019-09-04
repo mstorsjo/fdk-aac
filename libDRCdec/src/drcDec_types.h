@@ -249,11 +249,11 @@ typedef struct {
   UCHAR drcFrameSizePresent;
   USHORT drcFrameSize;
   UCHAR characteristicLeftCount;
-  UCHAR characteristicLeftFormat[8];
-  CUSTOM_DRC_CHAR customCharacteristicLeft[8];
+  UCHAR characteristicLeftFormat[16];
+  CUSTOM_DRC_CHAR customCharacteristicLeft[16];
   UCHAR characteristicRightCount;
-  UCHAR characteristicRightFormat[8];
-  CUSTOM_DRC_CHAR customCharacteristicRight[8];
+  UCHAR characteristicRightFormat[16];
+  CUSTOM_DRC_CHAR customCharacteristicRight[16];
   UCHAR
   gainSequenceCount;  /* unsaturated value, i.e. as provided in bitstream */
   UCHAR gainSetCount; /* saturated to 12 */

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -184,24 +184,11 @@ static DRC_ERROR _generateDrcInstructionsDerivedData(
 }
 
 DRC_ERROR
-initGainDec(HANDLE_DRC_GAIN_DECODER hGainDec, const int frameSize,
-            const int sampleRate) {
+initGainDec(HANDLE_DRC_GAIN_DECODER hGainDec) {
   int i, j, k;
 
-  if (frameSize < 1) {
-    return DE_NOT_OK;
-  }
-
-  hGainDec->frameSize = frameSize;
-
-  if (hGainDec->frameSize * 1000 < sampleRate) {
-    return DE_NOT_OK;
-  }
-
-  hGainDec->deltaTminDefault = getDeltaTmin(sampleRate);
-  if (hGainDec->deltaTminDefault > hGainDec->frameSize) {
-    return DE_NOT_OK;
-  }
+  /* sanity check */
+  if (hGainDec->deltaTminDefault > hGainDec->frameSize) return DE_NOT_OK;
 
   for (i = 0; i < MAX_ACTIVE_DRCS; i++) {
     for (j = 0; j < 8; j++) {
@@ -336,9 +323,11 @@ initActiveDrcOffset(HANDLE_DRC_GAIN_DECODER hGainDec) {
   for (a = 0; a < hGainDec->nActiveDrcs; a++) {
     hGainDec->activeDrc[a].activeDrcOffset = accGainElementCount;
     accGainElementCount += hGainDec->activeDrc[a].gainElementCount;
+    if (accGainElementCount > 12) {
+      hGainDec->nActiveDrcs = a;
+      return DE_NOT_OK;
+    }
   }
-
-  if (accGainElementCount > 12) return DE_NOT_OK;
 
   return DE_OK;
 }

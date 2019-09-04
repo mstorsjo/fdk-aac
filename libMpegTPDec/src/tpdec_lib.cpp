@@ -274,7 +274,7 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp,
   UCHAR configChanged = 0;
   UCHAR configMode = AC_CM_DET_CFG_CHANGE;
 
-  UCHAR tmpConf[1024];
+  UCHAR tmpConf[1024] = {0};
   if (length > 1024) {
     return TRANSPORTDEC_UNSUPPORTED_FORMAT;
   }
