@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -661,6 +661,7 @@ void FDKaacEnc_IntensityStereoProcessing(
     for (sfboffs = 0; sfboffs < maxSfbPerGroup; sfboffs++) {
       INT sL, sR;
       FIXP_DBL inv_n;
+      INT mdct_spec_sf = MDCT_SPEC_SF;
 
       msMask[sfb + sfboffs] = 0;
       if (isMask[sfb + sfboffs] == 0) {
@@ -680,6 +681,12 @@ void FDKaacEnc_IntensityStereoProcessing(
         if (pnsData[1]->pnsFlag[sfb + sfboffs]) {
           pnsData[1]->pnsFlag[sfb + sfboffs] = 0;
         }
+      }
+
+      if (sfbOffset[sfb + sfboffs + 1] - sfbOffset[sfb + sfboffs] >
+          1 << mdct_spec_sf) {
+        mdct_spec_sf++; /* This is for rare cases where the number of bins in a
+                           scale factor band is > 64 */
       }
 
       inv_n = GetInvInt(
@@ -707,11 +714,11 @@ void FDKaacEnc_IntensityStereoProcessing(
              j++) {
           d = ((mdctSpectrumLeft[j] << s0) >> 1) -
               ((mdctSpectrumRight[j] << s0) >> 1);
-          ed += fMultDiv2(d, d) >> (MDCT_SPEC_SF - 1);
+          ed += fMultDiv2(d, d) >> (mdct_spec_sf - 1);
         }
         msMask[sfb + sfboffs] = 1;
         tmp = fDivNorm(sfbEnergyLeft[sfb + sfboffs], ed, &s1);
-        s2 = (s1) + (2 * s0) - 2 - MDCT_SPEC_SF;
+        s2 = (s1) + (2 * s0) - 2 - mdct_spec_sf;
         if (s2 & 1) {
           tmp = tmp >> 1;
           s2 = s2 + 1;
@@ -748,12 +755,12 @@ void FDKaacEnc_IntensityStereoProcessing(
           s = ((mdctSpectrumLeft[j] << s0) >> 1) +
               ((mdctSpectrumRight[j] << s0) >> 1);
           es += fMultDiv2(s, s) >>
-                (MDCT_SPEC_SF -
-                 1);  // scaled 2*(mdctScale - s0 + 1) + MDCT_SPEC_SF
+                (mdct_spec_sf -
+                 1);  // scaled 2*(mdctScale - s0 + 1) + mdct_spec_sf
         }
         msMask[sfb + sfboffs] = 0;
         tmp = fDivNorm(sfbEnergyLeft[sfb + sfboffs], es, &s1);
-        s2 = (s1) + (2 * s0) - 2 - MDCT_SPEC_SF;
+        s2 = (s1) + (2 * s0) - 2 - mdct_spec_sf;
         if (s2 & 1) {
           tmp = tmp >> 1;
           s2 = s2 + 1;
