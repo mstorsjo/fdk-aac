@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	void *wav = NULL;
 	int output_size, ret;
 	uint8_t *output_buf;
-	int16_t *decode_buf;
+	INT_PCM *decode_buf;
 	HANDLE_AACDECODER handle;
 	AAC_DECODER_ERROR err;
 	unsigned frame_size = 0, i;
@@ -82,9 +82,9 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	output_size = 8*2*2048;
+	output_size = 8*sizeof(INT_PCM)*2048;
 	output_buf = (uint8_t*) malloc(output_size);
-	decode_buf = (int16_t*) malloc(output_size);
+	decode_buf = (INT_PCM*) malloc(output_size);
 
 	while (1) {
 		UINT valid;
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
 			}
 			frame_size = info->frameSize * info->numChannels;
 			// Note, this probably doesn't return channels > 2 in the right order for wav
-			wav = wav_write_open(outfile, info->sampleRate, 16, info->numChannels);
+			wav = wav_write_open(outfile, info->sampleRate, sizeof(INT_PCM)*8, info->numChannels);
 			if (!wav) {
 				perror(outfile);
 				status = 1;
@@ -134,11 +134,12 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		for (i = 0; i < frame_size; i++) {
-			uint8_t* out = &output_buf[2*i];
-			out[0] = decode_buf[i] & 0xff;
-			out[1] = decode_buf[i] >> 8;
+			uint8_t* out = &output_buf[sizeof(INT_PCM)*i];
+			unsigned j;
+			for (j = 0; j < sizeof(INT_PCM); j++)
+				out[j] = (uint8_t)(decode_buf[i] >> (8*j));
 		}
-		wav_write_data(wav, output_buf, 2*frame_size);
+		wav_write_data(wav, output_buf, sizeof(INT_PCM)*frame_size);
 	}
 	free(output_buf);
 	free(decode_buf);
