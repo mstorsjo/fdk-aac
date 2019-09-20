@@ -1170,6 +1170,9 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
   /*-----------------------------------------------------*
    *  Multiply F1(z) by (1+z^-1) and F2(z) by (1-z^-1)   *
    *-----------------------------------------------------*/
+  scaleValues(f1, NC + 1, -2);
+  scaleValues(f2, NC + 1, -2);
+
   for (i = NC; i > 0; i--) {
     f1[i] += f1[i - 1];
     f2[i] -= f2[i - 1];
@@ -1178,13 +1181,8 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
   FIXP_DBL aDBL[M_LP_FILTER_ORDER];
 
   for (i = 1, k = M_LP_FILTER_ORDER - 1; i <= NC; i++, k--) {
-    FIXP_DBL tmp1, tmp2;
-
-    tmp1 = f1[i] >> 1;
-    tmp2 = f2[i] >> 1;
-
-    aDBL[i - 1] = (tmp1 + tmp2);
-    aDBL[k] = (tmp1 - tmp2);
+    aDBL[i - 1] = f1[i] + f2[i];
+    aDBL[k] = f1[i] - f2[i];
   }
 
   int headroom_a = getScalefactor(aDBL, M_LP_FILTER_ORDER);
@@ -1193,5 +1191,5 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
     a[i] = FX_DBL2FX_LPC(aDBL[i] << headroom_a);
   }
 
-  *a_exp = 8 - headroom_a;
+  *a_exp = SF_F + (2 - 1) - headroom_a;
 }
