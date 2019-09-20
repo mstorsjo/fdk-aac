@@ -231,7 +231,7 @@ void nearest_neighbor_2D8(FIXP_ZF x[8], int y[8]) {
 void RE8_PPV(FIXP_ZF x[], SHORT y[], int r) {
   int i, y0[8], y1[8];
   FIXP_ZF x1[8], tmp;
-  FIXP_DBL e;
+  INT64 e;
 
   /* find the nearest neighbor y0 of x in 2D8 */
   nearest_neighbor_2D8(x, y0);
@@ -245,16 +245,16 @@ void RE8_PPV(FIXP_ZF x[], SHORT y[], int r) {
   }
 
   /* compute e0=||x-y0||^2 and e1=||x-y1||^2 */
-  e = (FIXP_DBL)0;
+  e = 0;
   for (i = 0; i < 8; i++) {
     tmp = x[i] - INT2ZF(y0[i], 0);
-    e += fPow2Div2(
+    e += (INT64)fPow2Div2(
         tmp << r); /* shift left to ensure that no fract part bits get lost. */
     tmp = x[i] - INT2ZF(y1[i], 0);
-    e -= fPow2Div2(tmp << r);
+    e -= (INT64)fPow2Div2(tmp << r);
   }
   /* select best candidate y0 or y1 to minimize distortion */
-  if (e < (FIXP_DBL)0) {
+  if (e < 0) {
     for (i = 0; i < 8; i++) {
       y[i] = y0[i];
     }
