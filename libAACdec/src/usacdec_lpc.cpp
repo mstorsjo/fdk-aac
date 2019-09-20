@@ -565,7 +565,8 @@ static void lsf_weight_2st(FIXP_LPC *lsfq, FIXP_DBL *xq, int nk_mode) {
   /* add non-weighted residual LSF vector to LSF1st */
   for (i = 0; i < M_LP_FILTER_ORDER; i++) {
     w = (LONG)fMultDiv2(factor, sqrtFixp(fMult(d[i], d[i + 1])));
-    lsfq[i] = fAddSaturate(lsfq[i], FX_DBL2FX_LPC((FIXP_DBL)(w * (LONG)xq[i])));
+    lsfq[i] = fAddSaturate(lsfq[i],
+                           FX_DBL2FX_LPC((FIXP_DBL)((INT64)w * (LONG)xq[i])));
   }
 
   return;
