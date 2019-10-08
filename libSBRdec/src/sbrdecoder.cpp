@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -871,11 +871,10 @@ INT sbrDecoder_Header(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
         if (sbrError == SBRDEC_OK) {
           hSbrHeader->syncState = SBR_HEADER;
           hSbrHeader->status |= SBRDEC_HDR_STAT_UPDATE;
+        } else {
+          hSbrHeader->syncState = SBR_NOT_INITIALIZED;
+          hSbrHeader->status = HEADER_ERROR;
         }
-        /* else {
-          Since we already have overwritten the old SBR header the only way out
-        is UPSAMPLING! This will be prepared in the next step.
-        } */
       }
     }
   }

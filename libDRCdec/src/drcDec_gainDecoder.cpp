@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -170,16 +170,34 @@ drcDec_GainDecoder_Open(HANDLE_DRC_GAIN_DECODER* phGainDec) {
 }
 
 DRC_ERROR
-drcDec_GainDecoder_Init(HANDLE_DRC_GAIN_DECODER hGainDec, const int frameSize,
-                        const int sampleRate) {
+drcDec_GainDecoder_Init(HANDLE_DRC_GAIN_DECODER hGainDec) {
   DRC_ERROR err = DE_OK;
 
-  err = initGainDec(hGainDec, frameSize, sampleRate);
+  err = initGainDec(hGainDec);
   if (err) return err;
 
   initDrcGainBuffers(hGainDec->frameSize, &hGainDec->drcGainBuffers);
 
   return err;
+}
+
+DRC_ERROR
+drcDec_GainDecoder_SetParam(HANDLE_DRC_GAIN_DECODER hGainDec,
+                            const GAIN_DEC_PARAM paramType,
+                            const int paramValue) {
+  switch (paramType) {
+    case GAIN_DEC_FRAME_SIZE:
+      if (paramValue < 0) return DE_PARAM_OUT_OF_RANGE;
+      hGainDec->frameSize = paramValue;
+      break;
+    case GAIN_DEC_SAMPLE_RATE:
+      if (paramValue < 0) return DE_PARAM_OUT_OF_RANGE;
+      hGainDec->deltaTminDefault = getDeltaTmin(paramValue);
+      break;
+    default:
+      return DE_PARAM_INVALID;
+  }
+  return DE_OK;
 }
 
 DRC_ERROR

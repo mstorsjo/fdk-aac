@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -474,80 +474,6 @@ static const FIXP_DBL CLD_m[N_CLD] = {
     FL2FXCONST_DBL(0.888178419700125),
 };
 
-static FIXP_DBL dequantIPD_CLD_ICC_splitAngle__FDK_Function(INT ipdIdx,
-                                                            INT cldIdx,
-                                                            INT iccIdx) {
-  FIXP_DBL cld;
-  SpatialDequantGetCLD2Values(cldIdx, &cld);
-
-  /*const FIXP_DBL one_m = (FIXP_DBL)MAXVAL_DBL;
-  const int one_e = 0;*/
-  const FIXP_DBL one_m = FL2FXCONST_DBL(0.5f);
-  const int one_e = 1;
-  /* iidLin = sqrt(cld); */
-  FIXP_DBL iidLin_m = sqrt_CLD_m[cldIdx];
-  int iidLin_e = sqrt_CLD_e[cldIdx];
-  /* iidLin2 = cld; */
-  FIXP_DBL iidLin2_m = CLD_m[cldIdx];
-  int iidLin2_e = sqrt_CLD_e[cldIdx] << 1;
-  /* iidLin21 = iidLin2 + 1.0f; */
-  int iidLin21_e;
-  FIXP_DBL iidLin21_m =
-      fAddNorm(iidLin2_m, iidLin2_e, one_m, one_e, &iidLin21_e);
-  /* iidIcc2 = iidLin * icc * 2.0f; */
-  FIXP_CFG icc = dequantICC__FDK[iccIdx];
-  FIXP_DBL temp1_m, temp1c_m;
-  int temp1_e, temp1c_e;
-  temp1_m = fMult(iidLin_m, icc);
-  temp1_e = iidLin_e + 1;
-
-  FIXP_DBL cosIpd, sinIpd;
-  cosIpd = COS_IPD(ipdIdx);
-  sinIpd = SIN_IPD(ipdIdx);
-
-  temp1c_m = fMult(temp1_m, cosIpd);
-  temp1c_e = temp1_e;  //+cosIpd_e;
-
-  int temp2_e, temp3_e, inv_temp3_e, ratio_e;
-  FIXP_DBL temp2_m =
-      fAddNorm(iidLin21_m, iidLin21_e, temp1c_m, temp1c_e, &temp2_e);
-  FIXP_DBL temp3_m =
-      fAddNorm(iidLin21_m, iidLin21_e, temp1_m, temp1_e, &temp3_e);
-  /* calculate 1/temp3 needed later */
-  inv_temp3_e = temp3_e;
-  FIXP_DBL inv_temp3_m = invFixp(temp3_m, &inv_temp3_e);
-  FIXP_DBL ratio_m =
-      fAddNorm(fMult(inv_temp3_m, temp2_m), (inv_temp3_e + temp2_e),
-               FL2FXCONST_DBL(1e-9f), 0, &ratio_e);
-
-  int weight2_e, tempb_atan2_e;
-  FIXP_DBL weight2_m =
-      fPow(ratio_m, ratio_e, FL2FXCONST_DBL(0.5f), -1, &weight2_e);
-  /* atan2(w2*sinIpd, w1*iidLin + w2*cosIpd) = atan2(w2*sinIpd, (2 - w2)*iidLin
-   * + w2*cosIpd) = atan2(w2*sinIpd, 2*iidLin + w2*(cosIpd - iidLin)); */
-  /* tmpa_atan2 = w2*sinIpd; tmpb_atan2 = 2*iidLin + w2*(cosIpd - iidLin); */
-  FIXP_DBL tempb_atan2_m = iidLin_m;
-  tempb_atan2_e = iidLin_e + 1;
-  int add_tmp1_e = 0;
-  FIXP_DBL add_tmp1_m = fAddNorm(cosIpd, 0, -iidLin_m, iidLin_e, &add_tmp1_e);
-  FIXP_DBL add_tmp2_m = fMult(add_tmp1_m, weight2_m);
-  int add_tmp2_e = add_tmp1_e + weight2_e;
-  tempb_atan2_m = fAddNorm(tempb_atan2_m, tempb_atan2_e, add_tmp2_m, add_tmp2_e,
-                           &tempb_atan2_e);
-
-  FIXP_DBL tempa_atan2_m = fMult(weight2_m, sinIpd);
-  int tempa_atan2_e = weight2_e;  // + sinIpd_e;
-
-  if (tempa_atan2_e > tempb_atan2_e) {
-    tempb_atan2_m = (tempb_atan2_m >> (tempa_atan2_e - tempb_atan2_e));
-    tempb_atan2_e = tempa_atan2_e;
-  } else if (tempb_atan2_e > tempa_atan2_e) {
-    tempa_atan2_m = (tempa_atan2_m >> (tempb_atan2_e - tempa_atan2_e));
-  }
-
-  return fixp_atan2(tempa_atan2_m, tempb_atan2_m);
-}
-
 static void calculateOpd(spatialDec* self, INT ottBoxIndx, INT parameterSetIndx,
                          FIXP_DBL opd[MAX_PARAMETER_BANDS]) {
   INT band;
@@ -563,12 +489,12 @@ static void calculateOpd(spatialDec* self, INT ottBoxIndx, INT parameterSetIndx,
     SpatialDequantGetCLD2Values(idxCld, &cld);
 
     /* ipd(idxIpd==8) == PI */
-    if ((cld == FL2FXCONST_DBL(0.0f)) && (idxIpd == 8)) {
+    if (((cld == FL2FXCONST_DBL(0.0f)) && (idxIpd == 8)) || (idxIpd == 0)) {
       opd[2 * band] = FL2FXCONST_DBL(0.0f);
     } else {
-      opd[2 * band] = (dequantIPD_CLD_ICC_splitAngle__FDK_Function(
-                           idxIpd, idxCld, idxIcc) >>
-                       (IPD_SCALE - AT2O_SF));
+      FDK_ASSERT(idxIpd > 0);
+      opd[2 * band] =
+          dequantIPD_CLD_ICC_splitAngle__FDK[idxIpd - 1][idxCld][idxIcc];
     }
     opd[2 * band + 1] = opd[2 * band] - ipd;
   }

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -104,8 +104,7 @@ amm-info@iis.fraunhofer.de
 #define DRCGAINDEC_INIT_H
 
 DRC_ERROR
-initGainDec(HANDLE_DRC_GAIN_DECODER hGainDec, const int frameSize,
-            const int sampleRate);
+initGainDec(HANDLE_DRC_GAIN_DECODER hGainDec);
 
 void initDrcGainBuffers(const int frameSize, DRC_GAIN_BUFFERS* drcGainBuffers);
 

@@ -1152,6 +1152,10 @@ static int generateFixFixOnly(FRAME_INFO *hSbrFrameInfo, int tranPosInternal,
   int nEnv, i, tranIdx;
   const int *pTable;
 
+  if (tranPosInternal >= numberTimeSlots) {
+    return 0;
+  }
+
   switch (numberTimeSlots) {
     case 8:
       pTable = FDK_sbrDecoder_envelopeTable_8[tranPosInternal];

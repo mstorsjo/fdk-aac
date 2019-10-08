@@ -1457,7 +1457,7 @@ static SACDEC_ERROR mapIndexData(
     FIXP_DBL (*pOttVsTotDb1)[MAX_PARAMETER_SETS][MAX_PARAMETER_BANDS],
     FIXP_DBL (*pOttVsTotDb2)[MAX_PARAMETER_SETS][MAX_PARAMETER_BANDS]) {
   int aParamSlots[MAX_PARAMETER_SETS];
-  int aInterpolate[MAX_PARAMETER_SETS];
+  int aInterpolate[MAX_PARAMETER_SETS] = {0};
 
   int dataSets;
   int aMap[MAX_PARAMETER_BANDS + 1];
@@ -1562,6 +1562,7 @@ static SACDEC_ERROR mapIndexData(
     i2 = i;
     while (aInterpolate[i2] == 1) {
       i2++;
+      if (i2 >= MAX_PARAMETER_SETS) return MPS_WRONG_PARAMETERSETS;
     }
     x1 = paramSlot[i1];
     xi = paramSlot[i];

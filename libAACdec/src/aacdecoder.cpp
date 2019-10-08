@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1814,6 +1814,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     if (configMode & AC_CM_ALLOC_MEM) {
       self->useLdQmfTimeAlign =
           asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
+    }
+    if (self->sbrEnabled != asc->m_sbrPresentFlag) {
+      ascChanged = 1;
     }
   }
 
