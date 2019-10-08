@@ -308,8 +308,6 @@ processDrcTime(HANDLE_DRC_GAIN_DECODER hGainDec, const int activeDrcIndex,
               pLinearNodeBuffer[pActiveDrc->lnbIndexForChannel[c][lnbIx] + b]);
         else
           pLnbPrevious = pDummyLnb;
-        if (pLnbPrevious->nNodes[lnbIx] <= 0 || pLnbPrevious->nNodes[lnbIx] > 16)
-          return DE_NOT_OK;
         nodePrevious =
             pLnbPrevious->linearNode[lnbIx][pLnbPrevious->nNodes[lnbIx] - 1];
         nodePrevious.time -= hGainDec->frameSize;
