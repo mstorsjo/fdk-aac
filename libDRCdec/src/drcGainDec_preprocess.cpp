@@ -676,7 +676,6 @@ prepareDrcGain(HANDLE_DRC_GAIN_DECODER hGainDec,
       nDrcBands = pActiveDrc->bandCountForChannelGroup[g];
       for (b = 0; b < nDrcBands; b++) {
         DRC_ERROR err = DE_OK;
-        if (gainSetIndex >= 12) return DE_PARAM_OUT_OF_RANGE;
         GAIN_SET* pGainSet = &(pCoef->gainSet[gainSetIndex]);
         int seq = pGainSet->gainSequenceIndex[b];
         DRC_CHARACTERISTIC* pDChar = &(pGainSet->drcCharacteristic[b]);
