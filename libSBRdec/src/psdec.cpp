@@ -325,7 +325,7 @@ void initSlotBasedRotation(
     int env, int usb) {
   INT group = 0;
   INT bin = 0;
-  INT noIidSteps, noFactors;
+  INT noIidSteps;
 
   FIXP_SGL invL;
   FIXP_DBL ScaleL, ScaleR;
@@ -337,11 +337,9 @@ void initSlotBasedRotation(
   if (h_ps_d->bsData[h_ps_d->processSlot].mpeg.bFineIidQ) {
     PScaleFactors = ScaleFactorsFine; /* values are shiftet right by one */
     noIidSteps = NO_IID_STEPS_FINE;
-    noFactors = NO_IID_LEVELS_FINE;
   } else {
     PScaleFactors = ScaleFactors; /* values are shiftet right by one */
     noIidSteps = NO_IID_STEPS;
-    noFactors = NO_IID_LEVELS;
   }
 
   /* dequantize and decode */
@@ -360,13 +358,10 @@ void initSlotBasedRotation(
 
     /* ScaleR and ScaleL are scaled by 1 shift right */
 
-    ScaleL = ScaleR = 0;
-    if (noIidSteps + h_ps_d->specificTo.mpeg.pCoef->aaIidIndexMapped[env][bin] >= 0 && noIidSteps + h_ps_d->specificTo.mpeg.pCoef->aaIidIndexMapped[env][bin] < noFactors)
-      ScaleR = PScaleFactors[noIidSteps + h_ps_d->specificTo.mpeg.pCoef
-                                              ->aaIidIndexMapped[env][bin]];
-    if (noIidSteps - h_ps_d->specificTo.mpeg.pCoef->aaIidIndexMapped[env][bin] >= 0 && noIidSteps - h_ps_d->specificTo.mpeg.pCoef->aaIidIndexMapped[env][bin] < noFactors)
-      ScaleL = PScaleFactors[noIidSteps - h_ps_d->specificTo.mpeg.pCoef
-                                              ->aaIidIndexMapped[env][bin]];
+    ScaleR = PScaleFactors[noIidSteps + h_ps_d->specificTo.mpeg.pCoef
+                                            ->aaIidIndexMapped[env][bin]];
+    ScaleL = PScaleFactors[noIidSteps - h_ps_d->specificTo.mpeg.pCoef
+                                            ->aaIidIndexMapped[env][bin]];
 
     AlphasValue = 0;
     if (h_ps_d->specificTo.mpeg.pCoef->aaIccIndexMapped[env][bin] >= 0)
