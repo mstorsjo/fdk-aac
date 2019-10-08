@@ -694,7 +694,6 @@ prepareDrcGain(HANDLE_DRC_GAIN_DECODER hGainDec,
         err = _prepareDrcCharacteristic(pDChar, pCoef, b, &nodeMod);
         if (err) return err;
 
-        if (seq >= 12) return DE_PARAM_OUT_OF_RANGE;
         /* copy a node buffer and convert from dB to linear */
         pLnb->nNodes[lnbp] = fMin((int)hUniDrcGain->nNodes[seq], 16);
         for (i = 0; i < pLnb->nNodes[lnbp]; i++) {
