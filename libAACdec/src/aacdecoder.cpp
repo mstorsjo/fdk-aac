@@ -1303,7 +1303,8 @@ static void CAacDecoder_DeInit(HANDLE_AACDECODER self,
                                const int subStreamIndex) {
   int ch;
   int aacChannelOffset = 0, aacChannels = (8);
-  int numElements = (((8)) + (8)), elementOffset = 0;
+  int numElements = (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1),
+      elementOffset = 0;
 
   if (self == NULL) return;
 
@@ -1928,6 +1929,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           self->samplingRateInfo[0].samplingRate / self->downscaleFactor;
       self->streamInfo.aacSamplesPerFrame =
           asc->m_samplesPerFrame / self->downscaleFactor;
+      if (self->streamInfo.aacSampleRate <= 0) {
+        return AAC_DEC_UNSUPPORTED_SAMPLINGRATE;
+      }
     }
   }
 

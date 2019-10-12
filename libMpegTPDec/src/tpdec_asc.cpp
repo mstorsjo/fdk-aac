@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1440,7 +1440,8 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
         UCHAR tmpDownscaleFreqIdx;
         esc->m_downscaledSamplingFrequency =
             getSampleRate(hBs, &tmpDownscaleFreqIdx, 4);
-        if (esc->m_downscaledSamplingFrequency == 0) {
+        if (esc->m_downscaledSamplingFrequency == 0 ||
+            esc->m_downscaledSamplingFrequency > 96000) {
           return TRANSPORTDEC_PARSE_ERROR;
         }
         downscale_fill_nibble = FDKreadBits(hBs, 4);
@@ -1948,6 +1949,9 @@ static TRANSPORTDEC_ERROR UsacConfig_Parse(CSAudioSpecificConfig *asc,
   INT nbits = (INT)FDKgetValidBits(hBs);
 
   usacSamplingFrequency = getSampleRate(hBs, &asc->m_samplingFrequencyIndex, 5);
+  if (usacSamplingFrequency == 0 || usacSamplingFrequency > 96000) {
+    return TRANSPORTDEC_PARSE_ERROR;
+  }
   asc->m_samplingFrequency = (UINT)usacSamplingFrequency;
 
   coreSbrFrameLengthIndex = FDKreadBits(hBs, 3);
@@ -2027,7 +2031,8 @@ static TRANSPORTDEC_ERROR AudioSpecificConfig_ExtensionParse(
               self->m_extensionSamplingFrequency = getSampleRate(
                   bs, &self->m_extensionSamplingFrequencyIndex, 4);
 
-              if ((INT)self->m_extensionSamplingFrequency <= 0) {
+              if (self->m_extensionSamplingFrequency == 0 ||
+                  self->m_extensionSamplingFrequency > 96000) {
                 return TRANSPORTDEC_PARSE_ERROR;
               }
             }
@@ -2153,6 +2158,10 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
 
       self->m_extensionSamplingFrequency =
           getSampleRate(bs, &self->m_extensionSamplingFrequencyIndex, 4);
+      if (self->m_extensionSamplingFrequency == 0 ||
+          self->m_extensionSamplingFrequency > 96000) {
+        return TRANSPORTDEC_PARSE_ERROR;
+      }
       self->m_aot = getAOT(bs);
 
       switch (self->m_aot) {
