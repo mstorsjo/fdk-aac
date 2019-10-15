@@ -143,13 +143,11 @@ amm-info@iis.fraunhofer.de
 #include "env_extr.h"
 #include "sbr_dec.h"
 #include "env_dec.h"
-#include "sbr_crc.h"
+#include "FDK_crc.h"
 #include "sbr_ram.h"
 #include "sbr_rom.h"
 #include "lpp_tran.h"
 #include "transcendent.h"
-
-#include "FDK_crc.h"
 
 #include "sbrdec_drc.h"
 
@@ -1134,18 +1132,22 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
   SBR_HEADER_STATUS headerStatus = HEADER_NOT_PRESENT;
 
   INT startPos = FDKgetValidBits(hBs);
-  INT CRCLen = 0;
+  FDK_CRCINFO crcInfo;
+  INT crcReg = 0;
+  USHORT sbrCrc = 0;
+  UINT crcPoly;
+  UINT crcStartValue = 0;
+  UINT crcLen;
+
   HANDLE_FDK_BITSTREAM hBsOriginal = hBs;
   FDK_BITSTREAM bsBwd;
 
-  FDK_CRCINFO crcInfo;
-  INT crcReg = 0;
-  USHORT drmSbrCrc = 0;
   const int fGlobalIndependencyFlag = acFlags & AC_INDEP;
   const int bs_pvc = acElFlags[elementIndex] & AC_EL_USAC_PVC;
   const int bs_interTes = acElFlags[elementIndex] & AC_EL_USAC_ITES;
   int stereo;
   int fDoDecodeSbrData = 1;
+  int alignBits = 0;
 
   int lastSlot, lastHdrSlot = 0, thisHdrSlot = 0;
 
@@ -1277,27 +1279,23 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
   if (fDoDecodeSbrData) {
     if (crcFlag) {
       switch (self->coreCodec) {
-        case AOT_ER_AAC_ELD:
-          FDKpushFor(hBs, 10);
-          /* check sbrcrc later: we don't know the payload length now */
-          break;
         case AOT_DRM_AAC:
         case AOT_DRM_SURROUND:
-          drmSbrCrc = (USHORT)FDKreadBits(hBs, 8);
-          /* Setup CRC decoder */
-          FDKcrcInit(&crcInfo, 0x001d, 0xFFFF, 8);
-          /* Start CRC region */
-          crcReg = FDKcrcStartReg(&crcInfo, hBs, 0);
+          crcPoly = 0x001d;
+          crcLen = 8;
+          crcStartValue = 0x000000ff;
           break;
         default:
-          CRCLen = bsPayLen - 10; /* change: 0 => i */
-          if (CRCLen < 0) {
-            fDoDecodeSbrData = 0;
-          } else {
-            fDoDecodeSbrData = SbrCrcCheck(hBs, CRCLen);
-          }
+          crcPoly = 0x0633;
+          crcLen = 10;
+          crcStartValue = 0x00000000;
           break;
       }
+      sbrCrc = (USHORT)FDKreadBits(hBs, crcLen);
+      /* Setup CRC decoder */
+      FDKcrcInit(&crcInfo, crcPoly, crcStartValue, crcLen);
+      /* Start CRC region */
+      crcReg = FDKcrcStartReg(&crcInfo, hBs, 0);
     }
   } /* if (fDoDecodeSbrData) */
 
@@ -1450,35 +1448,6 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
         valBits = (INT)FDKgetValidBits(hBs);
       }
 
-      if (crcFlag) {
-        switch (self->coreCodec) {
-          case AOT_ER_AAC_ELD: {
-            /* late crc check for eld */
-            INT payloadbits =
-                (INT)startPos - (INT)FDKgetValidBits(hBs) - startPos;
-            INT crcLen = payloadbits - 10;
-            FDKpushBack(hBs, payloadbits);
-            fDoDecodeSbrData = SbrCrcCheck(hBs, crcLen);
-            FDKpushFor(hBs, crcLen);
-          } break;
-          case AOT_DRM_AAC:
-          case AOT_DRM_SURROUND:
-            /* End CRC region */
-            FDKcrcEndReg(&crcInfo, hBs, crcReg);
-            /* Check CRC */
-            if ((FDKcrcGetCRC(&crcInfo) ^ 0xFF) != drmSbrCrc) {
-              fDoDecodeSbrData = 0;
-              if (headerStatus != HEADER_NOT_PRESENT) {
-                headerStatus = HEADER_ERROR;
-                hSbrHeader->syncState = SBR_NOT_INITIALIZED;
-              }
-            }
-            break;
-          default:
-            break;
-        }
-      }
-
       /* sanity check of remaining bits */
       if (valBits < 0) {
         fDoDecodeSbrData = 0;
@@ -1489,7 +1458,7 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
           case AOT_AAC_LC: {
             /* This sanity check is only meaningful with General Audio
              * bitstreams */
-            int alignBits = valBits & 0x7;
+            alignBits = valBits & 0x7;
 
             if (valBits > alignBits) {
               fDoDecodeSbrData = 0;
@@ -1506,6 +1475,20 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
        not parse the frame data. Return an error so that the caller can react
        respectively. */
     errorStatus = SBRDEC_PARSE_ERROR;
+  }
+
+  if (crcFlag && (hSbrHeader->syncState >= SBR_HEADER) && fDoDecodeSbrData) {
+    FDKpushFor(hBs, alignBits);
+    FDKcrcEndReg(&crcInfo, hBs, crcReg); /* End CRC region */
+    FDKpushBack(hBs, alignBits);
+    /* Check CRC */
+    if ((FDKcrcGetCRC(&crcInfo) ^ crcStartValue) != sbrCrc) {
+      fDoDecodeSbrData = 0;
+      if (headerStatus != HEADER_NOT_PRESENT) {
+        headerStatus = HEADER_ERROR;
+        hSbrHeader->syncState = SBR_NOT_INITIALIZED;
+      }
+    }
   }
 
   if (!fDoDecodeSbrData) {
