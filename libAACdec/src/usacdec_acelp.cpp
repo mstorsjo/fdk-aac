@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -131,7 +131,7 @@ void E_UTIL_preemph(const FIXP_DBL *in, FIXP_DBL *out, INT L) {
   int i;
 
   for (i = 0; i < L; i++) {
-    out[i] = in[i] - fMult(PREEMPH_FAC, in[i - 1]);
+    out[i] = fAddSaturate(in[i], -fMult(PREEMPH_FAC, in[i - 1]));
   }
 
   return;
