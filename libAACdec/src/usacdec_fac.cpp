@@ -493,9 +493,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
           /* Div2 is compensated by table scaling */
           x = fMultDiv2(pTmp2[i], FacWindowZir[w]);
           x += fMultDiv2(pTmp1[-i - 1], FacWindowSynth[w]);
-          x += pFAC_and_FAC_ZIR[i];
-          pOut1[i] = x;
-
+          pOut1[i] = fAddSaturate(x, pFAC_and_FAC_ZIR[i]);
           w++;
         }
       }
@@ -552,7 +550,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
     FDK_ASSERT((pOut1 >= hMdct->overlap.time &&
                 pOut1 < hMdct->overlap.time + hMdct->ov_size) ||
                (pOut1 >= output && pOut1 < output + 1024));
-    *pOut1 += IMDCT_SCALE_DBL(-x1);
+    *pOut1 = fAddSaturate(*pOut1, IMDCT_SCALE_DBL(-x1));
     pOut1--;
   }
 
@@ -578,7 +576,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
     FIXP_DBL x = -(*pCurr--);
     /* 5) (item 4) Synthesis filter Zir component, FAC ZIR (another one). */
     if (i < f_len) {
-      x += *pF++;
+      x = fAddSaturate(x, *pF++);
     }
 
     FDK_ASSERT((pOut1 >= hMdct->overlap.time &&
@@ -705,7 +703,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
       FIXP_DBL *pOut = pOut0 - fl / 2;
       FDK_ASSERT(fl / 2 <= 128);
       for (i = 0; i < fl / 2; i++) {
-        pOut[i] += IMDCT_SCALE_DBL(hMdct->pFacZir[i]);
+        pOut[i] = fAddSaturate(pOut[i], IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
       }
       hMdct->pFacZir = NULL;
     }
