@@ -344,7 +344,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       /* Overlap Add */
       x0 = -fMult(*pOvl--, pWindow[i].v.re);
 
-      *pOut0 += IMDCT_SCALE_DBL(x0);
+      *pOut0 = fAddSaturate(*pOut0, IMDCT_SCALE_DBL(x0));
       pOut0++;
     }
   } else {
@@ -354,7 +354,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       /* Overlap Add */
       x0 = fMult(*pOvl--, pWindow[i].v.re);
 
-      *pOut0 += IMDCT_SCALE_DBL(x0);
+      *pOut0 = fAddSaturate(*pOut0, IMDCT_SCALE_DBL(x0));
       pOut0++;
     }
   }
@@ -362,7 +362,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       0) { /* this should only happen for ACELP -> TCX20 -> ACELP transition */
     FIXP_DBL *pOut = pOut0 - fl / 2; /* fl/2 == fac_length */
     for (i = 0; i < fl / 2; i++) {
-      pOut[i] += IMDCT_SCALE_DBL(hMdct->pFacZir[i]);
+      pOut[i] = fAddSaturate(pOut[i], IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
     }
     hMdct->pFacZir = NULL;
   }
