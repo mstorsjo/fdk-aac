@@ -739,7 +739,8 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
             fMin(DFRACT_BITS - 1, new_summand_sf - total_power_high_after_sf);
         total_power_high_after_sf = new_summand_sf;
       } else if (new_summand_sf < total_power_high_after_sf) {
-        subsample_power_high[i] >>= total_power_high_after_sf - new_summand_sf;
+        subsample_power_high[i] >>=
+            fMin(DFRACT_BITS - 1, total_power_high_after_sf - new_summand_sf);
       }
       total_power_high_after += subsample_power_high[i] >> preShift2;
     }
