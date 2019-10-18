@@ -336,17 +336,22 @@ void bass_pf_1sf_delay(
 
       {
         for (i = 0; i < lg; i++) {
-          /* scaled with SF_SYNTH + gain_sf + 1 */
+          /* scaled with SF_SYNTH + gain_sf + 1; composition of scalefactor 2:
+           * one additional shift of syn values + fMult => fMultDiv2 */
           noise_in[i] =
-              (fMult(gainSGL, syn[i + i_subfr] - (syn[i + i_subfr - T] >> 1) -
-                                  (syn[i + i_subfr + T] >> 1))) >>
-              s1;
+              scaleValue(fMultDiv2(gainSGL, (syn[i + i_subfr] >> 1) -
+                                                (syn[i + i_subfr - T] >> 2) -
+                                                (syn[i + i_subfr + T] >> 2)),
+                         2 - s1);
         }
 
         for (i = lg; i < L_SUBFR; i++) {
-          /* scaled with SF_SYNTH + gain_sf + 1 */
+          /* scaled with SF_SYNTH + gain_sf + 1; composition of scalefactor 2:
+           * one additional shift of syn values + fMult => fMultDiv2 */
           noise_in[i] =
-              (fMult(gainSGL, syn[i + i_subfr] - syn[i + i_subfr - T])) >> s1;
+              scaleValue(fMultDiv2(gainSGL, (syn[i + i_subfr] >> 1) -
+                                                (syn[i + i_subfr - T] >> 1)),
+                         2 - s1);
         }
       }
     } else {
