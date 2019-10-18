@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -130,9 +130,10 @@ void filtLP(const FIXP_DBL *syn, FIXP_PCM *syn_out, FIXP_DBL *noise,
   for (i = 0; i < stop; i++) {
     tmp = fMultDiv2(noise[i], filt[0]);  // Filt in Q-1.16
     for (j = 1; j <= len; j++) {
-      tmp += fMultDiv2((noise[i - j] + noise[i + j]), filt[j]);
+      tmp += fMult((noise[i - j] >> 1) + (noise[i + j] >> 1), filt[j]);
     }
-    syn_out[i] = (FIXP_PCM)(IMDCT_SCALE(syn[i] - tmp));
+    syn_out[i] = (FIXP_PCM)(SATURATE_SHIFT(
+        (syn[i] >> 1) - (tmp >> 1), (MDCT_OUTPUT_SCALE - 1), PCM_OUT_BITS));
   }
 }
 
