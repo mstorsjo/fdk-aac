@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -569,7 +569,7 @@ INT imlt_block(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *spectrum,
        */
       for (i = 0; i < hMdct->prev_nr; i++) {
         FIXP_DBL x = -(*pOvl--);
-        *pOut0 = IMDCT_SCALE_DBL(x + hMdct->pFacZir[i]);
+        *pOut0 = fAddSaturate(x, IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
         pOut0++;
       }
       hMdct->pFacZir = NULL;
@@ -678,7 +678,7 @@ INT imlt_block(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *spectrum,
       FIXP_DBL *pOut = pOut0 - fl / 2;
       FDK_ASSERT(fl / 2 <= 128);
       for (i = 0; i < fl / 2; i++) {
-        pOut[i] += IMDCT_SCALE_DBL(hMdct->pFacZir[i]);
+        pOut[i] = fAddSaturate(pOut[i], IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
       }
       hMdct->pFacZir = NULL;
     }
