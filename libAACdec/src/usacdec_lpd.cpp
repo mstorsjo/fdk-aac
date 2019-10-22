@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -130,9 +130,10 @@ void filtLP(const FIXP_DBL *syn, FIXP_PCM *syn_out, FIXP_DBL *noise,
   for (i = 0; i < stop; i++) {
     tmp = fMultDiv2(noise[i], filt[0]);  // Filt in Q-1.16
     for (j = 1; j <= len; j++) {
-      tmp += fMultDiv2((noise[i - j] + noise[i + j]), filt[j]);
+      tmp += fMult((noise[i - j] >> 1) + (noise[i + j] >> 1), filt[j]);
     }
-    syn_out[i] = (FIXP_PCM)(IMDCT_SCALE(syn[i] - tmp));
+    syn_out[i] = (FIXP_PCM)(SATURATE_SHIFT(
+        (syn[i] >> 1) - (tmp >> 1), (MDCT_OUTPUT_SCALE - 1), PCM_OUT_BITS));
   }
 }
 
@@ -335,17 +336,22 @@ void bass_pf_1sf_delay(
 
       {
         for (i = 0; i < lg; i++) {
-          /* scaled with SF_SYNTH + gain_sf + 1 */
+          /* scaled with SF_SYNTH + gain_sf + 1; composition of scalefactor 2:
+           * one additional shift of syn values + fMult => fMultDiv2 */
           noise_in[i] =
-              (fMult(gainSGL, syn[i + i_subfr] - (syn[i + i_subfr - T] >> 1) -
-                                  (syn[i + i_subfr + T] >> 1))) >>
-              s1;
+              scaleValue(fMultDiv2(gainSGL, (syn[i + i_subfr] >> 1) -
+                                                (syn[i + i_subfr - T] >> 2) -
+                                                (syn[i + i_subfr + T] >> 2)),
+                         2 - s1);
         }
 
         for (i = lg; i < L_SUBFR; i++) {
-          /* scaled with SF_SYNTH + gain_sf + 1 */
+          /* scaled with SF_SYNTH + gain_sf + 1; composition of scalefactor 2:
+           * one additional shift of syn values + fMult => fMultDiv2 */
           noise_in[i] =
-              (fMult(gainSGL, syn[i + i_subfr] - syn[i + i_subfr - T])) >> s1;
+              scaleValue(fMultDiv2(gainSGL, (syn[i + i_subfr] >> 1) -
+                                                (syn[i + i_subfr - T] >> 1)),
+                         2 - s1);
         }
       }
     } else {
@@ -1222,7 +1228,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read(
       (INT)(samplingRate * PIT_MIN_12k8 + (FSCALE_DENOM / 2)) / FSCALE_DENOM -
       (INT)PIT_MIN_12k8;
 
-  if ((samplingRate < 6000) || (samplingRate > 24000)) {
+  if ((samplingRate < FAC_FSCALE_MIN) || (samplingRate > FAC_FSCALE_MAX)) {
     error = AAC_DEC_PARSE_ERROR;
     goto bail;
   }

@@ -739,7 +739,8 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
             fMin(DFRACT_BITS - 1, new_summand_sf - total_power_high_after_sf);
         total_power_high_after_sf = new_summand_sf;
       } else if (new_summand_sf < total_power_high_after_sf) {
-        subsample_power_high[i] >>= total_power_high_after_sf - new_summand_sf;
+        subsample_power_high[i] >>=
+            fMin(DFRACT_BITS - 1, total_power_high_after_sf - new_summand_sf);
       }
       total_power_high_after += subsample_power_high[i] >> preShift2;
     }
@@ -1831,7 +1832,8 @@ static void equalizeFiltBufferExp(
     diff = (int)(nrgGain_e[band] - filtBuffer_e[band]);
     if (diff > 0) {
       filtBuffer[band] >>=
-          diff; /* Compensate for the scale change by shifting the mantissa. */
+          fMin(diff, DFRACT_BITS - 1); /* Compensate for the scale change by
+                                          shifting the mantissa. */
       filtBuffer_e[band] += diff; /* New gain is bigger, use its exponent */
     } else if (diff < 0) {
       /* The buffered gains seem to be larger, but maybe there
@@ -1851,8 +1853,8 @@ static void equalizeFiltBufferExp(
         filtBuffer_e[band] -= reserve; /* Compensate in the exponent: */
 
         /* For the remaining difference, change the new gain value */
-        diff = fixMin(-(reserve + diff), DFRACT_BITS - 1);
-        nrgGain[band] >>= diff;
+        diff = -(reserve + diff);
+        nrgGain[band] >>= fMin(diff, DFRACT_BITS - 1);
         nrgGain_e[band] += diff;
       }
     }

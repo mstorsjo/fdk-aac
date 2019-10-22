@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -244,7 +244,7 @@ static void qmfForwardModulationLP_even(
   int i;
   int L = anaQmf->no_channels;
   int M = L >> 1;
-  int scale;
+  int scale = 0;
   FIXP_DBL accu;
 
   const FIXP_DBL *timeInTmp1 = (FIXP_DBL *)&timeIn[3 * M];
@@ -603,7 +603,7 @@ inline static void qmfInverseModulationLP_even(
   int i;
   int L = synQmf->no_channels;
   int M = L >> 1;
-  int scale;
+  int scale = 0;
   FIXP_DBL tmp;
   FIXP_DBL *RESTRICT tReal = pTimeOut;
   FIXP_DBL *RESTRICT tImag = pTimeOut + L;
