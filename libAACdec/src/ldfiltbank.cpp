@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -131,10 +131,12 @@ static void multE2_DinvF_fdk(FIXP_PCM *output, FIXP_DBL *x, const FIXP_WTB *fb,
     FIXP_DBL z0, z2, tmp;
 
     z2 = x[N / 2 + i];
-    z0 = z2 + (fMultDiv2(z[N / 2 + i], fb[2 * N + i]) >> (-WTS2 - 1));
+    z0 = fAddSaturate(z2,
+                      (fMultDiv2(z[N / 2 + i], fb[2 * N + i]) >> (-WTS2 - 1)));
 
-    z[N / 2 + i] = x[N / 2 - 1 - i] +
-                   (fMultDiv2(z[N + i], fb[2 * N + N / 2 + i]) >> (-WTS2 - 1));
+    z[N / 2 + i] = fAddSaturate(
+        x[N / 2 - 1 - i],
+        (fMultDiv2(z[N + i], fb[2 * N + N / 2 + i]) >> (-WTS2 - 1)));
 
     tmp = (fMultDiv2(z[N / 2 + i], fb[N + N / 2 - 1 - i]) +
            fMultDiv2(z[i], fb[N + N / 2 + i]));
@@ -159,10 +161,12 @@ static void multE2_DinvF_fdk(FIXP_PCM *output, FIXP_DBL *x, const FIXP_WTB *fb,
     FIXP_DBL z0, z2, tmp0, tmp1;
 
     z2 = x[N / 2 + i];
-    z0 = z2 + (fMultDiv2(z[N / 2 + i], fb[2 * N + i]) >> (-WTS2 - 1));
+    z0 = fAddSaturate(z2,
+                      (fMultDiv2(z[N / 2 + i], fb[2 * N + i]) >> (-WTS2 - 1)));
 
-    z[N / 2 + i] = x[N / 2 - 1 - i] +
-                   (fMultDiv2(z[N + i], fb[2 * N + N / 2 + i]) >> (-WTS2 - 1));
+    z[N / 2 + i] = fAddSaturate(
+        x[N / 2 - 1 - i],
+        (fMultDiv2(z[N + i], fb[2 * N + N / 2 + i]) >> (-WTS2 - 1)));
 
     tmp0 = (fMultDiv2(z[N / 2 + i], fb[N / 2 - 1 - i]) +
             fMultDiv2(z[i], fb[N / 2 + i]));
