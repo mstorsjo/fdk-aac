@@ -121,6 +121,11 @@ amm-info@iis.fraunhofer.de
              i=0,..,(sizeof(BP_GF__FDK)/sizeof(FIXP_CFG)-1) => energy        \
              calculation needs 4 bits headroom, headroom can be reduced by 1 \
              bit due to fPow2Div2() usage */
+#define SF_WET_NRG                                                           \
+  (4 - 1) /* 8.495f = sum(BP_GF__FDK[i])                                     \
+             i=0,..,(sizeof(BP_GF__FDK)/sizeof(FIXP_CFG)-1) => energy        \
+             calculation needs 4 bits headroom, headroom can be reduced by 1 \
+             bit due to fPow2Div2() usage */
 #define SF_PRODUCT_BP_GF 13
 #define SF_PRODUCT_BP_GF_GF 26
 #define SF_SCALE 2
@@ -178,8 +183,6 @@ amm-info@iis.fraunhofer.de
        STP_SCALE_LIMIT_HI_LD64 = LD64(STP_SCALE_LIMIT_HI*STP_SCALE_LIMIT_HI)
        STP_SCALE_LIMIT_LO_LD64 = LD64(STP_SCALE_LIMIT_LO*STP_SCALE_LIMIT_LO)
 */
-
-#define WET_ENER_WEIGHT(WetEner) WetEner = WetEner << wet_scale_dmx
 
 #define CALC_WET_SCALE(dryIdx, wetIdx)                                         \
   if ((DryEnerLD64[dryIdx] - STP_SCALE_LIMIT_HI_LD64) > WetEnerLD64[wetIdx]) { \
@@ -390,8 +393,12 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
           CalcLdData(hStpDec->runDryEner[ch] + ABS_THR__FDK);
     }
     for (ch = 0; ch < self->numOutputChannels; ch++) {
-      hStpDec->oldWetEnerLD64[ch] =
-          CalcLdData(hStpDec->runWetEner[ch] + ABS_THR2__FDK);
+      if (self->treeConfig == TREE_212)
+        hStpDec->oldWetEnerLD64[ch] =
+            CalcLdData(hStpDec->runWetEner[ch] + ABS_THR__FDK);
+      else
+        hStpDec->oldWetEnerLD64[ch] =
+            CalcLdData(hStpDec->runWetEner[ch] + ABS_THR2__FDK);
     }
   } else {
     hStpDec->update_old_ener++;
@@ -469,14 +476,30 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
     }
 
     WetEnerX = FL2FXCONST_DBL(0.0f);
-    for (n = BP_GF_START; n < cplxBands; n++) {
-      tmp = fPow2Div2(qmfOutputRealWet[ch][n] << SF_WET);
-      tmp += fPow2Div2(qmfOutputImagWet[ch][n] << SF_WET);
-      WetEnerX += fMultDiv2(tmp, pBP[n]);
-    }
-    WET_ENER_WEIGHT(WetEnerX);
 
-    WetEnerX = WetEnerX << (nrgScale);
+    if (self->treeConfig == TREE_212) {
+      INT sMin, sNorm;
+
+      sMin = fMin(getScalefactor(&qmfOutputRealWet[ch][BP_GF_START],
+                                 cplxBands - BP_GF_START),
+                  getScalefactor(&qmfOutputImagWet[ch][BP_GF_START],
+                                 cplxBands - BP_GF_START));
+
+      for (n = BP_GF_START; n < cplxBands; n++) {
+        WetEnerX +=
+            (fMultDiv2(fPow2Div2(scaleValue(qmfOutputRealWet[ch][n], sMin)),
+                       pBP[n]) +
+             fMultDiv2(fPow2Div2(scaleValue(qmfOutputImagWet[ch][n], sMin)),
+                       pBP[n])) >>
+            SF_WET_NRG;
+      }
+      sNorm = SF_FREQ_DOMAIN_HEADROOM + SF_WET_NRG + wet_scale_dmx -
+              (2 * sMin) + nrgScale;
+      WetEnerX = scaleValueSaturate(
+          WetEnerX, fMax(fMin(sNorm, DFRACT_BITS - 1), -(DFRACT_BITS - 1)));
+    } else
+      FDK_ASSERT(self->treeConfig == TREE_212);
+
     hStpDec->runWetEner[ch] =
         fMult(STP_LPF_COEFF1__FDK, hStpDec->runWetEner[ch]) +
         fMult(ONE_MINUS_STP_LPF_COEFF1__FDK, WetEnerX);
