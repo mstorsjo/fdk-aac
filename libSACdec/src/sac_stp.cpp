@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -305,12 +305,10 @@ SACDEC_ERROR subbandTPInit(HANDLE_STP_DEC self) {
 
   for (ch = 0; ch < MAX_OUTPUT_CHANNELS; ch++) {
     self->prev_tp_scale[ch] = FL2FXCONST_DBL(1.0f / (1 << SF_SCALE));
-    self->oldWetEnerLD64[ch] =
-        FL2FXCONST_DBL(0.34375f); /* 32768.0*32768.0/2^(44-26-10) */
+    self->oldWetEnerLD64[ch] = FL2FXCONST_DBL(0.0);
   }
   for (ch = 0; ch < MAX_INPUT_CHANNELS; ch++) {
-    self->oldDryEnerLD64[ch] =
-        FL2FXCONST_DBL(0.1875f); /* 32768.0*32768.0/2^(44-26) */
+    self->oldDryEnerLD64[ch] = FL2FXCONST_DBL(0.0);
   }
 
   self->BP = BP__FDK;
