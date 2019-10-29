@@ -1325,9 +1325,9 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
                                                   CSTpCallBacks *cb) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
   CSEldSpecificConfig *esc = &asc->m_sc.m_eldSpecificConfig;
-  ASC_ELD_EXT_TYPE eldExtType;
+  UINT eldExtType;
   int eldExtLen, len, cnt, ldSbrLen = 0, eldExtLenSum, numSbrHeader = 0,
-                           sbrIndex;
+                           sbrIndex, eldExtCnt = 0;
 
   unsigned char downscale_fill_nibble;
 
@@ -1394,9 +1394,8 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
   eldExtLenSum = FDKgetValidBits(hBs);
   esc->m_downscaledSamplingFrequency = asc->m_samplingFrequency;
   /* parse ExtTypeConfigData */
-  while (
-      ((eldExtType = (ASC_ELD_EXT_TYPE)FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
-      ((INT)FDKgetValidBits(hBs) >= 0)) {
+  while (((eldExtType = FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
+         ((INT)FDKgetValidBits(hBs) >= 0) && (eldExtCnt++ < 15)) {
     eldExtLen = len = FDKreadBits(hBs, 4);
     if (len == 0xf) {
       len = FDKreadBits(hBs, 8);
@@ -1454,6 +1453,9 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
         }
         break;
     }
+  }
+  if (eldExtType != ELDEXT_TERM) {
+    return TRANSPORTDEC_PARSE_ERROR;
   }
 
   if ((INT)FDKgetValidBits(hBs) < 0) {
