@@ -609,9 +609,9 @@ inline static void qmfInverseModulationLP_even(
   FIXP_DBL *RESTRICT tImag = pTimeOut + L;
 
   /* Move input to output vector with offset */
-  scaleValues(&tReal[0], &qmfReal[0], synQmf->lsb, (int)scaleFactorLowBand);
-  scaleValues(&tReal[0 + synQmf->lsb], &qmfReal[0 + synQmf->lsb],
-              synQmf->usb - synQmf->lsb, (int)scaleFactorHighBand);
+  scaleValuesSaturate(&tReal[0], &qmfReal[0], synQmf->lsb, scaleFactorLowBand);
+  scaleValuesSaturate(&tReal[0 + synQmf->lsb], &qmfReal[0 + synQmf->lsb],
+                      synQmf->usb - synQmf->lsb, scaleFactorHighBand);
   FDKmemclear(&tReal[0 + synQmf->usb], (L - synQmf->usb) * sizeof(FIXP_DBL));
 
   /* Dct type-2 transform */
@@ -662,9 +662,9 @@ inline static void qmfInverseModulationLP_odd(
   int shift = 0;
 
   /* Move input to output vector with offset */
-  scaleValues(pTimeOut + M, qmfReal, synQmf->lsb, scaleFactorLowBand);
-  scaleValues(pTimeOut + M + synQmf->lsb, qmfReal + synQmf->lsb,
-              synQmf->usb - synQmf->lsb, scaleFactorHighBand);
+  scaleValuesSaturate(pTimeOut + M, qmfReal, synQmf->lsb, scaleFactorLowBand);
+  scaleValuesSaturate(pTimeOut + M + synQmf->lsb, qmfReal + synQmf->lsb,
+                      synQmf->usb - synQmf->lsb, scaleFactorHighBand);
   FDKmemclear(pTimeOut + M + synQmf->usb, (L - synQmf->usb) * sizeof(FIXP_DBL));
 
   dct_IV(pTimeOut + M, L, &shift);
@@ -698,26 +698,27 @@ inline static void qmfInverseModulationHQ(
   FIXP_DBL *RESTRICT tImag = pWorkBuffer + L;
 
   if (synQmf->flags & QMF_FLAG_CLDFB) {
-    for (i = 0; i < synQmf->lsb; i++) {
-      cplxMult(&tImag[i], &tReal[i], scaleValue(qmfImag[i], scaleFactorLowBand),
-               scaleValue(qmfReal[i], scaleFactorLowBand), synQmf->t_cos[i],
-               synQmf->t_sin[i]);
+    for (i = 0; i < synQmf->usb; i++) {
+      cplxMultDiv2(&tImag[i], &tReal[i], qmfImag[i], qmfReal[i],
+                   synQmf->t_cos[i], synQmf->t_sin[i]);
     }
-    for (; i < synQmf->usb; i++) {
-      cplxMult(&tImag[i], &tReal[i],
-               scaleValue(qmfImag[i], scaleFactorHighBand),
-               scaleValue(qmfReal[i], scaleFactorHighBand), synQmf->t_cos[i],
-               synQmf->t_sin[i]);
-    }
+    scaleValuesSaturate(&tReal[0], synQmf->lsb, scaleFactorLowBand + 1);
+    scaleValuesSaturate(&tReal[0 + synQmf->lsb], synQmf->usb - synQmf->lsb,
+                        scaleFactorHighBand + 1);
+    scaleValuesSaturate(&tImag[0], synQmf->lsb, scaleFactorLowBand + 1);
+    scaleValuesSaturate(&tImag[0 + synQmf->lsb], synQmf->usb - synQmf->lsb,
+                        scaleFactorHighBand + 1);
   }
 
   if ((synQmf->flags & QMF_FLAG_CLDFB) == 0) {
-    scaleValues(&tReal[0], &qmfReal[0], synQmf->lsb, (int)scaleFactorLowBand);
-    scaleValues(&tReal[0 + synQmf->lsb], &qmfReal[0 + synQmf->lsb],
-                synQmf->usb - synQmf->lsb, (int)scaleFactorHighBand);
-    scaleValues(&tImag[0], &qmfImag[0], synQmf->lsb, (int)scaleFactorLowBand);
-    scaleValues(&tImag[0 + synQmf->lsb], &qmfImag[0 + synQmf->lsb],
-                synQmf->usb - synQmf->lsb, (int)scaleFactorHighBand);
+    scaleValuesSaturate(&tReal[0], &qmfReal[0], synQmf->lsb,
+                        scaleFactorLowBand);
+    scaleValuesSaturate(&tReal[0 + synQmf->lsb], &qmfReal[0 + synQmf->lsb],
+                        synQmf->usb - synQmf->lsb, scaleFactorHighBand);
+    scaleValuesSaturate(&tImag[0], &qmfImag[0], synQmf->lsb,
+                        scaleFactorLowBand);
+    scaleValuesSaturate(&tImag[0 + synQmf->lsb], &qmfImag[0 + synQmf->lsb],
+                        synQmf->usb - synQmf->lsb, scaleFactorHighBand);
   }
 
   FDKmemclear(&tReal[synQmf->usb],
