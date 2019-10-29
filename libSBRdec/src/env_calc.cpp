@@ -3144,6 +3144,11 @@ ResetLimiterBands(
       return SBRDEC_UNSUPPORTED_CONFIG;
     }
 
+    /* Restrict maximum value of limiter band table */
+    if (workLimiterBandTable[tempNoLim] > highSubband) {
+      return SBRDEC_UNSUPPORTED_CONFIG;
+    }
+
     /* Copy limiterbands from working buffer into final destination */
     for (k = 0; k <= nBands; k++) {
       limiterBandTable[k] = workLimiterBandTable[k];
