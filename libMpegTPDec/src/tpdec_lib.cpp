@@ -981,6 +981,9 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
               CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
           if (hTp->transportFmt == TT_MP4_LOAS) {
             syncLayerFrameBits -= startPos - (INT)FDKgetValidBits(hBs) - (13);
+            if (syncLayerFrameBits <= 0) {
+              err = TRANSPORTDEC_SYNC_ERROR;
+            }
           }
         }
       } else {
@@ -1271,8 +1274,9 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
   if (!(hTp->flags & (TPDEC_LOST_FRAMES_PENDING | TPDEC_IGNORE_BUFFERFULLNESS |
                       TPDEC_SYNCOK)) &&
       err == TRANSPORTDEC_OK) {
-    err = additionalHoldOffNeeded(hTp, transportDec_GetBufferFullness(hTp),
-                                  FDKgetValidBits(hBs) - syncLayerFrameBits);
+    err =
+        additionalHoldOffNeeded(hTp, transportDec_GetBufferFullness(hTp),
+                                (INT)FDKgetValidBits(hBs) - syncLayerFrameBits);
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
       hTp->holdOffFrames++;
     }
