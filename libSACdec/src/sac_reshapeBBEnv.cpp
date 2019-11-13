@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -162,75 +162,59 @@ static inline void getSlotNrgHQ(FIXP_DBL *RESTRICT pReal,
   FIXP_DBL nrg;
 
   /* qs = 12, 13, 14 */
-  slotNrg[0] = ((fPow2Div2((*pReal++) << maxValSF) +
-                 fPow2Div2((*pImag++) << maxValSF)) >>
-                (SF_FACTOR_SLOT - 1));
-  slotNrg[1] = ((fPow2Div2((*pReal++) << maxValSF) +
-                 fPow2Div2((*pImag++) << maxValSF)) >>
-                (SF_FACTOR_SLOT - 1));
-  slotNrg[2] = ((fPow2Div2((*pReal++) << maxValSF) +
-                 fPow2Div2((*pImag++) << maxValSF)) >>
-                (SF_FACTOR_SLOT - 1));
+  slotNrg[0] = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  slotNrg[1] = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  slotNrg[2] = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
   /* qs = 15 */
-  slotNrg[3] = ((fPow2Div2((*pReal++) << maxValSF) +
-                 fPow2Div2((*pImag++) << maxValSF)) >>
-                (SF_FACTOR_SLOT - 1));
+  slotNrg[3] = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
   /* qs = 16, 17 */
-  nrg = ((fPow2Div2((*pReal++) << maxValSF) +
-          fPow2Div2((*pImag++) << maxValSF)) >>
-         (SF_FACTOR_SLOT - 1));
-  slotNrg[4] = nrg + ((fPow2Div2((*pReal++) << maxValSF) +
-                       fPow2Div2((*pImag++) << maxValSF)) >>
-                      (SF_FACTOR_SLOT - 1));
+  nrg = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+         (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  slotNrg[4] =
+      nrg + ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+             (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
   /* qs = 18, 19, 20 */
-  nrg = ((fPow2Div2((*pReal++) << maxValSF) +
-          fPow2Div2((*pImag++) << maxValSF)) >>
-         (SF_FACTOR_SLOT - 1));
-  nrg += ((fPow2Div2((*pReal++) << maxValSF) +
-           fPow2Div2((*pImag++) << maxValSF)) >>
-          (SF_FACTOR_SLOT - 1));
-  slotNrg[5] = nrg + ((fPow2Div2((*pReal++) << maxValSF) +
-                       fPow2Div2((*pImag++) << maxValSF)) >>
-                      (SF_FACTOR_SLOT - 1));
+  nrg = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+         (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  nrg += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+          (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  slotNrg[5] =
+      nrg + ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+             (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
   /* qs = 21, 22 */
-  nrg = ((fPow2Div2((*pReal++) << maxValSF) +
-          fPow2Div2((*pImag++) << maxValSF)) >>
-         (SF_FACTOR_SLOT - 1));
-  slotNrg[6] = nrg + ((fPow2Div2((*pReal++) << maxValSF) +
-                       fPow2Div2((*pImag++) << maxValSF)) >>
-                      (SF_FACTOR_SLOT - 1));
+  nrg = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+         (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+  slotNrg[6] =
+      nrg + ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+             (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
   /* qs = 23, 24 */
   if (hybBands > 23) {
-    slotNrg[6] += ((fPow2Div2((*pReal++) << maxValSF) +
-                    fPow2Div2((*pImag++) << maxValSF)) >>
-                   (SF_FACTOR_SLOT - 1));
-    slotNrg[6] += ((fPow2Div2((*pReal++) << maxValSF) +
-                    fPow2Div2((*pImag++) << maxValSF)) >>
-                   (SF_FACTOR_SLOT - 1));
+    slotNrg[6] += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                   (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+    slotNrg[6] += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+                   (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
     /* qs = 25, 26, 29, 28, 29 */
-    nrg = ((fPow2Div2((*pReal++) << maxValSF) +
-            fPow2Div2((*pImag++) << maxValSF)) >>
-           (SF_FACTOR_SLOT - 1));
-    nrg += ((fPow2Div2((*pReal++) << maxValSF) +
-             fPow2Div2((*pImag++) << maxValSF)) >>
-            (SF_FACTOR_SLOT - 1));
-    nrg += ((fPow2Div2((*pReal++) << maxValSF) +
-             fPow2Div2((*pImag++) << maxValSF)) >>
-            (SF_FACTOR_SLOT - 1));
-    nrg += ((fPow2Div2((*pReal++) << maxValSF) +
-             fPow2Div2((*pImag++) << maxValSF)) >>
-            (SF_FACTOR_SLOT - 1));
-    slotNrg[7] = nrg + ((fPow2Div2((*pReal++) << maxValSF) +
-                         fPow2Div2((*pImag++) << maxValSF)) >>
-                        (SF_FACTOR_SLOT - 1));
+    nrg = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+           (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+    nrg += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+            (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+    nrg += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+            (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+    nrg += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+            (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
+    slotNrg[7] =
+        nrg + ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+               (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
     /* qs = 30 ... min(41,hybBands-1) */
-    nrg = ((fPow2Div2((*pReal++) << maxValSF) +
-            fPow2Div2((*pImag++) << maxValSF)) >>
-           (SF_FACTOR_SLOT - 1));
+    nrg = ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+           (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
     for (qs = 31; qs < hybBands; qs++) {
-      nrg += ((fPow2Div2((*pReal++) << maxValSF) +
-               fPow2Div2((*pImag++) << maxValSF)) >>
-              (SF_FACTOR_SLOT - 1));
+      nrg += ((fPow2Div2((*pReal++) << maxValSF) >> (SF_FACTOR_SLOT - 1)) +
+              (fPow2Div2((*pImag++) << maxValSF) >> (SF_FACTOR_SLOT - 1)));
     }
     slotNrg[8] = nrg;
   } else {
@@ -239,49 +223,22 @@ static inline void getSlotNrgHQ(FIXP_DBL *RESTRICT pReal,
   }
 }
 
-static inline INT getMaxValDmx(FIXP_DBL *RESTRICT pReal,
-                               FIXP_DBL *RESTRICT pImag, INT cplxBands,
-                               INT hybBands) {
-  INT qs, clz;
-  FIXP_DBL maxVal = FL2FXCONST_DBL(0.0f);
+static inline void combineDryWet(FIXP_DBL *RESTRICT pReal,
+                                 FIXP_DBL *RESTRICT pImag,
+                                 FIXP_DBL *RESTRICT pHybOutputRealDry,
+                                 FIXP_DBL *RESTRICT pHybOutputImagDry,
+                                 FIXP_DBL *RESTRICT pHybOutputRealWet,
+                                 FIXP_DBL *RESTRICT pHybOutputImagWet,
+                                 INT cplxBands, INT hybBands) {
+  INT qs;
 
   for (qs = 12; qs < cplxBands; qs++) {
-    maxVal |= fAbs(pReal[qs]);
-    maxVal |= fAbs(pImag[qs]);
+    pReal[qs] = (pHybOutputRealDry[qs] >> 1) + (pHybOutputRealWet[qs] >> 1);
+    pImag[qs] = (pHybOutputImagDry[qs] >> 1) + (pHybOutputImagWet[qs] >> 1);
   }
   for (; qs < hybBands; qs++) {
-    maxVal |= fAbs(pReal[qs]);
+    pReal[qs] = (pHybOutputRealDry[qs] >> 1) + (pHybOutputRealWet[qs] >> 1);
   }
-
-  clz = fixMax(0, CntLeadingZeros(maxVal) - 1);
-
-  return (clz);
-}
-
-static inline INT getMaxValDryWet(FIXP_DBL *RESTRICT pReal,
-                                  FIXP_DBL *RESTRICT pImag,
-                                  FIXP_DBL *RESTRICT pHybOutputRealDry,
-                                  FIXP_DBL *RESTRICT pHybOutputImagDry,
-                                  FIXP_DBL *RESTRICT pHybOutputRealWet,
-                                  FIXP_DBL *RESTRICT pHybOutputImagWet,
-                                  INT cplxBands, INT hybBands) {
-  INT qs, clz;
-  FIXP_DBL maxVal = FL2FXCONST_DBL(0.0f);
-
-  for (qs = 12; qs < cplxBands; qs++) {
-    pReal[qs] = pHybOutputRealDry[qs] + pHybOutputRealWet[qs];
-    maxVal |= fAbs(pReal[qs]);
-    pImag[qs] = pHybOutputImagDry[qs] + pHybOutputImagWet[qs];
-    maxVal |= fAbs(pImag[qs]);
-  }
-  for (; qs < hybBands; qs++) {
-    pReal[qs] = pHybOutputRealDry[qs] + pHybOutputRealWet[qs];
-    maxVal |= fAbs(pReal[qs]);
-  }
-
-  clz = fixMax(0, CntLeadingZeros(maxVal) - 1);
-
-  return (clz);
 }
 
 static inline void slotAmp(FIXP_DBL *RESTRICT slotAmp_dry,
@@ -386,15 +343,18 @@ static void extractBBEnv(spatialDec *self, INT inp, INT start, INT channels,
       prevChOffs = ch;
       pReal = pScratchBuffer;
       pImag = pScratchBuffer + 42;
-      clz = getMaxValDryWet(
-          pReal, pImag, self->hybOutputRealDry__FDK[ch],
-          self->hybOutputImagDry__FDK[ch], self->hybOutputRealWet__FDK[ch],
-          self->hybOutputImagWet__FDK[ch], cplxBands, hybBands);
+      combineDryWet(pReal, pImag, self->hybOutputRealDry__FDK[ch],
+                    self->hybOutputImagDry__FDK[ch],
+                    self->hybOutputRealWet__FDK[ch],
+                    self->hybOutputImagWet__FDK[ch], cplxBands, hybBands);
+      clz = fMin(getScalefactor(&pReal[12], fMax(0, hybBands - 12)),
+                 getScalefactor(&pImag[12], fMax(0, cplxBands - 12)));
     } else {
       prevChOffs = ch + self->numOutputChannels;
       pReal = self->hybInputReal__FDK[ch];
       pImag = self->hybInputImag__FDK[ch];
-      clz = getMaxValDmx(pReal, pImag, cplxBands, hybBands);
+      clz = fMin(getScalefactor(&pReal[12], fMax(0, hybBands - 12)),
+                 getScalefactor(&pImag[12], fMax(0, cplxBands - 12)));
     }
 
     partNrg = partNrgPrev = pBBEnvState->partNrgPrev__FDK[prevChOffs];
@@ -411,8 +371,10 @@ static void extractBBEnv(spatialDec *self, INT inp, INT start, INT channels,
                                                       SF_FACTOR_SLOT */
     }
 
-    slotNrgSF = 2 * (staticScale - clz) + SF_FACTOR_SLOT;
-    frameNrgSF = 2 * (staticScale - clz) + SF_FACTOR_SLOT;
+    slotNrgSF = 2 * (staticScale - clz + ((inp == INP_DRY_WET) ? 1 : 0)) +
+                SF_FACTOR_SLOT;
+    frameNrgSF = 2 * (staticScale - clz + ((inp == INP_DRY_WET) ? 1 : 0)) +
+                 SF_FACTOR_SLOT;
 
     partNrgSF = fixMax(slotNrgSF - SF_ALPHA1 + 1,
                        pPartNrgPrevSF[0] - pPartNrgPrev2SF[0] + 1);
