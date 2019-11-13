@@ -775,7 +775,7 @@ FIXP_DBL fPow(FIXP_DBL base_m, INT base_e, FIXP_DBL exp_m, INT exp_e,
 
 /**
  * \brief return (base_m * 2^base_e) ^ N
- * \param base_m mantissa of the base
+ * \param base_m mantissa of the base. Must not be negative.
  * \param base_e exponent of the base
  * \param N power to be calculated of the base
  * \param result_e pointer to a INT where the exponent of the result will be
