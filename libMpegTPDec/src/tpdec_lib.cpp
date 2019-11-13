@@ -482,7 +482,8 @@ TRANSPORTDEC_ERROR transportDec_InBandConfig(HANDLE_TRANSPORTDEC hTp,
 
         for (int i = 0; i < 2; i++) {
           if (i > 0) {
-            FDKpushBack(hBs, newConfigLength * 8 - FDKgetValidBits(hBs));
+            FDKpushBack(hBs,
+                        (INT)newConfigLength * 8 - (INT)FDKgetValidBits(hBs));
             configMode = AC_CM_ALLOC_MEM;
           }
           /* config transport decoder */
@@ -1469,7 +1470,7 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit(const HANDLE_TRANSPORTDEC hTp,
 
         for (i = 0; i < 2; i++) {
           if (i > 0) {
-            FDKpushBack(hBs, bsStart - FDKgetValidBits(hBs));
+            FDKpushBack(hBs, bsStart - (INT)FDKgetValidBits(hBs));
             configMode = AC_CM_ALLOC_MEM;
           }
 
