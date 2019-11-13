@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -545,15 +545,20 @@ inline INT fMultIceil(FIXP_DBL a, INT b) {
   m = fMultNorm(a, (FIXP_DBL)b, &m_e);
 
   if (m_e < (INT)0) {
-    if (m_e > (INT)-DFRACT_BITS) {
+    if (m_e > (INT) - (DFRACT_BITS - 1)) {
       mi = (m >> (-m_e));
       if ((LONG)m & ((1 << (-m_e)) - 1)) {
         mi = mi + (FIXP_DBL)1;
       }
     } else {
-      mi = (FIXP_DBL)1;
-      if (m < (FIXP_DBL)0) {
-        mi = (FIXP_DBL)0;
+      if (m > (FIXP_DBL)0) {
+        mi = (FIXP_DBL)1;
+      } else {
+        if ((m_e == -(DFRACT_BITS - 1)) && (m == (FIXP_DBL)MINVAL_DBL)) {
+          mi = (FIXP_DBL)-1;
+        } else {
+          mi = (FIXP_DBL)0;
+        }
       }
     }
   } else {
