@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -112,6 +112,8 @@ amm-info@iis.fraunhofer.de
 
 #include "FDK_trigFcts.h"
 #include "FDK_decorrelate.h"
+
+#define SAC_DEC_APPLY_M2_SCALE(spec, s) ((spec) >> (-(s)))
 
 /**
  * \brief  Linear interpolation between two parameter values.
@@ -634,8 +636,7 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
     }
 
     if (self->phaseCoding == 3) {
-      /* + SCALE_DATA_APPLY_M2 to compensate for Div2 below ?! */
-      scale_param_m2 = SCALE_PARAM_M2_212_PRED + SCALE_DATA_APPLY_M2;
+      scale_param_m2 = -(SCALE_DATA_APPLY_M2_PC - 1);
     }
 
     for (row = 0; row < self->numM2rows; row++) {
@@ -686,10 +687,10 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
           } else { /*  isBinauralMode(self->upmixType)  */
 
             for (qs = 0; qs < complexHybBands; qs++) {
-              pHybOutRealDry[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagDry[qs] += fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
             }
 
             M2ParamToKernelMult(pKernel, self->M2Imag__FDK[row][col],
@@ -697,27 +698,27 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
                                 self->kernels_width, alpha, complexParBands);
 
             /* direct signals sign is -1 for qs = 0,2 */
-            pHybOutRealDry[0] += fMultDiv2(pWImag[0], pKernel[0])
-                                 << (scale_param_m2);
-            pHybOutImagDry[0] -= fMultDiv2(pWReal[0], pKernel[0])
-                                 << (scale_param_m2);
+            pHybOutRealDry[0] += SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWImag[0], pKernel[0]), scale_param_m2);
+            pHybOutImagDry[0] -= SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWReal[0], pKernel[0]), scale_param_m2);
 
-            pHybOutRealDry[2] += fMultDiv2(pWImag[2], pKernel[2])
-                                 << (scale_param_m2);
-            pHybOutImagDry[2] -= fMultDiv2(pWReal[2], pKernel[2])
-                                 << (scale_param_m2);
+            pHybOutRealDry[2] += SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWImag[2], pKernel[2]), scale_param_m2);
+            pHybOutImagDry[2] -= SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWReal[2], pKernel[2]), scale_param_m2);
 
             /* direct signals sign is +1 for qs = 1,3,4,5,...,complexHybBands */
-            pHybOutRealDry[1] -= fMultDiv2(pWImag[1], pKernel[1])
-                                 << (scale_param_m2);
-            pHybOutImagDry[1] += fMultDiv2(pWReal[1], pKernel[1])
-                                 << (scale_param_m2);
+            pHybOutRealDry[1] -= SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWImag[1], pKernel[1]), scale_param_m2);
+            pHybOutImagDry[1] += SAC_DEC_APPLY_M2_SCALE(
+                fMultDiv2(pWReal[1], pKernel[1]), scale_param_m2);
 
             for (qs = 3; qs < complexHybBands; qs++) {
-              pHybOutRealDry[qs] -= fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagDry[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealDry[qs] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
             }
           } /* self->upmixType */
         }   /* if (activParamBands) */
@@ -770,17 +771,17 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
             FIXP_DBL *RESTRICT pHybOutImag;
 
             for (qs = 0; qs < resHybIndex; qs++) {
-              pHybOutRealDry[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagDry[qs] += fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
             }
             /* decor signals */
             for (; qs < complexHybBands; qs++) {
-              pHybOutRealWet[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagWet[qs] += fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealWet[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagWet[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
             }
 
             M2ParamToKernelMult(pKernel, self->M2Imag__FDK[row][col],
@@ -790,20 +791,20 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
             /* direct signals sign is -1 for qs = 0,2 */
             /* direct signals sign is +1 for qs = 1,3.. */
             if (toolsDisabled) {
-              pHybOutRealDry[0] += fMultDiv2(pWImag[0], pKernel[0])
-                                   << (scale_param_m2);
-              pHybOutImagDry[0] -= fMultDiv2(pWReal[0], pKernel[0])
-                                   << (scale_param_m2);
+              pHybOutRealDry[0] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[0], pKernel[0]), scale_param_m2);
+              pHybOutImagDry[0] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[0], pKernel[0]), scale_param_m2);
 
-              pHybOutRealDry[1] -= fMultDiv2(pWImag[1], pKernel[1])
-                                   << (scale_param_m2);
-              pHybOutImagDry[1] += fMultDiv2(pWReal[1], pKernel[1])
-                                   << (scale_param_m2);
+              pHybOutRealDry[1] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[1], pKernel[1]), scale_param_m2);
+              pHybOutImagDry[1] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[1], pKernel[1]), scale_param_m2);
 
-              pHybOutRealDry[2] += fMultDiv2(pWImag[2], pKernel[2])
-                                   << (scale_param_m2);
-              pHybOutImagDry[2] -= fMultDiv2(pWReal[2], pKernel[2])
-                                   << (scale_param_m2);
+              pHybOutRealDry[2] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[2], pKernel[2]), scale_param_m2);
+              pHybOutImagDry[2] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[2], pKernel[2]), scale_param_m2);
             } else {
               pHybOutReal = &pHybOutRealDry[0];
               pHybOutImag = &pHybOutImagDry[0];
@@ -811,46 +812,60 @@ SACDEC_ERROR SpatialDecApplyM2(spatialDec *self, INT ps, const FIXP_SGL alpha,
                 pHybOutReal = &pHybOutRealWet[0];
                 pHybOutImag = &pHybOutImagWet[0];
               }
-              pHybOutReal[0] += fMultDiv2(pWImag[0], pKernel[0])
-                                << (scale_param_m2);
-              pHybOutImag[0] -= fMultDiv2(pWReal[0], pKernel[0])
-                                << (scale_param_m2);
+              pHybOutReal[0] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[0], pKernel[0]), scale_param_m2);
+              pHybOutImag[0] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[0], pKernel[0]), scale_param_m2);
 
               if (1 == resHybIndex) {
                 pHybOutReal = &pHybOutRealWet[0];
                 pHybOutImag = &pHybOutImagWet[0];
               }
-              pHybOutReal[1] -= fMultDiv2(pWImag[1], pKernel[1])
-                                << (scale_param_m2);
-              pHybOutImag[1] += fMultDiv2(pWReal[1], pKernel[1])
-                                << (scale_param_m2);
+              pHybOutReal[1] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[1], pKernel[1]), scale_param_m2);
+              pHybOutImag[1] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[1], pKernel[1]), scale_param_m2);
 
               if (2 == resHybIndex) {
                 pHybOutReal = &pHybOutRealWet[0];
                 pHybOutImag = &pHybOutImagWet[0];
               }
-              pHybOutReal[2] += fMultDiv2(pWImag[2], pKernel[2])
-                                << (scale_param_m2);
-              pHybOutImag[2] -= fMultDiv2(pWReal[2], pKernel[2])
-                                << (scale_param_m2);
+              pHybOutReal[2] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[2], pKernel[2]), scale_param_m2);
+              pHybOutImag[2] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[2], pKernel[2]), scale_param_m2);
             }
 
             for (qs = 3; qs < resHybIndex; qs++) {
-              pHybOutRealDry[qs] -= fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagDry[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealDry[qs] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagDry[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
             }
             /* decor signals */
             for (; qs < complexHybBands; qs++) {
-              pHybOutRealWet[qs] -= fMultDiv2(pWImag[qs], pKernel[qs])
-                                    << (scale_param_m2);
-              pHybOutImagWet[qs] += fMultDiv2(pWReal[qs], pKernel[qs])
-                                    << (scale_param_m2);
+              pHybOutRealWet[qs] -= SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWImag[qs], pKernel[qs]), scale_param_m2);
+              pHybOutImagWet[qs] += SAC_DEC_APPLY_M2_SCALE(
+                  fMultDiv2(pWReal[qs], pKernel[qs]), scale_param_m2);
             }
           } /* self->upmixType */
         }   /* if (activParamBands) { */
       }     /*  self->numVChannels */
+
+      if (self->phaseCoding == 3) {
+        scaleValuesSaturate(pHybOutRealDry, complexHybBands,
+                            SCALE_PARAM_M2_212_PRED + SCALE_DATA_APPLY_M2_PC);
+        scaleValuesSaturate(pHybOutImagDry, complexHybBands,
+                            SCALE_PARAM_M2_212_PRED + SCALE_DATA_APPLY_M2_PC);
+
+        if (!toolsDisabled) {
+          scaleValuesSaturate(pHybOutRealWet, complexHybBands,
+                              SCALE_PARAM_M2_212_PRED + SCALE_DATA_APPLY_M2_PC);
+          scaleValuesSaturate(pHybOutImagWet, complexHybBands,
+                              SCALE_PARAM_M2_212_PRED + SCALE_DATA_APPLY_M2_PC);
+        }
+      }
     }
 
     C_ALLOC_SCRATCH_END(pKernel, FIXP_SGL, MAX_HYBRID_BANDS);
