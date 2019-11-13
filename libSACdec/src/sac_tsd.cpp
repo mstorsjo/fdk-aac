@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -123,12 +123,15 @@ static const UCHAR nBitsTsdCW_64slots[64] = {
 
 RAM_ALIGN
 LNK_SECTION_CONSTDATA
-static const FIXP_STP phiTsd[8] = {
-    STCP(0x7fffffff, 0x00000000), STCP(0x5a82799a, 0x5a82799a),
-    STCP(0x00000000, 0x7fffffff), STCP(0xa57d8666, 0x5a82799a),
-    STCP(0x80000000, 0x00000000), STCP(0xa57d8666, 0xa57d8666),
-    STCP(0x00000000, 0x80000000), STCP(0x5a82799a, 0xa57d8666),
-};
+static const FIXP_DPK phiTsd[8] = {
+    {{(FIXP_DBL)0x7fffffff, (FIXP_DBL)0x00000000}},
+    {{(FIXP_DBL)0x5a82799a, (FIXP_DBL)0x5a82799a}},
+    {{(FIXP_DBL)0x00000000, (FIXP_DBL)0x7fffffff}},
+    {{(FIXP_DBL)0xa57d8666, (FIXP_DBL)0x5a82799a}},
+    {{(FIXP_DBL)0x80000000, (FIXP_DBL)0x00000000}},
+    {{(FIXP_DBL)0xa57d8666, (FIXP_DBL)0xa57d8666}},
+    {{(FIXP_DBL)0x00000000, (FIXP_DBL)0x80000000}},
+    {{(FIXP_DBL)0x5a82799a, (FIXP_DBL)0xa57d8666}}};
 
 /*** Static Functions ***/
 static void longmult1(USHORT a[], USHORT b, USHORT d[], int len) {
@@ -333,16 +336,19 @@ void TsdApply(const int numHybridBands, const TSD_DATA *pTsdData, int *pTsdTs,
 
   if (isTrSlot(pTsdData, ts)) {
     int k;
-    const FIXP_STP *phi = &phiTsd[pTsdData->bsTsdTrPhaseData[ts]];
+    const FIXP_DPK *phi = &phiTsd[pTsdData->bsTsdTrPhaseData[ts]];
     FDK_ASSERT((pTsdData->bsTsdTrPhaseData[ts] >= 0) &&
                (pTsdData->bsTsdTrPhaseData[ts] < 8));
 
     /* d = d_nonTr + v_direct * exp(j * bsTsdTrPhaseData[ts]/4 * pi ) */
     for (k = TSD_START_BAND; k < numHybridBands; k++) {
       FIXP_DBL tempReal, tempImag;
-      cplxMult(&tempReal, &tempImag, pVdirectReal[k], pVdirectImag[k], *phi);
-      pDnonTrReal[k] += tempReal;
-      pDnonTrImag[k] += tempImag;
+      cplxMultDiv2(&tempReal, &tempImag, pVdirectReal[k], pVdirectImag[k],
+                   *phi);
+      pDnonTrReal[k] = SATURATE_LEFT_SHIFT(
+          (pDnonTrReal[k] >> 2) + (tempReal >> 1), 2, DFRACT_BITS);
+      pDnonTrImag[k] = SATURATE_LEFT_SHIFT(
+          (pDnonTrImag[k] >> 2) + (tempImag >> 1), 2, DFRACT_BITS);
     }
   }
 
