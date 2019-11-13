@@ -702,20 +702,11 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
       gain_sf[i] += gamma_sf + 1; /* +1 because of fMultDiv2() */
 
       /* set gain to at least 0.2f */
-      FIXP_DBL point_two = FL2FXCONST_DBL(0.8f); /* scaled up by 2 */
-      int point_two_sf = -2;
-
-      FIXP_DBL tmp = gain[i];
-      if (point_two_sf < gain_sf[i]) {
-        point_two >>= gain_sf[i] - point_two_sf;
-      } else {
-        tmp >>= point_two_sf - gain_sf[i];
-      }
-
       /* limit and calculate gain[i]^2 too */
       FIXP_DBL gain_pow2;
       int gain_pow2_sf;
-      if (tmp < point_two) {
+
+      if (fIsLessThan(gain[i], gain_sf[i], FL2FXCONST_DBL(0.2f), 0)) {
         gain[i] = FL2FXCONST_DBL(0.8f);
         gain_sf[i] = -2;
         gain_pow2 = FL2FXCONST_DBL(0.64f);
