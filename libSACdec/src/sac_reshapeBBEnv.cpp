@@ -284,11 +284,14 @@ shapeBBEnv(FIXP_DBL *pHybOutputRealDry, FIXP_DBL *pHybOutputImagDry,
     }
   } else {
     for (qs = 0; qs < cplxBands; qs++) {
-      pHybOutputRealDry[qs] = fMultDiv2(pHybOutputRealDry[qs], dryFac) << scale;
-      pHybOutputImagDry[qs] = fMultDiv2(pHybOutputImagDry[qs], dryFac) << scale;
+      pHybOutputRealDry[qs] = SATURATE_LEFT_SHIFT(
+          fMultDiv2(pHybOutputRealDry[qs], dryFac), scale, DFRACT_BITS);
+      pHybOutputImagDry[qs] = SATURATE_LEFT_SHIFT(
+          fMultDiv2(pHybOutputImagDry[qs], dryFac), scale, DFRACT_BITS);
     }
     for (; qs < hybBands; qs++) {
-      pHybOutputRealDry[qs] = fMultDiv2(pHybOutputRealDry[qs], dryFac) << scale;
+      pHybOutputRealDry[qs] = SATURATE_LEFT_SHIFT(
+          fMultDiv2(pHybOutputRealDry[qs], dryFac), scale, DFRACT_BITS);
     }
   }
 }
@@ -614,14 +617,16 @@ void SpatialDecReshapeBBEnv(spatialDec *self, const SPATIAL_BS_FRAME *frame,
           fixMax(3, fixMax(dryFacSF, slotAmpSF)); /* scale is at least with 3
                                                      bits to avoid overflows
                                                      when calculating dryFac  */
-      dryFac = dryFac >> (scale - dryFacSF);
-      slotAmp_ratio = slotAmp_ratio >> (scale - slotAmpSF);
+      dryFac = dryFac >> fixMin(scale - dryFacSF, DFRACT_BITS - 1);
+      slotAmp_ratio =
+          slotAmp_ratio >> fixMin(scale - slotAmpSF, DFRACT_BITS - 1);
 
       /* limit dryFac */
       dryFac = fixMax(
           FL2FXCONST_DBL(0.25f) >> (INT)fixMin(2 * scale, DFRACT_BITS - 1),
-          fMult(dryFac, slotAmp_ratio) - (slotAmp_ratio >> scale) +
-              (dryFac >> scale));
+          fMult(dryFac, slotAmp_ratio) -
+              (slotAmp_ratio >> fixMin(scale, DFRACT_BITS - 1)) +
+              (dryFac >> fixMin(scale, DFRACT_BITS - 1)));
       dryFac = fixMin(
           FL2FXCONST_DBL(0.50f) >> (INT)fixMin(2 * scale - 3, DFRACT_BITS - 1),
           dryFac); /* reduce shift bits by 3, because upper
@@ -635,8 +640,8 @@ void SpatialDecReshapeBBEnv(spatialDec *self, const SPATIAL_BS_FRAME *frame,
 
       /* shaping */
       shapeBBEnv(&self->hybOutputRealDry__FDK[ch][6],
-                 &self->hybOutputImagDry__FDK[ch][6], dryFac, scale, cplxBands,
-                 hybBands);
+                 &self->hybOutputImagDry__FDK[ch][6], dryFac,
+                 fixMin(scale, DFRACT_BITS - 1), cplxBands, hybBands);
     }
   }
 }
