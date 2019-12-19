@@ -519,6 +519,8 @@ LONG FDK_drcDec_GetParam(HANDLE_DRC_DECODER hDrcDec,
     }
     case DRC_DEC_TARGET_CHANNEL_COUNT_SELECTED:
       return (LONG)hDrcDec->selProcOutput.targetChannelCount;
+    case DRC_DEC_OUTPUT_LOUDNESS:
+      return (LONG)hDrcDec->selProcOutput.outputLoudness;
     default:
       return 0;
   }

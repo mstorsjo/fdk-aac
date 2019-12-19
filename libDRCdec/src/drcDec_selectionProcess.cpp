@@ -103,8 +103,6 @@ amm-info@iis.fraunhofer.de
 #include "drcDec_selectionProcess.h"
 #include "drcDec_tools.h"
 
-#define UNDEFINED_LOUDNESS_VALUE (FIXP_DBL) MAXVAL_DBL
-
 typedef enum {
   DETR_NONE = 0,
   DETR_NIGHT = 1,
@@ -1136,9 +1134,8 @@ static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement8(
 
   FIXP_DBL loudnessDeviationMax =
       ((FIXP_DBL)hSelProcInput->loudnessDeviationMax) << (DFRACT_BITS - 1 - 7);
-  ;
 
-  if (hSelProcInput->loudnessNormalizationOn) {
+  {
     retVal = _getLoudness(hLoudnessInfoSet, hSelProcInput->albumMode,
                           hSelProcInput->loudnessMeasurementMethod,
                           hSelProcInput->loudnessMeasurementSystem,
@@ -1147,9 +1144,10 @@ static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement8(
                           hSelProcInput->downmixIdRequested[downmixIdIndex],
                           &loudnessNormalizationGainDb, &loudness);
     if (retVal) return (retVal);
-  } else {
+  }
+
+  if (!hSelProcInput->loudnessNormalizationOn) {
     loudnessNormalizationGainDb = (FIXP_DBL)0;
-    loudness = UNDEFINED_LOUDNESS_VALUE;
   }
 
   retVal = _getSignalPeakLevel(
@@ -2070,6 +2068,7 @@ static DRCDEC_SELECTION_PROCESS_RETURN _generateOutputInfo(
       pSelectionData->loudnessNormalizationGainDbAdjusted +
       hSelProcInput->loudnessNormalizationGainModificationDb;
   hSelProcOutput->outputPeakLevelDb = pSelectionData->outputPeakLevel;
+  hSelProcOutput->outputLoudness = pSelectionData->outputLoudness;
 
   hSelProcOutput->boost = boost;
   hSelProcOutput->compress = compress;

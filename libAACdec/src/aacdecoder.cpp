@@ -1225,6 +1225,8 @@ static void CStreamInfoInit(CStreamInfo *pStreamInfo) {
   pStreamInfo->drcProgRefLev =
       -1; /* set program reference level to not indicated */
   pStreamInfo->drcPresMode = -1; /* default: presentation mode not indicated */
+
+  pStreamInfo->outputLoudness = -1; /* default: no loudness metadata present */
 }
 
 /*!

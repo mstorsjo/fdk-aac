@@ -892,15 +892,25 @@ typedef struct {
                           1770. If no level has been found in the bitstream the
                           value is -1. */
   SCHAR
-  drcPresMode; /*!< DRC presentation mode. According to ETSI TS 101 154,
-                  this field indicates whether   light (MPEG-4 Dynamic Range
-                  Control tool) or heavy compression (DVB heavy
-                  compression)   dynamic range control shall take priority
-                  on the outputs.   For details, see ETSI TS 101 154, table
-                  C.33. Possible values are: \n   -1: No corresponding
-                  metadata found in the bitstream \n   0: DRC presentation
-                  mode not indicated \n   1: DRC presentation mode 1 \n   2:
-                  DRC presentation mode 2 \n   3: Reserved */
+  drcPresMode;        /*!< DRC presentation mode. According to ETSI TS 101 154,
+                         this field indicates whether   light (MPEG-4 Dynamic Range
+                         Control tool) or heavy compression (DVB heavy
+                         compression)   dynamic range control shall take priority
+                         on the outputs.   For details, see ETSI TS 101 154, table
+                         C.33. Possible values are: \n   -1: No corresponding
+                         metadata found in the bitstream \n   0: DRC presentation
+                         mode not indicated \n   1: DRC presentation mode 1 \n   2:
+                         DRC presentation mode 2 \n   3: Reserved */
+  INT outputLoudness; /*!< Audio output loudness in steps of -0.25 dB. Range: 0
+                         (0 dBFS) to 231 (-57.75 dBFS).\n  A value of -1
+                         indicates that no loudness metadata is present.\n  If
+                         loudness normalization is active, the value corresponds
+                         to the target loudness value set with
+                         ::AAC_DRC_REFERENCE_LEVEL.\n  If loudness normalization
+                         is not active, the output loudness value corresponds to
+                         the loudness metadata given in the bitstream.\n
+                           Loudness metadata can originate from MPEG-4 DRC or
+                         MPEG-D DRC. */
 
 } CStreamInfo;
 

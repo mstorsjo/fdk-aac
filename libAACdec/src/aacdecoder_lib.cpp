@@ -120,7 +120,7 @@ amm-info@iis.fraunhofer.de
 /* Decoder library info */
 #define AACDECODER_LIB_VL0 3
 #define AACDECODER_LIB_VL1 1
-#define AACDECODER_LIB_VL2 2
+#define AACDECODER_LIB_VL2 3
 #define AACDECODER_LIB_TITLE "AAC Decoder Lib"
 #ifdef __ANDROID__
 #define AACDECODER_LIB_BUILD_DATE ""
@@ -1761,6 +1761,38 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
             FDK_interleave(
                 drcWorkBuffer, pTimeDataPcmPost, self->streamInfo.numChannels,
                 self->streamInfo.frameSize, self->streamInfo.frameSize);
+          }
+        }
+      }
+      if (FDK_drcDec_GetParam(self->hUniDrcDecoder, DRC_DEC_IS_ACTIVE)) {
+        /* return output loudness information for MPEG-D DRC */
+        LONG outputLoudness =
+            FDK_drcDec_GetParam(self->hUniDrcDecoder, DRC_DEC_OUTPUT_LOUDNESS);
+        if (outputLoudness == DRC_DEC_LOUDNESS_NOT_PRESENT) {
+          /* no valid MPEG-D DRC loudness value contained */
+          self->streamInfo.outputLoudness = -1;
+        } else {
+          if (outputLoudness > 0) {
+            /* positive output loudness values (very unusual) are limited to 0
+             * dB */
+            self->streamInfo.outputLoudness = 0;
+          } else {
+            self->streamInfo.outputLoudness =
+                -(INT)outputLoudness >>
+                22; /* negate and scale from e = 7 to e = (31-2) */
+          }
+        }
+      } else {
+        /* return output loudness information for MPEG-4 DRC */
+        if (self->streamInfo.drcProgRefLev <
+            0) { /* no MPEG-4 DRC loudness metadata contained */
+          self->streamInfo.outputLoudness = -1;
+        } else {
+          if (self->defaultTargetLoudness <
+              0) { /* loudness normalization is off */
+            self->streamInfo.outputLoudness = self->streamInfo.drcProgRefLev;
+          } else {
+            self->streamInfo.outputLoudness = self->defaultTargetLoudness;
           }
         }
       }
