@@ -446,6 +446,24 @@ static SBR_PS_SIGNALING getSbrSignalingMode(
   return sbrSignaling;
 }
 
+static inline INT getAssociatedChElement(SBR_ELEMENT_INFO *elInfoSbr,
+                                         CHANNEL_MAPPING *channelMapping) {
+  ELEMENT_INFO *elInfo = channelMapping->elInfo;
+  INT nElements = channelMapping->nElements;
+  INT associatedChElement = -1;
+  int i;
+
+  for (i = 0; i < nElements; i++) {
+    if (elInfoSbr->elType == elInfo[i].elType &&
+        elInfoSbr->instanceTag == elInfo[i].instanceTag) {
+      associatedChElement = i;
+      break;
+    }
+  }
+
+  return associatedChElement;
+}
+
 /****************************************************************************
                                Allocate Encoder
 ****************************************************************************/
@@ -1921,7 +1939,15 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
           {
             hAacEncoder->extPayload[nExtensions].dataSize =
                 hAacEncoder->pSbrPayload->dataSize[nPayload][i];
-            hAacEncoder->extPayload[nExtensions].associatedChElement = i;
+            hAacEncoder->extPayload[nExtensions].associatedChElement =
+                getAssociatedChElement(
+                    &hAacEncoder->hEnvEnc->sbrElement[i]->elInfo,
+                    &hAacEncoder->hAacEnc->channelMapping);
+            if (hAacEncoder->extPayload[nExtensions].associatedChElement ==
+                -1) {
+              err = AACENC_ENCODE_ERROR;
+              goto bail;
+            }
           }
           hAacEncoder->extPayload[nExtensions].dataType =
               EXT_SBR_DATA; /* Once SBR Encoder supports SBR CRC set
