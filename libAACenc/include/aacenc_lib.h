@@ -436,31 +436,32 @@ audio quality.
 
 
 \subsection vbrmode Variable Bitrate Mode
-The encoder provides various Variable Bitrate Modes that differ in audio quality
-and average overall bitrate. The given values are averages over time, different
-encoder settings and strongly depend on the type of audio signal. The VBR
-configurations can be adjusted via ::AACENC_BITRATEMODE encoder parameter.
+The variable bitrate (VBR) mode coding adapts the bit consumption to the
+psychoacoustic requirements of the signal. The encoder ignores the user-defined
+bit rate and selects a suitable pre-defined configuration based on the provided
+AOT. The VBR mode 1 is tuned for HE-AACv2, for VBR mode 2, HE-AACv1 should be
+used. VBR modes 3-5 should be used with Low-Complexity AAC. When encoding
+AAC-ELD, the best mode is selected automatically.
+
+The bitrates given in the table are averages over time and different encoder
+settings. They strongly depend on the type of audio signal. The VBR
+configurations can be adjusted with the ::AACENC_BITRATEMODE encoder parameter.
 \verbatim
---------------------------------------------
- VBR_MODE | Approx. Bitrate in kbps/channel
-          |     AAC-LC    |  AAC-LD/AC_ELD
-----------+---------------+-----------------
-    VBR_1 |    32 -  48   |      32 -  56
-    VBR_2 |    40 -  56   |      40 -  64
-    VBR_3 |    48 -  64   |      48 -  72
-    VBR_4 |    64 -  80   |      64 -  88
-    VBR_5 |    96 - 120   |     112 - 144
+-----------------------------------------------
+ VBR_MODE | Approx. Bitrate in kbps for stereo
+          |     AAC-LC    |      AAC-ELD
+----------+---------------+--------------------
+    VBR_1 | 32 (HE-AACv2) |         48
+    VBR_2 | 72 (HE-AACv1) |         56
+    VBR_3 |      112      |         72
+    VBR_4 |      148      |        148
+    VBR_5 |      228      |        224
 --------------------------------------------
 \endverbatim
-The bitrate ranges apply for individual audio channels. In case of multichannel
-configurations the average bitrate might be estimated by multiplying with the
-number of effective channels. This corresponds to all audio input channels
-exclusively the low frequency channel. At configurations which are making use of
-downmix modules the AAC core channels respectively downmix channels shall be
-considered. For ::AACENC_AOT which are using SBR, the average bitrate can be
-estimated by using the ratio of 0.5 for dualrate SBR and 0.75 for downsampled
-SBR configurations.
-
+Note that these figures are valid for stereo encoding only. VBR modes 2-5 will
+yield much lower bit rates when encoding single-channel input. For
+configurations which are making use of downmix modules the AAC core channels
+respectively downmix channels shall be considered.
 
 \subsection encQual Audio Quality Considerations
 The default encoder configuration is suggested to be used. Encoder tools such as
