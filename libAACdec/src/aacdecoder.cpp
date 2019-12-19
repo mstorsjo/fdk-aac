@@ -3177,9 +3177,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       FDKmemcpy(drcChMap, self->chMapping, (8) * sizeof(UCHAR));
     }
 
-    /* Turn off DRC modules level normalization in digital domain. */
-    aacDecoder_drcSetParam(self->hDrcInfo, APPLY_NORMALIZATION, 0);
-
     /* deactivate legacy DRC in case uniDrc is active, i.e. uniDrc payload is
      * present and one of DRC or Loudness Normalization is switched on */
     aacDecoder_drcSetParam(
