@@ -637,10 +637,10 @@ void FDK_QmfDomain_GetSlot(const HANDLE_FDK_QMF_DOMAIN_IN qd_ch, const int ts,
 
   if (pQmfOutImag == NULL) {
     for (; b < fMin(lsb, stop_band); b++) {
-      pQmfOutReal[b] = scaleValue(real[b], lb_sf);
+      pQmfOutReal[b] = scaleValueSaturate(real[b], lb_sf);
     }
     for (; b < fMin(usb, stop_band); b++) {
-      pQmfOutReal[b] = scaleValue(real[b], hb_sf);
+      pQmfOutReal[b] = scaleValueSaturate(real[b], hb_sf);
     }
     for (; b < stop_band; b++) {
       pQmfOutReal[b] = (FIXP_DBL)0;
@@ -648,12 +648,12 @@ void FDK_QmfDomain_GetSlot(const HANDLE_FDK_QMF_DOMAIN_IN qd_ch, const int ts,
   } else {
     FDK_ASSERT(imag != NULL);
     for (; b < fMin(lsb, stop_band); b++) {
-      pQmfOutReal[b] = scaleValue(real[b], lb_sf);
-      pQmfOutImag[b] = scaleValue(imag[b], lb_sf);
+      pQmfOutReal[b] = scaleValueSaturate(real[b], lb_sf);
+      pQmfOutImag[b] = scaleValueSaturate(imag[b], lb_sf);
     }
     for (; b < fMin(usb, stop_band); b++) {
-      pQmfOutReal[b] = scaleValue(real[b], hb_sf);
-      pQmfOutImag[b] = scaleValue(imag[b], hb_sf);
+      pQmfOutReal[b] = scaleValueSaturate(real[b], hb_sf);
+      pQmfOutImag[b] = scaleValueSaturate(imag[b], hb_sf);
     }
     for (; b < stop_band; b++) {
       pQmfOutReal[b] = (FIXP_DBL)0;

@@ -122,18 +122,21 @@ amm-info@iis.fraunhofer.de
 
 #include "ac_arith_coder.h"
 
-void filtLP(const FIXP_DBL *syn, FIXP_PCM *syn_out, FIXP_DBL *noise,
-            const FIXP_SGL *filt, INT stop, int len) {
+void filtLP(const FIXP_DBL *syn, PCM_DEC *syn_out, FIXP_DBL *noise,
+            const FIXP_SGL *filt, const INT aacOutDataHeadroom, INT stop,
+            int len) {
   INT i, j;
   FIXP_DBL tmp;
+
+  FDK_ASSERT((aacOutDataHeadroom - 1) >= -(MDCT_OUTPUT_SCALE));
 
   for (i = 0; i < stop; i++) {
     tmp = fMultDiv2(noise[i], filt[0]);  // Filt in Q-1.16
     for (j = 1; j <= len; j++) {
       tmp += fMult((noise[i - j] >> 1) + (noise[i + j] >> 1), filt[j]);
     }
-    syn_out[i] = (FIXP_PCM)(SATURATE_SHIFT(
-        (syn[i] >> 1) - (tmp >> 1), (MDCT_OUTPUT_SCALE - 1), PCM_OUT_BITS));
+    syn_out[i] = (PCM_DEC)(
+        IMDCT_SCALE((syn[i] >> 1) - (tmp >> 1), aacOutDataHeadroom - 1));
   }
 }
 
@@ -143,8 +146,10 @@ void bass_pf_1sf_delay(
     FIXP_DBL *pit_gain,
     const int frame_length, /* (i) : frame length (should be 768|1024) */
     const INT l_frame,
-    const INT l_next, /* (i) : look ahead for symmetric filtering           */
-    FIXP_PCM *synth_out, /* (o) : filtered synthesis (with delay of 1 subfr) */
+    const INT l_next,   /* (i) : look ahead for symmetric filtering           */
+    PCM_DEC *synth_out, /* (o) : filtered synthesis (with delay of 1 subfr)   */
+    const INT aacOutDataHeadroom, /* (i) : headroom of the output time signal to
+                                     prevent clipping */
     FIXP_DBL mem_bpf[]) /* i/o : memory state [L_FILT+L_SUBFR]                */
 {
   INT i, sf, i_subfr, T, T2, lg;
@@ -370,7 +375,7 @@ void bass_pf_1sf_delay(
 
     {
       filtLP(&syn[i_subfr - L_SUBFR], &synth_out[i_subfr], noise,
-             fdk_dec_filt_lp, L_SUBFR, L_FILT);
+             fdk_dec_filt_lp, aacOutDataHeadroom, L_SUBFR, L_FILT);
     }
   }
 
@@ -383,9 +388,9 @@ void bass_pf_1sf_delay(
     /* Output scaling of the BPF memory */
     scaleValues(mem_bpf, (L_FILT + L_SUBFR), -1);
     /* Copy the rest of the signal (after the fac) */
-    scaleValuesSaturate((FIXP_PCM *)&synth_out[l_frame],
-                        (FIXP_DBL *)&syn[l_frame - L_SUBFR],
-                        (frame_length - l_frame), MDCT_OUT_HEADROOM);
+    scaleValuesSaturate(
+        (PCM_DEC *)&synth_out[l_frame], (FIXP_DBL *)&syn[l_frame - L_SUBFR],
+        (frame_length - l_frame), MDCT_OUT_HEADROOM - aacOutDataHeadroom);
   }
 
   return;
@@ -1552,9 +1557,9 @@ void CLpdChannelStream_Decode(
 
 AAC_DECODER_ERROR CLpd_RenderTimeSignal(
     CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo,
-    CAacDecoderChannelInfo *pAacDecoderChannelInfo, FIXP_PCM *pTimeData,
-    INT lFrame, SamplingRateInfo *pSamplingRateInfo, UINT frameOk, UINT flags,
-    UINT strmFlags) {
+    CAacDecoderChannelInfo *pAacDecoderChannelInfo, PCM_DEC *pTimeData,
+    INT lFrame, SamplingRateInfo *pSamplingRateInfo, UINT frameOk,
+    const INT aacOutDataHeadroom, UINT flags, UINT strmFlags) {
   UCHAR *mod = pAacDecoderChannelInfo->data.usac.mod;
   AAC_DECODER_ERROR error = AAC_DEC_OK;
   int k, i_offset;
@@ -2017,7 +2022,8 @@ AAC_DECODER_ERROR CLpd_RenderTimeSignal(
     {
       bass_pf_1sf_delay(p2_synth, pitch, pit_gain, lFrame, lFrame / facFB,
                         mod[nbDiv - 1] ? (SynDelay - (lDiv / 2)) : SynDelay,
-                        pTimeData, pAacDecoderStaticChannelInfo->mem_bpf);
+                        pTimeData, aacOutDataHeadroom,
+                        pAacDecoderStaticChannelInfo->mem_bpf);
     }
   }
 

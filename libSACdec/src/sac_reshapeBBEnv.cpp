@@ -253,17 +253,17 @@ static inline void slotAmp(FIXP_DBL *RESTRICT slotAmp_dry,
 
   dry = wet = FL2FXCONST_DBL(0.0f);
   for (qs = 0; qs < cplxBands; qs++) {
-    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs]) +
-                                fPow2Div2(pHybOutputImagDry[qs]));
-    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs]) +
-                                fPow2Div2(pHybOutputImagWet[qs]));
+    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs] << (1)) +
+                                fPow2Div2(pHybOutputImagDry[qs] << (1)));
+    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs] << (1)) +
+                                fPow2Div2(pHybOutputImagWet[qs] << (1)));
   }
   for (; qs < hybBands; qs++) {
-    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs]));
-    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs]));
+    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs] << (1)));
+    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs] << (1)));
   }
-  *slotAmp_dry = dry;
-  *slotAmp_wet = wet;
+  *slotAmp_dry = dry >> (2 * (1));
+  *slotAmp_wet = wet >> (2 * (1));
 }
 
 #if defined(__aarch64__)
@@ -327,7 +327,7 @@ static void extractBBEnv(spatialDec *self, INT inp, INT start, INT channels,
 
   INT shapeActiv = 1;
   INT hybBands = fixMin(42, self->hybridBands);
-  INT staticScale = self->staticDecScale;
+  INT staticScale = self->staticDecScale + (1);
   INT cplxBands;
   cplxBands = fixMin(42, self->hybridBands);
 

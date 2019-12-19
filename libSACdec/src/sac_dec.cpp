@@ -766,7 +766,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
 
     /* output scaling */
     for (nCh = 0; nCh < self->numOutputChannelsAT; nCh++) {
-      int outputScale = 0, outputGain_e = 0, scale = 0;
+      int outputScale = 0, outputGain_e = 0, scale = -(8) + (1);
       FIXP_DBL outputGain_m = getChGain(self, nCh, &outputGain_e);
 
       if (!isTwoChMode(self->upmixType) && !bypassMode) {
@@ -775,7 +775,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
                                              synthesis qmf */
       }
 
-      scale = outputScale;
+      scale += outputScale;
 
       qmfChangeOutScalefactor(&self->pQmfDomain->QmfDomainOut[nCh].fb, scale);
       qmfChangeOutGain(&self->pQmfDomain->QmfDomainOut[nCh].fb, outputGain_m,
@@ -1223,18 +1223,24 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
               !(self->stereoConfigIndex == 3)) {
             for (i = 0; i < self->qmfBands; i++) {
               self_qmfResidualReal__FDK_0_0[i] =
-                  fMult(self_qmfResidualReal__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
               self_qmfResidualImag__FDK_0_0[i] =
-                  fMult(self_qmfResidualImag__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
             }
           } else {
             for (i = 0; i < self->qmfBands; i++) {
-              self_qmfResidualReal__FDK_0_0[i] = fMult(
-                  self_qmfResidualReal__FDK_0_0[i], self->clipProtectGain__FDK);
-              self_qmfResidualImag__FDK_0_0[i] = fMult(
-                  self_qmfResidualImag__FDK_0_0[i], self->clipProtectGain__FDK);
+              self_qmfResidualReal__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
+              self_qmfResidualImag__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
             }
           }
         }
@@ -1416,6 +1422,7 @@ SACDEC_ERROR SpatialDecApplyFrame(
   FDK_ASSERT(self != NULL);
   FDK_ASSERT(pControlFlags != NULL);
   FDK_ASSERT(pcmOutBuf != NULL);
+  FDK_ASSERT(self->sacInDataHeadroom >= (1));
 
   self->errInt = err; /* Init internal error */
 

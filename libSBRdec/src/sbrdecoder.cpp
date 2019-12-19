@@ -155,7 +155,7 @@ amm-info@iis.fraunhofer.de
 
 /* Decoder library info */
 #define SBRDECODER_LIB_VL0 3
-#define SBRDECODER_LIB_VL1 0
+#define SBRDECODER_LIB_VL1 1
 #define SBRDECODER_LIB_VL2 0
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
 #ifdef __ANDROID__
@@ -1570,10 +1570,10 @@ bail:
  * \return SBRDEC_OK if successfull, else error code
  */
 static SBR_ERROR sbrDecoder_DecodeElement(
-    HANDLE_SBRDECODER self, QDOM_PCM *input, INT_PCM *timeData,
-    const int timeDataSize, const FDK_channelMapDescr *const mapDescr,
-    const int mapIdx, int channelIndex, const int elementIndex,
-    const int numInChannels, int *numOutChannels, const int psPossible) {
+    HANDLE_SBRDECODER self, LONG *input, LONG *timeData, const int timeDataSize,
+    const FDK_channelMapDescr *const mapDescr, const int mapIdx,
+    int channelIndex, const int elementIndex, const int numInChannels,
+    int *numOutChannels, const int psPossible) {
   SBR_DECODER_ELEMENT *hSbrElement = self->pSbrElement[elementIndex];
   HANDLE_SBR_CHANNEL *pSbrChannel =
       self->pSbrElement[elementIndex]->pSbrChannel;
@@ -1743,7 +1743,7 @@ static SBR_ERROR sbrDecoder_DecodeElement(
             timeData + offset1, strideOut, hSbrHeader, hFrameDataLeft,
             &pSbrChannel[0]->prevFrameData,
             (hSbrHeader->syncState == SBR_ACTIVE), h_ps_d, self->flags,
-            codecFrameSize);
+            codecFrameSize, self->sbrInDataHeadroom);
 
     if (stereo) {
       /* Process right channel */
@@ -1751,7 +1751,7 @@ static SBR_ERROR sbrDecoder_DecodeElement(
               timeData + offset1, NULL, NULL, strideOut, hSbrHeader,
               hFrameDataRight, &pSbrChannel[1]->prevFrameData,
               (hSbrHeader->syncState == SBR_ACTIVE), NULL, self->flags,
-              codecFrameSize);
+              codecFrameSize, self->sbrInDataHeadroom);
     }
 
     C_ALLOC_SCRATCH_END(pPsScratch, struct PS_DEC_COEFFICIENTS, 1)
@@ -1771,14 +1771,14 @@ static SBR_ERROR sbrDecoder_DecodeElement(
       int copyFrameSize =
           codecFrameSize * self->pQmfDomain->QmfDomainOut->fb.no_channels;
       copyFrameSize /= self->pQmfDomain->QmfDomainIn->fb.no_channels;
-      INT_PCM *ptr;
+      LONG *ptr;
       INT i;
       FDK_ASSERT(strideOut == 2);
 
       ptr = timeData;
       for (i = copyFrameSize >> 1; i--;) {
-        INT_PCM tmp; /* This temporal variable is required because some
-                        compilers can't do *ptr++ = *ptr++ correctly. */
+        LONG tmp; /* This temporal variable is required because some compilers
+                     can't do *ptr++ = *ptr++ correctly. */
         tmp = *ptr++;
         *ptr++ = tmp;
         tmp = *ptr++;
@@ -1791,12 +1791,13 @@ static SBR_ERROR sbrDecoder_DecodeElement(
   return errorStatus;
 }
 
-SBR_ERROR sbrDecoder_Apply(HANDLE_SBRDECODER self, INT_PCM *input,
-                           INT_PCM *timeData, const int timeDataSize,
-                           int *numChannels, int *sampleRate,
+SBR_ERROR sbrDecoder_Apply(HANDLE_SBRDECODER self, LONG *input, LONG *timeData,
+                           const int timeDataSize, int *numChannels,
+                           int *sampleRate,
                            const FDK_channelMapDescr *const mapDescr,
                            const int mapIdx, const int coreDecodedOk,
-                           UCHAR *psDecoded) {
+                           UCHAR *psDecoded, const INT inDataHeadroom,
+                           INT *outDataHeadroom) {
   SBR_ERROR errorStatus = SBRDEC_OK;
 
   int psPossible;
@@ -1832,6 +1833,9 @@ SBR_ERROR sbrDecoder_Apply(HANDLE_SBRDECODER self, INT_PCM *input,
   if (self->numSbrElements != 1 || self->pSbrElement[0]->elementID != ID_SCE) {
     psPossible = 0;
   }
+
+  self->sbrInDataHeadroom = inDataHeadroom;
+  *outDataHeadroom = (INT)(8);
 
   /* Make sure that even if no SBR data was found/parsed *psDecoded is returned
    * 1 if psPossible was 0. */

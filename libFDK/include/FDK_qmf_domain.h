@@ -160,8 +160,6 @@ H_ALLOC_MEM(QmfSlotsImag32, FIXP_DBL *)
 H_ALLOC_MEM(QmfOverlapBuffer16, FIXP_DBL)
 H_ALLOC_MEM(QmfOverlapBuffer32, FIXP_DBL)
 
-#define QDOM_PCM INT_PCM
-
 /**
  * Structure to hold the configuration data which is global whithin a QMF domain
  * instance.
@@ -181,9 +179,6 @@ typedef struct {
                   park a channel if only one processing channel is
                   available. */
   UCHAR parkChannel_requested;
-  QDOM_PCM
-  *TDinput; /*!< Pointer to time domain data used as input for the QMF
-               analysis. */
   FIXP_DBL *
       pWorkBuffer[QMF_MAX_WB_SECTIONS]; /*!< Pointerarray to volatile memory. */
   UINT flags; /*!< Flags to be set on all QMF analysis/synthesis filter

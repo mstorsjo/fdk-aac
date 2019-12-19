@@ -957,7 +957,7 @@ QmfTransposerCreate(HANDLE_HBE_TRANSPOSER* hQmfTransposer, const int frameSize,
     hQmfTran->qmfOutBufSize = 2 * (hQmfTran->noCols / 2 + QMF_WIN_LEN - 1);
 
     hQmfTran->inBuf_F =
-        (INT_PCM*)FDKcalloc(QMF_SYNTH_CHANNELS + 20 + 1, sizeof(INT_PCM));
+        (LONG*)FDKcalloc(QMF_SYNTH_CHANNELS + 20 + 1, sizeof(LONG));
     /* buffered time signal needs to be delayed by synthesis_size; max
      * synthesis_size = 20; */
     if (hQmfTran->inBuf_F == NULL) {

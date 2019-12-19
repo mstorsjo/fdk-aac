@@ -187,8 +187,12 @@ SACDEC_ERROR SpatialDecQMFAnalysis(spatialDec *self, const PCM_MPS *inData,
       if (!isTwoChMode(self->upmixType) && !bypassMode) {
         int i;
         for (i = 0; i < self->qmfBands; i++) {
-          qmfReal[ch][i] = fMult(qmfReal[ch][i], self->clipProtectGain__FDK);
-          qmfImag[ch][i] = fMult(qmfImag[ch][i], self->clipProtectGain__FDK);
+          qmfReal[ch][i] = fMult(
+              scaleValueSaturate(qmfReal[ch][i], self->sacInDataHeadroom - (1)),
+              self->clipProtectGain__FDK);
+          qmfImag[ch][i] = fMult(
+              scaleValueSaturate(qmfImag[ch][i], self->sacInDataHeadroom - (1)),
+              self->clipProtectGain__FDK);
         }
       }
     }
@@ -216,16 +220,17 @@ SACDEC_ERROR SpatialDecFeedQMF(spatialDec *self, FIXP_DBL **qmfInDataReal,
 
       /* Write Input data to pQmfRealAnalysis. */
       if (self->bShareDelayWithSBR) {
-        FDK_QmfDomain_GetSlot(
-            &self->pQmfDomain->QmfDomainIn[ch], ts + HYBRID_FILTER_DELAY, 0,
-            MAX_QMF_BANDS_TO_HYBRID, pQmfRealAnalysis, pQmfImagAnalysis, 15);
+        FDK_QmfDomain_GetSlot(&self->pQmfDomain->QmfDomainIn[ch],
+                              ts + HYBRID_FILTER_DELAY, 0,
+                              MAX_QMF_BANDS_TO_HYBRID, pQmfRealAnalysis,
+                              pQmfImagAnalysis, 15 + (1));
         FDK_QmfDomain_GetSlot(&self->pQmfDomain->QmfDomainIn[ch], ts,
                               MAX_QMF_BANDS_TO_HYBRID, self->qmfBands,
-                              pQmfRealAnalysis, pQmfImagAnalysis, 15);
+                              pQmfRealAnalysis, pQmfImagAnalysis, 15 + (1));
       } else {
         FDK_QmfDomain_GetSlot(&self->pQmfDomain->QmfDomainIn[ch], ts, 0,
                               self->qmfBands, pQmfRealAnalysis,
-                              pQmfImagAnalysis, 15);
+                              pQmfImagAnalysis, 15 + (1));
       }
       if (ts == self->pQmfDomain->globalConf.nQmfTimeSlots - 1) {
         /* Is currently also needed in case we dont have any overlap. We need to
@@ -501,8 +506,8 @@ SACDEC_ERROR SpatialDecApplyM2_Mode212_ResidualsPlusPhaseCoding(
     for (pb = 0, qs = 3; pb < 2; pb++) {
       INT s;
       FIXP_DBL maxVal;
-      FIXP_SGL mReal1;
-      FIXP_SGL mReal0, mImag0;
+      FIXP_DBL mReal1;
+      FIXP_DBL mReal0, mImag0;
       FIXP_DBL iReal0, iImag0, iReal1;
 
       iReal0 = interpolateParameter(alpha, MReal0[pb], MRealPrev0[pb]);
@@ -515,9 +520,9 @@ SACDEC_ERROR SpatialDecApplyM2_Mode212_ResidualsPlusPhaseCoding(
       s = fMax(CntLeadingZeros(maxVal) - 1, 0);
       s = fMin(s, scale_param_m2);
 
-      mReal0 = FX_DBL2FX_SGL(iReal0 << s);
-      mImag0 = FX_DBL2FX_SGL(iImag0 << s);
-      mReal1 = FX_DBL2FX_SGL(iReal1 << s);
+      mReal0 = iReal0 << s;
+      mImag0 = iImag0 << s;
+      mReal1 = iReal1 << s;
 
       s = scale_param_m2 - s;
 
@@ -934,6 +939,7 @@ SACDEC_ERROR SpatialDecSynthesis(spatialDec *self, const INT ts,
         self->pQmfDomain->QmfDomainIn[outCh].scaling.lb_scale -=
             self->clipProtectGainSF__FDK;
 
+        self->pQmfDomain->QmfDomainIn[outCh].scaling.lb_scale -= (1);
       } else {
         /* Call the QMF synthesis for dry. */
         err = CalculateSpaceSynthesisQmf(&self->pQmfDomain->QmfDomainOut[outCh],
