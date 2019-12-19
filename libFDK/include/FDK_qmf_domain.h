@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -145,15 +145,15 @@ H_ALLOC_MEM_OVERLAY(QmfWorkBufferCore6, FIXP_DBL)
 #define QMF_DOMAIN_OV_TIMESLOTS_16 (3)
 #define QMF_DOMAIN_OV_TIMESLOTS_32 (6)
 
-H_ALLOC_MEM(AnaQmfStates, FIXP_QAS)
+H_ALLOC_MEM(AnaQmfStates, FIXP_DBL)
 H_ALLOC_MEM(SynQmfStates, FIXP_QSS)
 H_ALLOC_MEM(QmfSlotsReal, FIXP_DBL *)
 H_ALLOC_MEM(QmfSlotsImag, FIXP_DBL *)
 H_ALLOC_MEM(QmfOverlapBuffer, FIXP_DBL)
 
-H_ALLOC_MEM(AnaQmfStates16, FIXP_QAS)
-H_ALLOC_MEM(AnaQmfStates24, FIXP_QAS)
-H_ALLOC_MEM(AnaQmfStates32, FIXP_QAS)
+H_ALLOC_MEM(AnaQmfStates16, FIXP_DBL)
+H_ALLOC_MEM(AnaQmfStates24, FIXP_DBL)
+H_ALLOC_MEM(AnaQmfStates32, FIXP_DBL)
 H_ALLOC_MEM(QmfSlotsReal16, FIXP_DBL *)
 H_ALLOC_MEM(QmfSlotsReal32, FIXP_DBL *)
 H_ALLOC_MEM(QmfSlotsImag16, FIXP_DBL *)
@@ -244,7 +244,7 @@ typedef struct {
                                 (workBuf_nTimeSlots * workBuf_nBands * CMPLX_MOD). */
   USHORT workBufferOffset;   /*!< Offset within work buffer. */
   USHORT workBufferSectSize; /*!< Size of work buffer section. */
-  FIXP_QAS *
+  FIXP_DBL *
       pAnaQmfStates; /*!< Pointer to QMF analysis states (persistent memory). */
   FIXP_DBL
   *pOverlapBuffer;        /*!< Pointer to QMF overlap/delay memory (persistent

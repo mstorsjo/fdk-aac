@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -128,13 +128,13 @@ C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore6, FIXP_DBL, QMF_WB_SECTION_SIZE,
 
 /*! Analysis states buffer. <br>
     Dimension: #((8) + (1))                                                   */
-C_ALLOC_MEM2(AnaQmfStates, FIXP_QAS, 10 * QMF_DOMAIN_MAX_ANALYSIS_QMF_BANDS,
-             ((8) + (1)))
+C_AALLOC_MEM2(AnaQmfStates, FIXP_DBL, 10 * QMF_DOMAIN_MAX_ANALYSIS_QMF_BANDS,
+              ((8) + (1)))
 
 /*! Synthesis states buffer. <br>
     Dimension: #((8) + (1))                                                  */
-C_ALLOC_MEM2(SynQmfStates, FIXP_QSS, 9 * QMF_DOMAIN_MAX_SYNTHESIS_QMF_BANDS,
-             ((8) + (1)))
+C_AALLOC_MEM2(SynQmfStates, FIXP_QSS, 9 * QMF_DOMAIN_MAX_SYNTHESIS_QMF_BANDS,
+              ((8) + (1)))
 
 /*! Pointer to real qmf data for each time slot. <br>
     Dimension: #((8) + (1))                                                   */
@@ -156,18 +156,17 @@ C_AALLOC_MEM2(QmfOverlapBuffer, FIXP_DBL,
 
 /*! Analysis states buffer. <br>
     Dimension: #((8) + (1))                                                   */
-C_ALLOC_MEM2(AnaQmfStates16, FIXP_QAS, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_16,
-             ((8) + (1)))
+C_AALLOC_MEM2(AnaQmfStates16, FIXP_DBL, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_16,
+              ((8) + (1)))
+/*! Analysis states buffer. <br>
+    Dimension: #((8) + (1))                                                   */
+C_AALLOC_MEM2(AnaQmfStates24, FIXP_DBL, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_24,
+              ((8) + (1)))
 
 /*! Analysis states buffer. <br>
     Dimension: #((8) + (1))                                                   */
-C_ALLOC_MEM2(AnaQmfStates24, FIXP_QAS, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_24,
-             ((8) + (1)))
-
-/*! Analysis states buffer. <br>
-    Dimension: #((8) + (1))                                                   */
-C_ALLOC_MEM2(AnaQmfStates32, FIXP_QAS, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_32,
-             ((8) + (1)))
+C_AALLOC_MEM2(AnaQmfStates32, FIXP_DBL, 10 * QMF_DOMAIN_ANALYSIS_QMF_BANDS_32,
+              ((8) + (1)))
 
 /*! Pointer to real qmf data for each time slot. <br>
     Dimension: #((8) + (1))                                                   */
