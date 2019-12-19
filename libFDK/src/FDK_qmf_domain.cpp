@@ -106,25 +106,21 @@ amm-info@iis.fraunhofer.de
 #include "common_fix.h"
 
 #define WORKBUFFER1_TAG 0
-#define WORKBUFFER2_TAG 1
-
 #define WORKBUFFER3_TAG 4
 #define WORKBUFFER4_TAG 5
-#define WORKBUFFER5_TAG 6
 #define WORKBUFFER6_TAG 7
+#define WORKBUFFER7_TAG 8
 
 C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore1, FIXP_DBL, QMF_WB_SECTION_SIZE,
                     SECT_DATA_L1, WORKBUFFER1_TAG)
-C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore2, FIXP_DBL, QMF_WB_SECTION_SIZE,
-                    SECT_DATA_L2, WORKBUFFER2_TAG)
 C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore3, FIXP_DBL, QMF_WB_SECTION_SIZE,
                     SECT_DATA_L2, WORKBUFFER3_TAG)
 C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore4, FIXP_DBL, QMF_WB_SECTION_SIZE,
                     SECT_DATA_L2, WORKBUFFER4_TAG)
-C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore5, FIXP_DBL, QMF_WB_SECTION_SIZE,
-                    SECT_DATA_L2, WORKBUFFER5_TAG)
 C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore6, FIXP_DBL, QMF_WB_SECTION_SIZE,
                     SECT_DATA_L2, WORKBUFFER6_TAG)
+C_ALLOC_MEM_OVERLAY(QmfWorkBufferCore7, FIXP_DBL, QMF_WB_SECTION_SIZE,
+                    SECT_DATA_L2, WORKBUFFER7_TAG)
 
 /*! Analysis states buffer. <br>
     Dimension: #((8) + (1))                                                   */
@@ -949,7 +945,7 @@ QMF_DOMAIN_ERROR FDK_QmfDomain_Configure(HANDLE_FDK_QMF_DOMAIN hqd) {
 
     if ((size > 4 * QMF_WB_SECTION_SIZE) && (pWorkBuffer[4] == NULL)) {
       /* get work buffer of size QMF_WB_SECTION_SIZE */
-      pWorkBuffer[4] = GetQmfWorkBufferCore5();
+      pWorkBuffer[4] = GetQmfWorkBufferCore7();
     }
 
     /* 8. distribute workbuffer over processing channels */
@@ -995,7 +991,7 @@ static void FDK_QmfDomain_FreeWorkBuffer(HANDLE_FDK_QMF_DOMAIN hqd) {
   if (pWorkBuffer[1]) FreeQmfWorkBufferCore1(&pWorkBuffer[1]);
   if (pWorkBuffer[2]) FreeQmfWorkBufferCore3(&pWorkBuffer[2]);
   if (pWorkBuffer[3]) FreeQmfWorkBufferCore4(&pWorkBuffer[3]);
-  if (pWorkBuffer[4]) FreeQmfWorkBufferCore5(&pWorkBuffer[4]);
+  if (pWorkBuffer[4]) FreeQmfWorkBufferCore7(&pWorkBuffer[4]);
 }
 
 void FDK_QmfDomain_FreeMem(HANDLE_FDK_QMF_DOMAIN hqd) {
