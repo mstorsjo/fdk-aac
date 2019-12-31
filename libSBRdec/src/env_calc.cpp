@@ -151,6 +151,9 @@ amm-info@iis.fraunhofer.de
 
 #include "genericStds.h" /* need FDKpow() for debug outputs */
 
+#define MAX_SFB_NRG_HEADROOM (1)
+#define MAX_VAL_NRG_HEADROOM ((((FIXP_DBL)MAXVAL_DBL) >> MAX_SFB_NRG_HEADROOM))
+
 typedef struct {
   FIXP_DBL nrgRef[MAX_FREQ_COEFFS];
   FIXP_DBL nrgEst[MAX_FREQ_COEFFS];
@@ -986,7 +989,8 @@ void calculateSbrEnvelope(
   */
   if (!useLP)
     adj_e = h_sbr_cal_env->filtBufferNoise_e -
-            getScalefactor(h_sbr_cal_env->filtBufferNoise, noSubbands);
+            getScalefactor(h_sbr_cal_env->filtBufferNoise, noSubbands) +
+            (INT)MAX_SFB_NRG_HEADROOM;
 
   /*
     Scan for maximum reference energy to be able
@@ -1006,7 +1010,7 @@ void calculateSbrEnvelope(
        - Smoothing can smear high gains of the previous envelope into the
        current
     */
-    maxSfbNrg_e += 6;
+    maxSfbNrg_e += (6 + MAX_SFB_NRG_HEADROOM);
 
     adj_e = maxSfbNrg_e;
     // final_e should not exist for PVC fixfix framing
@@ -1032,7 +1036,7 @@ void calculateSbrEnvelope(
          - Smoothing can smear high gains of the previous envelope into the
          current
       */
-      maxSfbNrg_e += 6;
+      maxSfbNrg_e += (6 + MAX_SFB_NRG_HEADROOM);
 
       if (borders[i] < hHeaderData->numberTimeSlots)
         /* This envelope affects timeslots that belong to the output frame */
@@ -2426,6 +2430,9 @@ static void adjustTimeSlot_EldGrid(
   const FIXP_DBL *p_harmonicPhaseX = &harmonicPhaseX[harmIndex][0];
   const INT *p_harmonicPhase = &harmonicPhase[harmIndex][0];
 
+  const FIXP_DBL max_val = MAX_VAL_NRG_HEADROOM >> scale_change;
+  const FIXP_DBL min_val = -max_val;
+
   *(ptrReal - 1) = fAddSaturate(
       *(ptrReal - 1),
       SATURATE_SHIFT(fMultDiv2(p_harmonicPhaseX[lowSubband & 1], pSineLevel[0]),
@@ -2438,7 +2445,8 @@ static void adjustTimeSlot_EldGrid(
     FIXP_DBL sineLevel_curr = *pSineLevel++;
     phaseIndex = (phaseIndex + 1) & (SBR_NF_NO_RANDOM_VAL - 1);
 
-    signalReal = fMultDiv2(*ptrReal, *pGain++) << ((int)scale_change);
+    signalReal = fMax(fMin(fMultDiv2(*ptrReal, *pGain++), max_val), min_val)
+                 << scale_change;
     sbNoise = *pNoiseLevel++;
     if (((INT)sineLevel_curr | noNoiseFlag) == 0) {
       signalReal +=
@@ -2472,7 +2480,8 @@ static void adjustTimeSlot_EldGrid(
     FIXP_DBL sineLevel_curr = *pSineLevel++;
     phaseIndex = (phaseIndex + 1) & (SBR_NF_NO_RANDOM_VAL - 1);
 
-    signalReal = fMultDiv2(*ptrReal, *pGain++) << ((int)scale_change);
+    signalReal = fMax(fMin(fMultDiv2(*ptrReal, *pGain++), max_val), min_val)
+                 << scale_change;
     sbNoise = *pNoiseLevel++;
     if (((INT)sineLevel_curr | noNoiseFlag) == 0) {
       signalReal +=
@@ -2512,6 +2521,8 @@ static void adjustTimeSlotLC(
   FIXP_DBL signalReal, sineLevel, sineLevelNext, sineLevelPrev;
   int tone_count = 0;
   int sineSign = 1;
+  const FIXP_DBL max_val = MAX_VAL_NRG_HEADROOM >> scale_change;
+  const FIXP_DBL min_val = -max_val;
 
 #define C1 ((FIXP_SGL)FL2FXCONST_SGL(2.f * 0.00815f))
 #define C1_CLDFB ((FIXP_SGL)FL2FXCONST_SGL(2.f * 0.16773f))
@@ -2527,7 +2538,8 @@ static void adjustTimeSlotLC(
     of the signal and should be carried out with full accuracy
     (supplying #FRACT_BITS valid bits).
   */
-  signalReal = fMultDiv2(*ptrReal, *pGain++) << ((int)scale_change);
+  signalReal = fMax(fMin(fMultDiv2(*ptrReal, *pGain++), max_val), min_val)
+               << scale_change;
   sineLevel = *pSineLevel++;
   sineLevelNext = (noSubbands > 1) ? pSineLevel[0] : FL2FXCONST_DBL(0.0f);
 
@@ -2555,10 +2567,10 @@ static void adjustTimeSlotLC(
 
       /* save switch and compare operations and reduce to XOR statement */
       if (((harmIndex >> 1) & 0x1) ^ freqInvFlag) {
-        *(ptrReal - 1) += tmp1;
+        *(ptrReal - 1) = fAddSaturate(*(ptrReal - 1), tmp1);
         signalReal -= tmp2;
       } else {
-        *(ptrReal - 1) -= tmp1;
+        *(ptrReal - 1) = fAddSaturate(*(ptrReal - 1), -tmp1);
         signalReal += tmp2;
       }
       *ptrReal++ = signalReal;
@@ -2589,7 +2601,9 @@ static void adjustTimeSlotLC(
 
         /* The next multiplication constitutes the actual envelope adjustment of
          * the signal. */
-        signalReal += fMultDiv2(*ptrReal, *pGain++) << ((int)scale_change);
+        signalReal +=
+            fMax(fMin(fMultDiv2(*ptrReal, *pGain++), max_val), min_val)
+            << scale_change;
 
         pNoiseLevel++;
         *ptrReal++ = signalReal;
@@ -2602,7 +2616,8 @@ static void adjustTimeSlotLC(
         index++;
         /* The next multiplication constitutes the actual envelope adjustment of
          * the signal. */
-        signalReal = fMultDiv2(*ptrReal, *pGain++) << ((int)scale_change);
+        signalReal = fMax(fMin(fMultDiv2(*ptrReal, *pGain++), max_val), min_val)
+                     << scale_change;
 
         if (*pSineLevel++ != FL2FXCONST_DBL(0.0f))
           tone_count++;
@@ -2630,7 +2645,8 @@ static void adjustTimeSlotLC(
     index++;
     /* The next multiplication constitutes the actual envelope adjustment of the
      * signal. */
-    signalReal = fMultDiv2(*ptrReal, *pGain) << ((int)scale_change);
+    signalReal = fMax(fMin(fMultDiv2(*ptrReal, *pGain), max_val), min_val)
+                 << scale_change;
     sineLevelPrev = fMultDiv2(pSineLevel[-1], FL2FX_SGL(0.0163f));
     sineLevel = pSineLevel[0];
 
@@ -2699,6 +2715,9 @@ static void adjustTimeSlotHQ_GainAndNoise(
       /*FL2FXCONST_SGL(1.0f) */ (FIXP_SGL)MAXVAL_SGL - smooth_ratio;
   int index = *ptrPhaseIndex;
   int shift;
+  FIXP_DBL max_val_noise = 0, min_val_noise = 0;
+  const FIXP_DBL max_val = MAX_VAL_NRG_HEADROOM >> scale_change;
+  const FIXP_DBL min_val = -max_val;
 
   *ptrPhaseIndex = (index + noSubbands) & (SBR_NF_NO_RANDOM_VAL - 1);
 
@@ -2708,6 +2727,8 @@ static void adjustTimeSlotHQ_GainAndNoise(
     shift = fixMin(DFRACT_BITS - 1, -filtBufferNoiseShift);
   } else {
     shift = fixMin(DFRACT_BITS - 1, filtBufferNoiseShift);
+    max_val_noise = MAX_VAL_NRG_HEADROOM >> shift;
+    min_val_noise = -max_val_noise;
   }
 
   if (smooth_ratio > FL2FXCONST_SGL(0.0f)) {
@@ -2723,8 +2744,10 @@ static void adjustTimeSlotHQ_GainAndNoise(
         smoothedNoise = (fMultDiv2(smooth_ratio, filtBufferNoise[k]) >> shift) +
                         fMult(direct_ratio, noiseLevel[k]);
       } else {
-        smoothedNoise = (fMultDiv2(smooth_ratio, filtBufferNoise[k]) << shift) +
-                        fMult(direct_ratio, noiseLevel[k]);
+        smoothedNoise = fMultDiv2(smooth_ratio, filtBufferNoise[k]);
+        smoothedNoise =
+            (fMax(fMin(smoothedNoise, max_val_noise), min_val_noise) << shift) +
+            fMult(direct_ratio, noiseLevel[k]);
       }
 
       /*
@@ -2732,8 +2755,12 @@ static void adjustTimeSlotHQ_GainAndNoise(
         of the signal and should be carried out with full accuracy
         (supplying #DFRACT_BITS valid bits).
       */
-      signalReal = fMultDiv2(*ptrReal, smoothedGain) << ((int)scale_change);
-      signalImag = fMultDiv2(*ptrImag, smoothedGain) << ((int)scale_change);
+      signalReal =
+          fMax(fMin(fMultDiv2(*ptrReal, smoothedGain), max_val), min_val)
+          << scale_change;
+      signalImag =
+          fMax(fMin(fMultDiv2(*ptrImag, smoothedGain), max_val), min_val)
+          << scale_change;
 
       index++;
 
@@ -2755,8 +2782,12 @@ static void adjustTimeSlotHQ_GainAndNoise(
   } else {
     for (k = 0; k < noSubbands; k++) {
       smoothedGain = gain[k];
-      signalReal = fMultDiv2(*ptrReal, smoothedGain) << scale_change;
-      signalImag = fMultDiv2(*ptrImag, smoothedGain) << scale_change;
+      signalReal =
+          fMax(fMin(fMultDiv2(*ptrReal, smoothedGain), max_val), min_val)
+          << scale_change;
+      signalImag =
+          fMax(fMin(fMultDiv2(*ptrImag, smoothedGain), max_val), min_val)
+          << scale_change;
 
       index++;
 
@@ -2862,6 +2893,9 @@ static void adjustTimeSlotHQ(
   int freqInvFlag = (lowSubband & 1);
   FIXP_DBL sineLevel;
   int shift;
+  FIXP_DBL max_val_noise = 0, min_val_noise = 0;
+  const FIXP_DBL max_val = MAX_VAL_NRG_HEADROOM >> scale_change;
+  const FIXP_DBL min_val = -max_val;
 
   *ptrPhaseIndex = (index + noSubbands) & (SBR_NF_NO_RANDOM_VAL - 1);
   *ptrHarmIndex = (harmIndex + 1) & 3;
@@ -2877,10 +2911,13 @@ static void adjustTimeSlotHQ(
 
   filtBufferNoiseShift +=
       1; /* due to later use of fMultDiv2 instead of fMult */
-  if (filtBufferNoiseShift < 0)
+  if (filtBufferNoiseShift < 0) {
     shift = fixMin(DFRACT_BITS - 1, -filtBufferNoiseShift);
-  else
+  } else {
     shift = fixMin(DFRACT_BITS - 1, filtBufferNoiseShift);
+    max_val_noise = MAX_VAL_NRG_HEADROOM >> shift;
+    min_val_noise = -max_val_noise;
+  }
 
   if (smooth_ratio > FL2FXCONST_SGL(0.0f)) {
     for (k = 0; k < noSubbands; k++) {
@@ -2896,8 +2933,10 @@ static void adjustTimeSlotHQ(
         smoothedNoise = (fMultDiv2(smooth_ratio, filtBufferNoise[k]) >> shift) +
                         fMult(direct_ratio, noiseLevel[k]);
       } else {
-        smoothedNoise = (fMultDiv2(smooth_ratio, filtBufferNoise[k]) << shift) +
-                        fMult(direct_ratio, noiseLevel[k]);
+        smoothedNoise = fMultDiv2(smooth_ratio, filtBufferNoise[k]);
+        smoothedNoise =
+            (fMax(fMin(smoothedNoise, max_val_noise), min_val_noise) << shift) +
+            fMult(direct_ratio, noiseLevel[k]);
       }
 
       /*
@@ -2905,8 +2944,12 @@ static void adjustTimeSlotHQ(
         of the signal and should be carried out with full accuracy
         (supplying #DFRACT_BITS valid bits).
       */
-      signalReal = fMultDiv2(*ptrReal, smoothedGain) << ((int)scale_change);
-      signalImag = fMultDiv2(*ptrImag, smoothedGain) << ((int)scale_change);
+      signalReal =
+          fMax(fMin(fMultDiv2(*ptrReal, smoothedGain), max_val), min_val)
+          << scale_change;
+      signalImag =
+          fMax(fMin(fMultDiv2(*ptrImag, smoothedGain), max_val), min_val)
+          << scale_change;
 
       index++;
 
@@ -2959,8 +3002,12 @@ static void adjustTimeSlotHQ(
   } else {
     for (k = 0; k < noSubbands; k++) {
       smoothedGain = gain[k];
-      signalReal = fMultDiv2(*ptrReal, smoothedGain) << scale_change;
-      signalImag = fMultDiv2(*ptrImag, smoothedGain) << scale_change;
+      signalReal =
+          fMax(fMin(fMultDiv2(*ptrReal, smoothedGain), max_val), min_val)
+          << scale_change;
+      signalImag =
+          fMax(fMin(fMultDiv2(*ptrImag, smoothedGain), max_val), min_val)
+          << scale_change;
 
       index++;
 
@@ -3141,6 +3188,11 @@ ResetLimiterBands(
 
     /* Test if algorithm exceeded maximum allowed limiterbands */
     if (nBands > MAX_NUM_LIMITERS || nBands <= 0) {
+      return SBRDEC_UNSUPPORTED_CONFIG;
+    }
+
+    /* Restrict maximum value of limiter band table */
+    if (workLimiterBandTable[tempNoLim] > highSubband) {
       return SBRDEC_UNSUPPORTED_CONFIG;
     }
 

@@ -1,0 +1,22 @@
+{
+    "presubmit": [
+        {
+            "name": "CtsMediaTestCases",
+            "options": [
+                { "include-filter": "android.media.cts.DecoderTest#testCodecResetsM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecode51M4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeAacEldM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeAacLcM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeAacLcMcM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeAacTs" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeHeAacM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeHeAacMcM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeHeAacV2M4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeM4a" },
+                { "include-filter": "android.media.cts.DecoderTest#testDecodeMonoM4a" },
+		{ "include-filter": "android.media.cts.DecoderTestXheAac" },
+		{ "include-filter": "android.media.cts.DecoderTestAacDrc" }
+            ]
+        }
+    ]
+}

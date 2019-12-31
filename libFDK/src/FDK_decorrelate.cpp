@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -227,7 +227,7 @@ static inline int SpatialDecGetQmfBand(int paramBand, const UCHAR *tab) {
 }
 
 #define DUCKER_MAX_NRG_SCALE (24)
-#define DUCKER_HEADROOM_BITS (3)
+#define DUCKER_HEADROOM_BITS (2)
 
 #define FILTER_SF (2)
 
@@ -606,10 +606,6 @@ static INT DecorrFilterApplyPASS(DECORR_FILTER_INSTANCE const filter[],
       dataImagIn += start;
       dataRealOut += start;
       dataImagOut += start;
-#ifdef FUNCTION_DecorrFilterApplyPASS_func1
-      DecorrFilterApplyPASS_func1(i, dataRealIn, dataImagIn, dataRealOut,
-                                  dataImagOut, pDelayBuffer, offset);
-#else
       do {
         FIXP_DBL delay_re, delay_im, real, imag;
 
@@ -623,7 +619,6 @@ static INT DecorrFilterApplyPASS(DECORR_FILTER_INSTANCE const filter[],
         *dataImagOut++ = delay_im;
         pDelayBuffer += offset;
       } while (--i != 0);
-#endif
     }
   }
 
@@ -1061,24 +1056,15 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
     FIXP_DBL maxVal = FL2FXCONST_DBL(-1.0f);
 
     if (maxVal == FL2FXCONST_DBL(-1.0f)) {
-#ifdef FUNCTION_DuckerCalcEnergy_func2
-      maxVal = DuckerCalcEnergy_func2(inputReal, inputImag, startHybBand,
-                                      maxHybBand, maxHybridBand);
-#else
-      FIXP_DBL localMaxVal = FL2FXCONST_DBL(0.0f);
-      for (qs = startHybBand; qs <= maxHybBand; qs++) {
-        localMaxVal |= fAbs(inputReal[qs]);
-        localMaxVal |= fAbs(inputImag[qs]);
-      }
-      for (; qs <= maxHybridBand; qs++) {
-        localMaxVal |= fAbs(inputReal[qs]);
-      }
-      maxVal = localMaxVal;
-#endif
+      clz = fMin(getScalefactor(&inputReal[startHybBand],
+                                fMax(0, maxHybridBand - startHybBand + 1)),
+                 getScalefactor(&inputImag[startHybBand],
+                                fMax(0, maxHybBand - startHybBand + 1)));
+    } else {
+      clz = CntLeadingZeros(maxVal) - 1;
     }
 
-    clz = fixMax(0, CntLeadingZeros(maxVal) - DUCKER_HEADROOM_BITS);
-    clz = fixMin(clz, DUCKER_MAX_NRG_SCALE);
+    clz = fMin(fMax(0, clz - DUCKER_HEADROOM_BITS), DUCKER_MAX_NRG_SCALE);
     *nrgScale = (SCHAR)clz << 1;
 
     /* Initialize pb since it would stay uninitialized for the case startHybBand
@@ -1086,9 +1072,10 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
     pb = SpatialDecGetProcessingBand(maxHybBand, self->mapHybBands2ProcBands);
     for (qs = startHybBand; qs <= maxHybBand; qs++) {
       pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
-      energy[pb] =
-          fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz) +
-                                       fPow2Div2(inputImag[qs] << clz));
+      energy[pb] = SATURATE_LEFT_SHIFT(
+          (energy[pb] >> 1) + (fPow2Div2(inputReal[qs] << clz) >> 1) +
+              (fPow2Div2(inputImag[qs] << clz) >> 1),
+          1, DFRACT_BITS);
     }
     pb++;
 
@@ -1112,43 +1099,29 @@ static INT DuckerCalcEnergy(DUCKER_INSTANCE *const self,
     maxVal = inputMaxVal;
 
     if (maxVal == FL2FXCONST_DBL(-1.0f)) {
-#ifdef FUNCTION_DuckerCalcEnergy_func2
-      maxVal = DuckerCalcEnergy_func2(inputReal, inputImag, startHybBand,
-                                      maxHybBand, maxHybridBand);
-#else
-      FIXP_DBL localMaxVal = FL2FXCONST_DBL(0.0f);
-      for (qs = startHybBand; qs <= maxHybBand; qs++) {
-        localMaxVal |= fAbs(inputReal[qs]);
-        localMaxVal |= fAbs(inputImag[qs]);
-      }
-      for (; qs <= maxHybridBand; qs++) {
-        localMaxVal |= fAbs(inputReal[qs]);
-      }
-      maxVal = localMaxVal;
-#endif
+      clz = fMin(getScalefactor(&inputReal[startHybBand],
+                                fMax(0, maxHybridBand - startHybBand + 1)),
+                 getScalefactor(&inputImag[startHybBand],
+                                fMax(0, maxHybBand - startHybBand + 1)));
+    } else {
+      clz = CntLeadingZeros(maxVal) - 1;
     }
 
-    clz = fixMax(0, CntLeadingZeros(maxVal) - DUCKER_HEADROOM_BITS);
-    clz = fixMin(clz, DUCKER_MAX_NRG_SCALE);
+    clz = fMin(fMax(0, clz - DUCKER_HEADROOM_BITS), DUCKER_MAX_NRG_SCALE);
     *nrgScale = (SCHAR)clz << 1;
 
-#ifdef FUNCTION_DuckerCalcEnergy_func4
-    DuckerCalcEnergy_func4(inputReal, inputImag, energy,
-                           self->mapHybBands2ProcBands, clz, startHybBand,
-                           maxHybBand, maxHybridBand);
-#else
     for (qs = startHybBand; qs <= maxHybBand; qs++) {
       int pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
-      energy[pb] =
-          fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz) +
-                                       fPow2Div2(inputImag[qs] << clz));
+      energy[pb] = SATURATE_LEFT_SHIFT(
+          (energy[pb] >> 1) + (fPow2Div2(inputReal[qs] << clz) >> 1) +
+              (fPow2Div2(inputImag[qs] << clz) >> 1),
+          1, DFRACT_BITS);
     }
 
     for (; qs <= maxHybridBand; qs++) {
       int pb = SpatialDecGetProcessingBand(qs, self->mapHybBands2ProcBands);
       energy[pb] = fAddSaturate(energy[pb], fPow2Div2(inputReal[qs] << clz));
     }
-#endif /* FUNCTION_DuckerCalcEnergy_func4 */
   }
 
   {
@@ -1295,10 +1268,6 @@ static INT DuckerApply(DUCKER_INSTANCE *const self,
       }
     }
 
-#ifdef FUNCTION_DuckerApply_func1
-    qs = DuckerApply_func1(qs, hybBands, qs_next, outputReal, outputImag,
-                           duckGain);
-#else
     /* general gain*output section */
     if (qs < hybBands) {           /* true for about 39% */
       for (; qs < qs_next; qs++) { /* runs about 2 times */
@@ -1310,7 +1279,6 @@ static INT DuckerApply(DUCKER_INSTANCE *const self,
         outputReal[qs] = fMultDiv2(outputReal[qs], duckGain) << 2;
       }
     }
-#endif
   } /* pb */
 
   self->headroomSmoothDirRevNrg =

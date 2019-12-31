@@ -1018,6 +1018,7 @@ static DRC_ERROR _skipEqInstructions(HANDLE_FDK_BITSTREAM hBs,
   int additionalDrcSetIdPresent, additionalDrcSetIdCount;
   int dependsOnEqSetPresent, eqChannelGroupCount, tdFilterCascadePresent,
       subbandGainsPresent, eqTransitionDurationPresent;
+  UCHAR eqChannelGroupForChannel[8];
 
   FDKpushFor(hBs, 6); /* eqSetId */
   FDKpushFor(hBs, 4); /* eqSetComplexityLevel */
@@ -1067,7 +1068,6 @@ static DRC_ERROR _skipEqInstructions(HANDLE_FDK_BITSTREAM hBs,
 
   eqChannelGroupCount = 0;
   for (c = 0; c < channelCount; c++) {
-    UCHAR eqChannelGroupForChannel[8];
     int newGroup = 1;
     if (c >= 8) return DE_MEMORY_ERROR;
     eqChannelGroupForChannel[c] = FDKreadBits(hBs, 7);

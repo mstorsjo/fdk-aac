@@ -1610,6 +1610,10 @@ static SACDEC_ERROR mapIndexData(
   } /* for( i = 0 ; i < numParameterSets; i++ ) */
 
   if (extendFrame) {
+    if (paramType == t_IPD) {
+      llData->bsQuantCoarseXXX[numParameterSets] =
+          llData->bsQuantCoarseXXX[numParameterSets - 1];
+    }
     for (band = startBand; band < stopBand; band++) {
       outputDataIdx[xttIdx][numParameterSets][band] =
           outputDataIdx[xttIdx][numParameterSets - 1][band];
