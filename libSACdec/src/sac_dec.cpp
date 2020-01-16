@@ -1317,10 +1317,12 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
       if ((self->tempShapeConfig == 1) && (!isTwoChMode(self->upmixType))) {
         for (ch = 0; ch < self->numOutputChannels; ch++) {
           for (hyb = 0; hyb < self->tp_hybBandBorder; hyb++) {
-            self->hybOutputRealDry__FDK[ch][hyb] +=
-                self->hybOutputRealWet__FDK[ch][hyb];
-            self->hybOutputImagDry__FDK[ch][hyb] +=
-                self->hybOutputImagWet__FDK[ch][hyb];
+            self->hybOutputRealDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputRealDry__FDK[ch][hyb],
+                             self->hybOutputRealWet__FDK[ch][hyb]);
+            self->hybOutputImagDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputImagDry__FDK[ch][hyb],
+                             self->hybOutputImagWet__FDK[ch][hyb]);
           } /* loop hyb */
         }   /* loop ch */
         err = subbandTPApply(
@@ -1341,11 +1343,11 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
             FIXP_DBL *RESTRICT pRealWet = self->hybOutputRealWet__FDK[ch];
             FIXP_DBL *RESTRICT pImagWet = self->hybOutputImagWet__FDK[ch];
             for (hyb = 0; hyb < nHybBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
-              pImagDry[hyb] += pImagWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
+              pImagDry[hyb] = fAddSaturate(pImagDry[hyb], pImagWet[hyb]);
             } /* loop hyb */
             for (; hyb < self->hybridBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
             } /* loop hyb */
           }   /* loop ch */
         } /* ( self->tempShapeConfig == 1 ) || ( self->tempShapeConfig == 2 ) */
