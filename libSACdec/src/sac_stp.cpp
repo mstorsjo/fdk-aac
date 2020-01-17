@@ -206,29 +206,6 @@ struct STP_DEC {
   int update_old_ener;
 };
 
-inline void combineSignalReal(FIXP_DBL *hybOutputRealDry,
-                              FIXP_DBL *hybOutputRealWet, int bands) {
-  int n;
-
-  for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry = *hybOutputRealDry + *hybOutputRealWet;
-    hybOutputRealDry++, hybOutputRealWet++;
-  }
-}
-
-inline void combineSignalRealScale1(FIXP_DBL *hybOutputRealDry,
-                                    FIXP_DBL *hybOutputRealWet, FIXP_DBL scaleX,
-                                    int bands) {
-  int n;
-
-  for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry =
-        *hybOutputRealDry +
-        (fMultDiv2(*hybOutputRealWet, scaleX) << (SF_SCALE + 1));
-    hybOutputRealDry++, hybOutputRealWet++;
-  }
-}
-
 inline void combineSignalCplx(FIXP_DBL *hybOutputRealDry,
                               FIXP_DBL *hybOutputImagDry,
                               FIXP_DBL *hybOutputRealWet,
@@ -236,8 +213,8 @@ inline void combineSignalCplx(FIXP_DBL *hybOutputRealDry,
   int n;
 
   for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry = *hybOutputRealDry + *hybOutputRealWet;
-    *hybOutputImagDry = *hybOutputImagDry + *hybOutputImagWet;
+    *hybOutputRealDry = fAddSaturate(*hybOutputRealDry, *hybOutputRealWet);
+    *hybOutputImagDry = fAddSaturate(*hybOutputImagDry, *hybOutputImagWet);
     hybOutputRealDry++, hybOutputRealWet++;
     hybOutputImagDry++, hybOutputImagWet++;
   }
@@ -253,12 +230,14 @@ inline void combineSignalCplxScale1(FIXP_DBL *hybOutputRealDry,
   FIXP_DBL scaleY;
   for (n = bands - 1; n >= 0; n--) {
     scaleY = fMultDiv2(scaleX, *pBP);
-    *hybOutputRealDry =
-        *hybOutputRealDry +
-        (fMultDiv2(*hybOutputRealWet, scaleY) << (SF_SCALE + 2));
-    *hybOutputImagDry =
-        *hybOutputImagDry +
-        (fMultDiv2(*hybOutputImagWet, scaleY) << (SF_SCALE + 2));
+    *hybOutputRealDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputRealDry >> 1) +
+            (fMultDiv2(*hybOutputRealWet, scaleY) << (SF_SCALE + 1)),
+        1, DFRACT_BITS);
+    *hybOutputImagDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputImagDry >> 1) +
+            (fMultDiv2(*hybOutputImagWet, scaleY) << (SF_SCALE + 1)),
+        1, DFRACT_BITS);
     hybOutputRealDry++, hybOutputRealWet++;
     hybOutputImagDry++, hybOutputImagWet++;
     pBP++;

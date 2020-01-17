@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1618,7 +1618,7 @@ static void CConcealment_ApplyRandomSign(int randomPhase, FIXP_DBL *spec,
     }
 
     if (packedSign & 0x1) {
-      spec[i] = -spec[i];
+      spec[i] = -fMax(spec[i], (FIXP_DBL)(MINVAL_DBL + 1));
     }
     packedSign >>= 1;
 

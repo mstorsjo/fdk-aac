@@ -171,6 +171,19 @@ extern const FIXP_DBL invSqrtTab[SQRT_VALUES];
  * \return non-zero if (a_m*2^a_e) < (b_m*2^b_e), 0 otherwise
  */
 FDK_INLINE INT fIsLessThan(FIXP_DBL a_m, INT a_e, FIXP_DBL b_m, INT b_e) {
+  INT n;
+
+  n = fixnorm_D(a_m);
+  a_m <<= n;
+  a_e -= n;
+
+  n = fixnorm_D(b_m);
+  b_m <<= n;
+  b_e -= n;
+
+  if (a_m == (FIXP_DBL)0) a_e = b_e;
+  if (b_m == (FIXP_DBL)0) b_e = a_e;
+
   if (a_e > b_e) {
     return ((b_m >> fMin(a_e - b_e, DFRACT_BITS - 1)) > a_m);
   } else {
@@ -179,6 +192,19 @@ FDK_INLINE INT fIsLessThan(FIXP_DBL a_m, INT a_e, FIXP_DBL b_m, INT b_e) {
 }
 
 FDK_INLINE INT fIsLessThan(FIXP_SGL a_m, INT a_e, FIXP_SGL b_m, INT b_e) {
+  INT n;
+
+  n = fixnorm_S(a_m);
+  a_m <<= n;
+  a_e -= n;
+
+  n = fixnorm_S(b_m);
+  b_m <<= n;
+  b_e -= n;
+
+  if (a_m == (FIXP_SGL)0) a_e = b_e;
+  if (b_m == (FIXP_SGL)0) b_e = a_e;
+
   if (a_e > b_e) {
     return ((b_m >> fMin(a_e - b_e, FRACT_BITS - 1)) > a_m);
   } else {
