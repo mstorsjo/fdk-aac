@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1848,6 +1848,12 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           self->streamInfo.extSamplingRate / self->downscaleFactor;
     }
   }
+  if ((asc->m_aot == AOT_AAC_LC) && (asc->m_sbrPresentFlag == 1) &&
+      (asc->m_extensionSamplingFrequency > (2 * asc->m_samplingFrequency))) {
+    return AAC_DEC_UNSUPPORTED_SAMPLINGRATE; /* Core decoder supports at most a
+                                                1:2 upsampling for HE-AAC and
+                                                HE-AACv2 */
+  }
 
   /* --------- vcb11 ------------ */
   self->flags[streamIndex] |= (asc->m_vcb11Flag) ? AC_ER_VCB11 : 0;
@@ -2364,6 +2370,13 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     if (FDK_drcDec_Init(self->hUniDrcDecoder, drcDecFrameSize, drcDecSampleRate,
                         self->aacChannels) != 0)
       goto bail;
+  }
+
+  if (*configChanged) {
+    if (asc->m_aot == AOT_USAC) {
+      self->hDrcInfo->enable = 0;
+      self->hDrcInfo->progRefLevelPresent = 0;
+    }
   }
 
   if (asc->m_aot == AOT_USAC) {
@@ -3172,9 +3185,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
         self->hDrcInfo, bs, self->pAacDecoderStaticChannelInfo,
         pce->ElementInstanceTag, drcChMap, aacChannels);
     if (mapped > 0) {
-      /* If at least one DRC thread has been mapped to a channel threre was DRC
-       * data in the bitstream. */
-      self->flags[streamIndex] |= AC_DRC_PRESENT;
+      if (!(self->flags[streamIndex] & (AC_USAC | AC_RSV603DA))) {
+        /* If at least one DRC thread has been mapped to a channel there was DRC
+         * data in the bitstream. */
+        self->flags[streamIndex] |= AC_DRC_PRESENT;
+      } else {
+        self->hDrcInfo->enable = 0;
+        self->hDrcInfo->progRefLevelPresent = 0;
+        ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
+      }
     }
 
     /* Create a reverse mapping table */
@@ -3419,9 +3438,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
         self->hDrcInfo, bs, self->pAacDecoderStaticChannelInfo,
         pce->ElementInstanceTag, drcChMap, aacChannels);
     if (mapped > 0) {
-      /* If at least one DRC thread has been mapped to a channel threre was DRC
-       * data in the bitstream. */
-      self->flags[streamIndex] |= AC_DRC_PRESENT;
+      if (!(self->flags[streamIndex] & (AC_USAC | AC_RSV603DA))) {
+        /* If at least one DRC thread has been mapped to a channel there was DRC
+         * data in the bitstream. */
+        self->flags[streamIndex] |= AC_DRC_PRESENT;
+      } else {
+        self->hDrcInfo->enable = 0;
+        self->hDrcInfo->progRefLevelPresent = 0;
+        ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
+      }
     }
   }
 

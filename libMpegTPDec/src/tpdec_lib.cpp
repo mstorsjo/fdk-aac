@@ -929,6 +929,11 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
               }
             }
           }
+          /* if an error is detected terminate config parsing to avoid that an
+           * invalid config is accepted in the second pass */
+          if (err != TRANSPORTDEC_OK) {
+            break;
+          }
         }
       } else {
         /* Reset CRC because the next bits are the beginning of a

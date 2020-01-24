@@ -956,17 +956,31 @@ static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement4(
   return DRCDEC_SELECTION_PROCESS_NO_ERROR;
 }
 
-/* #5: The number of DRC bands is supported. */
+/* #5: The number of DRC bands is supported. Moreover, gainSetIndex and
+ * gainSequenceIndex are within the allowed range. */
 static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement5(
     DRC_INSTRUCTIONS_UNI_DRC* pDrcInstructionUniDrc,
     DRC_COEFFICIENTS_UNI_DRC* pCoef, int* pMatchFound) {
-  int i;
+  int b, i;
 
   *pMatchFound = 1;
 
+  if (pDrcInstructionUniDrc->drcSetId < 0) /* virtual DRC sets are okay */
+  {
+    return DRCDEC_SELECTION_PROCESS_NO_ERROR;
+  }
+
   if (pCoef == NULL) /* check for parametricDRC */
   {
-    *pMatchFound = 1;
+    *pMatchFound = 0; /* parametricDRC not supported */
+    return DRCDEC_SELECTION_PROCESS_NO_ERROR;
+  }
+
+  if (pCoef->drcLocation !=
+      pDrcInstructionUniDrc
+          ->drcLocation) /* drcLocation must be LOCATION_SELECTED */
+  {
+    *pMatchFound = 0;
     return DRCDEC_SELECTION_PROCESS_NO_ERROR;
   }
 
@@ -974,10 +988,14 @@ static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement5(
     int indexDrcCoeff = pDrcInstructionUniDrc->gainSetIndexForChannelGroup[i];
     int bandCount = 0;
 
+    if (indexDrcCoeff >= 12) {
+      *pMatchFound = 0;
+      return DRCDEC_SELECTION_PROCESS_NO_ERROR;
+    }
+
     if (indexDrcCoeff > pCoef->gainSetCount - 1) /* check for parametricDRC */
     {
-      *pMatchFound = 1;
-      return DRCDEC_SELECTION_PROCESS_NO_ERROR;
+      continue;
     }
 
     GAIN_SET* gainSet = &(pCoef->gainSet[indexDrcCoeff]);
@@ -985,6 +1003,14 @@ static DRCDEC_SELECTION_PROCESS_RETURN _preSelectionRequirement5(
 
     if (bandCount > 4) {
       *pMatchFound = 0;
+    }
+
+    for (b = 0; b < bandCount; b++) {
+      if ((gainSet->gainSequenceIndex[b] >= 12) ||
+          (gainSet->gainSequenceIndex[b] >= pCoef->gainSequenceCount)) {
+        *pMatchFound = 0;
+        return DRCDEC_SELECTION_PROCESS_NO_ERROR;
+      }
     }
   }
 
@@ -1076,6 +1102,19 @@ static int _targetLoudnessInRange(
   }
 
   return retVal;
+}
+
+static int _drcSetIsUsable(HANDLE_UNI_DRC_CONFIG hUniDrcConfig,
+                           DRC_INSTRUCTIONS_UNI_DRC* pInst) {
+  int usable = 0;
+  DRC_COEFFICIENTS_UNI_DRC* pCoef =
+      selectDrcCoefficients(hUniDrcConfig, LOCATION_SELECTED);
+
+  /* check if ID is unique */
+  if (selectDrcInstructions(hUniDrcConfig, pInst->drcSetId) != pInst) return 0;
+  /* sanity check on drcInstructions */
+  _preSelectionRequirement5(pInst, pCoef, &usable);
+  return usable;
 }
 
 /* #8: The range of the target loudness specified for a DRC set has to include
@@ -2051,8 +2090,11 @@ static DRCDEC_SELECTION_PROCESS_RETURN _generateOutputInfo(
     int dependsOnDrcSetID = pSelectionData->pInst->dependsOnDrcSet;
 
     for (i = 0; i < hUniDrcConfig->drcInstructionsCountInclVirtual; i++) {
-      if (hUniDrcConfig->drcInstructionsUniDrc[i].drcSetId ==
-          dependsOnDrcSetID) {
+      DRC_INSTRUCTIONS_UNI_DRC* pInst =
+          &(hUniDrcConfig->drcInstructionsUniDrc[i]);
+      if (!_drcSetIsUsable(hUniDrcConfig, pInst)) continue;
+
+      if (pInst->drcSetId == dependsOnDrcSetID) {
         hSelProcOutput->selectedDrcSetIds[hSelProcOutput->numSelectedDrcSets] =
             hUniDrcConfig->drcInstructionsUniDrc[i].drcSetId;
         hSelProcOutput->selectedDownmixIds[hSelProcOutput->numSelectedDrcSets] =
@@ -2071,6 +2113,7 @@ static DRCDEC_SELECTION_PROCESS_RETURN _generateOutputInfo(
     for (i = 0; i < hUniDrcConfig->drcInstructionsUniDrcCount; i++) {
       DRC_INSTRUCTIONS_UNI_DRC* pInst =
           &(hUniDrcConfig->drcInstructionsUniDrc[i]);
+      if (!_drcSetIsUsable(hUniDrcConfig, pInst)) continue;
 
       if (pInst->drcSetEffect & EB_FADE) {
         if (pInst->downmixId[0] == DOWNMIX_ID_ANY_DOWNMIX) {
@@ -2098,6 +2141,7 @@ static DRCDEC_SELECTION_PROCESS_RETURN _generateOutputInfo(
   for (i = 0; i < hUniDrcConfig->drcInstructionsUniDrcCount; i++) {
     DRC_INSTRUCTIONS_UNI_DRC* pInst =
         &(hUniDrcConfig->drcInstructionsUniDrc[i]);
+    if (!_drcSetIsUsable(hUniDrcConfig, pInst)) continue;
 
     if (pInst->drcSetEffect & (EB_DUCK_OTHER | EB_DUCK_SELF)) {
       for (j = 0; j < pInst->downmixIdCount; j++) {
@@ -2124,6 +2168,7 @@ static DRCDEC_SELECTION_PROCESS_RETURN _generateOutputInfo(
     for (i = 0; i < hUniDrcConfig->drcInstructionsUniDrcCount; i++) {
       DRC_INSTRUCTIONS_UNI_DRC* pInst =
           &(hUniDrcConfig->drcInstructionsUniDrc[i]);
+      if (!_drcSetIsUsable(hUniDrcConfig, pInst)) continue;
 
       if (pInst->drcSetEffect & (EB_DUCK_OTHER | EB_DUCK_SELF)) {
         for (j = 0; j < pInst->downmixIdCount; j++) {
@@ -2231,6 +2276,11 @@ static DRCDEC_SELECTION_PROCESS_RETURN _drcSetPreSelection(
     for (j = 0; j < hUniDrcConfig->drcInstructionsCountInclVirtual; j++) {
       DRC_INSTRUCTIONS_UNI_DRC* pDrcInstruction =
           &(hUniDrcConfig->drcInstructionsUniDrc[j]);
+      /* check if ID is unique */
+      if (selectDrcInstructions(hUniDrcConfig, pDrcInstruction->drcSetId) !=
+          pDrcInstruction)
+        continue;
+
       retVal = _drcSetPreSelectionSingleInstruction(
           hSelProcInput, i, hUniDrcConfig, hLoudnessInfoSet, pDrcInstruction,
           *ppCandidatesPotential, *ppCandidatesSelected, codecMode);
