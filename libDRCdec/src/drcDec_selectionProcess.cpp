@@ -753,8 +753,8 @@ static DRCDEC_SELECTION_PROCESS_RETURN _initDefaultParams(
   hSelProcInput->loudnessNormalizationOn = 1;
   hSelProcInput->targetLoudness = FL2FXCONST_DBL(-24.0f / (float)(1 << 7));
   hSelProcInput->loudnessDeviationMax = DEFAULT_LOUDNESS_DEVIATION_MAX;
-  hSelProcInput->loudnessMeasurementMethod = MDR_DEFAULT;
-  hSelProcInput->loudnessMeasurementSystem = MSR_DEFAULT;
+  hSelProcInput->loudnessMeasurementMethod = MDR_ANCHOR_LOUDNESS;
+  hSelProcInput->loudnessMeasurementSystem = MSR_EXPERT_PANEL;
   hSelProcInput->loudnessMeasurementPreProc = LPR_DEFAULT;
   hSelProcInput->deviceCutOffFrequency = 500;
   hSelProcInput->loudnessNormalizationGainDbMax =
