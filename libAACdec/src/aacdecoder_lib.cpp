@@ -1269,9 +1269,9 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
     }
 
     /* Signal bit stream interruption to other modules if required. */
-    if (fTpInterruption || (flags & AACDEC_INTR)) {
+    if (fTpInterruption || ((flags & AACDEC_INTR) && (accessUnit == 0))) {
       aacDecoder_SignalInterruption(self);
-      if (!(flags & AACDEC_INTR)) {
+      if (!((flags & AACDEC_INTR) && (accessUnit == 0))) {
         ErrorStatus = AAC_DEC_TRANSPORT_SYNC_ERROR;
         goto bail;
       }
@@ -1768,7 +1768,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
       if (self->streamInfo.extAot != AOT_AAC_SLS) {
         INT pcmLimiterScale = 0;
         PCMDMX_ERROR dmxErr = PCMDMX_OK;
-        if (flags & (AACDEC_INTR)) {
+        if ((flags & AACDEC_INTR) && (accessUnit == 0)) {
           /* delete data from the past (e.g. mixdown coeficients) */
           pcmDmx_Reset(self->hPcmUtils, PCMDMX_RESET_BS_DATA);
         }
