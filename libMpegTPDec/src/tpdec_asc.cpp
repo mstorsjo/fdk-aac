@@ -1628,14 +1628,14 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
 
   int numConfigExtensions;
-  CONFIG_EXT_ID usacConfigExtType;
+  int usacConfigExtType;
   int usacConfigExtLength;
 
   numConfigExtensions = (int)escapedValue(hBs, 2, 4, 8) + 1;
   for (int confExtIdx = 0; confExtIdx < numConfigExtensions; confExtIdx++) {
     INT nbits;
     int loudnessInfoSetConfigExtensionPosition = FDKgetValidBits(hBs);
-    usacConfigExtType = (CONFIG_EXT_ID)escapedValue(hBs, 4, 8, 16);
+    usacConfigExtType = escapedValue(hBs, 4, 8, 16);
     usacConfigExtLength = (int)escapedValue(hBs, 4, 8, 16);
 
     /* Start bit position of config extension */
