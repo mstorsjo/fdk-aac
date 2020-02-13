@@ -114,6 +114,8 @@ amm-info@iis.fraunhofer.de
 extern "C" {
 #endif
 
+#define DRC_DEC_LOUDNESS_NOT_PRESENT (LONG)0x7FFFFFFE
+
 typedef struct s_drc_decoder* HANDLE_DRC_DECODER;
 typedef struct s_uni_drc_interface* HANDLE_UNI_DRC_INTERFACE;
 typedef struct s_selection_process_output* HANDLE_SEL_PROC_OUTPUT;
@@ -150,9 +152,12 @@ typedef enum {
   DRC_DEC_IS_ACTIVE, /**< MPEG-D DRC payload is present and at least one of
                         Dynamic Range Control (DRC) or Loudness Normalization
                         (LN) is activated */
-  DRC_DEC_TARGET_CHANNEL_COUNT_SELECTED /**< number of output channels if
-                                           appropriate downmixInstruction exists
-                                         */
+  DRC_DEC_TARGET_CHANNEL_COUNT_SELECTED, /**< number of output channels if
+                                            appropriate downmixInstruction
+                                            exists */
+  DRC_DEC_OUTPUT_LOUDNESS /**< output loudness in dB, with exponent e = 7, or
+                             DRC_DEC_LOUDNESS_NOT_PRESENT if no loudness is
+                             contained in the bitstream */
 } DRC_DEC_USERPARAM;
 
 typedef enum {
