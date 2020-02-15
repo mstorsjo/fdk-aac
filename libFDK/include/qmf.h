@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -116,6 +116,7 @@ amm-info@iis.fraunhofer.de
 
 #define FIXP_QAS FIXP_PCM
 #define QAS_BITS SAMPLE_BITS
+#define INT_PCM_QMFIN INT_PCM
 
 #define FIXP_QSS FIXP_DBL
 #define QSS_BITS DFRACT_BITS
@@ -201,16 +202,25 @@ struct QMF_FILTER_BANK {
 
 typedef struct QMF_FILTER_BANK *HANDLE_QMF_FILTER_BANK;
 
-void qmfAnalysisFiltering(
-    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Analysis Bank   */
-    FIXP_DBL **qmfReal,            /*!< Pointer to real subband slots */
-    FIXP_DBL **qmfImag,            /*!< Pointer to imag subband slots */
-    QMF_SCALE_FACTOR *scaleFactor, /*!< Scale factors of QMF data     */
-    const LONG *timeIn,            /*!< Time signal */
-    const int timeIn_e,            /*!< Exponent of audio data        */
-    const int stride,              /*!< Stride factor of audio data   */
-    FIXP_DBL *pWorkBuffer          /*!< pointer to temporary working buffer */
-);
+int qmfInitAnalysisFilterBank(
+    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< QMF Handle */
+    FIXP_QAS *pFilterStates,      /*!< Pointer to filter state buffer */
+    int noCols,                   /*!< Number of time slots  */
+    int lsb,                      /*!< Number of lower bands */
+    int usb,                      /*!< Number of upper bands */
+    int no_channels,              /*!< Number of critically sampled bands */
+    int flags);                   /*!< Flags */
+#if SAMPLE_BITS == 16
+
+int qmfInitAnalysisFilterBank(
+    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< QMF Handle */
+    FIXP_DBL *pFilterStates,      /*!< Pointer to filter state buffer */
+    int noCols,                   /*!< Number of time slots  */
+    int lsb,                      /*!< Number of lower bands */
+    int usb,                      /*!< Number of upper bands */
+    int no_channels,              /*!< Number of critically sampled bands */
+    int flags);                   /*!< Flags */
+#endif
 
 void qmfAnalysisFiltering(
     HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Analysis Bank   */
@@ -222,6 +232,48 @@ void qmfAnalysisFiltering(
     const int stride,              /*!< Stride factor of audio data   */
     FIXP_DBL *pWorkBuffer          /*!< pointer to temporal working buffer */
 );
+#if SAMPLE_BITS == 16
+
+void qmfAnalysisFiltering(
+    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Analysis Bank   */
+    FIXP_DBL **qmfReal,            /*!< Pointer to real subband slots */
+    FIXP_DBL **qmfImag,            /*!< Pointer to imag subband slots */
+    QMF_SCALE_FACTOR *scaleFactor, /*!< Scale factors of QMF data     */
+    const LONG *timeIn,            /*!< Time signal */
+    const int timeIn_e,            /*!< Exponent of audio data        */
+    const int stride,              /*!< Stride factor of audio data   */
+    FIXP_DBL *pWorkBuffer          /*!< pointer to temporary working buffer */
+);
+#endif
+
+void qmfAnalysisFilteringSlot(
+    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Synthesis Bank  */
+    FIXP_DBL *qmfReal,             /*!< Low and High band, real */
+    FIXP_DBL *qmfImag,             /*!< Low and High band, imag */
+    const INT_PCM *timeIn,         /*!< Pointer to input */
+    const int stride,              /*!< stride factor of input */
+    FIXP_DBL *pWorkBuffer          /*!< pointer to temporal working buffer */
+);
+#if SAMPLE_BITS == 16
+
+void qmfAnalysisFilteringSlot(
+    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Synthesis Bank  */
+    FIXP_DBL *qmfReal,             /*!< Low and High band, real */
+    FIXP_DBL *qmfImag,             /*!< Low and High band, imag */
+    const LONG *timeIn,            /*!< Pointer to input */
+    const int stride,              /*!< stride factor of input */
+    FIXP_DBL *pWorkBuffer          /*!< pointer to temporary working buffer */
+);
+#endif
+
+int qmfInitSynthesisFilterBank(
+    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< QMF Handle */
+    FIXP_QSS *pFilterStates,      /*!< Pointer to filter state buffer */
+    int noCols,                   /*!< Number of time slots  */
+    int lsb,                      /*!< Number of lower bands */
+    int usb,                      /*!< Number of upper bands */
+    int no_channels,              /*!< Number of critically sampled bands */
+    int flags);                   /*!< Flags */
 
 void qmfSynthesisFiltering(
     HANDLE_QMF_FILTER_BANK synQmf,       /*!< Handle of Qmf Synthesis Bank  */
@@ -234,41 +286,19 @@ void qmfSynthesisFiltering(
     FIXP_DBL *pWorkBuffer /*!< pointer to temporary working buffer. It must be
                              aligned */
 );
+#if SAMPLE_BITS == 16
 
-int qmfInitAnalysisFilterBank(
-    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< QMF Handle */
-    FIXP_QAS *pFilterStates,      /*!< Pointer to filter state buffer */
-    int noCols,                   /*!< Number of time slots  */
-    int lsb,                      /*!< Number of lower bands */
-    int usb,                      /*!< Number of upper bands */
-    int no_channels,              /*!< Number of critically sampled bands */
-    int flags);                   /*!< Flags */
-
-void qmfAnalysisFilteringSlot(
-    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Synthesis Bank  */
-    FIXP_DBL *qmfReal,             /*!< Low and High band, real */
-    FIXP_DBL *qmfImag,             /*!< Low and High band, imag */
-    const LONG *timeIn,            /*!< Pointer to input */
-    const int stride,              /*!< stride factor of input */
-    FIXP_DBL *pWorkBuffer          /*!< pointer to temporary working buffer */
+void qmfSynthesisFiltering(
+    HANDLE_QMF_FILTER_BANK synQmf,       /*!< Handle of Qmf Synthesis Bank  */
+    FIXP_DBL **QmfBufferReal,            /*!< Pointer to real subband slots */
+    FIXP_DBL **QmfBufferImag,            /*!< Pointer to imag subband slots */
+    const QMF_SCALE_FACTOR *scaleFactor, /*!< Scale factors of QMF data     */
+    const int ov_len,                    /*!< Length of band overlap        */
+    LONG *timeOut,                       /*!< Time signal */
+    const int timeOut_e,                 /*!< Target exponent for timeOut  */
+    FIXP_DBL *pWorkBuffer /*!< pointer to temporary working buffer */
 );
-
-void qmfAnalysisFilteringSlot(
-    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Synthesis Bank  */
-    FIXP_DBL *qmfReal,             /*!< Low and High band, real */
-    FIXP_DBL *qmfImag,             /*!< Low and High band, imag */
-    const INT_PCM *timeIn,         /*!< Pointer to input */
-    const int stride,              /*!< stride factor of input */
-    FIXP_DBL *pWorkBuffer          /*!< pointer to temporal working buffer */
-);
-int qmfInitSynthesisFilterBank(
-    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< QMF Handle */
-    FIXP_QSS *pFilterStates,      /*!< Pointer to filter state buffer */
-    int noCols,                   /*!< Number of time slots  */
-    int lsb,                      /*!< Number of lower bands */
-    int usb,                      /*!< Number of upper bands */
-    int no_channels,              /*!< Number of critically sampled bands */
-    int flags);                   /*!< Flags */
+#endif
 
 void qmfSynthesisFilteringSlot(HANDLE_QMF_FILTER_BANK synQmf,
                                const FIXP_DBL *realSlot,
@@ -276,6 +306,15 @@ void qmfSynthesisFilteringSlot(HANDLE_QMF_FILTER_BANK synQmf,
                                const int scaleFactorLowBand,
                                const int scaleFactorHighBand, INT_PCM *timeOut,
                                const int timeOut_e, FIXP_DBL *pWorkBuffer);
+#if SAMPLE_BITS == 16
+
+void qmfSynthesisFilteringSlot(HANDLE_QMF_FILTER_BANK synQmf,
+                               const FIXP_DBL *realSlot,
+                               const FIXP_DBL *imagSlot,
+                               const int scaleFactorLowBand,
+                               const int scaleFactorHighBand, LONG *timeOut,
+                               const int timeOut_e, FIXP_DBL *pWorkBuffer);
+#endif
 
 void qmfChangeOutScalefactor(
     HANDLE_QMF_FILTER_BANK synQmf, /*!< Handle of Qmf Synthesis Bank */
@@ -291,11 +330,5 @@ void qmfChangeOutGain(
     FIXP_DBL outputGain,           /*!< New gain for output data (mantissa) */
     int outputGainScale            /*!< New gain for output data (exponent) */
 );
-void qmfSynPrototypeFirSlot(
-    HANDLE_QMF_FILTER_BANK qmf,
-    FIXP_DBL *RESTRICT realSlot, /*!< Input: Pointer to real Slot */
-    FIXP_DBL *RESTRICT imagSlot, /*!< Input: Pointer to imag Slot */
-    INT_PCM *RESTRICT timeOut,   /*!< Time domain data */
-    const int timeOut_e);
 
 #endif /*ifndef QMF_H       */

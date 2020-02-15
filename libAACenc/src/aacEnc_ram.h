@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -198,7 +198,7 @@ struct AAC_ENC {
  +++++++++++++++++++++++++++++++++++++++++++++++++++++
 */
 
-#define BUF_SIZE_0 (ALIGN_SIZE(sizeof(QC_OUT_CHANNEL) * (8)))
+#define BUF_SIZE_0 (ALIGN_SIZE(sizeof(QC_OUT_CHANNEL)) * (8))
 #define BUF_SIZE_1                                                           \
   (ALIGN_SIZE(maxSize(maxSize(sizeof(PSY_DYNAMIC),                           \
                               (BIT_LOOK_UP_SIZE + MERGE_GAIN_LOOK_UP_SIZE)), \

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -108,6 +108,7 @@ amm-info@iis.fraunhofer.de
 #include "aacdec_hcr_types.h"
 #include "aacdec_hcrs.h"
 
+#define PCM_AAC LONG
 #define PCM_DEC FIXP_DBL
 #define MAXVAL_PCM_DEC MAXVAL_DBL
 #define MINVAL_PCM_DEC MINVAL_DBL

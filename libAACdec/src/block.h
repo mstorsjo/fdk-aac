@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -218,16 +218,16 @@ void ApplyTools(CAacDecoderChannelInfo *pAacDecoderChannelInfo[],
  */
 void CBlock_FrequencyToTime(
     CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo,
-    CAacDecoderChannelInfo *pAacDecoderChannelInfo, FIXP_PCM outSamples[],
+    CAacDecoderChannelInfo *pAacDecoderChannelInfo, PCM_DEC outSamples[],
     const SHORT frameLen, const int frameOk, FIXP_DBL *pWorkBuffer1,
-    UINT elFlags, INT elCh);
+    const INT aacOutDataHeadroom, UINT elFlags, INT elCh);
 
 /**
  * \brief Transform double lapped MDCT (AAC-ELD) spectral data into time domain.
  */
 void CBlock_FrequencyToTimeLowDelay(
     CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo,
-    CAacDecoderChannelInfo *pAacDecoderChannelInfo, FIXP_PCM outSamples[],
+    CAacDecoderChannelInfo *pAacDecoderChannelInfo, PCM_DEC outSamples[],
     const short frameLen);
 
 AAC_DECODER_ERROR CBlock_InverseQuantizeSpectralData(

@@ -897,10 +897,10 @@ void sbrDecoder_calculateGainVec(FIXP_DBL **sourceBufferReal,
     for (i = startSample; i < stopSample; i++) {
       maxVal |=
           (FIXP_DBL)((LONG)(sourceBufferReal[i][loBand]) ^
-                     ((LONG)sourceBufferReal[i][loBand] >> (SAMPLE_BITS - 1)));
+                     ((LONG)sourceBufferReal[i][loBand] >> (DFRACT_BITS - 1)));
       maxVal |=
           (FIXP_DBL)((LONG)(sourceBufferImag[i][loBand]) ^
-                     ((LONG)sourceBufferImag[i][loBand] >> (SAMPLE_BITS - 1)));
+                     ((LONG)sourceBufferImag[i][loBand] >> (DFRACT_BITS - 1)));
     }
 
     if (maxVal != FL2FX_DBL(0.0f)) {

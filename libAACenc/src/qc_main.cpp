@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -121,20 +121,15 @@ typedef struct {
 
 static const TAB_VBR_QUAL_FACTOR tableVbrQualFactor[] = {
     {QCDATA_BR_MODE_VBR_1,
-     FL2FXCONST_DBL(0.160f)}, /* Approx. 32 -  48 (AC-LC),  32 -  56
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.150f)}, /* Approx.  32 kbps mono   AAC-LC + SBR + PS */
     {QCDATA_BR_MODE_VBR_2,
-     FL2FXCONST_DBL(0.148f)}, /* Approx. 40 -  56 (AC-LC),  40 -  64
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.162f)}, /* Approx.  64 kbps stereo AAC-LC + SBR      */
     {QCDATA_BR_MODE_VBR_3,
-     FL2FXCONST_DBL(0.135f)}, /* Approx. 48 -  64 (AC-LC),  48 -  72
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.176f)}, /* Approx.  96 kbps stereo AAC-LC            */
     {QCDATA_BR_MODE_VBR_4,
-     FL2FXCONST_DBL(0.111f)}, /* Approx. 64 -  80 (AC-LC),  64 -  88
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.120f)}, /* Approx. 128 kbps stereo AAC-LC            */
     {QCDATA_BR_MODE_VBR_5,
-     FL2FXCONST_DBL(0.070f)} /* Approx. 96 - 120 (AC-LC), 112 - 144
-                                (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.070f)} /* Approx. 192 kbps stereo AAC-LC            */
 };
 
 static INT isConstantBitrateMode(const QCDATA_BR_MODE bitrateMode) {
