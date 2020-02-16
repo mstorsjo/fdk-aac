@@ -168,7 +168,6 @@ typedef struct {
 
   UINT expiryFrame;
   UCHAR bsDelayEnable;
-  UCHAR applyDigitalNorm;
 
   AACDEC_DRC_PARAMETER_HANDLING defaultPresentationMode;
   UCHAR encoderTargetLevel;
