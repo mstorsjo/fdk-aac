@@ -112,7 +112,7 @@ amm-info@iis.fraunhofer.de
 #define AACENCODER_LIB_VL1 0
 #define AACENCODER_LIB_VL2 1
 #define AACENCODER_LIB_TITLE "AAC Encoder"
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
 #define AACENCODER_LIB_BUILD_DATE ""
 #define AACENCODER_LIB_BUILD_TIME ""
 #else
