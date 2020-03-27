@@ -23,6 +23,7 @@ cc_library_static {
         "-Wuninitialized",
         "-Wno-self-assign",
         "-Wno-implicit-fallthrough",
+        "-DSUPPRESS_BUILD_DATE_INFO",
     ],
     sanitize: {
         misc_undefined:[
