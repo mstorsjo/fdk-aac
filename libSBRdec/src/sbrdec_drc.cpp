@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -233,14 +233,19 @@ void sbrDecoder_drcApplySlot(HANDLE_SBR_DRC_CHANNEL hDrcData,
     if (hDrcData->winSequenceCurr != 2) { /* long window */
       int j = col + (numQmfSubSamples >> 1);
 
-      if (hDrcData->drcInterpolationSchemeCurr == 0) {
-        INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
+      if (j < winBorderToColMap[15]) {
+        if (hDrcData->drcInterpolationSchemeCurr == 0) {
+          INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
 
-        alphaValue = (FIXP_DBL)(j * k);
-      } else {
-        if (j >= (int)winBorderToColMap[hDrcData->drcInterpolationSchemeCurr]) {
-          alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          alphaValue = (FIXP_DBL)(j * k);
+        } else {
+          if (j >=
+              (int)winBorderToColMap[hDrcData->drcInterpolationSchemeCurr]) {
+            alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          }
         }
+      } else {
+        alphaValue = (FIXP_DBL)MAXVAL_DBL;
       }
     } else { /* short windows */
       shortDrc = 1;
@@ -254,14 +259,19 @@ void sbrDecoder_drcApplySlot(HANDLE_SBR_DRC_CHANNEL hDrcData,
     if (hDrcData->winSequenceNext != 2) { /* next: long window */
       int j = col - (numQmfSubSamples >> 1);
 
-      if (hDrcData->drcInterpolationSchemeNext == 0) {
-        INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
+      if (j < winBorderToColMap[15]) {
+        if (hDrcData->drcInterpolationSchemeNext == 0) {
+          INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
 
-        alphaValue = (FIXP_DBL)(j * k);
-      } else {
-        if (j >= (int)winBorderToColMap[hDrcData->drcInterpolationSchemeNext]) {
-          alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          alphaValue = (FIXP_DBL)(j * k);
+        } else {
+          if (j >=
+              (int)winBorderToColMap[hDrcData->drcInterpolationSchemeNext]) {
+            alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          }
         }
+      } else {
+        alphaValue = (FIXP_DBL)MAXVAL_DBL;
       }
 
       fact_mag = hDrcData->nextFact_mag;
@@ -289,14 +299,19 @@ void sbrDecoder_drcApplySlot(HANDLE_SBR_DRC_CHANNEL hDrcData,
     if (hDrcData->winSequenceNext != 2) { /* long window */
       int j = col - (numQmfSubSamples >> 1);
 
-      if (hDrcData->drcInterpolationSchemeNext == 0) {
-        INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
+      if (j < winBorderToColMap[15]) {
+        if (hDrcData->drcInterpolationSchemeNext == 0) {
+          INT k = (frameLenFlag) ? 0x4444445 : 0x4000000;
 
-        alphaValue = (FIXP_DBL)(j * k);
-      } else {
-        if (j >= (int)winBorderToColMap[hDrcData->drcInterpolationSchemeNext]) {
-          alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          alphaValue = (FIXP_DBL)(j * k);
+        } else {
+          if (j >=
+              (int)winBorderToColMap[hDrcData->drcInterpolationSchemeNext]) {
+            alphaValue = (FIXP_DBL)MAXVAL_DBL;
+          }
         }
+      } else {
+        alphaValue = (FIXP_DBL)MAXVAL_DBL;
       }
     } else { /* short windows */
       shortDrc = 1;
