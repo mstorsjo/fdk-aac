@@ -112,7 +112,7 @@ amm-info@iis.fraunhofer.de
 #define DRCDEC_LIB_VL1 1
 #define DRCDEC_LIB_VL2 0
 #define DRCDEC_LIB_TITLE "MPEG-D DRC Decoder Lib"
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
 #define DRCDEC_LIB_BUILD_DATE ""
 #define DRCDEC_LIB_BUILD_TIME ""
 #else
