@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -795,7 +795,7 @@ static int transportEnc_writeELDSpecificConfig(HANDLE_FDK_BITSTREAM hBs,
 
     const INT eldExtLen =
         (cb->cbSsc(cb->cbSscData, NULL, config->aot, config->extSamplingRate, 0,
-                   0, 0, 0, 0, NULL) +
+                   0, 0, 0, 0, 0, NULL) +
          7) >>
         3;
     INT cnt = eldExtLen;
@@ -818,7 +818,7 @@ static int transportEnc_writeELDSpecificConfig(HANDLE_FDK_BITSTREAM hBs,
     }
 
     cb->cbSsc(cb->cbSscData, hBs, config->aot, config->extSamplingRate, 0, 0, 0,
-              0, 0, NULL);
+              0, 0, 0, NULL);
   }
 
   if (config->downscaleSamplingRate != 0 &&

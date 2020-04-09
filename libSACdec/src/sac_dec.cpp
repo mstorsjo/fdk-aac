@@ -1209,15 +1209,17 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
           self->bShareDelayWithSBR = 0; /* We got no hybrid delay */
         else
           self->bShareDelayWithSBR = 1;
-        SpatialDecFeedQMF(self, qmfInDataReal, qmfInDataImag, ts_io, bypassMode,
-                          self->qmfInputReal__FDK, self->qmfInputImag__FDK,
-                          self->numInputChannels);
+        SpatialDecFeedQMF(
+            self, qmfInDataReal, qmfInDataImag, ts_io, bypassMode,
+            self->qmfInputReal__FDK, self->qmfInputImag__FDK,
+            (bypassMode) ? numInputChannels : self->numInputChannels);
         break;
       case INPUTMODE_TIME:
         self->bShareDelayWithSBR = 0;
-        SpatialDecQMFAnalysis(self, inData, ts_io, bypassMode,
-                              self->qmfInputReal__FDK, self->qmfInputImag__FDK,
-                              self->numInputChannels);
+        SpatialDecQMFAnalysis(
+            self, inData, ts_io, bypassMode, self->qmfInputReal__FDK,
+            self->qmfInputImag__FDK,
+            (bypassMode) ? numInputChannels : self->numInputChannels);
         break;
       default:
         break;

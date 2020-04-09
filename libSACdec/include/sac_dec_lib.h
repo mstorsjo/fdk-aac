@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -316,8 +316,8 @@ SACDEC_ERROR mpegSurroundDecoder_Init(
 SACDEC_ERROR mpegSurroundDecoder_Config(
     CMpegSurroundDecoder *pMpegSurroundDecoder, HANDLE_FDK_BITSTREAM hBs,
     AUDIO_OBJECT_TYPE coreCodec, INT samplingRate, INT frameSize,
-    INT stereoConfigIndex, INT coreSbrFrameLengthIndex, INT configBytes,
-    const UCHAR configMode, UCHAR *configChanged);
+    INT numChannels, INT stereoConfigIndex, INT coreSbrFrameLengthIndex,
+    INT configBytes, const UCHAR configMode, UCHAR *configChanged);
 
 SACDEC_ERROR
 mpegSurroundDecoder_ConfigureQmfDomain(
