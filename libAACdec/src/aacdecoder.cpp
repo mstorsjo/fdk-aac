@@ -1397,6 +1397,31 @@ static void CAacDecoder_DeInit(HANDLE_AACDECODER self,
 }
 
 /*!
+ * \brief CAacDecoder_AcceptFlags Accept flags and element flags
+ *
+ * \param self          [o]   handle to AACDECODER structure
+ * \param asc           [i]   handle to ASC structure
+ * \param flags         [i]   flags
+ * \param elFlags       [i]   pointer to element flags
+ * \param streamIndex   [i]   stream index
+ * \param elementOffset [i]   element offset
+ *
+ * \return void
+ */
+static void CAacDecoder_AcceptFlags(HANDLE_AACDECODER self,
+                                    const CSAudioSpecificConfig *asc,
+                                    UINT flags, UINT *elFlags, int streamIndex,
+                                    int elementOffset) {
+  {
+    FDKmemcpy(
+        self->elFlags, elFlags,
+        sizeof(*elFlags) * (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1));
+  }
+
+  self->flags[streamIndex] = flags;
+}
+
+/*!
  * \brief CAacDecoder_CtrlCFGChange Set config change parameters.
  *
  * \param self           [i]   handle to AACDECODER structure
@@ -1492,6 +1517,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   int elementOffset, aacChannelsOffset, aacChannelsOffsetIdx;
   const int streamIndex = 0;
   INT flushChannels = 0;
+
+  UINT flags;
+  UINT elFlags[(3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)];
 
   if (!self) return AAC_DEC_INVALID_HANDLE;
 
@@ -1649,8 +1677,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   }
 
   /* Set syntax flags */
-  self->flags[streamIndex] = 0;
-  { FDKmemclear(self->elFlags, sizeof(self->elFlags)); }
+  flags = 0;
+  { FDKmemclear(elFlags, sizeof(elFlags)); }
 
   if ((asc->m_channelConfiguration > 0) || IS_USAC(asc->m_aot)) {
     if (IS_USAC(asc->m_aot)) {
@@ -1700,31 +1728,30 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           }
         }
 
-        self->elFlags[el] |=
-            (asc->m_sc.m_usacConfig.element[_el].m_noiseFilling)
-                ? AC_EL_USAC_NOISE
-                : 0;
-        self->elFlags[el] |=
+        elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_noiseFilling)
+                           ? AC_EL_USAC_NOISE
+                           : 0;
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].m_stereoConfigIndex > 0)
                 ? AC_EL_USAC_MPS212
                 : 0;
-        self->elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_interTes)
-                                 ? AC_EL_USAC_ITES
-                                 : 0;
-        self->elFlags[el] |=
+        elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_interTes)
+                           ? AC_EL_USAC_ITES
+                           : 0;
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].m_pvc) ? AC_EL_USAC_PVC : 0;
-        self->elFlags[el] |=
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].usacElementType == ID_USAC_LFE)
                 ? AC_EL_USAC_LFE
                 : 0;
-        self->elFlags[el] |=
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].usacElementType == ID_USAC_LFE)
                 ? AC_EL_LFE
                 : 0;
         if ((asc->m_sc.m_usacConfig.element[_el].usacElementType ==
              ID_USAC_CPE) &&
             ((self->usacStereoConfigIndex[el] == 0))) {
-          self->elFlags[el] |= AC_EL_USAC_CP_POSSIBLE;
+          elFlags[el] |= AC_EL_USAC_CP_POSSIBLE;
         }
       }
 
@@ -1846,8 +1873,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   if (configMode & AC_CM_ALLOC_MEM) {
     self->streamInfo.extSamplingRate = asc->m_extensionSamplingFrequency;
   }
-  self->flags[streamIndex] |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
-  self->flags[streamIndex] |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
+  flags |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
+  flags |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
   if (asc->m_sbrPresentFlag) {
     self->sbrEnabled = 1;
     self->sbrEnabledPrev = 1;
@@ -1873,51 +1900,47 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   }
 
   /* --------- vcb11 ------------ */
-  self->flags[streamIndex] |= (asc->m_vcb11Flag) ? AC_ER_VCB11 : 0;
+  flags |= (asc->m_vcb11Flag) ? AC_ER_VCB11 : 0;
 
   /* ---------- rvlc ------------ */
-  self->flags[streamIndex] |= (asc->m_rvlcFlag) ? AC_ER_RVLC : 0;
+  flags |= (asc->m_rvlcFlag) ? AC_ER_RVLC : 0;
 
   /* ----------- hcr ------------ */
-  self->flags[streamIndex] |= (asc->m_hcrFlag) ? AC_ER_HCR : 0;
+  flags |= (asc->m_hcrFlag) ? AC_ER_HCR : 0;
 
   if (asc->m_aot == AOT_ER_AAC_ELD) {
     self->mpsEnableCurr = 0;
-    self->flags[streamIndex] |= AC_ELD;
-    self->flags[streamIndex] |=
-        (asc->m_sbrPresentFlag)
-            ? AC_SBR_PRESENT
-            : 0; /* Need to set the SBR flag for backward-compatibility
-       reasons. Even if SBR is not supported. */
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_eldSpecificConfig.m_sbrCrcFlag) ? AC_SBRCRC : 0;
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign) ? AC_MPS_PRESENT
-                                                            : 0;
+    flags |= AC_ELD;
+    flags |= (asc->m_sbrPresentFlag)
+                 ? AC_SBR_PRESENT
+                 : 0; /* Need to set the SBR flag for backward-compatibility
+                               reasons. Even if SBR is not supported. */
+    flags |= (asc->m_sc.m_eldSpecificConfig.m_sbrCrcFlag) ? AC_SBRCRC : 0;
+    flags |= (asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign)
+                 ? AC_MPS_PRESENT
+                 : 0;
     if (self->mpsApplicable) {
       self->mpsEnableCurr = asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
     }
   }
-  self->flags[streamIndex] |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
-  self->flags[streamIndex] |= (asc->m_epConfig >= 0) ? AC_ER : 0;
+  flags |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
+  flags |= (asc->m_epConfig >= 0) ? AC_ER : 0;
 
   if (asc->m_aot == AOT_USAC) {
-    self->flags[streamIndex] |= AC_USAC;
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_usacConfig.element[0].m_stereoConfigIndex > 0)
-            ? AC_MPS_PRESENT
-            : 0;
+    flags |= AC_USAC;
+    flags |= (asc->m_sc.m_usacConfig.element[0].m_stereoConfigIndex > 0)
+                 ? AC_MPS_PRESENT
+                 : 0;
   }
   if (asc->m_aot == AOT_DRM_AAC) {
-    self->flags[streamIndex] |= AC_DRM | AC_SBRCRC | AC_SCALABLE;
+    flags |= AC_DRM | AC_SBRCRC | AC_SCALABLE;
   }
   if (asc->m_aot == AOT_DRM_SURROUND) {
-    self->flags[streamIndex] |=
-        AC_DRM | AC_SBRCRC | AC_SCALABLE | AC_MPS_PRESENT;
+    flags |= AC_DRM | AC_SBRCRC | AC_SCALABLE | AC_MPS_PRESENT;
     FDK_ASSERT(!asc->m_psPresentFlag);
   }
   if ((asc->m_aot == AOT_AAC_SCAL) || (asc->m_aot == AOT_ER_AAC_SCAL)) {
-    self->flags[streamIndex] |= AC_SCALABLE;
+    flags |= AC_SCALABLE;
   }
 
   if ((asc->m_epConfig >= 0) && (asc->m_channelConfiguration <= 0)) {
@@ -1968,6 +1991,10 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     if (ascChanged != 0) {
       *configChanged = 1;
     }
+
+    CAacDecoder_AcceptFlags(self, asc, flags, elFlags, streamIndex,
+                            elementOffset);
+
     return err;
   }
 
@@ -1996,7 +2023,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
 
         if (usacStereoConfigIndex == 3) {
-          self->flags[streamIndex] |= AC_USAC_SCFGI3;
+          flags |= AC_USAC_SCFGI3;
         }
       }
       break;
@@ -2077,14 +2104,14 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       ch = aacChannelsOffset;
       int _numElements;
       _numElements = (((8)) + (8));
-      if (self->flags[streamIndex] & (AC_RSV603DA | AC_USAC)) {
+      if (flags & (AC_RSV603DA | AC_USAC)) {
         _numElements = (int)asc->m_sc.m_usacConfig.m_usacNumElements;
       }
       for (int _el = 0; _el < _numElements; _el++) {
         int el_channels = 0;
         int el = elementOffset + _el;
 
-        if (self->flags[streamIndex] &
+        if (flags &
             (AC_ER | AC_LD | AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
           if (ch >= ascChannels) {
             break;
@@ -2184,15 +2211,14 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           if (self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer == NULL) {
             goto bail;
           }
-          if (self->flags[streamIndex] &
-              (AC_USAC | AC_RSVD50 | AC_RSV603DA /*|AC_BSAC*/)) {
+          if (flags & (AC_USAC | AC_RSVD50 | AC_RSV603DA /*|AC_BSAC*/)) {
             self->pAacDecoderStaticChannelInfo[ch]->hArCo = CArco_Create();
             if (self->pAacDecoderStaticChannelInfo[ch]->hArCo == NULL) {
               goto bail;
             }
           }
 
-          if (!(self->flags[streamIndex] & (AC_USAC | AC_RSV603DA))) {
+          if (!(flags & (AC_USAC | AC_RSV603DA))) {
             CPns_UpdateNoiseState(
                 &self->pAacDecoderChannelInfo[ch]->data.aac.PnsData,
                 &self->pAacDecoderStaticChannelInfo[ch]->pnsCurrentSeed,
@@ -2203,7 +2229,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         chIdx++;
       }
 
-      if (self->flags[streamIndex] & AC_USAC) {
+      if (flags & AC_USAC) {
         for (int _ch = 0; _ch < flushChannels; _ch++) {
           ch = aacChannelsOffset + _ch;
           if (self->pTimeDataFlush[ch] == NULL) {
@@ -2215,7 +2241,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
       }
 
-      if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      if (flags & (AC_USAC | AC_RSV603DA)) {
         int complexStereoPredPossible = 0;
         ch = aacChannelsOffset;
         chIdx = aacChannelsOffsetIdx;
@@ -2231,7 +2257,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
             elCh = 1;
           }
 
-          if (self->elFlags[el2] & AC_EL_USAC_CP_POSSIBLE) {
+          if (elFlags[el2] & AC_EL_USAC_CP_POSSIBLE) {
             complexStereoPredPossible = 1;
             if (self->cpeStaticData[el2] == NULL) {
               self->cpeStaticData[el2] = GetCpePersistentData();
@@ -2368,9 +2394,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     }
   }
 
-  /* Update externally visible copy of flags */
-  self->streamInfo.flags = self->flags[0];
-
   if (*configChanged) {
     int drcDecSampleRate, drcDecFrameSize;
 
@@ -2399,6 +2422,12 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     pcmLimiter_SetAttack(self->hLimiter, (5));
     pcmLimiter_SetThreshold(self->hLimiter, FL2FXCONST_DBL(0.89125094f));
   }
+
+  CAacDecoder_AcceptFlags(self, asc, flags, elFlags, streamIndex,
+                          elementOffset);
+
+  /* Update externally visible copy of flags */
+  self->streamInfo.flags = self->flags[0];
 
   return err;
 
