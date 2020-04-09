@@ -1791,9 +1791,17 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       downscaleFactorInBS =
           asc->m_samplingFrequency /
           asc->m_sc.m_eldSpecificConfig.m_downscaledSamplingFrequency;
-      if (downscaleFactorInBS == 1 || downscaleFactorInBS == 2 ||
-          downscaleFactorInBS == 3 || downscaleFactorInBS == 4) {
+      if ((downscaleFactorInBS == 1 || downscaleFactorInBS == 2 ||
+           (downscaleFactorInBS == 3 &&
+            asc->m_sc.m_eldSpecificConfig.m_frameLengthFlag) ||
+           downscaleFactorInBS == 4) &&
+          ((asc->m_samplingFrequency %
+            asc->m_sc.m_eldSpecificConfig.m_downscaledSamplingFrequency) ==
+           0)) {
         downscaleFactor = downscaleFactorInBS;
+      } else {
+        downscaleFactorInBS = 1;
+        downscaleFactor = 1;
       }
     }
   } else {
