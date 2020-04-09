@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -147,6 +147,19 @@ static INT convert_drcParam(FIXP_DBL param_dbl) {
   param_long >>= 1;
 
   return (INT)param_long;
+}
+
+/*!
+\brief  Disable DRC
+
+\self Handle of DRC info
+
+\return none
+*/
+void aacDecoder_drcDisable(HANDLE_AAC_DRC self) {
+  self->enable = 0;
+  self->applyExtGain = 0;
+  self->progRefLevelPresent = 0;
 }
 
 /*!

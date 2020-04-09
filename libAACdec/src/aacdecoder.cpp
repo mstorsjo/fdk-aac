@@ -2414,8 +2414,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
 
   if (*configChanged) {
     if (asc->m_aot == AOT_USAC) {
-      self->hDrcInfo->enable = 0;
-      self->hDrcInfo->progRefLevelPresent = 0;
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
   }
 
@@ -3231,10 +3230,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
          * data in the bitstream. */
         self->flags[streamIndex] |= AC_DRC_PRESENT;
       } else {
-        self->hDrcInfo->enable = 0;
-        self->hDrcInfo->progRefLevelPresent = 0;
         ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
       }
+    }
+    if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
 
     /* Create a reverse mapping table */
@@ -3478,10 +3478,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
          * data in the bitstream. */
         self->flags[streamIndex] |= AC_DRC_PRESENT;
       } else {
-        self->hDrcInfo->enable = 0;
-        self->hDrcInfo->progRefLevelPresent = 0;
         ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
       }
+    }
+    if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
   }
 
