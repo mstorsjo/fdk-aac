@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1398,6 +1398,17 @@ void calculateSbrEnvelope(
     */
     noise_e = (start_pos < no_cols) ? adj_e : final_e;
 
+    if (start_pos >= no_cols) {
+      int diff = h_sbr_cal_env->filtBufferNoise_e - noise_e;
+      if (diff > 0) {
+        int s = getScalefactor(h_sbr_cal_env->filtBufferNoise, noSubbands);
+        if (diff > s) {
+          final_e += diff - s;
+          noise_e = final_e;
+        }
+      }
+    }
+
     /*
       Convert energies to amplitude levels
     */
@@ -2741,6 +2752,9 @@ static void adjustTimeSlotHQ_GainAndNoise(
             fMult(direct_ratio, noiseLevel[k]);
       }
 
+      smoothedNoise = fMax(fMin(smoothedNoise, (FIXP_DBL)(MAXVAL_DBL / 2)),
+                           (FIXP_DBL)(MINVAL_DBL / 2));
+
       /*
         The next 2 multiplications constitute the actual envelope adjustment
         of the signal and should be carried out with full accuracy
@@ -2929,6 +2943,9 @@ static void adjustTimeSlotHQ(
             (fMax(fMin(smoothedNoise, max_val_noise), min_val_noise) << shift) +
             fMult(direct_ratio, noiseLevel[k]);
       }
+
+      smoothedNoise = fMax(fMin(smoothedNoise, (FIXP_DBL)(MAXVAL_DBL / 2)),
+                           (FIXP_DBL)(MINVAL_DBL / 2));
 
       /*
         The next 2 multiplications constitute the actual envelope adjustment
