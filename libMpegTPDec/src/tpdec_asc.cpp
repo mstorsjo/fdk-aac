@@ -266,11 +266,118 @@ static int CProgramConfig_ReadHeightExt(CProgramConfig *pPce,
   return (err);
 }
 
+/**
+ * \brief Sanity checks for program config element.
+ *        Check order of elements according to ISO/IEC 13818-7:2003(E),
+ * chapter 8.5.1
+ *
+ * \param pPce  pointer to program config element.
+ *
+ * \return  0 if successful, otherwise 1.
+ */
+static int CProgramConfig_Check(CProgramConfig *pPce) {
+  INT i;
+  INT err = 0;
+  INT numBackChannels[3] = {0};
+  INT numSideChannels[3] = {0};
+  INT numFrontChannels[3] = {0};
+  UCHAR *pCpeFront = pPce->FrontElementIsCpe;
+  UCHAR *pCpeSide = pPce->SideElementIsCpe;
+  UCHAR *pCpeBack = pPce->BackElementIsCpe;
+  UCHAR *pHeight;
+
+  pHeight = pPce->BackElementHeightInfo;
+  for (i = 0; i < pPce->NumBackChannelElements; i++) {
+    numBackChannels[*pHeight] += pPce->BackElementIsCpe[i] ? 2 : 1;
+    pHeight++;
+  }
+  pHeight = pPce->SideElementHeightInfo;
+  for (i = 0; i < pPce->NumSideChannelElements; i++) {
+    numSideChannels[*pHeight] += pPce->SideElementIsCpe[i] ? 2 : 1;
+    pHeight++;
+  }
+  pHeight = pPce->FrontElementHeightInfo;
+  for (i = 0; i < pPce->NumFrontChannelElements; i++) {
+    numFrontChannels[*pHeight] += pPce->FrontElementIsCpe[i] ? 2 : 1;
+    pHeight++;
+  }
+
+  /* 0 = normal height channels, 1 = top height channels, 2 = bottom height
+   * channels */
+  for (i = 0; i < 3; i++) {
+    /* if number of channels is odd => first element must be a SCE (front center
+     * channel) */
+    if (numFrontChannels[i] & 1) {
+      if (*pCpeFront++ == ID_CPE) {
+        err = 1;
+        goto bail;
+      }
+      numFrontChannels[i]--;
+    }
+    while (numFrontChannels[i] > 0) {
+      /* must be CPE or paired SCE */
+      if (*pCpeFront++ == ID_SCE) {
+        if (*pCpeFront++ == ID_CPE) {
+          err = 1;
+          goto bail;
+        }
+      }
+      numFrontChannels[i] -= 2;
+    };
+
+    /* in case that a top center surround channel (Ts) is transmitted the number
+     * of channels can be odd */
+    if (i != 1) {
+      /* number of channels must be even */
+      if (numSideChannels[i] & 1) {
+        err = 1;
+        goto bail;
+      }
+      while (numSideChannels[i] > 0) {
+        /* must be CPE or paired SCE */
+        if (*pCpeSide++ == ID_SCE) {
+          if (*pCpeSide++ == ID_CPE) {
+            err = 1;
+            goto bail;
+          }
+        }
+        numSideChannels[i] -= 2;
+      };
+    }
+
+    while (numBackChannels[i] > 1) {
+      /* must be CPE or paired SCE */
+      if (*pCpeBack++ == ID_SCE) {
+        if (*pCpeBack++ == ID_CPE) {
+          err = 1;
+          goto bail;
+        }
+      }
+      numBackChannels[i] -= 2;
+    };
+    /* if number of channels is odd => last element must be a SCE (back center
+     * channel) */
+    if (numBackChannels[i]) {
+      if (*pCpeBack++ == ID_CPE) {
+        err = 1;
+        goto bail;
+      }
+    }
+  }
+
+bail:
+
+  return err;
+}
+
 void CProgramConfig_Read(CProgramConfig *pPce, HANDLE_FDK_BITSTREAM bs,
                          UINT alignmentAnchor) {
-  int i, err = 0;
+  int i;
   int commentBytes;
+  UCHAR tag, isCpe;
+  UCHAR checkElementTagSelect[3][PC_FSB_CHANNELS_MAX] = {{0}};
 
+  pPce->isValid = 1;
   pPce->NumEffectiveChannels = 0;
   pPce->NumChannels = 0;
   pPce->ElementInstanceTag = (UCHAR)FDKreadBits(bs, 4);
@@ -297,28 +404,60 @@ void CProgramConfig_Read(CProgramConfig *pPce, HANDLE_FDK_BITSTREAM bs,
   }
 
   for (i = 0; i < pPce->NumFrontChannelElements; i++) {
-    pPce->FrontElementIsCpe[i] = (UCHAR)FDKreadBits(bs, 1);
-    pPce->FrontElementTagSelect[i] = (UCHAR)FDKreadBits(bs, 4);
+    pPce->FrontElementIsCpe[i] = isCpe = (UCHAR)FDKreadBits(bs, 1);
+    pPce->FrontElementTagSelect[i] = tag = (UCHAR)FDKreadBits(bs, 4);
     pPce->NumChannels += pPce->FrontElementIsCpe[i] ? 2 : 1;
+
+    /* Check element instance tag according to ISO/IEC 13818-7:2003(E),
+     * chapter 8.2.1.1 */
+    if (checkElementTagSelect[isCpe][tag] == 0) {
+      checkElementTagSelect[isCpe][tag] = 1;
+    } else {
+      pPce->isValid = 0;
+    }
   }
 
   for (i = 0; i < pPce->NumSideChannelElements; i++) {
-    pPce->SideElementIsCpe[i] = (UCHAR)FDKreadBits(bs, 1);
-    pPce->SideElementTagSelect[i] = (UCHAR)FDKreadBits(bs, 4);
+    pPce->SideElementIsCpe[i] = isCpe = (UCHAR)FDKreadBits(bs, 1);
+    pPce->SideElementTagSelect[i] = tag = (UCHAR)FDKreadBits(bs, 4);
     pPce->NumChannels += pPce->SideElementIsCpe[i] ? 2 : 1;
+
+    /* Check element instance tag according to ISO/IEC 13818-7:2003(E),
+     * chapter 8.2.1.1 */
+    if (checkElementTagSelect[isCpe][tag] == 0) {
+      checkElementTagSelect[isCpe][tag] = 1;
+    } else {
+      pPce->isValid = 0;
+    }
   }
 
   for (i = 0; i < pPce->NumBackChannelElements; i++) {
-    pPce->BackElementIsCpe[i] = (UCHAR)FDKreadBits(bs, 1);
-    pPce->BackElementTagSelect[i] = (UCHAR)FDKreadBits(bs, 4);
+    pPce->BackElementIsCpe[i] = isCpe = (UCHAR)FDKreadBits(bs, 1);
+    pPce->BackElementTagSelect[i] = tag = (UCHAR)FDKreadBits(bs, 4);
     pPce->NumChannels += pPce->BackElementIsCpe[i] ? 2 : 1;
+
+    /* Check element instance tag according to ISO/IEC 13818-7:2003(E),
+     * chapter 8.2.1.1 */
+    if (checkElementTagSelect[isCpe][tag] == 0) {
+      checkElementTagSelect[isCpe][tag] = 1;
+    } else {
+      pPce->isValid = 0;
+    }
   }
 
   pPce->NumEffectiveChannels = pPce->NumChannels;
 
   for (i = 0; i < pPce->NumLfeChannelElements; i++) {
-    pPce->LfeElementTagSelect[i] = (UCHAR)FDKreadBits(bs, 4);
+    pPce->LfeElementTagSelect[i] = tag = (UCHAR)FDKreadBits(bs, 4);
     pPce->NumChannels += 1;
+
+    /* Check element instance tag according to ISO/IEC 13818-7:2003(E),
+     * chapter 8.2.1.1 */
+    if (checkElementTagSelect[2][tag] == 0) {
+      checkElementTagSelect[2][tag] = 1;
+    } else {
+      pPce->isValid = 0;
+    }
   }
 
   for (i = 0; i < pPce->NumAssocDataElements; i++) {
@@ -336,7 +475,15 @@ void CProgramConfig_Read(CProgramConfig *pPce, HANDLE_FDK_BITSTREAM bs,
   commentBytes = pPce->CommentFieldBytes;
 
   /* Search for height info extension and read it if available */
-  err = CProgramConfig_ReadHeightExt(pPce, bs, &commentBytes, alignmentAnchor);
+  if (CProgramConfig_ReadHeightExt(pPce, bs, &commentBytes, alignmentAnchor)) {
+    pPce->isValid = 0;
+  }
+
+  /* Check order of elements according to ISO / IEC 13818 - 7:2003(E),
+   * chapter 8.5.1 */
+  if (CProgramConfig_Check(pPce)) {
+    pPce->isValid = 0;
+  }
 
   for (i = 0; i < commentBytes; i++) {
     UCHAR text;
@@ -347,8 +494,6 @@ void CProgramConfig_Read(CProgramConfig *pPce, HANDLE_FDK_BITSTREAM bs,
       pPce->Comment[i] = text;
     }
   }
-
-  pPce->isValid = (err) ? 0 : 1;
 }
 
 /*
