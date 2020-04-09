@@ -385,21 +385,19 @@ static INT aacDecoder_SbrCallback(
   return errTp;
 }
 
-static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
-                                  const AUDIO_OBJECT_TYPE coreCodec,
-                                  const INT samplingRate, const INT frameSize,
-                                  const INT stereoConfigIndex,
-                                  const INT coreSbrFrameLengthIndex,
-                                  const INT configBytes, const UCHAR configMode,
-                                  UCHAR *configChanged) {
+static INT aacDecoder_SscCallback(
+    void *handle, HANDLE_FDK_BITSTREAM hBs, const AUDIO_OBJECT_TYPE coreCodec,
+    const INT samplingRate, const INT frameSize, const INT numChannels,
+    const INT stereoConfigIndex, const INT coreSbrFrameLengthIndex,
+    const INT configBytes, const UCHAR configMode, UCHAR *configChanged) {
   SACDEC_ERROR err;
   TRANSPORTDEC_ERROR errTp;
   HANDLE_AACDECODER hAacDecoder = (HANDLE_AACDECODER)handle;
 
   err = mpegSurroundDecoder_Config(
       (CMpegSurroundDecoder *)hAacDecoder->pMpegSurroundDecoder, hBs, coreCodec,
-      samplingRate, frameSize, stereoConfigIndex, coreSbrFrameLengthIndex,
-      configBytes, configMode, configChanged);
+      samplingRate, frameSize, numChannels, stereoConfigIndex,
+      coreSbrFrameLengthIndex, configBytes, configMode, configChanged);
 
   switch (err) {
     case MPS_UNSUPPORTED_CONFIG:

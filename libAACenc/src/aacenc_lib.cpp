@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1242,7 +1242,7 @@ static INT aacenc_SbrCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
 INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
                        const AUDIO_OBJECT_TYPE coreCodec,
                        const INT samplingRate, const INT frameSize,
-                       const INT stereoConfigIndex,
+                       const INT numChannels, const INT stereoConfigIndex,
                        const INT coreSbrFrameLengthIndex, const INT configBytes,
                        const UCHAR configMode, UCHAR *configChanged) {
   HANDLE_AACENCODER hAacEncoder = (HANDLE_AACENCODER)self;
