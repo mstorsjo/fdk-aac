@@ -1179,8 +1179,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
       aacDecoder_FreeMemCallback(self, &asc);
       self->streamInfo.numChannels = 0;
       /* 3) restore AudioSpecificConfig */
-      transportDec_OutOfBandConfig(self->hInput, asc.config,
-                                   (asc.configBits + 7) >> 3, 0);
+      if (asc.configBits <= (TP_USAC_MAX_CONFIG_LEN << 3)) {
+        transportDec_OutOfBandConfig(self->hInput, asc.config,
+                                     (asc.configBits + 7) >> 3, 0);
+      }
     }
   }
 
