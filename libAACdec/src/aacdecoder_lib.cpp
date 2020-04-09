@@ -822,6 +822,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
 
     case AAC_DRC_ATTENUATION_FACTOR:
       /* DRC compression factor (where 0 is no and 127 is max compression) */
+      if ((value < 0) || (value > 127)) {
+        return AAC_DEC_SET_PARAM_FAIL;
+      }
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_CUT_SCALE, value);
       uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_COMPRESS,
                                       value * (FL2FXCONST_DBL(0.5f / 127.0f)));
@@ -829,6 +832,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
 
     case AAC_DRC_BOOST_FACTOR:
       /* DRC boost factor (where 0 is no and 127 is max boost) */
+      if ((value < 0) || (value > 127)) {
+        return AAC_DEC_SET_PARAM_FAIL;
+      }
       errorStatus = aacDecoder_drcSetParam(hDrcInfo, DRC_BOOST_SCALE, value);
       uniDrcErr = FDK_drcDec_SetParam(self->hUniDrcDecoder, DRC_DEC_BOOST,
                                       value * (FL2FXCONST_DBL(0.5f / 127.0f)));
