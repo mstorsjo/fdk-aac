@@ -158,7 +158,7 @@ amm-info@iis.fraunhofer.de
 #define SBRDECODER_LIB_VL1 1
 #define SBRDECODER_LIB_VL2 0
 #define SBRDECODER_LIB_TITLE "SBR Decoder"
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
 #define SBRDECODER_LIB_BUILD_DATE ""
 #define SBRDECODER_LIB_BUILD_TIME ""
 #else
