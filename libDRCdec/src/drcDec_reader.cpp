@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -512,10 +512,13 @@ drcDec_readUniDrcGain(HANDLE_FDK_BITSTREAM hBs,
               fMin(tmpNNodes, (UCHAR)16) * sizeof(GAIN_NODE));
   }
 
-  hUniDrcGain->uniDrcGainExtPresent = FDKreadBits(hBs, 1);
-  if (hUniDrcGain->uniDrcGainExtPresent == 1) {
-    err = _readUniDrcGainExtension(hBs, &(hUniDrcGain->uniDrcGainExtension));
-    if (err) return err;
+  if (pCoef && (gainSequenceCount ==
+                pCoef->gainSequenceCount)) { /* all sequences have been read */
+    hUniDrcGain->uniDrcGainExtPresent = FDKreadBits(hBs, 1);
+    if (hUniDrcGain->uniDrcGainExtPresent == 1) {
+      err = _readUniDrcGainExtension(hBs, &(hUniDrcGain->uniDrcGainExtension));
+      if (err) return err;
+    }
   }
 
   if (err == DE_OK && gainSequenceCount > 0) {
