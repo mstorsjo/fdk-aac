@@ -1778,6 +1778,10 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
   int numConfigExtensions;
   CONFIG_EXT_ID usacConfigExtType;
   int usacConfigExtLength;
+  int loudnessInfoSetIndex =
+      -1; /* index of loudnessInfoSet config extension. -1 if not contained. */
+  int tmp_subStreamIndex = 0;
+  AUDIO_OBJECT_TYPE tmp_aot = AOT_USAC;
 
   numConfigExtensions = (int)escapedValue(hBs, 2, 4, 8) + 1;
   for (int confExtIdx = 0; confExtIdx < numConfigExtensions; confExtIdx++) {
@@ -1807,10 +1811,12 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
           ErrorStatus = (TRANSPORTDEC_ERROR)cb->cbUniDrc(
               cb->cbUniDrcData, hBs, usacConfigExtLength,
               1, /* loudnessInfoSet */
-              0, loudnessInfoSetConfigExtensionPosition, AOT_USAC);
+              tmp_subStreamIndex, loudnessInfoSetConfigExtensionPosition,
+              tmp_aot);
           if (ErrorStatus != TRANSPORTDEC_OK) {
             return ErrorStatus;
           }
+          loudnessInfoSetIndex = confExtIdx;
         }
       } break;
       default:
@@ -1824,6 +1830,17 @@ static TRANSPORTDEC_ERROR configExtension(CSUsacConfig *usc,
       return TRANSPORTDEC_PARSE_ERROR;
     }
     FDKpushFor(hBs, usacConfigExtLength);
+  }
+
+  if (loudnessInfoSetIndex == -1 && cb->cbUniDrc != NULL) {
+    /* no loudnessInfoSet contained. Clear the loudnessInfoSet struct by feeding
+     * an empty config extension */
+    ErrorStatus = (TRANSPORTDEC_ERROR)cb->cbUniDrc(
+        cb->cbUniDrcData, NULL, 0, 1 /* loudnessInfoSet */, tmp_subStreamIndex,
+        0, tmp_aot);
+    if (ErrorStatus != TRANSPORTDEC_OK) {
+      return ErrorStatus;
+    }
   }
 
   return ErrorStatus;
@@ -1842,6 +1859,8 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
   int channelElementIdx =
       0; /* index for elements which contain audio channels (sce, cpe, lfe) */
   SC_CHANNEL_CONFIG sc_chan_config = {0, 0, 0, 0};
+  int uniDrcElement =
+      -1; /* index of uniDrc extension element. -1 if not contained. */
 
   numberOfElements = (int)escapedValue(hBs, 4, 8, 16) + 1;
   usc->m_usacNumElements = numberOfElements;
@@ -2017,6 +2036,10 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
       case ID_USAC_EXT:
         ErrorStatus = extElementConfig(&usc->element[i].extElement, hBs, cb, 0,
                                        asc->m_samplesPerFrame, 0, asc->m_aot);
+        if (usc->element[i].extElement.usacExtElementType ==
+            ID_EXT_ELE_UNI_DRC) {
+          uniDrcElement = i;
+        }
 
         if (ErrorStatus) {
           return ErrorStatus;
@@ -2042,6 +2065,18 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
                 sc_chan_config.nLFE) < (INT)usc->numAudioChannels) {
         return TRANSPORTDEC_PARSE_ERROR;
       }
+    }
+  }
+
+  if (uniDrcElement == -1 && cb->cbUniDrc != NULL) {
+    /* no uniDrcConfig contained. Clear the uniDrcConfig struct by feeding an
+     * empty extension element */
+    int subStreamIndex = 0;
+    ErrorStatus = (TRANSPORTDEC_ERROR)cb->cbUniDrc(
+        cb->cbUniDrcData, NULL, 0, 0 /* uniDrcConfig */, subStreamIndex, 0,
+        asc->m_aot);
+    if (ErrorStatus != TRANSPORTDEC_OK) {
+      return ErrorStatus;
     }
   }
 
@@ -2128,6 +2163,14 @@ static TRANSPORTDEC_ERROR UsacConfig_Parse(CSAudioSpecificConfig *asc,
 
   if (FDKreadBits(hBs, 1)) { /* usacConfigExtensionPresent */
     err = configExtension(&asc->m_sc.m_usacConfig, hBs, cb);
+    if (err != TRANSPORTDEC_OK) {
+      return err;
+    }
+  } else if (cb->cbUniDrc != NULL) {
+    /* no loudnessInfoSet contained. Clear the loudnessInfoSet struct by feeding
+     * an empty config extension */
+    err = (TRANSPORTDEC_ERROR)cb->cbUniDrc(
+        cb->cbUniDrcData, NULL, 0, 1 /* loudnessInfoSet */, 0, 0, asc->m_aot);
     if (err != TRANSPORTDEC_OK) {
       return err;
     }
