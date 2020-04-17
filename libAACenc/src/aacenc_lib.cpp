@@ -1784,8 +1784,8 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
                                                    hAacEncoder->nSamplesRead));
     INT_PCM *pIn =
         hAacEncoder->inputBuffer +
-        (hAacEncoder->inputBufferOffset + hAacEncoder->nSamplesRead) /
-            hAacEncoder->aacConfig.nChannels;
+        hAacEncoder->inputBufferOffset / hAacEncoder->aacConfig.nChannels +
+        hAacEncoder->nSamplesRead / hAacEncoder->extParam.nChannels;
     newSamples -=
         (newSamples %
          hAacEncoder->extParam
