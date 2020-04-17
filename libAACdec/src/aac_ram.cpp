@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -148,7 +148,7 @@ C_ALLOC_MEM(CplxPredictionData, CCplxPredictionData, 1)
 /*! The buffer holds time samples for the crossfade in case of an USAC DASH IPF
    config change Dimension: (8)
  */
-C_ALLOC_MEM2(TimeDataFlush, INT_PCM, TIME_DATA_FLUSH_SIZE, (8))
+C_ALLOC_MEM2(TimeDataFlush, PCM_DEC, TIME_DATA_FLUSH_SIZE, (8))
 
 /* @} */
 
