@@ -441,12 +441,23 @@ static INT aacDecoder_UniDrcCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
   TRANSPORTDEC_ERROR errTp;
   HANDLE_AACDECODER hAacDecoder = (HANDLE_AACDECODER)handle;
   DRC_DEC_CODEC_MODE drcDecCodecMode = DRC_DEC_CODEC_MODE_UNDEFINED;
+  UCHAR dummyBuffer[4] = {0};
+  FDK_BITSTREAM dummyBs;
+  HANDLE_FDK_BITSTREAM hReadBs;
 
   if (subStreamIndex != 0) {
     return TRANSPORTDEC_OK;
   }
 
-  else if (aot == AOT_USAC) {
+  if (hBs == NULL) {
+    /* use dummy zero payload to clear memory */
+    hReadBs = &dummyBs;
+    FDKinitBitStream(hReadBs, dummyBuffer, 4, 24);
+  } else {
+    hReadBs = hBs;
+  }
+
+  if (aot == AOT_USAC) {
     drcDecCodecMode = DRC_DEC_MPEG_D_USAC;
   }
 
@@ -455,10 +466,10 @@ static INT aacDecoder_UniDrcCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
 
   if (payloadType == 0) /* uniDrcConfig */
   {
-    err = FDK_drcDec_ReadUniDrcConfig(hAacDecoder->hUniDrcDecoder, hBs);
+    err = FDK_drcDec_ReadUniDrcConfig(hAacDecoder->hUniDrcDecoder, hReadBs);
   } else /* loudnessInfoSet */
   {
-    err = FDK_drcDec_ReadLoudnessInfoSet(hAacDecoder->hUniDrcDecoder, hBs);
+    err = FDK_drcDec_ReadLoudnessInfoSet(hAacDecoder->hUniDrcDecoder, hReadBs);
     hAacDecoder->loudnessInfoSetPosition[1] = payloadStart;
     hAacDecoder->loudnessInfoSetPosition[2] = fullPayloadLength;
   }
