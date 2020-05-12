@@ -51,4 +51,11 @@ cc_library_static {
         "libSACdec/include",
         "libSACenc/include",
     ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.bluetooth.updatable",
+        "com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
 }
