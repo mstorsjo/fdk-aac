@@ -1325,7 +1325,7 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
                                                   CSTpCallBacks *cb) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
   CSEldSpecificConfig *esc = &asc->m_sc.m_eldSpecificConfig;
-  ASC_ELD_EXT_TYPE eldExtType;
+  int eldExtType;
   int eldExtLen, len, cnt, ldSbrLen = 0, eldExtLenSum, numSbrHeader = 0,
                            sbrIndex;
 
@@ -1395,7 +1395,7 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
   esc->m_downscaledSamplingFrequency = asc->m_samplingFrequency;
   /* parse ExtTypeConfigData */
   while (
-      ((eldExtType = (ASC_ELD_EXT_TYPE)FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
+      ((eldExtType = FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
       ((INT)FDKgetValidBits(hBs) >= 0)) {
     eldExtLen = len = FDKreadBits(hBs, 4);
     if (len == 0xf) {
