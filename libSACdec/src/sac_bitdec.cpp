@@ -448,6 +448,7 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
   int bsFreqRes, b3DaudioMode = 0;
   int numHeaderBits;
   int cfgStartPos, bitsAvailable;
+  int treeConfig;
 
   FDKmemclear(pSpatialSpecificConfig, sizeof(SPATIAL_SPECIFIC_CONFIG));
 
@@ -488,13 +489,13 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
   pSpatialSpecificConfig->freqRes =
       (SPATIALDEC_FREQ_RES)freqResTable_LD[bsFreqRes];
 
-  pSpatialSpecificConfig->treeConfig =
-      (SPATIALDEC_TREE_CONFIG)FDKreadBits(bitstream, 4);
+  treeConfig = FDKreadBits(bitstream, 4);
 
-  if (pSpatialSpecificConfig->treeConfig != SPATIALDEC_MODE_RSVD7) {
+  if (treeConfig != SPATIALDEC_MODE_RSVD7) {
     err = MPS_UNSUPPORTED_CONFIG;
     goto bail;
   }
+  pSpatialSpecificConfig->treeConfig = (SPATIALDEC_TREE_CONFIG) treeConfig;
 
   {
     pSpatialSpecificConfig->nOttBoxes =
