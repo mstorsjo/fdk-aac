@@ -1423,6 +1423,9 @@ static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
 
   sign = (quantSpecCoef >= 0) ? 1 : -1;
 
+  if (escapeOnesCounter > 30)
+    escapeOnesCounter = 30;
+
   quantSpecCoef = sign * (((INT)1 << escapeOnesCounter) + escape_word);
 
   return quantSpecCoef;
