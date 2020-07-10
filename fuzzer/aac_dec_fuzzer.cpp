@@ -19,10 +19,58 @@
  */
 
 #include <stdint.h>
+#include <string.h>
+#include <algorithm>
 #include "aacdecoder_lib.h"
 
 constexpr uint8_t kNumberOfLayers = 1;
 constexpr uint8_t kMaxChannelCount = 8;
+constexpr uint32_t kMaxConfigurationSize = 1024;
+constexpr uint32_t kMaxOutBufferSize = 2048 * kMaxChannelCount;
+
+// Value indicating the start of AAC Header Segment
+constexpr const char *kAacSegStartSeq = "AAC_STRT";
+constexpr uint8_t kAacSegStartSeqLen = sizeof(kAacSegStartSeq);
+// Value indicating the end of AAC Header Segment
+constexpr const char *kAacSegEndSeq = "AAC_ENDS";
+constexpr uint8_t kAacSegEndSeqLen = sizeof(kAacSegEndSeq);
+
+// Number of bytes used to signal the length of the header
+constexpr uint8_t kHeaderLengthBytes = 2;
+// Minimum size of an AAC header is 2
+// Minimum data required is
+// strlen(AAC_STRT) + strlen(AAC_ENDS) + kHeaderLengthBytes + 2;
+constexpr UINT kMinDataSize = kAacSegStartSeqLen + kAacSegEndSeqLen + kHeaderLengthBytes + 2;
+
+UINT getHeaderSize(UCHAR *data, UINT size) {
+  if (size < kMinDataSize) {
+    return 0;
+  }
+
+  int32_t result = memcmp(data, kAacSegStartSeq, kAacSegStartSeqLen);
+  if (result) {
+    return 0;
+  }
+  data += kAacSegStartSeqLen;
+  size -= kAacSegStartSeqLen;
+
+  uint32_t headerLengthInBytes = (data[0] << 8 | data[1]) & 0xFFFF;
+  data += kHeaderLengthBytes;
+  size -= kHeaderLengthBytes;
+
+  if (headerLengthInBytes + kAacSegEndSeqLen > size) {
+    return 0;
+  }
+
+  data += headerLengthInBytes;
+  size -= headerLengthInBytes;
+  result = memcmp(data, kAacSegEndSeq, kAacSegEndSeqLen);
+  if (result) {
+    return 0;
+  }
+
+  return std::min(headerLengthInBytes, kMaxConfigurationSize);
+}
 
 class Codec {
  public:
@@ -51,6 +99,14 @@ void Codec::deInitDecoder() {
 }
 
 void Codec::decodeFrames(UCHAR *data, UINT size) {
+  UINT headerSize = getHeaderSize(data, size);
+  if (headerSize != 0) {
+    data += kAacSegStartSeqLen + kHeaderLengthBytes;
+    size -= kAacSegStartSeqLen + kHeaderLengthBytes;
+    aacDecoder_ConfigRaw(mAacDecoderHandle, &data, &headerSize);
+    data += headerSize + kAacSegEndSeqLen;
+    size -= headerSize + kAacSegEndSeqLen;
+  }
   while (size > 0) {
     UINT inputSize = size;
     UINT valid = size;
@@ -59,11 +115,11 @@ void Codec::decodeFrames(UCHAR *data, UINT size) {
       ++data;
       --size;
     } else {
-      INT_PCM outputBuf[2048 * kMaxChannelCount];
-      aacDecoder_DecodeFrame(mAacDecoderHandle, outputBuf, 2048 * kMaxChannelCount, 0);
-      if (valid >= inputSize) {
-        return;
-      }
+      INT_PCM outputBuf[kMaxOutBufferSize];
+      do {
+        mErrorCode =
+            aacDecoder_DecodeFrame(mAacDecoderHandle, outputBuf, sizeof(outputBuf), 0);
+      } while (mErrorCode == AAC_DEC_OK);
       UINT offset = inputSize - valid;
       data += offset;
       size = valid;
