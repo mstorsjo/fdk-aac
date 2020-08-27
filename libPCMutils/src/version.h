@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -105,7 +105,7 @@ amm-info@iis.fraunhofer.de
 
 /* library info */
 #define PCMUTIL_LIB_VL0 3
-#define PCMUTIL_LIB_VL1 0
+#define PCMUTIL_LIB_VL1 1
 #define PCMUTIL_LIB_VL2 0
 #define PCMUTIL_LIB_TITLE "PCM Utility Lib"
 #ifdef SUPPRESS_BUILD_DATE_INFO

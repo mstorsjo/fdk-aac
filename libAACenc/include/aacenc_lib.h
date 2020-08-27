@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -148,12 +148,6 @@ number of bytes, but can take on any length between 1 and 768 bytes.
 All API header files are located in the folder /include of the release package.
 All header files are provided for usage in C/C++ programs. The AAC encoder
 library API functions are located in aacenc_lib.h.
-
-In binary releases the encoder core resides in statically linkable libraries
-called for example libAACenc.a/libFDK.a (LINUX) or FDK_fastaaclib.lib (MS Visual
-C++) for the plain AAC-LC core encoder and libSBRenc.a (LINUX) or
-FDK_sbrEncLib.lib (MS Visual C++) for the SBR (Spectral Band Replication) and PS
-(Parametric Stereo) modules.
 
 \section CallingSequence Calling Sequence
 
@@ -326,16 +320,10 @@ input buffer, simulating a modulo buffer: \code if (outargs.numInSamples>0) {
 \endcode
 
 \section writeOutData Output Bitstream Data
-If any AAC bitstream data is available, write it to output file or device. This
-can be done once the following condition is true: \code if
-(outargs.numOutBytes>0) {
-
+If any AAC bitstream data is available, write it to output file or device as
+follows. \code if (outargs.numOutBytes>0) { FDKfwrite(outputBuffer,
+outargs.numOutBytes, 1, pOutFile);
 }
-\endcode
-
-If you use file I/O then for example call mpegFileWrite_Write() from the library
-libMpegFileWrite \code mpegFileWrite_Write(hMpegFile, outputBuffer,
-outargs.numOutBytes, aacEncoder_GetParam(hAacEncoder, AACENC_GRANULE_LENGTH));
 \endcode
 
 \section cfgMetaData Meta Data Configuration
@@ -427,7 +415,7 @@ switch (nChannels) {
 return chMode;
 \endcode
 
-\subsection bitreservoir Bitreservoir Configuration
+\subsection peakbitrate Peak Bitrate Configuration
 In AAC, the default bitreservoir configuration depends on the chosen bitrate per
 frame and the number of effective channels. The size can be determined as below.
 \f[
@@ -436,17 +424,10 @@ bitreservoir = nEffChannels*6144 - (bitrate*framelength/samplerate)
 Due to audio quality concerns it is not recommended to change the bitreservoir
 size to a lower value than the default setting! However, for minimizing the
 delay for streaming applications or for achieving a constant size of the
-bitstream packages in each frame, it may be necessaray to change the
-bitreservoir size. This can be done with the ::AACENC_PEAK_BITRATE parameter.
-\code
+bitstream packages in each frame, it may be necessaray to limit the maximum bits
+per frame size. This can be done with the ::AACENC_PEAK_BITRATE parameter. \code
 aacEncoder_SetParam(hAacEncoder, AACENC_PEAK_BITRATE, value);
 \endcode
-By setting ::AACENC_BITRATEMODE to fixed framing, the bitreservoir is disabled.
-A disabled bitreservoir results in a constant size for each bitstream package.
-Please note that especially at lower bitrates a disabled bitreservoir can
-downgrade the audio quality considerably! The default bitreservoir configuration
-can be achieved as follows. \code aacEncoder_SetParam(hAacEncoder,
-AACENC_BITRESERVOIR, -1); \endcode
 
 To achieve acceptable audio quality with a reduced bitreservoir size setting at
 least 1000 bits per audio channel is recommended. For a multichannel audio file
@@ -455,31 +436,32 @@ audio quality.
 
 
 \subsection vbrmode Variable Bitrate Mode
-The encoder provides various Variable Bitrate Modes that differ in audio quality
-and average overall bitrate. The given values are averages over time, different
-encoder settings and strongly depend on the type of audio signal. The VBR
-configurations can be adjusted via ::AACENC_BITRATEMODE encoder parameter.
+The variable bitrate (VBR) mode coding adapts the bit consumption to the
+psychoacoustic requirements of the signal. The encoder ignores the user-defined
+bit rate and selects a suitable pre-defined configuration based on the provided
+AOT. The VBR mode 1 is tuned for HE-AACv2, for VBR mode 2, HE-AACv1 should be
+used. VBR modes 3-5 should be used with Low-Complexity AAC. When encoding
+AAC-ELD, the best mode is selected automatically.
+
+The bitrates given in the table are averages over time and different encoder
+settings. They strongly depend on the type of audio signal. The VBR
+configurations can be adjusted with the ::AACENC_BITRATEMODE encoder parameter.
 \verbatim
---------------------------------------------
- VBR_MODE | Approx. Bitrate in kbps/channel
-          |     AAC-LC    |  AAC-LD/AC_ELD
-----------+---------------+-----------------
-    VBR_1 |    32 -  48   |      32 -  56
-    VBR_2 |    40 -  56   |      40 -  64
-    VBR_3 |    48 -  64   |      48 -  72
-    VBR_4 |    64 -  80   |      64 -  88
-    VBR_5 |    96 - 120   |     112 - 144
+-----------------------------------------------
+ VBR_MODE | Approx. Bitrate in kbps for stereo
+          |     AAC-LC    |      AAC-ELD
+----------+---------------+--------------------
+    VBR_1 | 32 (HE-AACv2) |         48
+    VBR_2 | 72 (HE-AACv1) |         56
+    VBR_3 |      112      |         72
+    VBR_4 |      148      |        148
+    VBR_5 |      228      |        224
 --------------------------------------------
 \endverbatim
-The bitrate ranges apply for individual audio channels. In case of multichannel
-configurations the average bitrate might be estimated by multiplying with the
-number of effective channels. This corresponds to all audio input channels
-exclusively the low frequency channel. At configurations which are making use of
-downmix modules the AAC core channels respectively downmix channels shall be
-considered. For ::AACENC_AOT which are using SBR, the average bitrate can be
-estimated by using the ratio of 0.5 for dualrate SBR and 0.75 for downsampled
-SBR configurations.
-
+Note that these figures are valid for stereo encoding only. VBR modes 2-5 will
+yield much lower bit rates when encoding single-channel input. For
+configurations which are making use of downmix modules the AAC core channels
+respectively downmix channels shall be considered.
 
 \subsection encQual Audio Quality Considerations
 The default encoder configuration is suggested to be used. Encoder tools such as
@@ -967,9 +949,7 @@ in this Fraunhofer IIS AAC encoder. AAC has been designed in that way.
 
 \subsection BEHAVIOUR_ESTIM_AVG_FRAMESIZES Estimating Average Frame Sizes
 
-A HE-AAC v1 or v2 audio frame contains 2048 PCM samples per channel (there is
-also one mode with 1920 samples per channel but this is only for special
-purposes such as DAB+ digital radio).
+A HE-AAC v1 or v2 audio frame contains 2048 PCM samples per channel.
 
 The number of HE-AAC frames \f$N\_FRAMES\f$ per second at 44.1 kHz is:
 
@@ -1082,9 +1062,7 @@ typedef struct AACENCODER *HANDLE_AACENCODER;
 typedef struct {
   UINT maxOutBufBytes; /*!< Maximum number of encoder bitstream bytes within one
                           frame. Size depends on maximum number of supported
-                          channels in encoder instance. For superframing (as
-                          used for example in DAB+), size has to be a multiple
-                          accordingly. */
+                          channels in encoder instance. */
 
   UINT maxAncBytes; /*!< Maximum number of ancillary data bytes which can be
                        inserted into bitstream within one frame. */

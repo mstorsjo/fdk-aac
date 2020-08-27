@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -807,19 +807,17 @@ void CJointStereo_ApplyMS(
                   for (int i = 0; i < windowLen; i++) {
                     dmx_re_prev[i] =
                         ((staticSpectralCoeffsL[index_offset + i] >>
-                          srLeftChan) +
+                          fMin(DFRACT_BITS - 1, srLeftChan + 1)) +
                          (staticSpectralCoeffsR[index_offset + i] >>
-                          srRightChan)) >>
-                        1;
+                          fMin(DFRACT_BITS - 1, srRightChan + 1)));
                   }
                 } else {
                   for (int i = 0; i < windowLen; i++) {
                     dmx_re_prev[i] =
                         ((staticSpectralCoeffsL[index_offset + i] >>
-                          srLeftChan) -
+                          fMin(DFRACT_BITS - 1, srLeftChan + 1)) -
                          (staticSpectralCoeffsR[index_offset + i] >>
-                          srRightChan)) >>
-                        1;
+                          fMin(DFRACT_BITS - 1, srRightChan + 1)));
                   }
                 }
               }
@@ -854,12 +852,13 @@ void CJointStereo_ApplyMS(
           if (window == 0) {
             if (dmx_re_prev_e < frameMaxScale) {
               if (mainband_flag == 0) {
-                scaleValues(dmx_re_prev, store_dmx_re_prev, windowLen,
-                            -(frameMaxScale - dmx_re_prev_e));
+                scaleValues(
+                    dmx_re_prev, store_dmx_re_prev, windowLen,
+                    -fMin(DFRACT_BITS - 1, (frameMaxScale - dmx_re_prev_e)));
               } else {
-                for (int i = 0; i < windowLen; i++) {
-                  dmx_re_prev[i] >>= (frameMaxScale - dmx_re_prev_e);
-                }
+                scaleValues(
+                    dmx_re_prev, windowLen,
+                    -fMin(DFRACT_BITS - 1, (frameMaxScale - dmx_re_prev_e)));
               }
             } else {
               if (mainband_flag == 0) {
@@ -873,10 +872,9 @@ void CJointStereo_ApplyMS(
             FDK_ASSERT(pAacDecoderChannelInfo[L]->icsInfo.WindowSequence ==
                        BLOCK_SHORT);
             if (specScaleL[window - 1] < frameMaxScale) {
-              for (int i = 0; i < windowLen; i++) {
-                dmx_re[windowLen * (window - 1) + i] >>=
-                    (frameMaxScale - specScaleL[window - 1]);
-              }
+              scaleValues(&dmx_re[windowLen * (window - 1)], windowLen,
+                          -fMin(DFRACT_BITS - 1,
+                                (frameMaxScale - specScaleL[window - 1])));
             } else {
               specScaleL[window] = specScaleL[window - 1];
               specScaleR[window] = specScaleR[window - 1];
@@ -991,7 +989,7 @@ void CJointStereo_ApplyMS(
         }   /* if ( pJointStereoData->complex_coef == 1 ) */
 
         /* 4. upmix process */
-        INT pred_dir = cplxPredictionData->pred_dir ? -1 : 1;
+        LONG pred_dir = cplxPredictionData->pred_dir ? -1 : 1;
         /* 0.1 in Q-3.34 */
         const FIXP_DBL pointOne = 0x66666666; /* 0.8 */
         /* Shift value for the downmix */
@@ -1041,34 +1039,24 @@ void CJointStereo_ApplyMS(
                 the downmix. "dmx_re" and "specL" are two different pointers
                 pointing to separate arrays, which may or may not contain the
                 same data (with different scaling).
+
+                specL[i] =   + (specL[i] + side);
+                specR[i] = -/+ (specL[i] - side);
               */
+              FIXP_DBL side, left, right;
 
-              /* help1: alpha_re[i] * dmx_re[i] */
-              FIXP_DBL help1 = fMultDiv2(alpha_re_tmp, *p2dmxRe++);
+              side = fMultAddDiv2(fMultDiv2(alpha_re_tmp, *p2dmxRe++),
+                                  alpha_im_tmp, (*p2dmxIm++) << shift_dmx);
+              side = ((*p2CoeffR) >> 2) -
+                     (FIXP_DBL)SATURATE_SHIFT(side, -(help3_shift - 2),
+                                              DFRACT_BITS - 2);
 
-              /* tmp: dmx_im[i] */
-              FIXP_DBL tmp = (*p2dmxIm++) << shift_dmx;
+              left = ((*p2CoeffL) >> 2) + side;
+              right = ((*p2CoeffL) >> 2) - side;
+              right = (FIXP_DBL)((LONG)right * pred_dir);
 
-              /* help2: alpha_im[i] * dmx_im[i] */
-              FIXP_DBL help2 = fMultDiv2(alpha_im_tmp, tmp);
-
-              /* help3: alpha_re[i] * dmx_re[i] + alpha_im[i] * dmx_im[i] */
-              FIXP_DBL help3 = help1 + help2;
-
-              /* side (= help4) = specR[i] - (dmx_re[i] * specL[i] + alpha_im[i]
-               * * dmx_im[i]) */
-              FIXP_DBL help4 = *p2CoeffR - scaleValue(help3, help3_shift);
-
-              /* We calculate the left and right output by using the helper
-               * function */
-              /* specR[i] = -/+ (specL[i] - side); */
-              *p2CoeffR =
-                  (FIXP_DBL)((LONG)(*p2CoeffL - help4) * (LONG)pred_dir);
-              p2CoeffR++;
-
-              /* specL[i] = specL[i] + side; */
-              *p2CoeffL = *p2CoeffL + help4;
-              p2CoeffL++;
+              *p2CoeffL++ = SATURATE_LEFT_SHIFT_ALT(left, 2, DFRACT_BITS);
+              *p2CoeffR++ = SATURATE_LEFT_SHIFT_ALT(right, 2, DFRACT_BITS);
             }
           }
 

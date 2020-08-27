@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1325,9 +1325,9 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
                                                   CSTpCallBacks *cb) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
   CSEldSpecificConfig *esc = &asc->m_sc.m_eldSpecificConfig;
-  ASC_ELD_EXT_TYPE eldExtType;
+  UINT eldExtType;
   int eldExtLen, len, cnt, ldSbrLen = 0, eldExtLenSum, numSbrHeader = 0,
-                           sbrIndex;
+                           sbrIndex, eldExtCnt = 0;
 
   unsigned char downscale_fill_nibble;
 
@@ -1394,9 +1394,8 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
   eldExtLenSum = FDKgetValidBits(hBs);
   esc->m_downscaledSamplingFrequency = asc->m_samplingFrequency;
   /* parse ExtTypeConfigData */
-  while (
-      ((eldExtType = (ASC_ELD_EXT_TYPE)FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
-      ((INT)FDKgetValidBits(hBs) >= 0)) {
+  while (((eldExtType = FDKreadBits(hBs, 4)) != ELDEXT_TERM) &&
+         ((INT)FDKgetValidBits(hBs) >= 0) && (eldExtCnt++ < 15)) {
     eldExtLen = len = FDKreadBits(hBs, 4);
     if (len == 0xf) {
       len = FDKreadBits(hBs, 8);
@@ -1440,7 +1439,8 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
         UCHAR tmpDownscaleFreqIdx;
         esc->m_downscaledSamplingFrequency =
             getSampleRate(hBs, &tmpDownscaleFreqIdx, 4);
-        if (esc->m_downscaledSamplingFrequency == 0) {
+        if (esc->m_downscaledSamplingFrequency == 0 ||
+            esc->m_downscaledSamplingFrequency > 96000) {
           return TRANSPORTDEC_PARSE_ERROR;
         }
         downscale_fill_nibble = FDKreadBits(hBs, 4);
@@ -1453,6 +1453,9 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
         }
         break;
     }
+  }
+  if (eldExtType != ELDEXT_TERM) {
+    return TRANSPORTDEC_PARSE_ERROR;
   }
 
   if ((INT)FDKgetValidBits(hBs) < 0) {
@@ -1948,6 +1951,9 @@ static TRANSPORTDEC_ERROR UsacConfig_Parse(CSAudioSpecificConfig *asc,
   INT nbits = (INT)FDKgetValidBits(hBs);
 
   usacSamplingFrequency = getSampleRate(hBs, &asc->m_samplingFrequencyIndex, 5);
+  if (usacSamplingFrequency == 0 || usacSamplingFrequency > 96000) {
+    return TRANSPORTDEC_PARSE_ERROR;
+  }
   asc->m_samplingFrequency = (UINT)usacSamplingFrequency;
 
   coreSbrFrameLengthIndex = FDKreadBits(hBs, 3);
@@ -2027,7 +2033,8 @@ static TRANSPORTDEC_ERROR AudioSpecificConfig_ExtensionParse(
               self->m_extensionSamplingFrequency = getSampleRate(
                   bs, &self->m_extensionSamplingFrequencyIndex, 4);
 
-              if ((INT)self->m_extensionSamplingFrequency <= 0) {
+              if (self->m_extensionSamplingFrequency == 0 ||
+                  self->m_extensionSamplingFrequency > 96000) {
                 return TRANSPORTDEC_PARSE_ERROR;
               }
             }
@@ -2139,6 +2146,24 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
 
     self->m_channelConfiguration = FDKreadBits(bs, 4);
 
+    /* MPEG-04 standard ISO/IEC 14496-3: channelConfiguration == 0 is reserved
+       in er_raw_data_block (table 4.19) and er_raw_data_block_eld (table 4.75)
+       MPEG-04 conformance ISO/IEC 14496-4: channelConfiguration == 0 is not
+       permitted for AOT_ER_AAC_LC, AOT_ER_AAC_LTP, AOT_ER_AAC_LD,
+       AOT_ER_AAC_SCAL (chapter 6.6.4.1.2.1.1) */
+    if ((self->m_channelConfiguration == 0) &&
+        ((self->m_aot == AOT_ER_AAC_LC) || (self->m_aot == AOT_ER_AAC_LTP) ||
+         (self->m_aot == AOT_ER_AAC_LD) || (self->m_aot == AOT_ER_AAC_SCAL) ||
+         (self->m_aot == AOT_ER_AAC_ELD))) {
+      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
+    }
+    /* MPEG-04 conformance ISO/IEC 14496-4: channelConfiguration > 2 is not
+     * permitted for AOT_AAC_SCAL and AOT_ER_AAC_SCAL (chapter 6.6.4.1.2.1.1) */
+    if ((self->m_channelConfiguration > 2) &&
+        ((self->m_aot == AOT_AAC_SCAL) || (self->m_aot == AOT_ER_AAC_SCAL))) {
+      return TRANSPORTDEC_UNSUPPORTED_FORMAT;
+    }
+
     /* SBR extension ( explicit non-backwards compatible mode ) */
     self->m_sbrPresentFlag = 0;
     self->m_psPresentFlag = 0;
@@ -2153,6 +2178,10 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
 
       self->m_extensionSamplingFrequency =
           getSampleRate(bs, &self->m_extensionSamplingFrequencyIndex, 4);
+      if (self->m_extensionSamplingFrequency == 0 ||
+          self->m_extensionSamplingFrequency > 96000) {
+        return TRANSPORTDEC_PARSE_ERROR;
+      }
       self->m_aot = getAOT(bs);
 
       switch (self->m_aot) {

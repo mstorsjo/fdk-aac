@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -191,6 +191,9 @@ struct AAC_DECODER_INSTANCE {
   INT outputInterleaved; /*!< PCM output format (interleaved/none interleaved).
                           */
 
+  INT aacOutDataHeadroom; /*!< Headroom of the output time signal to prevent
+                             clipping */
+
   HANDLE_TRANSPORTDEC hInput; /*!< Transport layer handle. */
 
   SamplingRateInfo
@@ -235,6 +238,7 @@ struct AAC_DECODER_INSTANCE {
   CAacDecoderStaticChannelInfo
       *pAacDecoderStaticChannelInfo[(8)]; /*!< Persistent channel memory */
 
+  FIXP_DBL *workBufferCore1;
   FIXP_DBL *workBufferCore2;
   PCM_DEC *pTimeData2;
   INT timeData2Size;
@@ -311,10 +315,9 @@ This structure is allocated once for each CPE. */
   UCHAR limiterEnableUser; /*!< The limiter configuration requested by the
                               library user */
   UCHAR limiterEnableCurr; /*!< The current limiter configuration.         */
+
   FIXP_DBL extGain[1]; /*!< Gain that must be applied to the output signal. */
   UINT extGainDelay;   /*!< Delay that must be accounted for extGain. */
-
-  INT_PCM pcmOutputBuffer[(8) * (1024 * 2)];
 
   HANDLE_DRC_DECODER hUniDrcDecoder;
   UCHAR multibandDrcPresent;
@@ -427,7 +430,7 @@ LINKSPEC_H AAC_DECODER_ERROR CAacDecoder_Init(HANDLE_AACDECODER self,
   \return  error status
 */
 LINKSPEC_H AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
-    HANDLE_AACDECODER self, const UINT flags, FIXP_PCM *pTimeData,
+    HANDLE_AACDECODER self, const UINT flags, PCM_DEC *pTimeData,
     const INT timeDataSize, const int timeDataChannelOffset);
 
 /* Free config dependent AAC memory */
