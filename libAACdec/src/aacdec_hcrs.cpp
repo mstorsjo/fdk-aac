@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1324,6 +1324,10 @@ UINT Hcr_State_BODY_SIGN_ESC__ESC_PREFIX(HANDLE_FDK_BITSTREAM bs, void *ptr) {
     /* count ones and store sum in escapePrefixUp */
     if (carryBit == 1) {
       escapePrefixUp += 1; /* update conter for ones */
+      if (escapePrefixUp > 8) {
+        pHcr->decInOut.errorLog |= STATE_ERROR_BODY_SIGN_ESC__ESC_PREFIX;
+        return BODY_SIGN_ESC__ESC_PREFIX;
+      }
 
       /* store updated counter in sideinfo of current codeword */
       pEscapeSequenceInfo[codewordOffset] &=

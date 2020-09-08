@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -250,10 +250,10 @@ void scaleValuesSaturate(FIXP_DBL *vector, /*!< Vector */
  */
 #define FUNCTION_scaleValuesSaturate_DBL_DBL
 SCALE_INLINE
-void scaleValuesSaturate(FIXP_DBL *dst,  /*!< Output */
-                         FIXP_DBL *src,  /*!< Input   */
-                         INT len,        /*!< Length */
-                         INT scalefactor /*!< Scalefactor */
+void scaleValuesSaturate(FIXP_DBL *dst,       /*!< Output */
+                         const FIXP_DBL *src, /*!< Input   */
+                         INT len,             /*!< Length */
+                         INT scalefactor      /*!< Scalefactor */
 ) {
   INT i;
 
@@ -285,10 +285,10 @@ void scaleValuesSaturate(FIXP_DBL *dst,  /*!< Output */
  */
 #define FUNCTION_scaleValuesSaturate_SGL_DBL
 SCALE_INLINE
-void scaleValuesSaturate(FIXP_SGL *dst,   /*!< Output */
-                         FIXP_DBL *src,   /*!< Input   */
-                         INT len,         /*!< Length */
-                         INT scalefactor) /*!< Scalefactor */
+void scaleValuesSaturate(FIXP_SGL *dst,       /*!< Output */
+                         const FIXP_DBL *src, /*!< Input   */
+                         INT len,             /*!< Length */
+                         INT scalefactor)     /*!< Scalefactor */
 {
   INT i;
   scalefactor = fixmax_I(fixmin_I(scalefactor, (INT)DFRACT_BITS - 1),
@@ -345,10 +345,10 @@ void scaleValuesSaturate(FIXP_SGL *vector, /*!< Vector */
  */
 #define FUNCTION_scaleValuesSaturate_SGL_SGL
 SCALE_INLINE
-void scaleValuesSaturate(FIXP_SGL *dst,  /*!< Output */
-                         FIXP_SGL *src,  /*!< Input */
-                         INT len,        /*!< Length */
-                         INT scalefactor /*!< Scalefactor */
+void scaleValuesSaturate(FIXP_SGL *dst,       /*!< Output */
+                         const FIXP_SGL *src, /*!< Input */
+                         INT len,             /*!< Length */
+                         INT scalefactor      /*!< Scalefactor */
 ) {
   INT i;
 
