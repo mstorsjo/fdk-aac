@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -252,7 +252,7 @@ typedef enum {
                 scenario. Default parameter value is 3 frames. */
 } SACDEC_PARAM;
 
-#define PCM_MPS INT_PCM
+#define PCM_MPS LONG
 
 /**
  * \brief MPEG Surround decoder handle.
@@ -401,17 +401,22 @@ int mpegSurroundDecoder_Parse(CMpegSurroundDecoder *pMpegSurroundDecoder,
  * for each output audio channel is stored into.
  * \param mapDescr             Channep map descriptor for output channel mapping
  * to be used (From MPEG PCE ordering to whatever is required).
+ * \param inDataHeadroom       Headroom of SAC input time signal to prevent
+ * clipping.
+ * \param outDataHeadroom      Pointer to headroom of SAC output time signal to
+ * prevent clipping.
  *
  * \return  Error code.
  */
 int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
-                              INT_PCM *input, PCM_MPS *pTimeData,
+                              PCM_MPS *input, PCM_MPS *pTimeData,
                               const int timeDataSize, int timeDataFrameSize,
                               int *nChannels, int *frameSize, int sampleRate,
                               AUDIO_OBJECT_TYPE coreCodec,
                               AUDIO_CHANNEL_TYPE channelType[],
                               UCHAR channelIndices[],
-                              const FDK_channelMapDescr *const mapDescr);
+                              const FDK_channelMapDescr *const mapDescr,
+                              const INT inDataHeadroom, INT *outDataHeadroom);
 
 /**
  * \brief                       Deallocate a MPEG Surround decoder instance.

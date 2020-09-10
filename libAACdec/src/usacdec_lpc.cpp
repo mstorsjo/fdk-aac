@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -231,7 +231,7 @@ void nearest_neighbor_2D8(FIXP_ZF x[8], int y[8]) {
 void RE8_PPV(FIXP_ZF x[], SHORT y[], int r) {
   int i, y0[8], y1[8];
   FIXP_ZF x1[8], tmp;
-  FIXP_DBL e;
+  INT64 e;
 
   /* find the nearest neighbor y0 of x in 2D8 */
   nearest_neighbor_2D8(x, y0);
@@ -245,16 +245,16 @@ void RE8_PPV(FIXP_ZF x[], SHORT y[], int r) {
   }
 
   /* compute e0=||x-y0||^2 and e1=||x-y1||^2 */
-  e = (FIXP_DBL)0;
+  e = 0;
   for (i = 0; i < 8; i++) {
     tmp = x[i] - INT2ZF(y0[i], 0);
-    e += fPow2Div2(
+    e += (INT64)fPow2Div2(
         tmp << r); /* shift left to ensure that no fract part bits get lost. */
     tmp = x[i] - INT2ZF(y1[i], 0);
-    e -= fPow2Div2(tmp << r);
+    e -= (INT64)fPow2Div2(tmp << r);
   }
   /* select best candidate y0 or y1 to minimize distortion */
-  if (e < (FIXP_DBL)0) {
+  if (e < 0) {
     for (i = 0; i < 8; i++) {
       y[i] = y0[i];
     }
@@ -565,7 +565,8 @@ static void lsf_weight_2st(FIXP_LPC *lsfq, FIXP_DBL *xq, int nk_mode) {
   /* add non-weighted residual LSF vector to LSF1st */
   for (i = 0; i < M_LP_FILTER_ORDER; i++) {
     w = (LONG)fMultDiv2(factor, sqrtFixp(fMult(d[i], d[i + 1])));
-    lsfq[i] = fAddSaturate(lsfq[i], FX_DBL2FX_LPC((FIXP_DBL)(w * (LONG)xq[i])));
+    lsfq[i] = fAddSaturate(lsfq[i],
+                           FX_DBL2FX_LPC((FIXP_DBL)((INT64)w * (LONG)xq[i])));
   }
 
   return;
@@ -1138,9 +1139,12 @@ static void get_lsppol(FIXP_LPC lsp[], FIXP_DBL f[], int n, int flag) {
   for (i = 2; i <= n; i++) {
     plsp += 2;
     b = -FX_LPC2FX_DBL(*plsp);
-    f[i] = ((fMultDiv2(b, f[i - 1]) << 1) + (f[i - 2])) << 1;
+    f[i] = SATURATE_LEFT_SHIFT((fMultDiv2(b, f[i - 1]) + (f[i - 2] >> 1)), 2,
+                               DFRACT_BITS);
     for (j = i - 1; j > 1; j--) {
-      f[j] = f[j] + (fMultDiv2(b, f[j - 1]) << 2) + f[j - 2];
+      f[j] = SATURATE_LEFT_SHIFT(
+          ((f[j] >> 2) + fMultDiv2(b, f[j - 1]) + (f[j - 2] >> 2)), 2,
+          DFRACT_BITS);
     }
     f[1] = f[1] + (b >> (SF_F - 1));
   }
@@ -1167,6 +1171,9 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
   /*-----------------------------------------------------*
    *  Multiply F1(z) by (1+z^-1) and F2(z) by (1-z^-1)   *
    *-----------------------------------------------------*/
+  scaleValues(f1, NC + 1, -2);
+  scaleValues(f2, NC + 1, -2);
+
   for (i = NC; i > 0; i--) {
     f1[i] += f1[i - 1];
     f2[i] -= f2[i - 1];
@@ -1175,13 +1182,8 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
   FIXP_DBL aDBL[M_LP_FILTER_ORDER];
 
   for (i = 1, k = M_LP_FILTER_ORDER - 1; i <= NC; i++, k--) {
-    FIXP_DBL tmp1, tmp2;
-
-    tmp1 = f1[i] >> 1;
-    tmp2 = f2[i] >> 1;
-
-    aDBL[i - 1] = (tmp1 + tmp2);
-    aDBL[k] = (tmp1 - tmp2);
+    aDBL[i - 1] = f1[i] + f2[i];
+    aDBL[k] = f1[i] - f2[i];
   }
 
   int headroom_a = getScalefactor(aDBL, M_LP_FILTER_ORDER);
@@ -1190,5 +1192,5 @@ void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp) {
     a[i] = FX_DBL2FX_LPC(aDBL[i] << headroom_a);
   }
 
-  *a_exp = 8 - headroom_a;
+  *a_exp = SF_F + (2 - 1) - headroom_a;
 }

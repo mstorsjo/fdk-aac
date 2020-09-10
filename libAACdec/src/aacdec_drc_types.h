@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -168,7 +168,6 @@ typedef struct {
 
   UINT expiryFrame;
   UCHAR bsDelayEnable;
-  UCHAR applyDigitalNorm;
 
   AACDEC_DRC_PARAMETER_HANDLING defaultPresentationMode;
   UCHAR encoderTargetLevel;
@@ -212,6 +211,13 @@ typedef struct {
   UCHAR
   uniDrcPrecedence; /* Flag for signalling that uniDrc is active and takes
                        precedence over legacy DRC */
+
+  UCHAR applyExtGain; /* Flag is 1 if extGain has to be applied, otherwise 0. */
+
+  FIXP_DBL additionalGainPrev; /* Gain of previous frame to be applied to the
+                                  time data */
+  FIXP_DBL additionalGainFilterState;  /* Filter state for the gain smoothing */
+  FIXP_DBL additionalGainFilterState1; /* Filter state for the gain smoothing */
 
 } CDrcInfo;
 

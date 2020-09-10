@@ -130,6 +130,9 @@ typedef struct {
 
   UCHAR uniDrcGainExtPresent;
   UNI_DRC_GAIN_EXTENSION uniDrcGainExtension;
+
+  /* derived data */
+  UCHAR status;
 } UNI_DRC_GAIN, *HANDLE_UNI_DRC_GAIN;
 
 /****************/

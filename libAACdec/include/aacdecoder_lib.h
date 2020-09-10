@@ -164,9 +164,6 @@ The contents of each file is described in detail in this document. All header
 files are provided for usage in specific C/C++ programs. The main AAC decoder
 library API functions are located in aacdecoder_lib.h header file.
 
-In binary releases the decoder core resides in statically linkable libraries,
-for example libAACdec.a.
-
 
 \section Calling_Sequence Calling Sequence
 
@@ -174,19 +171,7 @@ The following sequence is necessary for proper decoding of ISO/MPEG-2/4 AAC,
 HE-AAC v2, or MPEG-D USAC bitstreams. In the following description, input stream
 read and output write function details are left out, since they may be
 implemented in a variety of configurations depending on the user's specific
-requirements. The example implementation uses file-based input/output, and in
-such case one may call mpegFileRead_Open() to open an input file and to allocate
-memory for the required structures, and the corresponding mpegFileRead_Close()
-to close opened files and to de-allocate associated structures.
-mpegFileRead_Open() will attempt to detect the bitstream format and in case of
-MPEG-4 file format or Raw Packets file format (a proprietary Fraunhofer IIS file
-format suitable only for testing) it will read the Audio Specific Config data
-(ASC). An unsuccessful attempt to recognize the bitstream format requires the
-user to provide this information manually. For any other bitstream formats that
-are usually applicable in streaming applications, the decoder itself will try to
-synchronize and parse the given bitstream fragment using the FDK transport
-library. Hence, for streaming applications (without file access) this step is
-not necessary.
+requirements.
 
 
 -# Call aacDecoder_Open() to open and retrieve a handle to a new AAC decoder
@@ -205,19 +190,17 @@ do {
 working memory (a client-supplied input buffer "inBuffer" in framework). This
 buffer will be used to load AAC bitstream data to the decoder.  Only when all
 data in this buffer has been processed will the decoder signal an empty buffer.
-For file-based input, you may invoke mpegFileRead_Read() to acquire new
-bitstream data.
 -# Call aacDecoder_Fill() to fill the decoder's internal bitstream input buffer
 with the client-supplied bitstream input buffer. Note, if the data loaded in to
 the internal buffer is not sufficient to decode a frame,
 aacDecoder_DecodeFrame() will return ::AAC_DEC_NOT_ENOUGH_BITS until a
 sufficient amount of data is loaded in to the internal buffer. For streaming
 formats (ADTS, LOAS), it is acceptable to load more than one frame to the
-decoder. However, for RAW file format (Fraunhofer IIS proprietary format), only
-one frame may be loaded to the decoder per aacDecoder_DecodeFrame() call. For
-least amount of communication delay, fill and decode should be performed on a
-frame by frame basis. \code ErrorStatus = aacDecoder_Fill(aacDecoderInfo,
-inBuffer, bytesRead, bytesValid); \endcode
+decoder. However, for packed based formats, only one frame may be loaded to the
+decoder per aacDecoder_DecodeFrame() call. For least amount of communication
+delay, fill and decode should be performed on a frame by frame basis. \code
+    ErrorStatus = aacDecoder_Fill(aacDecoderInfo, inBuffer, bytesRead,
+bytesValid); \endcode
 -# Call aacDecoder_DecodeFrame(). This function decodes one frame and writes
 decoded PCM audio data to a client-supplied buffer. It is the client's
 responsibility to allocate a buffer which is large enough to hold the decoded
@@ -225,12 +208,9 @@ output data. \code ErrorStatus = aacDecoder_DecodeFrame(aacDecoderInfo,
 TimeData, OUT_BUF_SIZE, flags); \endcode If the bitstream configuration (number
 of channels, sample rate, frame size) is not known a priori, you may call
 aacDecoder_GetStreamInfo() to retrieve a structure that contains this
-information. You may use this data to initialize an audio output device. In the
-example program, if the number of channels or the sample rate has changed since
-program start or the previously decoded frame, the audio output device is then
-re-initialized. If WAVE file output is chosen, a new WAVE file for each new
-stream configuration is be created. \code p_si =
-aacDecoder_GetStreamInfo(aacDecoderInfo); \endcode
+information. You may use this data to initialize an audio output device. \code
+    p_si = aacDecoder_GetStreamInfo(aacDecoderInfo);
+\endcode
 -# Repeat steps 5 to 7 until no data is available to decode any more, or in case
 of error. \code } while (bytesRead[0] > 0 || doFlush || doBsFlush ||
 forceContinue); \endcode
@@ -239,7 +219,7 @@ structures. \code aacDecoder_Close(aacDecoderInfo); \endcode
 
 \image latex decode.png "Decode calling sequence" width=11cm
 
-\image latex change_source.png "Change data source sequence" width 5cm
+\image latex change_source.png "Change data source sequence" width=5cm
 
 \image latex conceal.png "Error concealment sequence" width=14cm
 
@@ -296,16 +276,14 @@ input buffer, and one to hold the decoded output PCM sample data. In resource
 limited applications, the output buffer may be reused as an external input
 buffer prior to the subsequence aacDecoder_Fill() function call.
 
-The external input buffer is set in the example program and its size is defined
-by ::IN_BUF_SIZE. You may freely choose different buffer sizes. To feed the data
-to the decoder-internal input buffer, use the function aacDecoder_Fill(). This
-function returns important information regarding the number of bytes in the
-external input buffer that have not yet been copied into the internal input
-buffer (variable bytesValid). Once the external buffer has been fully copied, it
-can be completely re-filled again. In case you wish to refill the buffer while
-there are unprocessed bytes (bytesValid is unequal 0), you should preserve the
-unconsumed data. However, we recommend to refill the buffer only when bytesValid
-returns 0.
+To feed the data to the decoder-internal input buffer, use the
+function aacDecoder_Fill(). This function returns important information
+regarding the number of bytes in the external input buffer that have not yet
+been copied into the internal input buffer (variable bytesValid). Once the
+external buffer has been fully copied, it can be completely re-filled again. In
+case you wish to refill the buffer while there are unprocessed bytes (bytesValid
+is unequal 0), you should preserve the unconsumed data. However, we recommend to
+refill the buffer only when bytesValid returns 0.
 
 The bytesValid parameter is an input and output parameter to the FDK decoder. As
 an input, it signals how many valid bytes are available in the external buffer.
@@ -340,10 +318,7 @@ explanation, please refer to ISO/IEC 13818-7:2005(E), chapter 8.5.3.2.
 In case a Program Config is included in the audio configuration, the channel
 mapping described within it will be adopted.
 
-In case of MPEG-D Surround the channel mapping will follow the same criteria
-described in ISO/IEC 13818-7:2005(E), but adding corresponding top channels (if
-available) to the channel types in order to avoid ambiguity. The examples below
-explain these aspects in detail.
+The examples below explain these aspects in detail.
 
 \section OutputFormatChange Changing the audio output format
 
@@ -689,9 +664,7 @@ typedef enum {
                      2. If the parameter value is greater than that of
                  ::AAC_PCM_MAX_OUTPUT_CHANNELS both will be set to the same
                  value. \n
-                     3. This parameter does not affect MPEG Surround processing.
-                 \n
-                     4. This parameter will be ignored if the number of encoded
+                     3. This parameter will be ignored if the number of encoded
                  audio channels is greater than 8. */
   AAC_PCM_MAX_OUTPUT_CHANNELS =
       0x0012, /*!< Maximum number of PCM output channels. If lower than the
@@ -718,11 +691,7 @@ typedef enum {
                      2. If the parameter value is greater than zero but smaller
                  than ::AAC_PCM_MIN_OUTPUT_CHANNELS both will be set to same
                  value. \n
-                     3. The operating mode of the MPEG Surround module will be
-                 set accordingly. \n
-                     4. Setting this parameter with any value will disable the
-                 binaural processing of the MPEG Surround module
-                     5. This parameter will be ignored if the number of encoded
+                     3. This parameter will be ignored if the number of encoded
                  audio channels is greater than 8. */
   AAC_METADATA_PROFILE =
       0x0020, /*!< See ::AAC_MD_PROFILE for all available values. */
@@ -803,11 +772,11 @@ typedef enum {
                  sequences for fading in and out, if provided in the
                  bitstream.\n Enabled album mode makes use of dedicated album
                  loudness information, if provided in the bitstream.\n */
-  AAC_QMF_LOWPOWER = 0x0300, /*!< Quadrature Mirror Filter (QMF) Bank processing
-                                mode. \n -1: Use internal default. Implies MPEG
-                                Surround partially complex accordingly. \n 0:
-                                Use complex QMF data mode. \n 1: Use real (low
-                                power) QMF data mode. \n */
+  AAC_QMF_LOWPOWER =
+      0x0300, /*!< Quadrature Mirror Filter (QMF) Bank processing mode. \n
+                   -1: Use internal default. \n
+                    0: Use complex QMF data mode. \n
+                    1: Use real (low power) QMF data mode. \n */
   AAC_TPDEC_CLEAR_BUFFER =
       0x0603 /*!< Clear internal bit stream buffer of transport layers. The
                 decoder will start decoding at new data passed after this event
@@ -892,15 +861,25 @@ typedef struct {
                           1770. If no level has been found in the bitstream the
                           value is -1. */
   SCHAR
-  drcPresMode; /*!< DRC presentation mode. According to ETSI TS 101 154,
-                  this field indicates whether   light (MPEG-4 Dynamic Range
-                  Control tool) or heavy compression (DVB heavy
-                  compression)   dynamic range control shall take priority
-                  on the outputs.   For details, see ETSI TS 101 154, table
-                  C.33. Possible values are: \n   -1: No corresponding
-                  metadata found in the bitstream \n   0: DRC presentation
-                  mode not indicated \n   1: DRC presentation mode 1 \n   2:
-                  DRC presentation mode 2 \n   3: Reserved */
+  drcPresMode;        /*!< DRC presentation mode. According to ETSI TS 101 154,
+                         this field indicates whether   light (MPEG-4 Dynamic Range
+                         Control tool) or heavy compression (DVB heavy
+                         compression)   dynamic range control shall take priority
+                         on the outputs.   For details, see ETSI TS 101 154, table
+                         C.33. Possible values are: \n   -1: No corresponding
+                         metadata found in the bitstream \n   0: DRC presentation
+                         mode not indicated \n   1: DRC presentation mode 1 \n   2:
+                         DRC presentation mode 2 \n   3: Reserved */
+  INT outputLoudness; /*!< Audio output loudness in steps of -0.25 dB. Range: 0
+                         (0 dBFS) to 231 (-57.75 dBFS).\n  A value of -1
+                         indicates that no loudness metadata is present.\n  If
+                         loudness normalization is active, the value corresponds
+                         to the target loudness value set with
+                         ::AAC_DRC_REFERENCE_LEVEL.\n  If loudness normalization
+                         is not active, the output loudness value corresponds to
+                         the loudness metadata given in the bitstream.\n
+                           Loudness metadata can originate from MPEG-4 DRC or
+                         MPEG-D DRC. */
 
 } CStreamInfo;
 
@@ -1028,21 +1007,24 @@ LINKSPEC_H AAC_DECODER_ERROR aacDecoder_Fill(HANDLE_AACDECODER self,
                                              const UINT bufferSize[],
                                              UINT *bytesValid);
 
-#define AACDEC_CONCEAL                                                        \
-  1 /*!< Flag for aacDecoder_DecodeFrame(): Trigger the built-in error        \
-       concealment module to generate a substitute signal for one lost frame. \
-       New input data will not be considered. */
-#define AACDEC_FLUSH                                                         \
-  2 /*!< Flag for aacDecoder_DecodeFrame(): Flush all filterbanks to get all \
-       delayed audio without having new input data. Thus new input data will \
-       not be considered.*/
-#define AACDEC_INTR                                                         \
-  4 /*!< Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data \
-       discontinuity. Resync any internals as necessary. */
-#define AACDEC_CLRHIST                                                        \
-  8 /*!< Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and  \
-       history buffers. CAUTION: This can cause discontinuities in the output \
-       signal. */
+/** Flag for aacDecoder_DecodeFrame(): Trigger the built-in error concealment
+ * module to generate a substitute signal for one lost frame. New input data
+ * will not be considered.
+ */
+#define AACDEC_CONCEAL 1
+/** Flag for aacDecoder_DecodeFrame(): Flush all filterbanks to get all delayed
+ * audio without having new input data. Thus new input data will not be
+ * considered.
+ */
+#define AACDEC_FLUSH 2
+/** Flag for aacDecoder_DecodeFrame(): Signal an input bit stream data
+ * discontinuity. Resync any internals as necessary.
+ */
+#define AACDEC_INTR 4
+/** Flag for aacDecoder_DecodeFrame(): Clear all signal delay lines and history
+ * buffers. CAUTION: This can cause discontinuities in the output signal.
+ */
+#define AACDEC_CLRHIST 8
 
 /**
  * \brief               Decode one audio frame

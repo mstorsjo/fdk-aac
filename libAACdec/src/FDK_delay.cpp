@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -113,7 +113,7 @@ INT FDK_Delay_Create(FDK_SignalDelay* data, const USHORT delay,
 
   if (delay > 0) {
     data->delay_line =
-        (INT_PCM*)FDKcalloc(num_channels * delay, sizeof(INT_PCM));
+        (PCM_DEC*)FDKcalloc(num_channels * delay, sizeof(PCM_DEC));
     if (data->delay_line == NULL) {
       return -1;
     }
@@ -126,36 +126,36 @@ INT FDK_Delay_Create(FDK_SignalDelay* data, const USHORT delay,
   return 0;
 }
 
-void FDK_Delay_Apply(FDK_SignalDelay* data, FIXP_PCM* time_buffer,
+void FDK_Delay_Apply(FDK_SignalDelay* data, PCM_DEC* time_buffer,
                      const UINT frame_length, const UCHAR channel) {
   FDK_ASSERT(data != NULL);
 
   if (data->delay > 0) {
-    C_ALLOC_SCRATCH_START(tmp, FIXP_PCM, MAX_FRAME_LENGTH)
+    C_ALLOC_SCRATCH_START(tmp, PCM_DEC, MAX_FRAME_LENGTH)
     FDK_ASSERT(frame_length <= MAX_FRAME_LENGTH);
     FDK_ASSERT(channel < data->num_channels);
     FDK_ASSERT(time_buffer != NULL);
     if (frame_length >= data->delay) {
       FDKmemcpy(tmp, &time_buffer[frame_length - data->delay],
-                data->delay * sizeof(FIXP_PCM));
+                data->delay * sizeof(PCM_DEC));
       FDKmemmove(&time_buffer[data->delay], &time_buffer[0],
-                 (frame_length - data->delay) * sizeof(FIXP_PCM));
+                 (frame_length - data->delay) * sizeof(PCM_DEC));
       FDKmemcpy(&time_buffer[0], &data->delay_line[channel * data->delay],
-                data->delay * sizeof(FIXP_PCM));
+                data->delay * sizeof(PCM_DEC));
       FDKmemcpy(&data->delay_line[channel * data->delay], tmp,
-                data->delay * sizeof(FIXP_PCM));
+                data->delay * sizeof(PCM_DEC));
     } else {
-      FDKmemcpy(tmp, &time_buffer[0], frame_length * sizeof(FIXP_PCM));
+      FDKmemcpy(tmp, &time_buffer[0], frame_length * sizeof(PCM_DEC));
       FDKmemcpy(&time_buffer[0], &data->delay_line[channel * data->delay],
-                frame_length * sizeof(FIXP_PCM));
+                frame_length * sizeof(PCM_DEC));
       FDKmemcpy(&data->delay_line[channel * data->delay],
                 &data->delay_line[channel * data->delay + frame_length],
-                (data->delay - frame_length) * sizeof(FIXP_PCM));
+                (data->delay - frame_length) * sizeof(PCM_DEC));
       FDKmemcpy(&data->delay_line[channel * data->delay +
                                   (data->delay - frame_length)],
-                tmp, frame_length * sizeof(FIXP_PCM));
+                tmp, frame_length * sizeof(PCM_DEC));
     }
-    C_ALLOC_SCRATCH_END(tmp, FIXP_PCM, MAX_FRAME_LENGTH)
+    C_ALLOC_SCRATCH_END(tmp, PCM_DEC, MAX_FRAME_LENGTH)
   }
 
   return;

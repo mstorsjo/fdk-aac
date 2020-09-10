@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -109,8 +109,6 @@ amm-info@iis.fraunhofer.de
 #define TDL_ATTACK_DEFAULT_MS (15)  /* default attack  time in ms */
 #define TDL_RELEASE_DEFAULT_MS (50) /* default release time in ms */
 
-#define TDL_GAIN_SCALING (15) /* scaling of gain value. */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -128,10 +126,7 @@ struct TDLimiter {
   unsigned int maxBufIdx, delayBufIdx;
   FIXP_DBL smoothState0;
   FIXP_DBL minGain;
-
-  FIXP_DBL additionalGainPrev;
-  FIXP_DBL additionalGainFilterState;
-  FIXP_DBL additionalGainFilterState1;
+  INT scaling;
 };
 
 typedef enum {
@@ -255,27 +250,16 @@ TDLIMITER_ERROR pcmLimiter_SetThreshold(TDLimiterPtr limiter,
 
 /******************************************************************************
  * pcmLimiter_Apply                                                            *
- * limiter:    limiter handle                                                  *
- * pGain :     pointer to gains to be applied to the signal before limiting,   *
- *             which are downscaled by TDL_GAIN_SCALING bit.                   *
- *             These gains are delayed by gain_delay, and smoothed.            *
- *             Smoothing is done by a butterworth lowpass filter with a cutoff *
- *             frequency which is fixed with respect to the sampling rate.     *
- *             It is a substitute for the smoothing due to windowing and       *
- *             overlap/add, if a gain is applied in frequency domain.          *
- * gain_scale: pointer to scaling exponents to be applied to the signal before *
- *             limiting, without delay and without smoothing                   *
- * gain_size:  number of elements in pGain, currently restricted to 1          *
- * gain_delay: delay [samples] with which the gains in pGain shall be applied  *
- *             gain_delay <= nSamples                                          *
- * samples:    input/output buffer containing interleaved samples              *
- *             precision of output will be DFRACT_BITS-TDL_GAIN_SCALING bits   *
- * nSamples:   number of samples per channel                                   *
+ * limiter:        limiter handle                                              *
+ * samplesIn:      pointer to input buffer containing interleaved samples      *
+ * samplesOut:     pointer to output buffer containing interleaved samples     *
+ * pGainPerSample: pointer to gains for each sample                            *
+ * scaling:        scaling of output samples                                   *
+ * nSamples:       number of samples per channel                               *
  * returns:    error code                                                      *
  ******************************************************************************/
 TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
-                                 INT_PCM* samplesOut, FIXP_DBL* pGain,
-                                 const INT* gain_scale, const UINT gain_size,
-                                 const UINT gain_delay, const UINT nSamples);
+                                 INT_PCM* samplesOut, FIXP_DBL* pGainPerSample,
+                                 const INT scaling, const UINT nSamples);
 
 #endif /* #ifndef LIMITER_H */

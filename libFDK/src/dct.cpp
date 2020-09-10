@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -489,18 +489,18 @@ void dst_IV(FIXP_DBL *pDat, int L, int *pDat_e) {
     for (i = 0; i < M - 1; i += 2, pDat_0 += 2, pDat_1 -= 2) {
       FIXP_DBL accu1, accu2, accu3, accu4;
 
-      accu1 = pDat_1[1];
-      accu2 = -pDat_0[0];
-      accu3 = pDat_0[1];
-      accu4 = -pDat_1[0];
+      accu1 = pDat_1[1] >> 1;
+      accu2 = -(pDat_0[0] >> 1);
+      accu3 = pDat_0[1] >> 1;
+      accu4 = -(pDat_1[0] >> 1);
 
       cplxMultDiv2(&accu1, &accu2, accu1, accu2, twiddle[i]);
       cplxMultDiv2(&accu3, &accu4, accu4, accu3, twiddle[i + 1]);
 
-      pDat_0[0] = accu2 >> 1;
-      pDat_0[1] = accu1 >> 1;
-      pDat_1[0] = accu4 >> 1;
-      pDat_1[1] = -(accu3 >> 1);
+      pDat_0[0] = accu2;
+      pDat_0[1] = accu1;
+      pDat_1[0] = accu4;
+      pDat_1[1] = -accu3;
     }
     if (M & 1) {
       FIXP_DBL accu1, accu2;

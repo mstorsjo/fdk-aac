@@ -150,6 +150,20 @@ static INT convert_drcParam(FIXP_DBL param_dbl) {
 }
 
 /*!
+\brief Reset DRC information
+
+\self Handle of DRC info
+
+\return none
+*/
+void aacDecoder_drcReset(HANDLE_AAC_DRC self) {
+  self->applyExtGain = 0;
+  self->additionalGainPrev = AACDEC_DRC_GAIN_INIT_VALUE;
+  self->additionalGainFilterState = AACDEC_DRC_GAIN_INIT_VALUE;
+  self->additionalGainFilterState1 = AACDEC_DRC_GAIN_INIT_VALUE;
+}
+
+/*!
   \brief Initialize DRC information
 
   \self Handle of DRC info
@@ -176,7 +190,6 @@ void aacDecoder_drcInit(HANDLE_AAC_DRC self) {
   pParams->usrBoost = FL2FXCONST_DBL(0.0f);
   pParams->targetRefLevel = 96;
   pParams->expiryFrame = AACDEC_DRC_DFLT_EXPIRY_FRAMES;
-  pParams->applyDigitalNorm = ON;
   pParams->applyHeavyCompression = OFF;
   pParams->usrApplyHeavyCompression = OFF;
 
@@ -192,6 +205,8 @@ void aacDecoder_drcInit(HANDLE_AAC_DRC self) {
   self->progRefLevelPresent = 0;
   self->presMode = -1;
   self->uniDrcPrecedence = 0;
+
+  aacDecoder_drcReset(self);
 }
 
 /*!
@@ -258,11 +273,8 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam(HANDLE_AAC_DRC self,
         return AAC_DEC_INVALID_HANDLE;
       }
       if (value < 0) {
-        self->params.applyDigitalNorm = OFF;
         self->params.targetRefLevel = -1;
       } else {
-        /* ref_level must be between 0 and MAX_REFERENCE_LEVEL, inclusive */
-        self->params.applyDigitalNorm = ON;
         if (self->params.targetRefLevel != (SCHAR)value) {
           self->params.targetRefLevel = (SCHAR)value;
           self->progRefLevel = (SCHAR)value; /* Always set the program reference
@@ -272,16 +284,6 @@ AAC_DECODER_ERROR aacDecoder_drcSetParam(HANDLE_AAC_DRC self,
         }
         self->update = 1;
       }
-      break;
-    case APPLY_NORMALIZATION:
-      if ((value != OFF) && (value != ON)) {
-        return AAC_DEC_SET_PARAM_FAIL;
-      }
-      if (self == NULL) {
-        return AAC_DEC_INVALID_HANDLE;
-      }
-      /* Store new parameter value */
-      self->params.applyDigitalNorm = (UCHAR)value;
       break;
     case APPLY_HEAVY_COMPRESSION:
       if ((value != OFF) && (value != ON)) {
@@ -910,11 +912,9 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC self, void *pSbrDec,
       FDK_ASSERT(0);
     }
   }
-  if (self->params.applyDigitalNorm == OFF) {
-    /* Reset normalization gain since this module must not apply it */
-    norm_mantissa = FL2FXCONST_DBL(0.5f);
-    norm_exponent = 1;
-  }
+  /* Reset normalization gain since this module must not apply it */
+  norm_mantissa = FL2FXCONST_DBL(0.5f);
+  norm_exponent = 1;
 
   /* calc scale factors */
   for (band = 0; band < numBands; band++) {
@@ -1352,4 +1352,153 @@ void aacDecoder_drcGetInfo(HANDLE_AAC_DRC self, SCHAR *pPresMode,
       }
     }
   }
+}
+
+/**
+ * \brief  Apply DRC Level Normalization.
+ *
+ *         This function prepares/applies the gain values for the DRC Level
+ * Normalization and returns the exponent of the time data. The following two
+ * cases are handled:
+ *
+ *         - Limiter enabled:
+ *           The input data must be interleaved.
+ *           One gain per sample is written to the buffer pGainPerSample.
+ *           If necessary the time data is rescaled.
+ *
+ *         - Limiter disabled:
+ *           The input data can be interleaved or deinterleaved.
+ *           The gain values are applied to the time data.
+ *           If necessary the time data is rescaled.
+ *
+ * \param hDrcInfo                     [i/o] handle to drc data structure.
+ * \param samplesIn                    [i/o] pointer to time data.
+ * \param pGain                        [i  ] pointer to gain to be applied to
+ * the time data.
+ * \param pGainPerSample               [o  ] pointer to the gain per sample to
+ * be applied to the time data in the limiter.
+ * \param gain_scale                   [i  ] exponent to be applied to the time
+ * data.
+ * \param gain_delay                   [i  ] delay[samples] with which the gains
+ * in pGain shall be applied (gain_delay <= nSamples).
+ * \param nSamples                     [i  ] number of samples per frame.
+ * \param channels                     [i  ] number of channels.
+ * \param stride                       [i  ] channel stride of time data.
+ * \param limiterEnabled               [i  ] 1 if limiter is enabled, otherwise
+ * 0.
+ *
+ * \return exponent of time data
+ */
+INT applyDrcLevelNormalization(HANDLE_AAC_DRC hDrcInfo, PCM_DEC *samplesIn,
+                               FIXP_DBL *pGain, FIXP_DBL *pGainPerSample,
+                               const INT gain_scale, const UINT gain_delay,
+                               const UINT nSamples, const UINT channels,
+                               const UINT stride, const UINT limiterEnabled) {
+  UINT i;
+  INT additionalGain_scaling;
+  FIXP_DBL additionalGain;
+
+  FDK_ASSERT(gain_delay <= nSamples);
+
+  FIXP_DBL additionalGainSmoothState = hDrcInfo->additionalGainFilterState;
+  FIXP_DBL additionalGainSmoothState1 = hDrcInfo->additionalGainFilterState1;
+
+  if (!gain_delay) {
+    additionalGain = pGain[0];
+
+    /* Apply the additional scaling gain_scale[0] that has no delay and no
+     * smoothing */
+    additionalGain_scaling =
+        fMin(gain_scale, CntLeadingZeros(additionalGain) - 1);
+    additionalGain = scaleValue(additionalGain, additionalGain_scaling);
+
+    /* if it's not possible to fully apply gain_scale to additionalGain, apply
+     * it to the input signal */
+    additionalGain_scaling -= gain_scale;
+
+    if (additionalGain_scaling) {
+      scaleValuesSaturate(samplesIn, channels * nSamples,
+                          -additionalGain_scaling);
+    }
+
+    if (limiterEnabled) {
+      FDK_ASSERT(pGainPerSample != NULL);
+
+      for (i = 0; i < nSamples; i++) {
+        pGainPerSample[i] = additionalGain;
+      }
+    } else {
+      for (i = 0; i < channels * nSamples; i++) {
+        samplesIn[i] = FIXP_DBL2PCM_DEC(fMult(samplesIn[i], additionalGain));
+      }
+    }
+  } else {
+    UINT inc;
+    FIXP_DBL additionalGainUnfiltered;
+
+    inc = (stride == 1) ? channels : 1;
+
+    for (i = 0; i < nSamples; i++) {
+      if (i < gain_delay) {
+        additionalGainUnfiltered = hDrcInfo->additionalGainPrev;
+      } else {
+        additionalGainUnfiltered = pGain[0];
+      }
+
+      /* Smooth additionalGain */
+
+      /* [b,a] = butter(1, 0.01) */
+      static const FIXP_SGL b[] = {FL2FXCONST_SGL(0.015466 * 2.0),
+                                   FL2FXCONST_SGL(0.015466 * 2.0)};
+      static const FIXP_SGL a[] = {(FIXP_SGL)MAXVAL_SGL,
+                                   FL2FXCONST_SGL(-0.96907)};
+
+      additionalGain = -fMult(additionalGainSmoothState, a[1]) +
+                       fMultDiv2(additionalGainUnfiltered, b[0]) +
+                       fMultDiv2(additionalGainSmoothState1, b[1]);
+      additionalGainSmoothState1 = additionalGainUnfiltered;
+      additionalGainSmoothState = additionalGain;
+
+      /* Apply the additional scaling gain_scale[0] that has no delay and no
+       * smoothing */
+      additionalGain_scaling =
+          fMin(gain_scale, CntLeadingZeros(additionalGain) - 1);
+      additionalGain = scaleValue(additionalGain, additionalGain_scaling);
+
+      /* if it's not possible to fully apply gain_scale[0] to additionalGain,
+       * apply it to the input signal */
+      additionalGain_scaling -= gain_scale;
+
+      if (limiterEnabled) {
+        FDK_ASSERT(stride == 1);
+        FDK_ASSERT(pGainPerSample != NULL);
+
+        if (additionalGain_scaling) {
+          scaleValuesSaturate(samplesIn, channels, -additionalGain_scaling);
+        }
+
+        pGainPerSample[i] = additionalGain;
+      } else {
+        if (additionalGain_scaling) {
+          for (UINT k = 0; k < channels; k++) {
+            scaleValuesSaturate(&samplesIn[k * stride], 1,
+                                -additionalGain_scaling);
+          }
+        }
+
+        for (UINT k = 0; k < channels; k++) {
+          samplesIn[k * stride] =
+              FIXP_DBL2PCM_DEC(fMult(samplesIn[k * stride], additionalGain));
+        }
+      }
+
+      samplesIn += inc;
+    }
+  }
+
+  hDrcInfo->additionalGainPrev = pGain[0];
+  hDrcInfo->additionalGainFilterState = additionalGainSmoothState;
+  hDrcInfo->additionalGainFilterState1 = additionalGainSmoothState1;
+
+  return (AACDEC_DRC_GAIN_SCALING);
 }

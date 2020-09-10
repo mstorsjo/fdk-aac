@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -368,7 +368,10 @@ void FDK_Feed(HANDLE_FDK_BITBUF hBitBuf, const UCHAR *RESTRICT inputBuffer,
 
   UINT bTotal = 0;
 
-  UINT bToRead = (hBitBuf->bufBits - hBitBuf->ValidBits) >> 3;
+  UINT bToRead =
+      fMin(hBitBuf->bufBits,
+           (UINT)fMax(0, ((INT)hBitBuf->bufBits - (INT)hBitBuf->ValidBits))) >>
+      3;
   UINT noOfBytes =
       fMin(bToRead,
            *bytesValid);  //(bToRead < *bytesValid) ? bToRead : *bytesValid ;
@@ -384,7 +387,7 @@ void FDK_Feed(HANDLE_FDK_BITBUF hBitBuf, const UCHAR *RESTRICT inputBuffer,
               bToRead * sizeof(UCHAR));
 
     /* add noOfBits to number of valid bits in buffer */
-    hBitBuf->ValidBits += bToRead << 3;
+    hBitBuf->ValidBits = (UINT)((INT)hBitBuf->ValidBits + (INT)(bToRead << 3));
     bTotal += bToRead;
     inputBuffer += bToRead;
 

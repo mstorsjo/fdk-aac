@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -114,6 +114,8 @@ amm-info@iis.fraunhofer.de
 
 #include "genericStds.h"
 
+#define BITRES_MIN \
+  300 /* default threshold for using reduced/disabled bitres mode */
 #define BITRES_MAX_LD 4000
 #define BITRES_MIN_LD 500
 #define BITRATE_MAX_LD 70000 /* Max assumed bitrate for bitres calculation */
@@ -550,7 +552,8 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
         (config->minBitsPerFrame != -1) ? config->minBitsPerFrame : 0;
     qcInit.minBits = fixMin(qcInit.minBits, averageBitsPerFrame & ~7);
   } else {
-    INT bitreservoir = -1; /* default bitrservoir size*/
+    INT bitreservoir = -1; /* default bitreservoir size*/
+    bitresMin = BITRES_MIN;
     if (isLowDelay(config->audioObjectType)) {
       INT brPerChannel = config->bitRate / config->nChannels;
       brPerChannel = fMin(BITRATE_MAX_LD, fMax(BITRATE_MIN_LD, brPerChannel));
@@ -601,9 +604,9 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
   qcInit.nSubFrames = config->nSubFrames;
   qcInit.padding.paddingRest = config->sampleRate;
 
-  if (qcInit.bitRes >= bitresMin * config->nChannels) {
+  if (qcInit.maxBits - qcInit.averageBits >= bitresMin * config->nChannels) {
     qcInit.bitResMode = AACENC_BR_MODE_FULL; /* full bitreservoir */
-  } else if (qcInit.bitRes > 0) {
+  } else if (qcInit.maxBits > qcInit.averageBits) {
     qcInit.bitResMode = AACENC_BR_MODE_REDUCED; /* reduced bitreservoir */
   } else {
     qcInit.bitResMode = AACENC_BR_MODE_DISABLED; /* disabled bitreservoir */

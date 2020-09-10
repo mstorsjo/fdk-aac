@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -105,12 +105,7 @@ amm-info@iis.fraunhofer.de
 
 #define WORKBUFFER1_TAG 0
 #define WORKBUFFER2_TAG 1
-
-#define WORKBUFFER3_TAG 4
-#define WORKBUFFER4_TAG 5
-
 #define WORKBUFFER5_TAG 6
-
 #define WORKBUFFER6_TAG 7
 
 /*! The structure AAC_DECODER_INSTANCE is the top level structure holding all
@@ -169,9 +164,6 @@ C_ALLOC_MEM2(TimeDataFlush, INT_PCM, TIME_DATA_FLUSH_SIZE, (8))
 C_ALLOC_MEM_OVERLAY(WorkBufferCore2, FIXP_DBL, ((8) * 1024), SECT_DATA_L2,
                     WORKBUFFER2_TAG)
 
-C_ALLOC_MEM_OVERLAY(WorkBufferCore3, FIXP_DBL, WB_SECTION_SIZE, SECT_DATA_L2,
-                    WORKBUFFER3_TAG)
-C_AALLOC_MEM(WorkBufferCore4, FIXP_DBL, WB_SECTION_SIZE)
 C_ALLOC_MEM_OVERLAY(WorkBufferCore6, SCHAR,
                     fMax((INT)(sizeof(FIXP_DBL) * WB_SECTION_SIZE),
                          (INT)sizeof(CAacDecoderCommonData)),

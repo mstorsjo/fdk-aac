@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -104,7 +104,7 @@ amm-info@iis.fraunhofer.de
 
 /* FDK tools library info */
 #define FDK_TOOLS_LIB_VL0 3
-#define FDK_TOOLS_LIB_VL1 0
+#define FDK_TOOLS_LIB_VL1 1
 #define FDK_TOOLS_LIB_VL2 0
 #define FDK_TOOLS_LIB_TITLE "FDK Tools"
 #ifdef SUPPRESS_BUILD_DATE_INFO
