@@ -118,7 +118,8 @@ void Codec::decodeFrames(UCHAR *data, UINT size) {
       INT_PCM outputBuf[kMaxOutBufferSize];
       do {
         mErrorCode =
-            aacDecoder_DecodeFrame(mAacDecoderHandle, outputBuf, sizeof(outputBuf), 0);
+            aacDecoder_DecodeFrame(mAacDecoderHandle, outputBuf,
+                    kMaxOutBufferSize /*size in number of INT_PCM, not bytes*/, 0);
       } while (mErrorCode == AAC_DEC_OK);
       UINT offset = inputSize - valid;
       data += offset;
