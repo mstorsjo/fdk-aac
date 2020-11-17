@@ -153,8 +153,10 @@ static int getCrc(HANDLE_FDK_BITSTREAM hBs, ULONG NrBits) {
     calcCRC(&CrcBuf, bValue, MAXCRCSTEP);
   }
 
-  bValue = FDKreadBits(hBs, CrcNrBitsRest);
-  calcCRC(&CrcBuf, bValue, CrcNrBitsRest);
+  if (CrcNrBitsRest > 0) {
+    bValue = FDKreadBits(hBs, CrcNrBitsRest);
+    calcCRC(&CrcBuf, bValue, CrcNrBitsRest);
+  }
 
   return (CrcBuf.crcState & SBR_CRC_RANGE);
 }
