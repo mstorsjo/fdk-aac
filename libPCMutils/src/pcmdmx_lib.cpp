@@ -583,9 +583,6 @@ static PCMDMX_ERROR getChannelMode(
         (channelType[ch] & 0x0F) - 1,
         0); /* Assign all undefined channels (ACT_NONE) to front channels. */
 
-    if (channelIndices[ch] >= numCh[channelType[ch] >> 4][chGrp])
-      return PCMDMX_INVALID_CH_CONFIG;
-
     spkrPos[ch] = getSpeakerPos(channelType[ch], channelIndices[ch],
                                 numCh[channelType[ch] >> 4][chGrp]);
 
