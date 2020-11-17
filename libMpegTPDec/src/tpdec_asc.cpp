@@ -1549,7 +1549,8 @@ static TRANSPORTDEC_ERROR extElementConfig(CSUsacExtElementConfig *extElement,
                                            const AUDIO_OBJECT_TYPE aot) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
 
-  int usacExtElementType = escapedValue(hBs, 4, 8, 16);
+  USAC_EXT_ELEMENT_TYPE usacExtElementType =
+      (USAC_EXT_ELEMENT_TYPE)escapedValue(hBs, 4, 8, 16);
 
   /* recurve extension elements which are invalid for USAC */
   if (aot == AOT_USAC) {
@@ -1566,7 +1567,7 @@ static TRANSPORTDEC_ERROR extElementConfig(CSUsacExtElementConfig *extElement,
     }
   }
 
-  extElement->usacExtElementType = (USAC_EXT_ELEMENT_TYPE) usacExtElementType;
+  extElement->usacExtElementType = usacExtElementType;
   int usacExtElementConfigLength = escapedValue(hBs, 4, 8, 16);
   extElement->usacExtElementConfigLength = (USHORT)usacExtElementConfigLength;
   INT bsAnchor;
