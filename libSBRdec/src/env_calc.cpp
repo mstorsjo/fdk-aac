@@ -1477,8 +1477,10 @@ void calculateSbrEnvelope(
 
       for (k = 0; k < noSubbands; k++) {
         int sc = scale_change - pNrgs->nrgGain_e[k] + (sc_change - 1);
-        pNrgs->nrgGain[k] >>= sc;
         pNrgs->nrgGain_e[k] += sc;
+        if (sc > 31)
+          sc = 31;
+        pNrgs->nrgGain[k] >>= sc;
       }
 
       if (!useLP) {
