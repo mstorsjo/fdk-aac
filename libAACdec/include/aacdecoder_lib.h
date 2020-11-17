@@ -431,6 +431,10 @@ Where N equals to CStreamInfo::frameSize .
 #include "machine_type.h"
 #include "FDK_audio.h"
 
+#define AACDECODER_LIB_VL0 3
+#define AACDECODER_LIB_VL1 2
+#define AACDECODER_LIB_VL2 0
+
 #include "genericStds.h"
 /**
  * \brief  AAC decoder error codes.
