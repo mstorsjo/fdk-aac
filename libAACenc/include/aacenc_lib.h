@@ -1007,7 +1007,7 @@ internally.
 
 #define AACENCODER_LIB_VL0 4
 #define AACENCODER_LIB_VL1 0
-#define AACENCODER_LIB_VL2 0
+#define AACENCODER_LIB_VL2 1
 
 /**
  *  AAC encoder error codes.
