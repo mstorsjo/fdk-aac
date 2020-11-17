@@ -210,7 +210,6 @@ SBRDEC_SRC = \
     libSBRdec/src/psdec_drm.cpp \
     libSBRdec/src/psdecrom_drm.cpp \
     libSBRdec/src/pvc_dec.cpp \
-    libSBRdec/src/sbr_crc.cpp \
     libSBRdec/src/sbr_deb.cpp \
     libSBRdec/src/sbr_dec.cpp \
     libSBRdec/src/sbr_ram.cpp \
