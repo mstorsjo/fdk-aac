@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -170,6 +170,9 @@ struct SBR_DECODER_INSTANCE {
                        flushed consecutively. */
 
   UINT flags;
+
+  INT sbrInDataHeadroom; /* Headroom of the SBR input time signal to prevent
+                            clipping */
 };
 
 H_ALLOC_MEM(Ram_SbrDecElement, SBR_DECODER_ELEMENT)

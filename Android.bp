@@ -1,6 +1,7 @@
 cc_library_static {
     name: "libFraunhoferAAC",
     vendor_available: true,
+    host_supported: true,
     srcs: [
         "libAACdec/src/*.cpp",
         "libAACenc/src/*.cpp",
@@ -23,12 +24,13 @@ cc_library_static {
         "-Wuninitialized",
         "-Wno-self-assign",
         "-Wno-implicit-fallthrough",
+        "-DSUPPRESS_BUILD_DATE_INFO",
     ],
     sanitize: {
-        misc_undefined:[
-           "unsigned-integer-overflow",
-           "signed-integer-overflow",
-           "bounds",
+        misc_undefined: [
+            "unsigned-integer-overflow",
+            "signed-integer-overflow",
+            "bounds",
         ],
         // Enable CFI if this becomes a shared library.
         // cfi: true,
@@ -51,4 +53,17 @@ cc_library_static {
         "libSACdec/include",
         "libSACenc/include",
     ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.bluetooth.updatable",
+        "com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
 }

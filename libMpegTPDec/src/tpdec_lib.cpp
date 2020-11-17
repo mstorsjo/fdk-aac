@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -482,7 +482,8 @@ TRANSPORTDEC_ERROR transportDec_InBandConfig(HANDLE_TRANSPORTDEC hTp,
 
         for (int i = 0; i < 2; i++) {
           if (i > 0) {
-            FDKpushBack(hBs, newConfigLength * 8 - FDKgetValidBits(hBs));
+            FDKpushBack(hBs,
+                        (INT)newConfigLength * 8 - (INT)FDKgetValidBits(hBs));
             configMode = AC_CM_ALLOC_MEM;
           }
           /* config transport decoder */
@@ -663,10 +664,14 @@ TRANSPORTDEC_ERROR transportDec_FillData(const HANDLE_TRANSPORTDEC hTp,
     if (*pBytesValid == 0) {
       /* nothing to do */
       return TRANSPORTDEC_OK;
-    }
-
-    if (hTp->numberOfRawDataBlocks <= 0) {
+    } else {
+      const int bytesValid = *pBytesValid;
       FDKfeedBuffer(hBs, pBuffer, bufferSize, pBytesValid);
+
+      if (hTp->numberOfRawDataBlocks > 0) {
+        hTp->globalFramePos += (bytesValid - *pBytesValid) * 8;
+        hTp->accessUnitAnchor[layer] = FDKgetValidBits(hBs);
+      }
     }
   }
 
@@ -924,6 +929,11 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
               }
             }
           }
+          /* if an error is detected terminate config parsing to avoid that an
+           * invalid config is accepted in the second pass */
+          if (err != TRANSPORTDEC_OK) {
+            break;
+          }
         }
       } else {
         /* Reset CRC because the next bits are the beginning of a
@@ -976,6 +986,9 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
               CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
           if (hTp->transportFmt == TT_MP4_LOAS) {
             syncLayerFrameBits -= startPos - (INT)FDKgetValidBits(hBs) - (13);
+            if (syncLayerFrameBits <= 0) {
+              err = TRANSPORTDEC_SYNC_ERROR;
+            }
           }
         }
       } else {
@@ -1151,6 +1164,11 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
                                     &rawDataBlockLength, &fTraverseMoreFrames,
                                     &syncLayerFrameBits, &fConfigFound,
                                     &headerBits);
+      if (headerBits > bitsAvail) {
+        err = (headerBits < (INT)hBs->hBitBuf.bufBits)
+                  ? TRANSPORTDEC_NOT_ENOUGH_BITS
+                  : TRANSPORTDEC_SYNC_ERROR;
+      }
       if (TPDEC_IS_FATAL_ERROR(err)) {
         /* Rewind - TPDEC_SYNCSKIP, in order to look for a synch one bit ahead
          * next time. Ensure that the bit amount lands at a multiple of
@@ -1181,8 +1199,6 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
     }
 
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
-      /* Enforce reading of new data */
-      hTp->numberOfRawDataBlocks = 0;
       break;
     }
 
@@ -1263,8 +1279,9 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
   if (!(hTp->flags & (TPDEC_LOST_FRAMES_PENDING | TPDEC_IGNORE_BUFFERFULLNESS |
                       TPDEC_SYNCOK)) &&
       err == TRANSPORTDEC_OK) {
-    err = additionalHoldOffNeeded(hTp, transportDec_GetBufferFullness(hTp),
-                                  FDKgetValidBits(hBs) - syncLayerFrameBits);
+    err =
+        additionalHoldOffNeeded(hTp, transportDec_GetBufferFullness(hTp),
+                                (INT)FDKgetValidBits(hBs) - syncLayerFrameBits);
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
       hTp->holdOffFrames++;
     }
@@ -1273,7 +1290,9 @@ static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp,
   /* Rewind for retry because of not enough bits */
   if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
     FDKpushBack(hBs, headerBits);
+    hTp->numberOfRawDataBlocks = numRawDataBlocksPrevious;
     headerBits = 0;
+    rawDataBlockLength = rawDataBlockLengthPrevious;
   } else {
     /* reset hold off frame counter */
     hTp->holdOffFrames = 0;
@@ -1460,7 +1479,7 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit(const HANDLE_TRANSPORTDEC hTp,
 
         for (i = 0; i < 2; i++) {
           if (i > 0) {
-            FDKpushBack(hBs, bsStart - FDKgetValidBits(hBs));
+            FDKpushBack(hBs, bsStart - (INT)FDKgetValidBits(hBs));
             configMode = AC_CM_ALLOC_MEM;
           }
 
@@ -1750,7 +1769,7 @@ TRANSPORTDEC_ERROR transportDec_GetLibInfo(LIB_INFO *info) {
   info += i;
 
   info->module_id = FDK_TPDEC;
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
   info->build_date = "";
   info->build_time = "";
 #else

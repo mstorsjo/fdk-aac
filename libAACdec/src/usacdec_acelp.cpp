@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -131,7 +131,7 @@ void E_UTIL_preemph(const FIXP_DBL *in, FIXP_DBL *out, INT L) {
   int i;
 
   for (i = 0; i < L; i++) {
-    out[i] = in[i] - fMult(PREEMPH_FAC, in[i - 1]);
+    out[i] = fAddSaturate(in[i], -fMult(PREEMPH_FAC, in[i - 1]));
   }
 
   return;
@@ -465,7 +465,9 @@ void BuildAdaptiveExcitation(
 /* Note: code[L_SUBFR] and exc2[L_SUBFR] share the same memory!
          If exc2[i] is written, code[i] will be destroyed!
 */
-#define SF (SF_CODE + SF_GAIN_C + 1 - SF_EXC)
+#define SF_HEADROOM (1)
+#define SF (SF_CODE + SF_GAIN_C + 1 - SF_EXC - SF_HEADROOM)
+#define SF_GAIN_P2 (SF_GAIN_P - SF_HEADROOM)
 
   int i;
   FIXP_DBL tmp, cpe, code_smooth_prev, code_smooth;
@@ -477,8 +479,8 @@ void BuildAdaptiveExcitation(
   cpe = (period_fac >> (2 - SF_PFAC)) + FL2FXCONST_DBL(0.25f);
 
   /* u'(n) */
-  tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P + 1); /* v(0)*g_p */
-  *exc++ = tmp + (fMultDiv2(code[0], gain_code) << SF);
+  tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P2 + 1); /* v(0)*g_p */
+  *exc++ = (tmp + (fMultDiv2(code[0], gain_code) << SF)) << SF_HEADROOM;
 
   /* u(n) */
   code_smooth_prev = fMultDiv2(*code++, gain_code_smoothed)
@@ -487,15 +489,15 @@ void BuildAdaptiveExcitation(
   code_smooth = fMultDiv2(code_i, gain_code_smoothed) << SF; /* c(1) * g_sc */
   tmp += code_smooth_prev; /* tmp = v(0)*g_p + c(0)*g_sc */
   cpe_code_smooth = fMultDiv2(cpe, code_smooth);
-  *exc2++ = tmp - cpe_code_smooth;
+  *exc2++ = (tmp - cpe_code_smooth) << SF_HEADROOM;
   cpe_code_smooth_prev = fMultDiv2(cpe, code_smooth_prev);
 
   i = L_SUBFR - 2;
   do /* ARM926: 22 cycles per iteration */
   {
     /* u'(n) */
-    tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P + 1);
-    *exc++ = tmp + (fMultDiv2(code_i, gain_code) << SF);
+    tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P2 + 1);
+    *exc++ = (tmp + (fMultDiv2(code_i, gain_code) << SF)) << SF_HEADROOM;
     /* u(n) */
     tmp += code_smooth; /* += g_sc * c(i) */
     tmp -= cpe_code_smooth_prev;
@@ -503,16 +505,17 @@ void BuildAdaptiveExcitation(
     code_i = *code++;
     code_smooth = fMultDiv2(code_i, gain_code_smoothed) << SF;
     cpe_code_smooth = fMultDiv2(cpe, code_smooth);
-    *exc2++ = tmp - cpe_code_smooth; /* tmp - c_pe * g_sc * c(i+1) */
+    *exc2++ = (tmp - cpe_code_smooth)
+              << SF_HEADROOM; /* tmp - c_pe * g_sc * c(i+1) */
   } while (--i != 0);
 
   /* u'(n) */
-  tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P + 1);
-  *exc = tmp + (fMultDiv2(code_i, gain_code) << SF);
+  tmp = fMultDiv2(*exc, gain_pit) << (SF_GAIN_P2 + 1);
+  *exc = (tmp + (fMultDiv2(code_i, gain_code) << SF)) << SF_HEADROOM;
   /* u(n) */
   tmp += code_smooth;
   tmp -= cpe_code_smooth_prev;
-  *exc2++ = tmp;
+  *exc2++ = tmp << SF_HEADROOM;
 
   return;
 }

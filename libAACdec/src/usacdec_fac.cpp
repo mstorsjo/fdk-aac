@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -344,7 +344,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       /* Overlap Add */
       x0 = -fMult(*pOvl--, pWindow[i].v.re);
 
-      *pOut0 += IMDCT_SCALE_DBL(x0);
+      *pOut0 = fAddSaturate(*pOut0, IMDCT_SCALE_DBL(x0));
       pOut0++;
     }
   } else {
@@ -354,7 +354,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       /* Overlap Add */
       x0 = fMult(*pOvl--, pWindow[i].v.re);
 
-      *pOut0 += IMDCT_SCALE_DBL(x0);
+      *pOut0 = fAddSaturate(*pOut0, IMDCT_SCALE_DBL(x0));
       pOut0++;
     }
   }
@@ -362,7 +362,7 @@ INT CLpd_FAC_Mdct2Acelp(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *pFac,
       0) { /* this should only happen for ACELP -> TCX20 -> ACELP transition */
     FIXP_DBL *pOut = pOut0 - fl / 2; /* fl/2 == fac_length */
     for (i = 0; i < fl / 2; i++) {
-      pOut[i] += IMDCT_SCALE_DBL(hMdct->pFacZir[i]);
+      pOut[i] = fAddSaturate(pOut[i], IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
     }
     hMdct->pFacZir = NULL;
   }
@@ -493,9 +493,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
           /* Div2 is compensated by table scaling */
           x = fMultDiv2(pTmp2[i], FacWindowZir[w]);
           x += fMultDiv2(pTmp1[-i - 1], FacWindowSynth[w]);
-          x += pFAC_and_FAC_ZIR[i];
-          pOut1[i] = x;
-
+          pOut1[i] = fAddSaturate(x, pFAC_and_FAC_ZIR[i]);
           w++;
         }
       }
@@ -552,7 +550,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
     FDK_ASSERT((pOut1 >= hMdct->overlap.time &&
                 pOut1 < hMdct->overlap.time + hMdct->ov_size) ||
                (pOut1 >= output && pOut1 < output + 1024));
-    *pOut1 += IMDCT_SCALE_DBL(-x1);
+    *pOut1 = fAddSaturate(*pOut1, IMDCT_SCALE_DBL(-x1));
     pOut1--;
   }
 
@@ -578,7 +576,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
     FIXP_DBL x = -(*pCurr--);
     /* 5) (item 4) Synthesis filter Zir component, FAC ZIR (another one). */
     if (i < f_len) {
-      x += *pF++;
+      x = fAddSaturate(x, *pF++);
     }
 
     FDK_ASSERT((pOut1 >= hMdct->overlap.time &&
@@ -668,9 +666,9 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
       for (i = 0; i < fl / 2; i++) {
         FIXP_DBL x0, x1;
 
-        cplxMult(&x1, &x0, *pCurr++, -*pOvl--, pWindow_prev[i]);
-        *pOut0 = IMDCT_SCALE_DBL(x0);
-        *pOut1 = IMDCT_SCALE_DBL(-x1);
+        cplxMultDiv2(&x1, &x0, *pCurr++, -*pOvl--, pWindow_prev[i]);
+        *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+        *pOut1 = IMDCT_SCALE_DBL_LSH1(-x1);
         pOut0++;
         pOut1--;
       }
@@ -680,9 +678,9 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
         for (i = 0; i < fl / 2; i++) {
           FIXP_DBL x0, x1;
 
-          cplxMult(&x1, &x0, *pCurr++, -*pOvl--, pWindow_prev[i]);
-          *pOut0 = IMDCT_SCALE_DBL(x0);
-          *pOut1 = IMDCT_SCALE_DBL(x1);
+          cplxMultDiv2(&x1, &x0, *pCurr++, -*pOvl--, pWindow_prev[i]);
+          *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+          *pOut1 = IMDCT_SCALE_DBL_LSH1(x1);
           pOut0++;
           pOut1--;
         }
@@ -691,9 +689,9 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
         for (i = 0; i < fl / 2; i++) {
           FIXP_DBL x0, x1;
 
-          cplxMult(&x1, &x0, *pCurr++, *pOvl--, pWindow_prev[i]);
-          *pOut0 = IMDCT_SCALE_DBL(x0);
-          *pOut1 = IMDCT_SCALE_DBL(x1);
+          cplxMultDiv2(&x1, &x0, *pCurr++, *pOvl--, pWindow_prev[i]);
+          *pOut0 = IMDCT_SCALE_DBL_LSH1(x0);
+          *pOut1 = IMDCT_SCALE_DBL_LSH1(x1);
           pOut0++;
           pOut1--;
         }
@@ -705,7 +703,7 @@ INT CLpd_FAC_Acelp2Mdct(H_MDCT hMdct, FIXP_DBL *output, FIXP_DBL *_pSpec,
       FIXP_DBL *pOut = pOut0 - fl / 2;
       FDK_ASSERT(fl / 2 <= 128);
       for (i = 0; i < fl / 2; i++) {
-        pOut[i] += IMDCT_SCALE_DBL(hMdct->pFacZir[i]);
+        pOut[i] = fAddSaturate(pOut[i], IMDCT_SCALE_DBL(hMdct->pFacZir[i]));
       }
       hMdct->pFacZir = NULL;
     }

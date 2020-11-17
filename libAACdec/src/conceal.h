@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -147,6 +147,6 @@ int CConcealment_GetLastFrameOk(CConcealmentInfo *hConcealmentInfo,
 
 INT CConcealment_TDFading(
     int len, CAacDecoderStaticChannelInfo **ppAacDecoderStaticChannelInfo,
-    FIXP_PCM *pcmdata, FIXP_PCM *pcmdata_1);
+    const INT aacOutDataHeadroom, PCM_DEC *pcmdata, PCM_DEC *pcmdata_1);
 
 #endif /* #ifndef CONCEAL_H */

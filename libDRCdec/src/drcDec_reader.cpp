@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -199,11 +199,8 @@ drcDec_readUniDrc(HANDLE_FDK_BITSTREAM hBs, HANDLE_UNI_DRC_CONFIG hUniDrcConfig,
     }
   }
 
-  if (hUniDrcGain != NULL) {
-    err = drcDec_readUniDrcGain(hBs, hUniDrcConfig, frameSize, deltaTminDefault,
-                                hUniDrcGain);
-    if (err) return err;
-  }
+  err = drcDec_readUniDrcGain(hBs, hUniDrcConfig, frameSize, deltaTminDefault,
+                              hUniDrcGain);
 
   return err;
 }
@@ -487,10 +484,13 @@ drcDec_readUniDrcGain(HANDLE_FDK_BITSTREAM hBs,
   int seq, gainSequenceCount;
   DRC_COEFFICIENTS_UNI_DRC* pCoef =
       selectDrcCoefficients(hUniDrcConfig, LOCATION_SELECTED);
-  if (pCoef == NULL) return DE_OK;
-  if (hUniDrcGain == NULL) return DE_OK; /* hUniDrcGain not initialized yet */
-
-  gainSequenceCount = fMin(pCoef->gainSequenceCount, (UCHAR)12);
+  if (hUniDrcGain == NULL) return DE_NOT_OK;
+  hUniDrcGain->status = 0;
+  if (pCoef) {
+    gainSequenceCount = fMin(pCoef->gainSequenceCount, (UCHAR)12);
+  } else {
+    gainSequenceCount = 0;
+  }
 
   for (seq = 0; seq < gainSequenceCount; seq++) {
     UCHAR index = pCoef->gainSetIndexForGainSequence[seq];
@@ -518,6 +518,9 @@ drcDec_readUniDrcGain(HANDLE_FDK_BITSTREAM hBs,
     if (err) return err;
   }
 
+  if (err == DE_OK && gainSequenceCount > 0) {
+    hUniDrcGain->status = 1;
+  }
   return err;
 }
 
@@ -1018,6 +1021,7 @@ static DRC_ERROR _skipEqInstructions(HANDLE_FDK_BITSTREAM hBs,
   int additionalDrcSetIdPresent, additionalDrcSetIdCount;
   int dependsOnEqSetPresent, eqChannelGroupCount, tdFilterCascadePresent,
       subbandGainsPresent, eqTransitionDurationPresent;
+  UCHAR eqChannelGroupForChannel[8];
 
   FDKpushFor(hBs, 6); /* eqSetId */
   FDKpushFor(hBs, 4); /* eqSetComplexityLevel */
@@ -1067,7 +1071,6 @@ static DRC_ERROR _skipEqInstructions(HANDLE_FDK_BITSTREAM hBs,
 
   eqChannelGroupCount = 0;
   for (c = 0; c < channelCount; c++) {
-    UCHAR eqChannelGroupForChannel[8];
     int newGroup = 1;
     if (c >= 8) return DE_MEMORY_ERROR;
     eqChannelGroupForChannel[c] = FDKreadBits(hBs, 7);

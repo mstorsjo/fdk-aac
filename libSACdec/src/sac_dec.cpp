@@ -766,7 +766,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
 
     /* output scaling */
     for (nCh = 0; nCh < self->numOutputChannelsAT; nCh++) {
-      int outputScale = 0, outputGain_e = 0, scale = 0;
+      int outputScale = 0, outputGain_e = 0, scale = -(8) + (1);
       FIXP_DBL outputGain_m = getChGain(self, nCh, &outputGain_e);
 
       if (!isTwoChMode(self->upmixType) && !bypassMode) {
@@ -775,7 +775,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
                                              synthesis qmf */
       }
 
-      scale = outputScale;
+      scale += outputScale;
 
       qmfChangeOutScalefactor(&self->pQmfDomain->QmfDomainOut[nCh].fb, scale);
       qmfChangeOutGain(&self->pQmfDomain->QmfDomainOut[nCh].fb, outputGain_m,
@@ -1223,18 +1223,24 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
               !(self->stereoConfigIndex == 3)) {
             for (i = 0; i < self->qmfBands; i++) {
               self_qmfResidualReal__FDK_0_0[i] =
-                  fMult(self_qmfResidualReal__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
               self_qmfResidualImag__FDK_0_0[i] =
-                  fMult(self_qmfResidualImag__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
             }
           } else {
             for (i = 0; i < self->qmfBands; i++) {
-              self_qmfResidualReal__FDK_0_0[i] = fMult(
-                  self_qmfResidualReal__FDK_0_0[i], self->clipProtectGain__FDK);
-              self_qmfResidualImag__FDK_0_0[i] = fMult(
-                  self_qmfResidualImag__FDK_0_0[i], self->clipProtectGain__FDK);
+              self_qmfResidualReal__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
+              self_qmfResidualImag__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
             }
           }
         }
@@ -1317,10 +1323,12 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
       if ((self->tempShapeConfig == 1) && (!isTwoChMode(self->upmixType))) {
         for (ch = 0; ch < self->numOutputChannels; ch++) {
           for (hyb = 0; hyb < self->tp_hybBandBorder; hyb++) {
-            self->hybOutputRealDry__FDK[ch][hyb] +=
-                self->hybOutputRealWet__FDK[ch][hyb];
-            self->hybOutputImagDry__FDK[ch][hyb] +=
-                self->hybOutputImagWet__FDK[ch][hyb];
+            self->hybOutputRealDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputRealDry__FDK[ch][hyb],
+                             self->hybOutputRealWet__FDK[ch][hyb]);
+            self->hybOutputImagDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputImagDry__FDK[ch][hyb],
+                             self->hybOutputImagWet__FDK[ch][hyb]);
           } /* loop hyb */
         }   /* loop ch */
         err = subbandTPApply(
@@ -1341,11 +1349,11 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
             FIXP_DBL *RESTRICT pRealWet = self->hybOutputRealWet__FDK[ch];
             FIXP_DBL *RESTRICT pImagWet = self->hybOutputImagWet__FDK[ch];
             for (hyb = 0; hyb < nHybBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
-              pImagDry[hyb] += pImagWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
+              pImagDry[hyb] = fAddSaturate(pImagDry[hyb], pImagWet[hyb]);
             } /* loop hyb */
             for (; hyb < self->hybridBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
             } /* loop hyb */
           }   /* loop ch */
         } /* ( self->tempShapeConfig == 1 ) || ( self->tempShapeConfig == 2 ) */
@@ -1414,6 +1422,7 @@ SACDEC_ERROR SpatialDecApplyFrame(
   FDK_ASSERT(self != NULL);
   FDK_ASSERT(pControlFlags != NULL);
   FDK_ASSERT(pcmOutBuf != NULL);
+  FDK_ASSERT(self->sacInDataHeadroom >= (1));
 
   self->errInt = err; /* Init internal error */
 

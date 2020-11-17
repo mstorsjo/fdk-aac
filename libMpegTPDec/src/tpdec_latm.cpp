@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -367,10 +367,10 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
           }
           if (pLatmDemux->m_AudioMuxVersion == 1) {
             FDK_BITSTREAM tmpBs;
-            UINT ascLen = 0;
+            INT ascLen = 0;
             ascLen = CLatmDemux_GetValue(bs);
             /* The ascLen could be wrong, so check if validBits<=bufBits*/
-            if (ascLen > FDKgetValidBits(bs)) {
+            if (ascLen < 0 || ascLen > (INT)FDKgetValidBits(bs)) {
               ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
               goto bail;
             }

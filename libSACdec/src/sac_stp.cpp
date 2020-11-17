@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -106,6 +106,8 @@ amm-info@iis.fraunhofer.de
 #include "FDK_matrixCalloc.h"
 #include "sac_rom.h"
 
+#define SF_FREQ_DOMAIN_HEADROOM (2 * (1))
+
 #define BP_GF_START 6
 #define BP_GF_SIZE 25
 #define HP_SIZE 9
@@ -114,6 +116,16 @@ amm-info@iis.fraunhofer.de
 #define SF_WET 5
 #define SF_DRY \
   3 /* SF_DRY == 2 would produce good conformance test results as well */
+#define SF_DRY_NRG                                                           \
+  (4 - 1) /* 8.495f = sum(BP_GF__FDK[i])                                     \
+             i=0,..,(sizeof(BP_GF__FDK)/sizeof(FIXP_CFG)-1) => energy        \
+             calculation needs 4 bits headroom, headroom can be reduced by 1 \
+             bit due to fPow2Div2() usage */
+#define SF_WET_NRG                                                           \
+  (4 - 1) /* 8.495f = sum(BP_GF__FDK[i])                                     \
+             i=0,..,(sizeof(BP_GF__FDK)/sizeof(FIXP_CFG)-1) => energy        \
+             calculation needs 4 bits headroom, headroom can be reduced by 1 \
+             bit due to fPow2Div2() usage */
 #define SF_PRODUCT_BP_GF 13
 #define SF_PRODUCT_BP_GF_GF 26
 #define SF_SCALE 2
@@ -172,18 +184,6 @@ amm-info@iis.fraunhofer.de
        STP_SCALE_LIMIT_LO_LD64 = LD64(STP_SCALE_LIMIT_LO*STP_SCALE_LIMIT_LO)
 */
 
-#define DRY_ENER_WEIGHT(DryEner) DryEner = DryEner >> dry_scale_dmx
-
-#define WET_ENER_WEIGHT(WetEner) WetEner = WetEner << wet_scale_dmx
-
-#define DRY_ENER_SUM_REAL(DryEner, dmxReal, n) \
-  DryEner +=                                   \
-      fMultDiv2(fPow2Div2(dmxReal << SF_DRY), pBP[n]) >> ((2 * SF_DRY) - 2)
-
-#define DRY_ENER_SUM_CPLX(DryEner, dmxReal, dmxImag, n) \
-  DryEner += fMultDiv2(                                 \
-      fPow2Div2(dmxReal << SF_DRY) + fPow2Div2(dmxImag << SF_DRY), pBP[n])
-
 #define CALC_WET_SCALE(dryIdx, wetIdx)                                         \
   if ((DryEnerLD64[dryIdx] - STP_SCALE_LIMIT_HI_LD64) > WetEnerLD64[wetIdx]) { \
     scale[wetIdx] = STP_SCALE_LIMIT_HI;                                        \
@@ -206,29 +206,6 @@ struct STP_DEC {
   int update_old_ener;
 };
 
-inline void combineSignalReal(FIXP_DBL *hybOutputRealDry,
-                              FIXP_DBL *hybOutputRealWet, int bands) {
-  int n;
-
-  for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry = *hybOutputRealDry + *hybOutputRealWet;
-    hybOutputRealDry++, hybOutputRealWet++;
-  }
-}
-
-inline void combineSignalRealScale1(FIXP_DBL *hybOutputRealDry,
-                                    FIXP_DBL *hybOutputRealWet, FIXP_DBL scaleX,
-                                    int bands) {
-  int n;
-
-  for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry =
-        *hybOutputRealDry +
-        (fMultDiv2(*hybOutputRealWet, scaleX) << (SF_SCALE + 1));
-    hybOutputRealDry++, hybOutputRealWet++;
-  }
-}
-
 inline void combineSignalCplx(FIXP_DBL *hybOutputRealDry,
                               FIXP_DBL *hybOutputImagDry,
                               FIXP_DBL *hybOutputRealWet,
@@ -236,8 +213,8 @@ inline void combineSignalCplx(FIXP_DBL *hybOutputRealDry,
   int n;
 
   for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry = *hybOutputRealDry + *hybOutputRealWet;
-    *hybOutputImagDry = *hybOutputImagDry + *hybOutputImagWet;
+    *hybOutputRealDry = fAddSaturate(*hybOutputRealDry, *hybOutputRealWet);
+    *hybOutputImagDry = fAddSaturate(*hybOutputImagDry, *hybOutputImagWet);
     hybOutputRealDry++, hybOutputRealWet++;
     hybOutputImagDry++, hybOutputImagWet++;
   }
@@ -253,12 +230,14 @@ inline void combineSignalCplxScale1(FIXP_DBL *hybOutputRealDry,
   FIXP_DBL scaleY;
   for (n = bands - 1; n >= 0; n--) {
     scaleY = fMultDiv2(scaleX, *pBP);
-    *hybOutputRealDry =
-        *hybOutputRealDry +
-        (fMultDiv2(*hybOutputRealWet, scaleY) << (SF_SCALE + 2));
-    *hybOutputImagDry =
-        *hybOutputImagDry +
-        (fMultDiv2(*hybOutputImagWet, scaleY) << (SF_SCALE + 2));
+    *hybOutputRealDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputRealDry >> 1) +
+            (fMultDiv2(*hybOutputRealWet, scaleY) << (SF_SCALE + 1)),
+        1, DFRACT_BITS);
+    *hybOutputImagDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputImagDry >> 1) +
+            (fMultDiv2(*hybOutputImagWet, scaleY) << (SF_SCALE + 1)),
+        1, DFRACT_BITS);
     hybOutputRealDry++, hybOutputRealWet++;
     hybOutputImagDry++, hybOutputImagWet++;
     pBP++;
@@ -305,12 +284,10 @@ SACDEC_ERROR subbandTPInit(HANDLE_STP_DEC self) {
 
   for (ch = 0; ch < MAX_OUTPUT_CHANNELS; ch++) {
     self->prev_tp_scale[ch] = FL2FXCONST_DBL(1.0f / (1 << SF_SCALE));
-    self->oldWetEnerLD64[ch] =
-        FL2FXCONST_DBL(0.34375f); /* 32768.0*32768.0/2^(44-26-10) */
+    self->oldWetEnerLD64[ch] = FL2FXCONST_DBL(0.0);
   }
   for (ch = 0; ch < MAX_INPUT_CHANNELS; ch++) {
-    self->oldDryEnerLD64[ch] =
-        FL2FXCONST_DBL(0.1875f); /* 32768.0*32768.0/2^(44-26) */
+    self->oldDryEnerLD64[ch] = FL2FXCONST_DBL(0.0);
   }
 
   self->BP = BP__FDK;
@@ -364,7 +341,12 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
   {
     cplxBands = BP_GF_SIZE;
     cplxHybBands = self->hybridBands;
-    dry_scale_dmx = (2 * SF_DRY) - 2;
+    if (self->treeConfig == TREE_212) {
+      dry_scale_dmx = 2; /* 2 bits to compensate fMultDiv2() and fPow2Div2()
+                            used in energy calculation */
+    } else {
+      dry_scale_dmx = (2 * SF_DRY) - 2;
+    }
     wet_scale_dmx = 2;
   }
 
@@ -390,8 +372,12 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
           CalcLdData(hStpDec->runDryEner[ch] + ABS_THR__FDK);
     }
     for (ch = 0; ch < self->numOutputChannels; ch++) {
-      hStpDec->oldWetEnerLD64[ch] =
-          CalcLdData(hStpDec->runWetEner[ch] + ABS_THR2__FDK);
+      if (self->treeConfig == TREE_212)
+        hStpDec->oldWetEnerLD64[ch] =
+            CalcLdData(hStpDec->runWetEner[ch] + ABS_THR__FDK);
+      else
+        hStpDec->oldWetEnerLD64[ch] =
+            CalcLdData(hStpDec->runWetEner[ch] + ABS_THR2__FDK);
     }
   } else {
     hStpDec->update_old_ener++;
@@ -411,12 +397,33 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
   pBP = hStpDec->BP_GF - BP_GF_START;
   switch (self->treeConfig) {
     case TREE_212:
+      INT sMin, sNorm, sReal, sImag;
+
+      sReal = fMin(getScalefactor(&qmfOutputRealDry[i_LF][BP_GF_START],
+                                  cplxBands - BP_GF_START),
+                   getScalefactor(&qmfOutputRealDry[i_RF][BP_GF_START],
+                                  cplxBands - BP_GF_START));
+      sImag = fMin(getScalefactor(&qmfOutputImagDry[i_LF][BP_GF_START],
+                                  cplxBands - BP_GF_START),
+                   getScalefactor(&qmfOutputImagDry[i_RF][BP_GF_START],
+                                  cplxBands - BP_GF_START));
+      sMin = fMin(sReal, sImag) - 1;
+
       for (n = BP_GF_START; n < cplxBands; n++) {
-        dmxReal0 = qmfOutputRealDry[i_LF][n] + qmfOutputRealDry[i_RF][n];
-        dmxImag0 = qmfOutputImagDry[i_LF][n] + qmfOutputImagDry[i_RF][n];
-        DRY_ENER_SUM_CPLX(DryEner0, dmxReal0, dmxImag0, n);
+        dmxReal0 = scaleValue(qmfOutputRealDry[i_LF][n], sMin) +
+                   scaleValue(qmfOutputRealDry[i_RF][n], sMin);
+        dmxImag0 = scaleValue(qmfOutputImagDry[i_LF][n], sMin) +
+                   scaleValue(qmfOutputImagDry[i_RF][n], sMin);
+
+        DryEner0 += (fMultDiv2(fPow2Div2(dmxReal0), pBP[n]) +
+                     fMultDiv2(fPow2Div2(dmxImag0), pBP[n])) >>
+                    SF_DRY_NRG;
       }
-      DRY_ENER_WEIGHT(DryEner0);
+
+      sNorm = SF_FREQ_DOMAIN_HEADROOM + SF_DRY_NRG + dry_scale_dmx -
+              (2 * sMin) + nrgScale;
+      DryEner0 = scaleValueSaturate(
+          DryEner0, fMax(fMin(sNorm, DFRACT_BITS - 1), -(DFRACT_BITS - 1)));
       break;
     default:;
   }
@@ -424,7 +431,7 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
 
   /* normalise the 'direct' signals */
   for (ch = 0; ch < self->numInputChannels; ch++) {
-    DryEner[ch] = DryEner[ch] << (nrgScale);
+    if (self->treeConfig != TREE_212) DryEner[ch] = DryEner[ch] << nrgScale;
     hStpDec->runDryEner[ch] =
         fMult(STP_LPF_COEFF1__FDK, hStpDec->runDryEner[ch]) +
         fMult(ONE_MINUS_STP_LPF_COEFF1__FDK, DryEner[ch]);
@@ -436,10 +443,8 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
       DryEnerLD64[ch] = FL2FXCONST_DBL(-0.484375f);
     }
   }
-  if (self->treeConfig == TREE_212) {
-    for (; ch < MAX_INPUT_CHANNELS; ch++) {
-      DryEnerLD64[ch] = FL2FXCONST_DBL(-0.484375f);
-    }
+  for (; ch < MAX_INPUT_CHANNELS; ch++) {
+    DryEnerLD64[ch] = FL2FXCONST_DBL(-0.484375f);
   }
 
   /* normalise the 'diffuse' signals */
@@ -450,14 +455,30 @@ SACDEC_ERROR subbandTPApply(spatialDec *self, const SPATIAL_BS_FRAME *frame) {
     }
 
     WetEnerX = FL2FXCONST_DBL(0.0f);
-    for (n = BP_GF_START; n < cplxBands; n++) {
-      tmp = fPow2Div2(qmfOutputRealWet[ch][n] << SF_WET);
-      tmp += fPow2Div2(qmfOutputImagWet[ch][n] << SF_WET);
-      WetEnerX += fMultDiv2(tmp, pBP[n]);
-    }
-    WET_ENER_WEIGHT(WetEnerX);
 
-    WetEnerX = WetEnerX << (nrgScale);
+    if (self->treeConfig == TREE_212) {
+      INT sMin, sNorm;
+
+      sMin = fMin(getScalefactor(&qmfOutputRealWet[ch][BP_GF_START],
+                                 cplxBands - BP_GF_START),
+                  getScalefactor(&qmfOutputImagWet[ch][BP_GF_START],
+                                 cplxBands - BP_GF_START));
+
+      for (n = BP_GF_START; n < cplxBands; n++) {
+        WetEnerX +=
+            (fMultDiv2(fPow2Div2(scaleValue(qmfOutputRealWet[ch][n], sMin)),
+                       pBP[n]) +
+             fMultDiv2(fPow2Div2(scaleValue(qmfOutputImagWet[ch][n], sMin)),
+                       pBP[n])) >>
+            SF_WET_NRG;
+      }
+      sNorm = SF_FREQ_DOMAIN_HEADROOM + SF_WET_NRG + wet_scale_dmx -
+              (2 * sMin) + nrgScale;
+      WetEnerX = scaleValueSaturate(
+          WetEnerX, fMax(fMin(sNorm, DFRACT_BITS - 1), -(DFRACT_BITS - 1)));
+    } else
+      FDK_ASSERT(self->treeConfig == TREE_212);
+
     hStpDec->runWetEner[ch] =
         fMult(STP_LPF_COEFF1__FDK, hStpDec->runWetEner[ch]) +
         fMult(ONE_MINUS_STP_LPF_COEFF1__FDK, WetEnerX);
