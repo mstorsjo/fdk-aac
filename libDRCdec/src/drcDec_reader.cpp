@@ -914,7 +914,7 @@ static void _skipEqCoefficients(HANDLE_FDK_BITSTREAM hBs) {
       firFilterOrder;
   int uniqueEqSubbandGainsCount, eqSubbandGainRepresentation,
       eqSubbandGainCount;
-  EQ_SUBBAND_GAIN_FORMAT eqSubbandGainFormat;
+  int eqSubbandGainFormat;
 
   eqDelayMaxPresent = FDKreadBits(hBs, 1);
   if (eqDelayMaxPresent) {
@@ -955,7 +955,7 @@ static void _skipEqCoefficients(HANDLE_FDK_BITSTREAM hBs) {
   uniqueEqSubbandGainsCount = FDKreadBits(hBs, 6);
   if (uniqueEqSubbandGainsCount > 0) {
     eqSubbandGainRepresentation = FDKreadBits(hBs, 1);
-    eqSubbandGainFormat = (EQ_SUBBAND_GAIN_FORMAT)FDKreadBits(hBs, 4);
+    eqSubbandGainFormat = FDKreadBits(hBs, 4);
     switch (eqSubbandGainFormat) {
       case GF_QMF32:
         eqSubbandGainCount = 32;
