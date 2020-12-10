@@ -1028,6 +1028,13 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     case AACENC_BR_MODE_VBR_3:
     case AACENC_BR_MODE_VBR_4:
     case AACENC_BR_MODE_VBR_5:
+      /* Adjust bitrate mode in case given peak bitrate is lower than expected
+       * VBR bitrate. */
+      if ((INT)config->userPeakBitrate != -1) {
+        hAacConfig->bitrateMode = FDKaacEnc_AdjustVBRBitrateMode(
+            hAacConfig->bitrateMode, config->userPeakBitrate,
+            hAacConfig->channelMode);
+      }
       /* Get bitrate in VBR configuration */
       /* In VBR mode; SBR-modul depends on bitrate, core encoder on bitrateMode.
        */
