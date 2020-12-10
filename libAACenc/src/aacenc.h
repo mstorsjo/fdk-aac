@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -332,6 +332,19 @@ INT FDKaacEnc_GetBitReservoirState(const HANDLE_AAC_ENC hAacEncoder);
 ------------------------------------------------------------------------------*/
 INT FDKaacEnc_GetVBRBitrate(AACENC_BITRATE_MODE bitrateMode,
                             CHANNEL_MODE channelMode);
+
+/*-----------------------------------------------------------------------------
+
+    functionname: FDKaacEnc_AdjustVBRBitrateMode
+    description:  Adjust bitrate mode to given bitrate parameter
+    input params: int vbrQuality (VBR0, VBR1, VBR2)
+                  bitrate
+                  channelMode
+    returns:      vbr bitrate mode
+
+ ------------------------------------------------------------------------------*/
+AACENC_BITRATE_MODE FDKaacEnc_AdjustVBRBitrateMode(
+    AACENC_BITRATE_MODE bitrateMode, INT bitrate, CHANNEL_MODE channelMode);
 
 /*-----------------------------------------------------------------------------
 
