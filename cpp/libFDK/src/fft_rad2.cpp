@@ -109,7 +109,7 @@ amm-info@iis.fraunhofer.de
 #if defined(__arm__)
 #include "arm/fft_rad2_arm.cpp"
 
-#elif defined(__GNUC__) && defined(__mips__) && defined(__mips_dsp)
+#elif defined(__GNUC__) && defined(__mips__) && defined(__mips_dsp) && !defined(__mips16)
 #include "mips/fft_rad2_mips.cpp"
 
 #endif
