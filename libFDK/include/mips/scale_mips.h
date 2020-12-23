@@ -103,7 +103,7 @@ amm-info@iis.fraunhofer.de
 #ifndef SCALE_MIPS_H
 #define SCALE_MIPS_H
 
-#if defined(__mips_dsp)
+#if defined(__mips_dsp) && !defined(__mips16)
 
 /*!
  *
