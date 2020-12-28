@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -368,7 +368,7 @@ typedef INT (*cbCtrlCFGChange_t)(void *, const CCtrlCFGChange *);
 typedef INT (*cbSsc_t)(void *, HANDLE_FDK_BITSTREAM,
                        const AUDIO_OBJECT_TYPE coreCodec,
                        const INT samplingRate, const INT frameSize,
-                       const INT stereoConfigIndex,
+                       const INT numChannels, const INT stereoConfigIndex,
                        const INT coreSbrFrameLengthIndex, const INT configBytes,
                        const UCHAR configMode, UCHAR *configChanged);
 

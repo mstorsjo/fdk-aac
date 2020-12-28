@@ -1415,7 +1415,7 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
               cb->cbSscData, hBs, asc->m_aot,
               asc->m_samplingFrequency << esc->m_sbrSamplingRate,
               asc->m_samplesPerFrame << esc->m_sbrSamplingRate,
-              1,  /* stereoConfigIndex */
+              asc->m_channelConfiguration, 1, /* stereoConfigIndex */
               -1, /* nTimeSlots: read from bitstream */
               eldExtLen, asc->configMode, &asc->SacConfigChanged);
           if (ErrorStatus != TRANSPORTDEC_OK) {
@@ -1827,6 +1827,8 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
               /* Mps212Config() ISO/IEC FDIS 23003-3 */
               if (cb->cbSsc(cb->cbSscData, hBs, asc->m_aot,
                             asc->m_extensionSamplingFrequency, samplesPerFrame,
+                            1, /* only downmix channels (residual channels are
+                                  not counted) */
                             usc->element[i].m_stereoConfigIndex,
                             usc->m_coreSbrFrameLengthIndex,
                             0, /* don't know the length */
@@ -2221,7 +2223,7 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
     case AOT_MPEGS:
       if (cb->cbSsc != NULL) {
         if (cb->cbSsc(cb->cbSscData, bs, self->m_aot, self->m_samplingFrequency,
-                      self->m_samplesPerFrame, 1,
+                      self->m_samplesPerFrame, self->m_channelConfiguration, 1,
                       -1, /* nTimeSlots: read from bitstream */
                       0,  /* don't know the length */
                       self->configMode, &self->SacConfigChanged)) {
@@ -2419,6 +2421,8 @@ static TRANSPORTDEC_ERROR Drm_xHEAACDecoderConfig(
                 cb->cbSscData, hBs,
                 AOT_DRM_USAC, /* syntax differs from MPEG Mps212Config() */
                 asc->m_extensionSamplingFrequency, samplesPerFrame,
+                1, /* only downmix channels (residual channels are not
+                      counted) */
                 usc->element[elemIdx].m_stereoConfigIndex,
                 usc->m_coreSbrFrameLengthIndex, 0, /* don't know the length */
                 asc->configMode, &asc->SacConfigChanged);
