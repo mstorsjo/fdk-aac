@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1996,9 +1996,11 @@ static TRANSPORTDEC_ERROR UsacConfig_Parse(CSAudioSpecificConfig *asc,
 
   /* Copy UsacConfig() to asc->m_sc.m_usacConfig.UsacConfig[] buffer. */
   INT configSize_bits = (INT)FDKgetValidBits(hBs) - nbits;
-  StoreConfigAsBitstream(hBs, configSize_bits,
-                         asc->m_sc.m_usacConfig.UsacConfig,
-                         TP_USAC_MAX_CONFIG_LEN);
+  if (StoreConfigAsBitstream(hBs, configSize_bits,
+                             asc->m_sc.m_usacConfig.UsacConfig,
+                             TP_USAC_MAX_CONFIG_LEN)) {
+    return TRANSPORTDEC_PARSE_ERROR;
+  }
   asc->m_sc.m_usacConfig.UsacConfigBits = fAbs(configSize_bits);
 
   return err;
@@ -2300,8 +2302,10 @@ TRANSPORTDEC_ERROR AudioSpecificConfig_Parse(
   /* Copy config() to asc->config[] buffer. */
   if ((ErrorStatus == TRANSPORTDEC_OK) && (self->m_aot == AOT_USAC)) {
     INT configSize_bits = (INT)FDKgetValidBits(bs) - (INT)ascStartAnchor;
-    StoreConfigAsBitstream(bs, configSize_bits, self->config,
-                           TP_USAC_MAX_CONFIG_LEN);
+    if (StoreConfigAsBitstream(bs, configSize_bits, self->config,
+                               TP_USAC_MAX_CONFIG_LEN)) {
+      return TRANSPORTDEC_PARSE_ERROR;
+    }
     self->configBits = fAbs(configSize_bits);
   }
 
