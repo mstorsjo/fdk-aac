@@ -18,17 +18,12 @@
  * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
  */
 
-cc_fuzz {
-    name: "aac_dec_fuzzer",
-    host_supported:true,
+cc_defaults {
+    name: "aac_fuzz_defaults",
+    host_supported: true,
 
     static_libs: [
         "libFraunhoferAAC",
-        "liblog",
-    ],
-
-    srcs: [
-        "aac_dec_fuzzer.cpp",
     ],
 
     target: {
@@ -43,4 +38,32 @@ cc_fuzz {
         ],
         componentid: 155276,
     },
+}
+
+cc_fuzz {
+    name: "aac_dec_fuzzer",
+
+    srcs: [
+        "aac_dec_fuzzer.cpp",
+    ],
+
+    static_libs: [
+        "liblog",
+    ],
+
+    defaults: [
+        "aac_fuzz_defaults"
+    ],
+}
+
+cc_fuzz {
+    name: "aac_enc_fuzzer",
+
+    srcs: [
+        "aac_enc_fuzzer.cpp",
+    ],
+
+    defaults: [
+        "aac_fuzz_defaults"
+    ],
 }
