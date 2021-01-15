@@ -1155,6 +1155,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
   int applyCrossfade = 1;    /* flag indicates if flushing was possible */
   PCM_DEC *pTimeData2;
   PCM_AAC *pTimeData3;
+  INT pcmLimiterScale = 0;
+  INT interleaved = 0;
 
   if (self == NULL) {
     return AAC_DEC_INVALID_HANDLE;
@@ -1800,8 +1802,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
       }
 
       if (self->streamInfo.extAot != AOT_AAC_SLS) {
-        INT pcmLimiterScale = 0;
-        INT interleaved = 0;
+        interleaved = 0;
         interleaved |= (self->sbrEnabled) ? 1 : 0;
         interleaved |= (self->mpsEnableCurr) ? 1 : 0;
         PCMDMX_ERROR dmxErr = PCMDMX_OK;
@@ -1832,145 +1833,38 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
            * predictable behavior and thus maybe produce strange output. */
           ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
         }
-
-        pcmLimiterScale += PCM_OUT_HEADROOM;
-
-        if (flags & AACDEC_CLRHIST) {
-          if (!(self->flags[0] & AC_USAC)) {
-            /* Reset DRC data */
-            aacDecoder_drcReset(self->hDrcInfo);
-            /* Delete the delayed signal. */
-            pcmLimiter_Reset(self->hLimiter);
-          }
-        }
-
-        /* Set applyExtGain if DRC processing is enabled and if
-           progRefLevelPresent is present for the first time. Consequences: The
-           headroom of the output signal can be set to AACDEC_DRC_GAIN_SCALING
-           only for audio formats which support legacy DRC Level Normalization.
-                         For all other audio formats the headroom of the output
-           signal is set to PCM_OUT_HEADROOM. */
-        if (self->hDrcInfo->enable &&
-            (self->hDrcInfo->progRefLevelPresent == 1)) {
-          self->hDrcInfo->applyExtGain |= 1;
-        }
-
-        /* Check whether time data buffer is large enough. */
-        if (timeDataSize <
-            (self->streamInfo.numChannels * self->streamInfo.frameSize)) {
-          ErrorStatus = AAC_DEC_OUTPUT_BUFFER_TOO_SMALL;
-          goto bail;
-        }
-
-        if (self->limiterEnableCurr) {
-          /* use workBufferCore2 buffer for interleaving */
-          PCM_LIM *pInterleaveBuffer;
-          int blockLength = self->streamInfo.frameSize;
-
-          /* Set actual signal parameters */
-          pcmLimiter_SetNChannels(self->hLimiter, self->streamInfo.numChannels);
-          pcmLimiter_SetSampleRate(self->hLimiter, self->streamInfo.sampleRate);
-
-          if ((self->streamInfo.numChannels == 1) || (self->sbrEnabled) ||
-              (self->mpsEnableCurr)) {
-            pInterleaveBuffer = (PCM_LIM *)pTimeData2;
-          } else {
-            pInterleaveBuffer = (PCM_LIM *)self->workBufferCore2;
-
-            /* applyLimiter requests for interleaved data */
-            /* Interleave ouput buffer */
-            FDK_interleave(pTimeData2, pInterleaveBuffer,
-                           self->streamInfo.numChannels, blockLength,
-                           self->streamInfo.frameSize);
-          }
-
-          FIXP_DBL *pGainPerSample = NULL;
-
-          if (self->hDrcInfo->enable && self->hDrcInfo->applyExtGain) {
-            pGainPerSample = self->workBufferCore1;
-
-            if ((INT)GetRequiredMemWorkBufferCore1() <
-                (INT)(self->streamInfo.frameSize * sizeof(FIXP_DBL))) {
-              ErrorStatus = AAC_DEC_UNKNOWN;
-              goto bail;
-            }
-
-            pcmLimiterScale = applyDrcLevelNormalization(
-                self->hDrcInfo, (PCM_DEC *)pInterleaveBuffer, self->extGain,
-                pGainPerSample, pcmLimiterScale, self->extGainDelay,
-                self->streamInfo.frameSize, self->streamInfo.numChannels, 1, 1);
-          }
-
-          pcmLimiter_Apply(self->hLimiter, pInterleaveBuffer, pTimeData,
-                           pGainPerSample, pcmLimiterScale,
-                           self->streamInfo.frameSize);
-
-          {
-            /* Announce the additional limiter output delay */
-            self->streamInfo.outputDelay += pcmLimiter_GetDelay(self->hLimiter);
-          }
-        } else {
-          if (self->hDrcInfo->enable && self->hDrcInfo->applyExtGain) {
-            pcmLimiterScale = applyDrcLevelNormalization(
-                self->hDrcInfo, pTimeData2, self->extGain, NULL,
-                pcmLimiterScale, self->extGainDelay, self->streamInfo.frameSize,
-                self->streamInfo.numChannels,
-                (interleaved || (self->streamInfo.numChannels == 1))
-                    ? 1
-                    : self->streamInfo.frameSize,
-                0);
-          }
-
-          /* If numChannels = 1 we do not need interleaving. The same applies if
-          SBR or MPS are used, since their output is interleaved already
-          (resampled or not) */
-          if ((self->streamInfo.numChannels == 1) || (self->sbrEnabled) ||
-              (self->mpsEnableCurr)) {
-            scaleValuesSaturate(
-                pTimeData, pTimeData2,
-                self->streamInfo.frameSize * self->streamInfo.numChannels,
-                pcmLimiterScale);
-
-          } else {
-            scaleValuesSaturate(
-                (INT_PCM *)self->workBufferCore2, pTimeData2,
-                self->streamInfo.frameSize * self->streamInfo.numChannels,
-                pcmLimiterScale);
-            /* Interleave ouput buffer */
-            FDK_interleave((INT_PCM *)self->workBufferCore2, pTimeData,
-                           self->streamInfo.numChannels,
-                           self->streamInfo.frameSize,
-                           self->streamInfo.frameSize);
-          }
-        }
-      } /* if (self->streamInfo.extAot != AOT_AAC_SLS)*/
+      }
 
       if (self->flags[0] & AC_USAC) {
         if (self->flushStatus == AACDEC_USAC_DASH_IPF_FLUSH_ON &&
             !(flags & AACDEC_CONCEAL)) {
-          CAacDecoder_PrepareCrossFade(pTimeData, self->pTimeDataFlush,
+          CAacDecoder_PrepareCrossFade(pTimeData2, self->pTimeDataFlush,
                                        self->streamInfo.numChannels,
-                                       self->streamInfo.frameSize, 1);
+                                       self->streamInfo.frameSize, interleaved);
         }
 
         /* prepare crossfade buffer for fade in */
-        if (!applyCrossfade && self->applyCrossfade &&
+        if (!applyCrossfade &&
+            (self->applyCrossfade != AACDEC_CROSSFADE_BITMASK_OFF) &&
             !(flags & AACDEC_CONCEAL)) {
           for (int ch = 0; ch < self->streamInfo.numChannels; ch++) {
             for (int i = 0; i < TIME_DATA_FLUSH_SIZE; i++) {
-              self->pTimeDataFlush[ch][i] = 0;
+              self->pTimeDataFlush[ch][i] = (PCM_DEC)0;
             }
           }
           applyCrossfade = 1;
         }
 
-        if (applyCrossfade && self->applyCrossfade &&
+        if (applyCrossfade &&
+            (self->applyCrossfade != AACDEC_CROSSFADE_BITMASK_OFF) &&
             !(accessUnit < numPrerollAU) &&
             (self->buildUpStatus == AACDEC_USAC_BUILD_UP_ON)) {
-          CAacDecoder_ApplyCrossFade(pTimeData, self->pTimeDataFlush,
+          CAacDecoder_ApplyCrossFade(pTimeData2, self->pTimeDataFlush,
                                      self->streamInfo.numChannels,
-                                     self->streamInfo.frameSize, 1);
-          self->applyCrossfade = 0;
+                                     self->streamInfo.frameSize, interleaved);
+          self->applyCrossfade =
+              AACDEC_CROSSFADE_BITMASK_OFF; /* disable cross-fade between frames
+                                               at nect config change */
         }
       }
 
@@ -2011,6 +1905,116 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
   } while ((accessUnit < numAccessUnits) ||
            ((self->flushStatus == AACDEC_USAC_DASH_IPF_FLUSH_ON) &&
             !(flags & AACDEC_CONCEAL)));
+
+  if (self->streamInfo.extAot != AOT_AAC_SLS) {
+    pcmLimiterScale += PCM_OUT_HEADROOM;
+
+    if (flags & AACDEC_CLRHIST) {
+      if (!(self->flags[0] & AC_USAC)) {
+        /* Reset DRC data */
+        aacDecoder_drcReset(self->hDrcInfo);
+        /* Delete the delayed signal. */
+        pcmLimiter_Reset(self->hLimiter);
+      }
+    }
+
+    /* Set applyExtGain if DRC processing is enabled and if progRefLevelPresent
+       is present for the first time. Consequences: The headroom of the output
+       signal can be set to AACDEC_DRC_GAIN_SCALING only for audio formats which
+       support legacy DRC Level Normalization. For all other audio formats the
+       headroom of the output signal is set to PCM_OUT_HEADROOM. */
+    if (self->hDrcInfo->enable && (self->hDrcInfo->progRefLevelPresent == 1)) {
+      self->hDrcInfo->applyExtGain |= 1;
+    }
+
+    /* Check whether time data buffer is large enough. */
+    if (timeDataSize <
+        (self->streamInfo.numChannels * self->streamInfo.frameSize)) {
+      ErrorStatus = AAC_DEC_OUTPUT_BUFFER_TOO_SMALL;
+      goto bail;
+    }
+
+    if (self->limiterEnableCurr) {
+      /* use workBufferCore2 buffer for interleaving */
+      PCM_LIM *pInterleaveBuffer;
+      int blockLength = self->streamInfo.frameSize;
+
+      /* Set actual signal parameters */
+      pcmLimiter_SetNChannels(self->hLimiter, self->streamInfo.numChannels);
+      pcmLimiter_SetSampleRate(self->hLimiter, self->streamInfo.sampleRate);
+
+      if ((self->streamInfo.numChannels == 1) || (self->sbrEnabled) ||
+          (self->mpsEnableCurr)) {
+        pInterleaveBuffer = (PCM_LIM *)pTimeData2;
+      } else {
+        pInterleaveBuffer = (PCM_LIM *)self->workBufferCore2;
+
+        /* applyLimiter requests for interleaved data */
+        /* Interleave ouput buffer */
+        FDK_interleave(pTimeData2, pInterleaveBuffer,
+                       self->streamInfo.numChannels, blockLength,
+                       self->streamInfo.frameSize);
+      }
+
+      FIXP_DBL *pGainPerSample = NULL;
+
+      if (self->hDrcInfo->enable && self->hDrcInfo->applyExtGain) {
+        pGainPerSample = self->workBufferCore1;
+
+        if ((INT)GetRequiredMemWorkBufferCore1() <
+            (INT)(self->streamInfo.frameSize * sizeof(FIXP_DBL))) {
+          ErrorStatus = AAC_DEC_UNKNOWN;
+          goto bail;
+        }
+
+        pcmLimiterScale = applyDrcLevelNormalization(
+            self->hDrcInfo, (PCM_DEC *)pInterleaveBuffer, self->extGain,
+            pGainPerSample, pcmLimiterScale, self->extGainDelay,
+            self->streamInfo.frameSize, self->streamInfo.numChannels, 1, 1);
+      }
+
+      pcmLimiter_Apply(self->hLimiter, pInterleaveBuffer, pTimeData,
+                       pGainPerSample, pcmLimiterScale,
+                       self->streamInfo.frameSize);
+
+      {
+        /* Announce the additional limiter output delay */
+        self->streamInfo.outputDelay += pcmLimiter_GetDelay(self->hLimiter);
+      }
+    } else {
+      if (self->hDrcInfo->enable && self->hDrcInfo->applyExtGain) {
+        pcmLimiterScale = applyDrcLevelNormalization(
+            self->hDrcInfo, pTimeData2, self->extGain, NULL, pcmLimiterScale,
+            self->extGainDelay, self->streamInfo.frameSize,
+            self->streamInfo.numChannels,
+            (interleaved || (self->streamInfo.numChannels == 1))
+                ? 1
+                : self->streamInfo.frameSize,
+            0);
+      }
+
+      /* If numChannels = 1 we do not need interleaving. The same applies if SBR
+      or MPS are used, since their output is interleaved already (resampled or
+      not) */
+      if ((self->streamInfo.numChannels == 1) || (self->sbrEnabled) ||
+          (self->mpsEnableCurr)) {
+        scaleValuesSaturate(
+            pTimeData, pTimeData2,
+            self->streamInfo.frameSize * self->streamInfo.numChannels,
+            pcmLimiterScale);
+
+      } else {
+        scaleValuesSaturate(
+            (INT_PCM *)self->workBufferCore2, pTimeData2,
+            self->streamInfo.frameSize * self->streamInfo.numChannels,
+            pcmLimiterScale);
+        /* Interleave ouput buffer */
+        FDK_interleave((INT_PCM *)self->workBufferCore2, pTimeData,
+                       self->streamInfo.numChannels, self->streamInfo.frameSize,
+                       self->streamInfo.frameSize);
+      }
+    }
+  } /* if (self->streamInfo.extAot != AOT_AAC_SLS)*/
 
 bail:
 

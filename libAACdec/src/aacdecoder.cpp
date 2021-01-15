@@ -568,7 +568,7 @@ static int CProgramConfigElement_Read(HANDLE_FDK_BITSTREAM bs,
   \return  Error code
 */
 LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
-    const INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    const PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved) {
   int i, ch, s1, s2;
   AAC_DECODER_ERROR ErrorStatus;
@@ -584,7 +584,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
   }
 
   for (ch = 0; ch < numChannels; ch++) {
-    const INT_PCM *pIn = &pTimeData[ch * s1];
+    const PCM_DEC *pIn = &pTimeData[ch * s1];
     for (i = 0; i < TIME_DATA_FLUSH_SIZE; i++) {
       pTimeDataFlush[ch][i] = *pIn;
       pIn += s2;
@@ -606,7 +606,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
   \return  Error code
 */
 LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_ApplyCrossFade(
-    INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved) {
   int i, ch, s1, s2;
   AAC_DECODER_ERROR ErrorStatus;
@@ -622,15 +622,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_ApplyCrossFade(
   }
 
   for (ch = 0; ch < numChannels; ch++) {
-    INT_PCM *pIn = &pTimeData[ch * s1];
+    PCM_DEC *pIn = &pTimeData[ch * s1];
     for (i = 0; i < TIME_DATA_FLUSH_SIZE; i++) {
       FIXP_SGL alpha = (FIXP_SGL)i
                        << (FRACT_BITS - 1 - TIME_DATA_FLUSH_SIZE_SF);
-      FIXP_DBL time = FX_PCM2FX_DBL(*pIn);
-      FIXP_DBL timeFlush = FX_PCM2FX_DBL(pTimeDataFlush[ch][i]);
+      FIXP_DBL time = PCM_DEC2FIXP_DBL(*pIn);
+      FIXP_DBL timeFlush = PCM_DEC2FIXP_DBL(pTimeDataFlush[ch][i]);
 
-      *pIn = (INT_PCM)(FIXP_PCM)FX_DBL2FX_PCM(
-          timeFlush - fMult(timeFlush, alpha) + fMult(time, alpha));
+      *pIn = FIXP_DBL2PCM_DEC(timeFlush - fMult(timeFlush, alpha) +
+                              fMult(time, alpha));
       pIn += s2;
     }
   }
@@ -753,7 +753,12 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PreRollExtensionPayloadParse(
     /* We are interested in preroll AUs if an explicit or an implicit config
      * change is signalized in other words if the build up status is set. */
     if (self->buildUpStatus == AACDEC_USAC_BUILD_UP_ON) {
-      self->applyCrossfade |= FDKreadBit(hBs);
+      UCHAR applyCrossfade = FDKreadBit(hBs);
+      if (applyCrossfade) {
+        self->applyCrossfade |= AACDEC_CROSSFADE_BITMASK_PREROLL;
+      } else {
+        self->applyCrossfade &= ~AACDEC_CROSSFADE_BITMASK_PREROLL;
+      }
       FDKreadBit(hBs); /* reserved */
       /* Read num preroll AU's */
       *numPrerollAU = escapedValue(hBs, 2, 4, 0);
