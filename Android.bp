@@ -57,13 +57,6 @@ cc_library_static {
         darwin: {
             enabled: false,
         },
-        android: {
-            sanitize: {
-                diag: {
-                    cfi: true,
-                },
-            },
-        },
     },
 
     apex_available: [
