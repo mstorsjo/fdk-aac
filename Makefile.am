@@ -253,12 +253,14 @@ libfdk_aac_la_SOURCES = \
     $(PCMUTILS_SRC) $(FDK_SRC) $(SYS_SRC)
 
 EXTRA_DIST = \
+    $(top_srcdir)/CMakeLists.txt \
     $(top_srcdir)/.clang-format \
     $(top_srcdir)/autogen.sh \
     $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
     $(top_srcdir)/NOTICE \
     $(top_srcdir)/OWNERS \
     $(top_srcdir)/Android.bp \
+    $(top_srcdir)/fdk-aac.def \
     $(top_srcdir)/fdk-aac.sym \
     $(top_srcdir)/Makefile.vc \
     $(top_srcdir)/documentation/*.pdf \
