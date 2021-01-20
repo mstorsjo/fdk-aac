@@ -606,15 +606,19 @@ libfdk_xhe_aac_la_SOURCES = \
     $(XHEAAC_ENC_SRC)
 
 EXTRA_DIST = \
+    $(top_srcdir)/CMakeLists.txt \
     $(top_srcdir)/.clang-format \
     $(top_srcdir)/autogen.sh \
     $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
     $(top_srcdir)/NOTICE \
     $(top_srcdir)/OWNERS \
     $(top_srcdir)/Android.bp \
+    $(top_srcdir)/fdk-aac.def \
     $(top_srcdir)/fdk-aac.sym \
+    $(top_srcdir)/fdk-aac-config.cmake.in \
     $(top_srcdir)/fdk-xhe-aac.def \
     $(top_srcdir)/fdk-xhe-aac.sym \
+    $(top_srcdir)/fdk-xhe-aac-config.cmake.in \
     $(top_srcdir)/cpp/Android.bp \
     $(top_srcdir)/cpp/documentation/*.pdf \
     $(top_srcdir)/cpp/fuzzer/* \
