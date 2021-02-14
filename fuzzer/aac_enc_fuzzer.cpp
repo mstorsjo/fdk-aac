@@ -20,6 +20,7 @@
 
 #include <string>
 #include "aacenc_lib.h"
+#include "src/aacenc.h"
 
 using namespace std;
 
@@ -31,23 +32,81 @@ constexpr size_t kMaxOutputBufferSize = 8192;
 constexpr uint32_t kMinBitRate = 8000;
 constexpr uint32_t kMaxBitRate = 960000;
 
-constexpr uint32_t kSampleRates[] = {8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000};
+constexpr int32_t kSampleRates[] = {8000,  11025, 12000, 16000, 22050, 24000,
+                                    32000, 44100, 48000, 64000, 88200, 96000};
 constexpr size_t kSampleRatesSize = size(kSampleRates);
 
-constexpr CHANNEL_MODE kChannelModes[] = {MODE_1,     MODE_2,       MODE_1_2,       MODE_1_2_1,
-                                          MODE_1_2_2, MODE_1_2_2_1, MODE_1_2_2_2_1, MODE_7_1_BACK};
+constexpr CHANNEL_MODE kChannelModes[] = {MODE_1,
+                                          MODE_2,
+                                          MODE_1_2,
+                                          MODE_1_2_1,
+                                          MODE_1_2_2,
+                                          MODE_1_2_2_1,
+                                          MODE_1_2_2_2_1,
+                                          MODE_6_1,
+                                          MODE_7_1_BACK,
+                                          MODE_7_1_TOP_FRONT,
+                                          MODE_7_1_REAR_SURROUND,
+                                          MODE_7_1_FRONT_CENTER,
+                                          MODE_212};
 constexpr size_t kChannelModesSize = size(kChannelModes);
 
 constexpr TRANSPORT_TYPE kIdentifiers[] = {
     TT_MP4_RAW, TT_MP4_ADIF, TT_MP4_ADTS, TT_MP4_LATM_MCP1, TT_MP4_LATM_MCP0, TT_MP4_LOAS, TT_DRM};
 constexpr size_t kIdentifiersSize = size(kIdentifiers);
 
-constexpr AUDIO_OBJECT_TYPE kAudioObjectTypes[] = {AOT_AAC_LC, AOT_ER_AAC_ELD, AOT_SBR, AOT_PS,
-                                                   AOT_ER_AAC_LD};
+constexpr AUDIO_OBJECT_TYPE kAudioObjectTypes[] = {AOT_NONE,        AOT_NULL_OBJECT,
+                                                   AOT_AAC_MAIN,    AOT_AAC_LC,
+                                                   AOT_AAC_SSR,     AOT_AAC_LTP,
+                                                   AOT_SBR,         AOT_AAC_SCAL,
+                                                   AOT_TWIN_VQ,     AOT_CELP,
+                                                   AOT_HVXC,        AOT_RSVD_10,
+                                                   AOT_RSVD_11,     AOT_TTSI,
+                                                   AOT_MAIN_SYNTH,  AOT_WAV_TAB_SYNTH,
+                                                   AOT_GEN_MIDI,    AOT_ALG_SYNTH_AUD_FX,
+                                                   AOT_ER_AAC_LC,   AOT_RSVD_18,
+                                                   AOT_ER_AAC_LTP,  AOT_ER_AAC_SCAL,
+                                                   AOT_ER_TWIN_VQ,  AOT_ER_BSAC,
+                                                   AOT_ER_AAC_LD,   AOT_ER_CELP,
+                                                   AOT_ER_HVXC,     AOT_ER_HILN,
+                                                   AOT_ER_PARA,     AOT_RSVD_28,
+                                                   AOT_PS,          AOT_MPEGS,
+                                                   AOT_ESCAPE,      AOT_MP3ONMP4_L1,
+                                                   AOT_MP3ONMP4_L2, AOT_MP3ONMP4_L3,
+                                                   AOT_RSVD_35,     AOT_RSVD_36,
+                                                   AOT_AAC_SLS,     AOT_SLS,
+                                                   AOT_ER_AAC_ELD,  AOT_USAC,
+                                                   AOT_SAOC,        AOT_LD_MPEGS,
+                                                   AOT_MP2_AAC_LC,  AOT_MP2_SBR,
+                                                   AOT_DRM_AAC,     AOT_DRM_SBR,
+                                                   AOT_DRM_MPEG_PS, AOT_DRM_SURROUND,
+                                                   AOT_DRM_USAC};
+
 constexpr size_t kAudioObjectTypesSize = size(kAudioObjectTypes);
 
-constexpr int32_t kSbrRatios[] = {0, 1, 2};
+constexpr int32_t kSbrRatios[] = {-1, 0, 1, 2};
 constexpr size_t kSbrRatiosSize = size(kSbrRatios);
+
+constexpr int32_t kBitRateModes[] = {
+    AACENC_BR_MODE_INVALID, AACENC_BR_MODE_CBR,   AACENC_BR_MODE_VBR_1,
+    AACENC_BR_MODE_VBR_2,   AACENC_BR_MODE_VBR_3, AACENC_BR_MODE_VBR_4,
+    AACENC_BR_MODE_VBR_5,   AACENC_BR_MODE_FF,    AACENC_BR_MODE_SFR};
+constexpr size_t kBitRateModesSize = size(kBitRateModes);
+
+constexpr int32_t kGranuleLengths[] = {120, 128, 240, 256, 480, 512, 1024};
+constexpr size_t kGranuleLengthsSize = size(kGranuleLengths);
+
+constexpr int32_t kChannelOrder[] = {CH_ORDER_MPEG, CH_ORDER_WAV};
+constexpr size_t kChannelOrderSize = size(kChannelOrder);
+
+constexpr int32_t kSignalingModes[] = {-1, 0, 1, 2, 3};
+constexpr size_t kSignalingModesSize = size(kGranuleLengths);
+
+constexpr int32_t kAudioMuxVer[] = {-1, 0, 1, 2};
+constexpr size_t kAudioMuxVerSize = size(kAudioMuxVer);
+
+constexpr int32_t kSbrModes[] = {-1, 0, 1, 2};
+constexpr size_t kSbrModesSize = size(kSbrModes);
 
 constexpr AACENC_METADATA_DRC_PROFILE kMetaDataDrcProfiles[] = {
     AACENC_METADATA_DRC_NONE,       AACENC_METADATA_DRC_FILMSTANDARD,
@@ -66,7 +125,6 @@ enum {
     IDX_CHANNEL,
     IDX_IDENTIFIER,
     IDX_SBR_RATIO,
-
     IDX_METADATA_DRC_PROFILE,
     IDX_METADATA_COMP_PROFILE,
     IDX_METADATA_DRC_TARGET_REF_LEVEL,
@@ -88,19 +146,23 @@ enum {
     IDX_METADATA_DMX_GAIN_2,
     IDX_METADATA_LFE_DMX_ENABLE,
     IDX_METADATA_LFE_DMX_LEVEL,
-
     IDX_IN_BUFFER_INDEX_1,
     IDX_IN_BUFFER_INDEX_2,
     IDX_IN_BUFFER_INDEX_3,
-
+    IDX_BIT_RATE_MODE,
+    IDX_GRANULE_LENGTH,
+    IDX_CHANNELORDER,
+    IDX_AFTERBURNER,
+    IDX_BANDWIDTH,
+    IDX_PEAK_BITRATE,
+    IDX_HEADER_PERIOD,
+    IDX_SIGNALING_MODE,
+    IDX_TPSUBFRAMES,
+    IDX_AUDIOMUXVER,
+    IDX_PROTECTION,
+    IDX_ANCILLARY_BITRATE,
+    IDX_METADATA_MODE,
     IDX_LAST
-};
-
-enum aac_sbr_mode_t : uint32_t {
-    AAC_SBR_OFF,
-    AAC_SBR_SINGLE_RATE,
-    AAC_SBR_DUAL_RATE,
-    AAC_SBR_AUTO
 };
 
 template <typename type1, typename type2, typename type3>
@@ -116,6 +178,9 @@ class Codec {
     void deInitEncoder();
 
    private:
+    template <typename type1, typename type2, typename type3>
+    void setAACParam(type1 data, const AACENC_PARAM aacParam, type2 min, type2 max,
+                     const type3 *array = nullptr);
     void setupMetaData(uint8_t *data);
 
     HANDLE_AACENCODER mEncoder = nullptr;
@@ -206,6 +271,20 @@ void Codec::setupMetaData(uint8_t *data) {
     mMetaData.ExtMetaData.lfeDmxLevel = lfeDmxLevel;
 }
 
+template <typename type1, typename type2, typename type3>
+void Codec::setAACParam(type1 data, const AACENC_PARAM aacParam, type2 min, type2 max,
+                        const type3 *array) {
+    auto value = 0;
+    if (array) {
+        uint32_t index = generateNumberInRangeFromData(data, min, max);
+        value = array[index];
+    } else {
+        value = generateNumberInRangeFromData(data, min, max);
+    }
+    aacEncoder_SetParam(mEncoder, aacParam, value);
+    (void)aacEncoder_GetParam(mEncoder, aacParam);
+}
+
 bool Codec::initEncoder(uint8_t **dataPtr, size_t *sizePtr) {
     uint8_t *data = *dataPtr;
 
@@ -213,39 +292,65 @@ bool Codec::initEncoder(uint8_t **dataPtr, size_t *sizePtr) {
         return false;
     }
 
-    uint32_t sbrMode = generateNumberInRangeFromData(data[IDX_SBR_MODE], (uint32_t)AAC_SBR_OFF,
-                                                     (uint32_t)AAC_SBR_AUTO);
-    aacEncoder_SetParam(mEncoder, AACENC_SBR_MODE, sbrMode);
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_SBR_MODE], AACENC_SBR_MODE, 0, kSbrModesSize - 1,
+                                          kSbrModes);
 
-    uint32_t sbrRatioIndex =
-        generateNumberInRangeFromData(data[IDX_SBR_RATIO], 0, kSbrRatiosSize - 1);
-    int32_t sbrRatio = kSbrRatios[sbrRatioIndex];
-    aacEncoder_SetParam(mEncoder, AACENC_SBR_RATIO, sbrRatio);
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_SBR_RATIO], AACENC_SBR_RATIO, 0,
+                                          kSbrRatiosSize - 1, kSbrRatios);
 
-    uint32_t aacAOTIndex =
-        generateNumberInRangeFromData(data[IDX_AAC_AOT], 0, kAudioObjectTypesSize - 1);
-    uint32_t aacAOT = kAudioObjectTypes[aacAOTIndex];
-    aacEncoder_SetParam(mEncoder, AACENC_AOT, aacAOT);
+    setAACParam<uint8_t, size_t, AUDIO_OBJECT_TYPE>(data[IDX_AAC_AOT], AACENC_AOT, 0,
+                                                    kAudioObjectTypesSize - 1, kAudioObjectTypes);
 
-    uint32_t sampleRateIndex =
-        generateNumberInRangeFromData(data[IDX_SAMPLE_RATE], 0, kSampleRatesSize - 1);
-    uint32_t sampleRate = kSampleRates[sampleRateIndex];
-    aacEncoder_SetParam(mEncoder, AACENC_SAMPLERATE, sampleRate);
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_SAMPLE_RATE], AACENC_SAMPLERATE, 0,
+                                          kSampleRatesSize - 1, kSampleRates);
 
     uint32_t tempValue =
         (data[IDX_BIT_RATE_1] << 16) | (data[IDX_BIT_RATE_2] << 8) | data[IDX_BIT_RATE_3];
-    uint32_t bitRate = generateNumberInRangeFromData(tempValue, kMinBitRate, kMaxBitRate);
-    aacEncoder_SetParam(mEncoder, AACENC_BITRATE, bitRate);
+    setAACParam<uint8_t, uint32_t, uint32_t>(tempValue, AACENC_BITRATE, kMinBitRate, kMaxBitRate);
 
-    uint32_t channelModeIndex =
-        generateNumberInRangeFromData(data[IDX_CHANNEL], 0, kChannelModesSize - 1);
-    CHANNEL_MODE channelMode = kChannelModes[channelModeIndex];
-    aacEncoder_SetParam(mEncoder, AACENC_CHANNELMODE, channelMode);
+    setAACParam<uint8_t, size_t, CHANNEL_MODE>(data[IDX_CHANNEL], AACENC_CHANNELMODE, 0,
+                                               kChannelModesSize - 1, kChannelModes);
 
-    uint32_t identifierIndex =
-        generateNumberInRangeFromData(data[IDX_IDENTIFIER], 0, kIdentifiersSize - 1);
-    uint32_t identifier = kIdentifiers[identifierIndex];
-    aacEncoder_SetParam(mEncoder, AACENC_TRANSMUX, identifier);
+    setAACParam<uint8_t, size_t, TRANSPORT_TYPE>(data[IDX_IDENTIFIER], AACENC_TRANSMUX, 0,
+                                                 kIdentifiersSize - 1, kIdentifiers);
+
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_BIT_RATE_MODE], AACENC_BITRATEMODE, 0,
+                                          kBitRateModesSize - 1, kBitRateModes);
+
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_GRANULE_LENGTH], AACENC_GRANULE_LENGTH, 0,
+                                          kGranuleLengthsSize - 1, kGranuleLengths);
+
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_CHANNELORDER], AACENC_CHANNELORDER, 0,
+                                          kChannelOrderSize - 1, kChannelOrder);
+
+    setAACParam<uint8_t, int32_t, int32_t>(data[IDX_AFTERBURNER], AACENC_AFTERBURNER, 0, 1);
+
+    setAACParam<uint8_t, int32_t, int32_t>(data[IDX_BANDWIDTH], AACENC_BANDWIDTH, 0, 1);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_PEAK_BITRATE], AACENC_PEAK_BITRATE,
+                                             kMinBitRate, kMinBitRate);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_HEADER_PERIOD], AACENC_HEADER_PERIOD, 0,
+                                             UINT8_MAX);
+
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_SIGNALING_MODE], AACENC_SIGNALING_MODE, 0,
+                                          kSignalingModesSize - 1, kSignalingModes);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_TPSUBFRAMES], AACENC_TPSUBFRAMES, 0,
+                                             UINT8_MAX);
+
+    setAACParam<uint8_t, size_t, int32_t>(data[IDX_AUDIOMUXVER], AACENC_AUDIOMUXVER, 0,
+                                          kAudioMuxVerSize - 1, kAudioMuxVer);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_PROTECTION], AACENC_PROTECTION, 0, 1);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_ANCILLARY_BITRATE], AACENC_ANCILLARY_BITRATE,
+                                             0, kMaxBitRate);
+
+    setAACParam<uint8_t, uint32_t, uint32_t>(data[IDX_METADATA_MODE], AACENC_METADATA_MODE, 0, 3);
+
+    AACENC_InfoStruct encInfo;
+    aacEncInfo(mEncoder, &encInfo);
 
     mInBufferIdx_1 = generateNumberInRangeFromData(data[IDX_IN_BUFFER_INDEX_1], 0, kMaxBuffers - 1);
     mInBufferIdx_2 = generateNumberInRangeFromData(data[IDX_IN_BUFFER_INDEX_2], 0, kMaxBuffers - 1);
