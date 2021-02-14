@@ -66,4 +66,8 @@ cc_fuzz {
     defaults: [
         "aac_fuzz_defaults"
     ],
+
+    include_dirs: [
+        "external/aac/libAACenc/"
+    ],
 }
