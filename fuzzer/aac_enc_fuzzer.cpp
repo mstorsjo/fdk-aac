@@ -100,7 +100,7 @@ constexpr int32_t kChannelOrder[] = {CH_ORDER_MPEG, CH_ORDER_WAV};
 constexpr size_t kChannelOrderSize = size(kChannelOrder);
 
 constexpr int32_t kSignalingModes[] = {-1, 0, 1, 2, 3};
-constexpr size_t kSignalingModesSize = size(kGranuleLengths);
+constexpr size_t kSignalingModesSize = size(kSignalingModes);
 
 constexpr int32_t kAudioMuxVer[] = {-1, 0, 1, 2};
 constexpr size_t kAudioMuxVerSize = size(kAudioMuxVer);
