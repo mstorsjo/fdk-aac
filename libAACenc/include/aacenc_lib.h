@@ -332,7 +332,7 @@ If the present library is configured with Metadata support, it is possible to
 insert meta data side info into the generated audio bitstream while encoding.
 
 To work with meta data the encoder instance has to be \ref encOpen "allocated"
-with meta data support. The meta data mode must be be configured with the
+with meta data support. The meta data mode must be configured with the
 ::AACENC_METADATA_MODE parameter and aacEncoder_SetParam() function. \code
 aacEncoder_SetParam(hAacEncoder, AACENC_METADATA_MODE, 0-3); \endcode
 
