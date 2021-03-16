@@ -1032,7 +1032,7 @@ LINKSPEC_H AAC_DECODER_ERROR aacDecoder_Fill(HANDLE_AACDECODER self,
  * \param self          AAC decoder handle.
  * \param pTimeData     Pointer to external output buffer where the decoded PCM
  * samples will be stored into.
- * \param timeDataSize  Size of external output buffer.
+ * \param timeDataSize  Size of external output buffer in PCM samples.
  * \param flags         Bit field with flags for the decoder: \n
  *                      (flags & AACDEC_CONCEAL) == 1: Do concealment. \n
  *                      (flags & AACDEC_FLUSH) == 2: Discard input data. Flush
