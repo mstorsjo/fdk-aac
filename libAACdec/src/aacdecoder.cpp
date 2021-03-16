@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1417,11 +1417,7 @@ static void CAacDecoder_AcceptFlags(HANDLE_AACDECODER self,
                                     const CSAudioSpecificConfig *asc,
                                     UINT flags, UINT *elFlags, int streamIndex,
                                     int elementOffset) {
-  {
-    FDKmemcpy(
-        self->elFlags, elFlags,
-        sizeof(*elFlags) * (3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1));
-  }
+  FDKmemcpy(self->elFlags, elFlags, sizeof(self->elFlags));
 
   self->flags[streamIndex] = flags;
 }
@@ -1524,6 +1520,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   INT flushChannels = 0;
 
   UINT flags;
+  /* elFlags[(3*MAX_CHANNELS + (MAX_CHANNELS)/2 + 4 * (MAX_TRACKS) + 1]
+     where MAX_CHANNELS is (8*2) and MAX_TRACKS is 1 */
   UINT elFlags[(3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)];
 
   if (!self) return AAC_DEC_INVALID_HANDLE;
