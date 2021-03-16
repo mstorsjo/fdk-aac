@@ -1524,6 +1524,10 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
      where MAX_CHANNELS is (8*2) and MAX_TRACKS is 1 */
   UINT elFlags[(3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)];
 
+  UCHAR sbrEnabled = self->sbrEnabled;
+  UCHAR sbrEnabledPrev = self->sbrEnabledPrev;
+  UCHAR mpsEnableCurr = self->mpsEnableCurr;
+
   if (!self) return AAC_DEC_INVALID_HANDLE;
 
   UCHAR downscaleFactor = self->downscaleFactor;
@@ -1707,7 +1711,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
             asc->m_sc.m_usacConfig.m_usacNumElements;
       }
 
-      self->mpsEnableCurr = 0;
+      mpsEnableCurr = 0;
       for (int _el = 0;
            _el < (int)self->pUsacConfig[streamIndex]->m_usacNumElements;
            _el++) {
@@ -1727,7 +1731,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           self->usacStereoConfigIndex[el] =
               asc->m_sc.m_usacConfig.element[_el].m_stereoConfigIndex;
           if (self->elements[el] == ID_USAC_CPE) {
-            self->mpsEnableCurr |= self->usacStereoConfigIndex[el] ? 1 : 0;
+            mpsEnableCurr |= self->usacStereoConfigIndex[el] ? 1 : 0;
           }
         }
 
@@ -1863,7 +1867,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       self->useLdQmfTimeAlign =
           asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
     }
-    if (self->sbrEnabled != asc->m_sbrPresentFlag) {
+    if (sbrEnabled != asc->m_sbrPresentFlag) {
       ascChanged = 1;
     }
   }
@@ -1879,13 +1883,13 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   flags |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
   flags |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
   if (asc->m_sbrPresentFlag) {
-    self->sbrEnabled = 1;
-    self->sbrEnabledPrev = 1;
+    sbrEnabled = 1;
+    sbrEnabledPrev = 1;
   } else {
-    self->sbrEnabled = 0;
-    self->sbrEnabledPrev = 0;
+    sbrEnabled = 0;
+    sbrEnabledPrev = 0;
   }
-  if (self->sbrEnabled && asc->m_extensionSamplingFrequency) {
+  if (sbrEnabled && asc->m_extensionSamplingFrequency) {
     if (downscaleFactor != 1 && (downscaleFactor)&1) {
       return AAC_DEC_UNSUPPORTED_SAMPLINGRATE; /* SBR needs an even downscale
                                                   factor */
@@ -1912,7 +1916,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   flags |= (asc->m_hcrFlag) ? AC_ER_HCR : 0;
 
   if (asc->m_aot == AOT_ER_AAC_ELD) {
-    self->mpsEnableCurr = 0;
+    mpsEnableCurr = 0;
     flags |= AC_ELD;
     flags |= (asc->m_sbrPresentFlag)
                  ? AC_SBR_PRESENT
@@ -1923,7 +1927,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
                  ? AC_MPS_PRESENT
                  : 0;
     if (self->mpsApplicable) {
-      self->mpsEnableCurr = asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
+      mpsEnableCurr = asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
     }
   }
   flags |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
@@ -2004,7 +2008,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   /* set AC_USAC_SCFGI3 globally if any usac element uses */
   switch (asc->m_aot) {
     case AOT_USAC:
-      if (self->sbrEnabled) {
+      if (sbrEnabled) {
         for (int _el = 0;
              _el < (int)self->pUsacConfig[streamIndex]->m_usacNumElements;
              _el++) {
@@ -2041,7 +2045,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     */
     switch (asc->m_aot) {
       case AOT_USAC:
-        if (self->sbrEnabled) {
+        if (sbrEnabled) {
           const UCHAR map_sbrRatio_2_nAnaBands[] = {16, 24, 32};
 
           FDK_ASSERT(asc->m_sc.m_usacConfig.m_sbrRatioIndex > 0);
@@ -2069,11 +2073,11 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
         break;
       case AOT_ER_AAC_ELD:
-        if (self->mpsEnableCurr &&
+        if (mpsEnableCurr &&
             asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign) {
-          SAC_INPUT_CONFIG sac_interface =
-              (self->sbrEnabled && self->hSbrDecoder) ? SAC_INTERFACE_QMF
-                                                      : SAC_INTERFACE_TIME;
+          SAC_INPUT_CONFIG sac_interface = (sbrEnabled && self->hSbrDecoder)
+                                               ? SAC_INTERFACE_QMF
+                                               : SAC_INTERFACE_TIME;
           mpegSurroundDecoder_ConfigureQmfDomain(
               (CMpegSurroundDecoder *)self->pMpegSurroundDecoder, sac_interface,
               (UINT)self->streamInfo.aacSampleRate, asc->m_aot);
@@ -2428,6 +2432,9 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
 
   CAacDecoder_AcceptFlags(self, asc, flags, elFlags, streamIndex,
                           elementOffset);
+  self->sbrEnabled = sbrEnabled;
+  self->sbrEnabledPrev = sbrEnabledPrev;
+  self->mpsEnableCurr = mpsEnableCurr;
 
   /* Update externally visible copy of flags */
   self->streamInfo.flags = self->flags[0];
