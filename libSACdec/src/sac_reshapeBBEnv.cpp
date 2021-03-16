@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -241,29 +241,56 @@ static inline void combineDryWet(FIXP_DBL *RESTRICT pReal,
   }
 }
 
-static inline void slotAmp(FIXP_DBL *RESTRICT slotAmp_dry,
-                           FIXP_DBL *RESTRICT slotAmp_wet,
-                           FIXP_DBL *RESTRICT pHybOutputRealDry,
-                           FIXP_DBL *RESTRICT pHybOutputImagDry,
-                           FIXP_DBL *RESTRICT pHybOutputRealWet,
-                           FIXP_DBL *RESTRICT pHybOutputImagWet, INT cplxBands,
-                           INT hybBands) {
-  INT qs;
+static inline void slotAmp(
+    FIXP_DBL *RESTRICT slotAmp_dry, INT *RESTRICT slotAmp_dry_e,
+    FIXP_DBL *RESTRICT slotAmp_wet, INT *RESTRICT slotAmp_wet_e,
+    FIXP_DBL *RESTRICT pHybOutputRealDry, FIXP_DBL *RESTRICT pHybOutputImagDry,
+    FIXP_DBL *RESTRICT pHybOutputRealWet, FIXP_DBL *RESTRICT pHybOutputImagWet,
+    INT cplxBands, INT hybBands) {
+  INT qs, s1, s2, headroom_dry, headroom_wet;
   FIXP_DBL dry, wet;
+
+  /* headroom can be reduced by 1 bit due to use of fPow2Div2 */
+  s1 = DFRACT_BITS - 1 - CntLeadingZeros(hybBands + cplxBands);
+  headroom_dry = fMin(getScalefactor(pHybOutputRealDry, hybBands),
+                      getScalefactor(pHybOutputImagDry, cplxBands));
+  headroom_wet = fMin(getScalefactor(pHybOutputRealWet, hybBands),
+                      getScalefactor(pHybOutputImagWet, cplxBands));
 
   dry = wet = FL2FXCONST_DBL(0.0f);
   for (qs = 0; qs < cplxBands; qs++) {
-    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs] << (1)) +
-                                fPow2Div2(pHybOutputImagDry[qs] << (1)));
-    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs] << (1)) +
-                                fPow2Div2(pHybOutputImagWet[qs] << (1)));
+    /* sum up dry part */
+    dry += (fPow2Div2(pHybOutputRealDry[qs] << headroom_dry) >> s1);
+    dry += (fPow2Div2(pHybOutputImagDry[qs] << headroom_dry) >> s1);
+    /* sum up wet part */
+    wet += (fPow2Div2(pHybOutputRealWet[qs] << headroom_wet) >> s1);
+    wet += (fPow2Div2(pHybOutputImagWet[qs] << headroom_wet) >> s1);
   }
   for (; qs < hybBands; qs++) {
-    dry = fAddSaturate(dry, fPow2Div2(pHybOutputRealDry[qs] << (1)));
-    wet = fAddSaturate(wet, fPow2Div2(pHybOutputRealWet[qs] << (1)));
+    dry += (fPow2Div2(pHybOutputRealDry[qs] << headroom_dry) >> s1);
+    wet += (fPow2Div2(pHybOutputRealWet[qs] << headroom_wet) >> s1);
   }
-  *slotAmp_dry = dry >> (2 * (1));
-  *slotAmp_wet = wet >> (2 * (1));
+
+  /* consider fPow2Div2() */
+  s1 += 1;
+
+  /* normalize dry part, ensure that exponent is even */
+  s2 = fixMax(0, CntLeadingZeros(dry) - 1);
+  *slotAmp_dry = dry << s2;
+  *slotAmp_dry_e = s1 - s2 - 2 * headroom_dry;
+  if (*slotAmp_dry_e & 1) {
+    *slotAmp_dry = *slotAmp_dry >> 1;
+    *slotAmp_dry_e += 1;
+  }
+
+  /* normalize wet part, ensure that exponent is even */
+  s2 = fixMax(0, CntLeadingZeros(wet) - 1);
+  *slotAmp_wet = wet << s2;
+  *slotAmp_wet_e = s1 - s2 - 2 * headroom_wet;
+  if (*slotAmp_wet_e & 1) {
+    *slotAmp_wet = *slotAmp_wet >> 1;
+    *slotAmp_wet_e += 1;
+  }
 }
 
 #if defined(__aarch64__)
@@ -533,6 +560,7 @@ void SpatialDecReshapeBBEnv(spatialDec *self, const SPATIAL_BS_FRAME *frame,
                             INT ts) {
   INT ch, scale;
   INT dryFacSF, slotAmpSF;
+  INT slotAmp_dry_e, slotAmp_wet_e;
   FIXP_DBL tmp, dryFac, envShape;
   FIXP_DBL slotAmp_dry, slotAmp_wet, slotAmp_ratio;
   FIXP_DBL envDry[MAX_OUTPUT_CHANNELS], envDmx[2];
@@ -594,22 +622,25 @@ void SpatialDecReshapeBBEnv(spatialDec *self, const SPATIAL_BS_FRAME *frame,
         dryFacSF = SF_SHAPE + 2 * dryFacSF;
       }
 
+      slotAmp_dry_e = slotAmp_wet_e = 0;
+
       /* calculate slotAmp_dry and slotAmp_wet */
-      slotAmp(&slotAmp_dry, &slotAmp_wet, &self->hybOutputRealDry__FDK[ch][6],
+      slotAmp(&slotAmp_dry, &slotAmp_dry_e, &slotAmp_wet, &slotAmp_wet_e,
+              &self->hybOutputRealDry__FDK[ch][6],
               &self->hybOutputImagDry__FDK[ch][6],
               &self->hybOutputRealWet__FDK[ch][6],
               &self->hybOutputImagWet__FDK[ch][6], cplxBands, hybBands);
 
+      /* exponents must be even due to subsequent square root calculation */
+      FDK_ASSERT(((slotAmp_dry_e & 1) == 0) && ((slotAmp_wet_e & 1) == 0));
+
       /* slotAmp_ratio will be scaled by slotAmpSF bits */
       if (slotAmp_dry != FL2FXCONST_DBL(0.0f)) {
-        sc = fixMax(0, CntLeadingZeros(slotAmp_wet) - 1);
-        sc = sc - (sc & 1);
-
-        slotAmp_wet = sqrtFixp(slotAmp_wet << sc);
+        slotAmp_wet = sqrtFixp(slotAmp_wet);
         slotAmp_dry = invSqrtNorm2(slotAmp_dry, &slotAmpSF);
 
         slotAmp_ratio = fMult(slotAmp_wet, slotAmp_dry);
-        slotAmpSF = slotAmpSF - (sc >> 1);
+        slotAmpSF = slotAmpSF + (slotAmp_wet_e >> 1) - (slotAmp_dry_e >> 1);
       }
 
       /* calculate common scale factor */
