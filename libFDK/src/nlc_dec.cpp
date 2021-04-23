@@ -568,7 +568,7 @@ bail:
 static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
                            SCHAR* out_data_2, DATA_TYPE data_type,
                            DIFF_TYPE diff_type_1, DIFF_TYPE diff_type_2,
-                           int num_val, CODING_SCHEME* cdg_scheme, int ldMode) {
+                           int num_val, int* cdg_scheme, int ldMode) {
   ERROR_t err = HUFFDEC_OK;
   DIFF_TYPE diff_type;
 
@@ -597,14 +597,14 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
 
   /* Coding scheme */
   data = FDKreadBits(strm, 1);
-  *cdg_scheme = (CODING_SCHEME)(data << PAIR_SHIFT);
+  *cdg_scheme = (data << PAIR_SHIFT);
 
   if (*cdg_scheme >> PAIR_SHIFT == HUFF_2D) {
     if ((out_data_1 != NULL) && (out_data_2 != NULL) && (ldMode == 0)) {
       data = FDKreadBits(strm, 1);
-      *cdg_scheme = (CODING_SCHEME)(*cdg_scheme | data);
+      *cdg_scheme = (*cdg_scheme | data);
     } else {
-      *cdg_scheme = (CODING_SCHEME)(*cdg_scheme | FREQ_PAIR);
+      *cdg_scheme = (*cdg_scheme | FREQ_PAIR);
     }
   }
 
@@ -843,7 +843,7 @@ ERROR_t EcDataPairDec(DECODER_TYPE DECODER, HANDLE_FDK_BITSTREAM strm,
   SCHAR* pDataVec[2] = {NULL, NULL};
 
   DIFF_TYPE diff_type[2] = {DIFF_FREQ, DIFF_FREQ};
-  CODING_SCHEME cdg_scheme = HUFF_1D;
+  int cdg_scheme = HUFF_1D;
   DIRECTION direction = BACKWARDS;
 
   switch (data_type) {
