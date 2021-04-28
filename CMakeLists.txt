@@ -488,7 +488,9 @@ target_link_libraries(fdk-aac PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>)
 set_target_properties(fdk-aac PROPERTIES
   PUBLIC_HEADER "${fdk_aacinclude_HEADERS}"
   VERSION 2.0.1
-  SOVERSION 2)
+  SOVERSION 2
+  MACHO_COMPATIBILITY_VERSION 3.0.0
+  MACHO_CURRENT_VERSION 3.1.0)
 
 ### Some compiler options from Makefile.am
 if(MSVC)
