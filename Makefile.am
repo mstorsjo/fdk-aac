@@ -262,7 +262,9 @@ EXTRA_DIST = \
     $(top_srcdir)/Android.bp \
     $(top_srcdir)/fdk-aac.def \
     $(top_srcdir)/fdk-aac.sym \
+    $(top_srcdir)/fdk-aac-config.cmake.in \
     $(top_srcdir)/documentation/*.pdf \
+    $(top_srcdir)/fuzzer/* \
     $(top_srcdir)/libAACdec/src/*.h \
     $(top_srcdir)/libAACdec/src/arm/*.cpp \
     $(top_srcdir)/libAACenc/src/*.h \
@@ -292,5 +294,7 @@ EXTRA_DIST = \
     $(top_srcdir)/libFDK/include/x86/*.h \
     $(top_srcdir)/libFDK/src/arm/*.cpp \
     $(top_srcdir)/libFDK/src/mips/*.cpp \
+    $(top_srcdir)/METADATA \
+    $(top_srcdir)/PREUPLOAD.cfg \
     $(top_srcdir)/win32/*.h
 
