@@ -1,7 +1,7 @@
 dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([fdk-aac], [2.0.1], [http://sourceforge.net/projects/opencore-amr/])
+AC_INIT([fdk-aac], [2.0.2], [http://sourceforge.net/projects/opencore-amr/])
 AC_CONFIG_AUX_DIR(.)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([tar-ustar foreign])
@@ -26,7 +26,7 @@ AC_SEARCH_LIBS([sin], [m])
 dnl soname version to use
 dnl goes by ‘current[:revision[:age]]’ with the soname ending up as
 dnl current.age.revision
-FDK_AAC_VERSION=2:1:0
+FDK_AAC_VERSION=2:2:0
 
 AS_IF([test x$enable_shared = xyes], [LIBS_PRIVATE=$LIBS], [LIBS_PUBLIC=$LIBS])
 AC_SUBST(FDK_AAC_VERSION)

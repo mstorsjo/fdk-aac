@@ -1,3 +1,9 @@
+2.0.2
+ - Minor upstream updates
+ - Lots of upstream and local fuzzing fixes
+ - Added CMake project files
+ - Removed the MSVC specific makefile
+
 2.0.1
  - Minor release with a number of crash/fuzz fixes, primarily for the decoder
 
