@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -568,12 +568,12 @@ bail:
 static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
                            SCHAR* out_data_2, DATA_TYPE data_type,
                            DIFF_TYPE diff_type_1, DIFF_TYPE diff_type_2,
-                           int num_val, CODING_SCHEME* cdg_scheme, int ldMode) {
+                           int num_val, PAIRING* pairing_scheme, int ldMode) {
   ERROR_t err = HUFFDEC_OK;
+  CODING_SCHEME coding_scheme = HUFF_1D;
   DIFF_TYPE diff_type;
 
   int i = 0;
-  ULONG data = 0;
 
   SCHAR pair_vec[28][2];
 
@@ -596,15 +596,13 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
   int hufYY;
 
   /* Coding scheme */
-  data = FDKreadBits(strm, 1);
-  *cdg_scheme = (CODING_SCHEME)(data << PAIR_SHIFT);
+  coding_scheme = (CODING_SCHEME)FDKreadBits(strm, 1);
 
-  if (*cdg_scheme >> PAIR_SHIFT == HUFF_2D) {
+  if (coding_scheme == HUFF_2D) {
     if ((out_data_1 != NULL) && (out_data_2 != NULL) && (ldMode == 0)) {
-      data = FDKreadBits(strm, 1);
-      *cdg_scheme = (CODING_SCHEME)(*cdg_scheme | data);
+      *pairing_scheme = (PAIRING)FDKreadBits(strm, 1);
     } else {
-      *cdg_scheme = (CODING_SCHEME)(*cdg_scheme | FREQ_PAIR);
+      *pairing_scheme = FREQ_PAIR;
     }
   }
 
@@ -613,7 +611,7 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
     hufYY2 = diff_type_2;
   }
 
-  switch (*cdg_scheme >> PAIR_SHIFT) {
+  switch (coding_scheme) {
     case HUFF_1D:
       p0_flag[0] = (diff_type_1 == DIFF_FREQ);
       p0_flag[1] = (diff_type_2 == DIFF_FREQ);
@@ -634,7 +632,7 @@ static ERROR_t huff_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
 
     case HUFF_2D:
 
-      switch (*cdg_scheme & PAIR_MASK) {
+      switch (*pairing_scheme) {
         case FREQ_PAIR:
 
           if (out_data_1 != NULL) {
@@ -843,7 +841,7 @@ ERROR_t EcDataPairDec(DECODER_TYPE DECODER, HANDLE_FDK_BITSTREAM strm,
   SCHAR* pDataVec[2] = {NULL, NULL};
 
   DIFF_TYPE diff_type[2] = {DIFF_FREQ, DIFF_FREQ};
-  CODING_SCHEME cdg_scheme = HUFF_1D;
+  PAIRING pairing = FREQ_PAIR;
   DIRECTION direction = BACKWARDS;
 
   switch (data_type) {
@@ -959,7 +957,7 @@ ERROR_t EcDataPairDec(DECODER_TYPE DECODER, HANDLE_FDK_BITSTREAM strm,
     }
     /* Huffman decoding */
     err = huff_decode(strm, pDataVec[0], pDataVec[1], data_type, diff_type[0],
-                      diff_type[1], dataBands, &cdg_scheme,
+                      diff_type[1], dataBands, &pairing,
                       (DECODER == SAOC_DECODER));
     if (err != HUFFDEC_OK) {
       return HUFFDEC_NOTOK;
@@ -986,8 +984,8 @@ ERROR_t EcDataPairDec(DECODER_TYPE DECODER, HANDLE_FDK_BITSTREAM strm,
         }
       }
 
-      mixed_time_pair = (diff_type[0] != diff_type[1]) &&
-                        ((cdg_scheme & PAIR_MASK) == TIME_PAIR);
+      mixed_time_pair =
+          (diff_type[0] != diff_type[1]) && (pairing == TIME_PAIR);
 
       if (direction == BACKWARDS) {
         if (diff_type[0] == DIFF_FREQ) {
