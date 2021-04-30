@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -488,12 +488,17 @@ SACDEC_ERROR SpatialDecParseSpecificConfig(
   pSpatialSpecificConfig->freqRes =
       (SPATIALDEC_FREQ_RES)freqResTable_LD[bsFreqRes];
 
-  pSpatialSpecificConfig->treeConfig =
-      (SPATIALDEC_TREE_CONFIG)FDKreadBits(bitstream, 4);
+  {
+    UINT treeConfig = FDKreadBits(bitstream, 4);
 
-  if (pSpatialSpecificConfig->treeConfig != SPATIALDEC_MODE_RSVD7) {
-    err = MPS_UNSUPPORTED_CONFIG;
-    goto bail;
+    switch (treeConfig) {
+      case SPATIALDEC_MODE_RSVD7:
+        pSpatialSpecificConfig->treeConfig = (SPATIALDEC_TREE_CONFIG)treeConfig;
+        break;
+      default:
+        err = MPS_UNSUPPORTED_CONFIG;
+        goto bail;
+    }
   }
 
   {
