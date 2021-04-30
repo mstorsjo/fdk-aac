@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -322,7 +322,8 @@ TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
               (FIXP_DBL)SATURATE_LEFT_SHIFT(tmp, scaling, DFRACT_BITS));
 #else
           samplesOut[j] = (INT_PCM)FX_DBL2FX_PCM((FIXP_DBL)SATURATE_LEFT_SHIFT(
-              tmp + ((FIXP_DBL)0x8000 >> scaling), scaling, DFRACT_BITS));
+              (tmp >> 1) + ((FIXP_DBL)0x8000 >> (scaling + 1)), scaling + 1,
+              DFRACT_BITS));
 #endif
         }
       }
