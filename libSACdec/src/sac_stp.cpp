@@ -252,12 +252,15 @@ inline void combineSignalCplxScale2(FIXP_DBL *hybOutputRealDry,
   int n;
 
   for (n = bands - 1; n >= 0; n--) {
-    *hybOutputRealDry =
-        *hybOutputRealDry +
-        (fMultDiv2(*hybOutputRealWet, scaleX) << (SF_SCALE + 1));
-    *hybOutputImagDry =
-        *hybOutputImagDry +
-        (fMultDiv2(*hybOutputImagWet, scaleX) << (SF_SCALE + 1));
+    *hybOutputRealDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputRealDry >> 1) +
+            (fMultDiv2(*hybOutputRealWet, scaleX) << SF_SCALE),
+        1, DFRACT_BITS);
+    *hybOutputImagDry = SATURATE_LEFT_SHIFT(
+        (*hybOutputImagDry >> 1) +
+            (fMultDiv2(*hybOutputImagWet, scaleX) << SF_SCALE),
+        1, DFRACT_BITS);
+    ;
     hybOutputRealDry++, hybOutputRealWet++;
     hybOutputImagDry++, hybOutputImagWet++;
   }
