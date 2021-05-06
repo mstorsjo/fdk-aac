@@ -494,6 +494,75 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
   return error;
 }
 
+static INT findElementInstanceTag(
+    INT elementTag, MP4_ELEMENT_ID elementId,
+    CAacDecoderChannelInfo **pAacDecoderChannelInfo, INT nChannels,
+    MP4_ELEMENT_ID *pElementIdTab, INT nElements) {
+  int el, chCnt = 0;
+
+  for (el = 0; el < nElements; el++) {
+    switch (pElementIdTab[el]) {
+      case ID_CPE:
+      case ID_SCE:
+      case ID_LFE:
+        if ((elementTag == pAacDecoderChannelInfo[chCnt]->ElementInstanceTag) &&
+            (elementId == pElementIdTab[el])) {
+          return 1; /* element instance tag found */
+        }
+        chCnt += (pElementIdTab[el] == ID_CPE) ? 2 : 1;
+        break;
+      default:
+        break;
+    }
+    if (chCnt >= nChannels) break;
+    if (pElementIdTab[el] == ID_END) break;
+  }
+
+  return 0; /* element instance tag not found */
+}
+
+static INT validateElementInstanceTags(
+    CProgramConfig *pce, CAacDecoderChannelInfo **pAacDecoderChannelInfo,
+    INT nChannels, MP4_ELEMENT_ID *pElementIdTab, INT nElements) {
+  if (nChannels >= pce->NumChannels) {
+    for (int el = 0; el < pce->NumFrontChannelElements; el++) {
+      if (!findElementInstanceTag(pce->FrontElementTagSelect[el],
+                                  pce->FrontElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumSideChannelElements; el++) {
+      if (!findElementInstanceTag(pce->SideElementTagSelect[el],
+                                  pce->SideElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumBackChannelElements; el++) {
+      if (!findElementInstanceTag(pce->BackElementTagSelect[el],
+                                  pce->BackElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumLfeChannelElements; el++) {
+      if (!findElementInstanceTag(pce->LfeElementTagSelect[el], ID_LFE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+  } else {
+    return 0; /* too less decoded audio channels */
+  }
+
+  return 1; /* all element instance tags found in raw_data_block() */
+}
+
 /*!
   \brief Read Program Config Element
 
@@ -2972,6 +3041,24 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     element_count++;
 
   } /* while ( (type != ID_END) ... ) */
+
+  if (!(self->flags[streamIndex] &
+        (AC_USAC | AC_RSVD50 | AC_RSV603DA | AC_BSAC | AC_LD | AC_ELD | AC_ER |
+         AC_SCALABLE)) &&
+      (self->streamInfo.channelConfig == 0) && pce->isValid &&
+      (ErrorStatus == AAC_DEC_OK) && self->frameOK &&
+      !(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
+    /* Check whether all PCE listed element instance tags are present in
+     * raw_data_block() */
+    if (!validateElementInstanceTags(
+            &self->pce, self->pAacDecoderChannelInfo, aacChannels,
+            channel_elements,
+            fMin(channel_element_count, (int)(sizeof(channel_elements) /
+                                              sizeof(*channel_elements))))) {
+      ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
+      self->frameOK = 0;
+    }
+  }
 
   if (!(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
     /* float decoder checks if bitsLeft is in range 0-7; only prerollAUs are
