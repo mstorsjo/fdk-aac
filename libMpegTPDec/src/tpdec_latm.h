@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -150,8 +150,6 @@ typedef struct {
   UCHAR newCfgHasAudioPreRoll; /* the new (dummy parsed) config has an
                                   AudioPreRoll */
 } CLatmDemux;
-
-int CLatmDemux_ReadAuChunkLengthInfo(HANDLE_FDK_BITSTREAM bs);
 
 TRANSPORTDEC_ERROR CLatmDemux_Read(HANDLE_FDK_BITSTREAM bs,
                                    CLatmDemux *pLatmDemux, TRANSPORT_TYPE tt,
