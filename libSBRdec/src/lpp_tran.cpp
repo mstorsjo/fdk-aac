@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -527,7 +527,7 @@ void lppTransposer(
         if ((scale > 0) && (result >= (FIXP_DBL)MAXVAL_DBL >> scale)) {
           resetLPCCoeffs = 1;
         } else {
-          alphar[1] = FX_DBL2FX_SGL(scaleValue(result, scale));
+          alphar[1] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale));
           if ((tmp < FL2FX_DBL(0.0f)) ^ (ac.det < FL2FX_DBL(0.0f))) {
             alphar[1] = -alphar[1];
           }
@@ -555,7 +555,7 @@ void lppTransposer(
                scale)) {
             resetLPCCoeffs = 1;
           } else {
-            alphai[1] = FX_DBL2FX_SGL(scaleValue(result, scale));
+            alphai[1] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale));
             if ((tmp < FL2FX_DBL(0.0f)) ^ (ac.det < FL2FX_DBL(0.0f))) {
               alphai[1] = -alphai[1];
             }
@@ -594,7 +594,7 @@ void lppTransposer(
       } else {
         INT scale;
         FIXP_DBL result = fDivNorm(absTmp, fixp_abs(ac.r11r), &scale);
-        alphar[0] = FX_DBL2FX_SGL(scaleValue(result, scale + 1));
+        alphar[0] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale + 1));
 
         if ((tmp > FL2FX_DBL(0.0f)) ^ (ac.r11r < FL2FX_DBL(0.0f)))
           alphar[0] = -alphar[0];
@@ -614,7 +614,7 @@ void lppTransposer(
         } else {
           INT scale;
           FIXP_DBL result = fDivNorm(absTmp, fixp_abs(ac.r11r), &scale);
-          alphai[0] = FX_DBL2FX_SGL(scaleValue(result, scale + 1));
+          alphai[0] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale + 1));
           if ((tmp > FL2FX_DBL(0.0f)) ^ (ac.r11r < FL2FX_DBL(0.0f)))
             alphai[0] = -alphai[0];
         }
@@ -657,7 +657,7 @@ void lppTransposer(
           INT scale;
           FIXP_DBL result =
               fDivNorm(fixp_abs(ac.r01r), fixp_abs(ac.r11r), &scale);
-          k1 = scaleValue(result, scale);
+          k1 = scaleValueSaturate(result, scale);
 
           if (!((ac.r01r < FL2FX_DBL(0.0f)) ^ (ac.r11r < FL2FX_DBL(0.0f)))) {
             k1 = -k1;
@@ -1062,7 +1062,7 @@ void lppTransposerHBE(
         if ((scale > 0) && (result >= (FIXP_DBL)MAXVAL_DBL >> scale)) {
           resetLPCCoeffs = 1;
         } else {
-          alphar[1] = FX_DBL2FX_SGL(scaleValue(result, scale));
+          alphar[1] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale));
           if ((tmp < FL2FX_DBL(0.0f)) ^ (ac.det < FL2FX_DBL(0.0f))) {
             alphar[1] = -alphar[1];
           }
@@ -1088,7 +1088,7 @@ void lppTransposerHBE(
             (result >= /*FL2FXCONST_DBL(1.f)*/ (FIXP_DBL)MAXVAL_DBL >> scale)) {
           resetLPCCoeffs = 1;
         } else {
-          alphai[1] = FX_DBL2FX_SGL(scaleValue(result, scale));
+          alphai[1] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale));
           if ((tmp < FL2FX_DBL(0.0f)) ^ (ac.det < FL2FX_DBL(0.0f))) {
             alphai[1] = -alphai[1];
           }
@@ -1117,7 +1117,7 @@ void lppTransposerHBE(
       } else {
         INT scale;
         FIXP_DBL result = fDivNorm(absTmp, fixp_abs(ac.r11r), &scale);
-        alphar[0] = FX_DBL2FX_SGL(scaleValue(result, scale + 1));
+        alphar[0] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale + 1));
 
         if ((tmp > FL2FX_DBL(0.0f)) ^ (ac.r11r < FL2FX_DBL(0.0f)))
           alphar[0] = -alphar[0];
@@ -1136,7 +1136,7 @@ void lppTransposerHBE(
       } else {
         INT scale;
         FIXP_DBL result = fDivNorm(absTmp, fixp_abs(ac.r11r), &scale);
-        alphai[0] = FX_DBL2FX_SGL(scaleValue(result, scale + 1));
+        alphai[0] = FX_DBL2FX_SGL(scaleValueSaturate(result, scale + 1));
         if ((tmp > FL2FX_DBL(0.0f)) ^ (ac.r11r < FL2FX_DBL(0.0f))) {
           alphai[0] = -alphai[0];
         }
