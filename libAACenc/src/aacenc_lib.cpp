@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -2520,6 +2520,11 @@ bail:
 AACENC_ERROR aacEncInfo(const HANDLE_AACENCODER hAacEncoder,
                         AACENC_InfoStruct *pInfo) {
   AACENC_ERROR err = AACENC_OK;
+
+  if ((hAacEncoder == NULL) || (pInfo == NULL)) {
+    err = AACENC_INVALID_HANDLE;
+    goto bail;
+  }
 
   FDKmemclear(pInfo, sizeof(AACENC_InfoStruct));
   pInfo->confSize = 64; /* pre-initialize */
