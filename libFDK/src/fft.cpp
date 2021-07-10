@@ -170,7 +170,7 @@ amm-info@iis.fraunhofer.de
 
 /* Performs the FFT of length 2. Input vector unscaled, output vector scaled
  * with factor 0.5 */
-static FDK_FORCEINLINE void fft2(FIXP_DBL *RESTRICT pDat) {
+static inline void fft2(FIXP_DBL *RESTRICT pDat) {
   FIXP_DBL r1, i1;
   FIXP_DBL r2, i2;
 
@@ -196,7 +196,7 @@ static FDK_FORCEINLINE void fft2(FIXP_DBL *RESTRICT pDat) {
 
 #ifndef FUNCTION_fft3
 /* Performs the FFT of length 3 according to the algorithm after winograd. */
-static FDK_FORCEINLINE void fft3(FIXP_DBL *RESTRICT pDat) {
+static inline void fft3(FIXP_DBL *RESTRICT pDat) {
   FIXP_DBL r1, r2;
   FIXP_DBL s1, s2;
   FIXP_DBL pD;
@@ -233,7 +233,7 @@ static FDK_FORCEINLINE void fft3(FIXP_DBL *RESTRICT pDat) {
 
 /* performs the FFT of length 5 according to the algorithm after winograd */
 /* This version works with a prescale of 2 instead of 3 */
-static FDK_FORCEINLINE void fft5(FIXP_DBL *RESTRICT pDat) {
+static inline void fft5(FIXP_DBL *RESTRICT pDat) {
   FIXP_DBL r1, r2, r3, r4;
   FIXP_DBL s1, s2, s3, s4;
   FIXP_DBL t;
