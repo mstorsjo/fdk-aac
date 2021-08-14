@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -172,6 +172,12 @@ enum {
   AACDEC_RSV60_BUILD_UP_IDLE_IN_BAND = 5
 };
 
+#define AACDEC_CROSSFADE_BITMASK_OFF                                    \
+  ((UCHAR)0) /*!< No cross-fade between frames shall be applied at next \
+                config change. */
+#define AACDEC_CROSSFADE_BITMASK_PREROLL \
+  ((UCHAR)1 << 1) /*!< applyCrossfade is signaled in AudioPreRoll */
+
 typedef struct {
   /* Usac Extension Elements */
   USAC_EXT_ELEMENT_TYPE usacExtElementType[(3)];
@@ -325,7 +331,7 @@ This structure is allocated once for each CPE. */
   UINT loudnessInfoSetPosition[3];
   SCHAR defaultTargetLoudness;
 
-  INT_PCM
+  PCM_DEC
   *pTimeDataFlush[((8) * 2)]; /*!< Pointer to the flushed time data which
                                  will be used for the crossfade in case of
                                  an USAC DASH IPF config change */
@@ -341,8 +347,8 @@ This structure is allocated once for each CPE. */
                                                           start position in the
                                                           bitstream */
   INT accessUnit; /*!< Number of the actual processed preroll accessUnit */
-  UCHAR applyCrossfade; /*!< if set crossfade for seamless stream switching is
-                           applied */
+  UCHAR applyCrossfade; /*!< If any bit is set, cross-fade for seamless stream
+                           switching is applied */
 
   FDK_SignalDelay usacResidualDelay; /*!< Delay residual signal to compensate
                                         for eSBR delay of DMX signal in case of
@@ -439,12 +445,12 @@ LINKSPEC_H AAC_DECODER_ERROR CAacDecoder_FreeMem(HANDLE_AACDECODER self,
 
 /* Prepare crossfade for USAC DASH IPF config change */
 LINKSPEC_H AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
-    const INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    const PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved);
 
 /* Apply crossfade for USAC DASH IPF config change */
 LINKSPEC_H AAC_DECODER_ERROR CAacDecoder_ApplyCrossFade(
-    INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved);
 
 /* Set flush and build up mode */

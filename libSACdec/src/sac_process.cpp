@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -517,12 +517,11 @@ SACDEC_ERROR SpatialDecApplyM2_Mode212_ResidualsPlusPhaseCoding(
       maxVal = fAbs(iReal0) | fAbs(iImag0);
       maxVal |= fAbs(iReal1);
 
-      s = fMax(CntLeadingZeros(maxVal) - 1, 0);
-      s = fMin(s, scale_param_m2);
+      s = fMin(CntLeadingZeros(maxVal) - 2, scale_param_m2);
 
-      mReal0 = iReal0 << s;
-      mImag0 = iImag0 << s;
-      mReal1 = iReal1 << s;
+      mReal0 = scaleValue(iReal0, s);
+      mImag0 = scaleValue(iImag0, s);
+      mReal1 = scaleValue(iReal1, s);
 
       s = scale_param_m2 - s;
 
@@ -562,12 +561,11 @@ SACDEC_ERROR SpatialDecApplyM2_Mode212_ResidualsPlusPhaseCoding(
       maxVal = fAbs(iReal0) | fAbs(iImag0);
       maxVal |= fAbs(iReal1);
 
-      s = fMax(CntLeadingZeros(maxVal) - 1, 0);
-      s = fMin(s, scale_param_m2);
+      s = fMin(CntLeadingZeros(maxVal) - 2, scale_param_m2);
 
-      mReal0 = FX_DBL2FX_SGL(iReal0 << s);
-      mImag0 = FX_DBL2FX_SGL(iImag0 << s);
-      mReal1 = FX_DBL2FX_SGL(iReal1 << s);
+      mReal0 = FX_DBL2FX_SGL(scaleValue(iReal0, s));
+      mImag0 = FX_DBL2FX_SGL(scaleValue(iImag0, s));
+      mReal1 = FX_DBL2FX_SGL(scaleValue(iReal1, s));
 
       s = scale_param_m2 - s;
 

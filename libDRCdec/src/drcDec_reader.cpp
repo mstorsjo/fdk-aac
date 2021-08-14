@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -512,10 +512,13 @@ drcDec_readUniDrcGain(HANDLE_FDK_BITSTREAM hBs,
               fMin(tmpNNodes, (UCHAR)16) * sizeof(GAIN_NODE));
   }
 
-  hUniDrcGain->uniDrcGainExtPresent = FDKreadBits(hBs, 1);
-  if (hUniDrcGain->uniDrcGainExtPresent == 1) {
-    err = _readUniDrcGainExtension(hBs, &(hUniDrcGain->uniDrcGainExtension));
-    if (err) return err;
+  if (pCoef && (gainSequenceCount ==
+                pCoef->gainSequenceCount)) { /* all sequences have been read */
+    hUniDrcGain->uniDrcGainExtPresent = FDKreadBits(hBs, 1);
+    if (hUniDrcGain->uniDrcGainExtPresent == 1) {
+      err = _readUniDrcGainExtension(hBs, &(hUniDrcGain->uniDrcGainExtension));
+      if (err) return err;
+    }
   }
 
   if (err == DE_OK && gainSequenceCount > 0) {
@@ -914,7 +917,7 @@ static void _skipEqCoefficients(HANDLE_FDK_BITSTREAM hBs) {
       firFilterOrder;
   int uniqueEqSubbandGainsCount, eqSubbandGainRepresentation,
       eqSubbandGainCount;
-  EQ_SUBBAND_GAIN_FORMAT eqSubbandGainFormat;
+  int eqSubbandGainFormat;
 
   eqDelayMaxPresent = FDKreadBits(hBs, 1);
   if (eqDelayMaxPresent) {
@@ -955,7 +958,7 @@ static void _skipEqCoefficients(HANDLE_FDK_BITSTREAM hBs) {
   uniqueEqSubbandGainsCount = FDKreadBits(hBs, 6);
   if (uniqueEqSubbandGainsCount > 0) {
     eqSubbandGainRepresentation = FDKreadBits(hBs, 1);
-    eqSubbandGainFormat = (EQ_SUBBAND_GAIN_FORMAT)FDKreadBits(hBs, 4);
+    eqSubbandGainFormat = FDKreadBits(hBs, 4);
     switch (eqSubbandGainFormat) {
       case GF_QMF32:
         eqSubbandGainCount = 32;

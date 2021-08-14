@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -539,11 +539,11 @@ static void dualChannelFiltering(const FIXP_DBL *const pQmfReal,
   i6 = pQmfImag[pReadIdx[6]] >> 2;
 
   FDK_ASSERT((invert == 0) || (invert == 1));
-  mHybridReal[0 + invert] = (r6 + r1) << 1;
-  mHybridImag[0 + invert] = (i6 + i1) << 1;
+  mHybridReal[0 + invert] = SATURATE_LEFT_SHIFT((r6 + r1), 1, DFRACT_BITS);
+  mHybridImag[0 + invert] = SATURATE_LEFT_SHIFT((i6 + i1), 1, DFRACT_BITS);
 
-  mHybridReal[1 - invert] = (r6 - r1) << 1;
-  mHybridImag[1 - invert] = (i6 - i1) << 1;
+  mHybridReal[1 - invert] = SATURATE_LEFT_SHIFT((r6 - r1), 1, DFRACT_BITS);
+  mHybridImag[1 - invert] = SATURATE_LEFT_SHIFT((i6 - i1), 1, DFRACT_BITS);
 }
 
 static void fourChannelFiltering(const FIXP_DBL *const pQmfReal,
@@ -766,15 +766,15 @@ static void eightChannelFiltering(const FIXP_DBL *const pQmfReal,
     mHybridReal[3] = pfft[FFT_IDX_R(1)] << sc;
     mHybridImag[3] = pfft[FFT_IDX_I(1)] << sc;
 
-    mHybridReal[4] = pfft[FFT_IDX_R(2)] << sc;
-    mHybridReal[4] += pfft[FFT_IDX_R(5)] << sc;
-    mHybridImag[4] = pfft[FFT_IDX_I(2)] << sc;
-    mHybridImag[4] += pfft[FFT_IDX_I(5)] << sc;
+    mHybridReal[4] = SATURATE_LEFT_SHIFT(
+        (pfft[FFT_IDX_R(2)] + pfft[FFT_IDX_R(5)]), sc, DFRACT_BITS);
+    mHybridImag[4] = SATURATE_LEFT_SHIFT(
+        (pfft[FFT_IDX_I(2)] + pfft[FFT_IDX_I(5)]), sc, DFRACT_BITS);
 
-    mHybridReal[5] = pfft[FFT_IDX_R(3)] << sc;
-    mHybridReal[5] += pfft[FFT_IDX_R(4)] << sc;
-    mHybridImag[5] = pfft[FFT_IDX_I(3)] << sc;
-    mHybridImag[5] += pfft[FFT_IDX_I(4)] << sc;
+    mHybridReal[5] = SATURATE_LEFT_SHIFT(
+        (pfft[FFT_IDX_R(3)] + pfft[FFT_IDX_R(4)]), sc, DFRACT_BITS);
+    mHybridImag[5] = SATURATE_LEFT_SHIFT(
+        (pfft[FFT_IDX_I(3)] + pfft[FFT_IDX_I(4)]), sc, DFRACT_BITS);
   } else {
     for (k = 0; k < 8; k++) {
       mHybridReal[k] = pfft[FFT_IDX_R(k)] << sc;
