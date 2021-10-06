@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -494,13 +494,40 @@ static PCM_DMX_CHANNEL_MODE getChMode4Plain(
   return plainChMode;
 }
 
-static inline UINT getIdxSum(UCHAR numCh) {
-  UINT result = 0;
-  int i;
-  for (i = 1; i < numCh; i += 1) {
-    result += i;
+/** Validates the channel indices of all channels present in the bitstream.
+ * The channel indices have to be consecutive and unique for each audio channel
+ *type.
+ * @param [in] The total number of channels of the given configuration.
+ * @param [in] The total number of channels of the current audio channel type of
+ *the given configuration.
+ * @param [in] Audio channel type to be examined.
+ * @param [in] Array holding the corresponding channel types for each channel.
+ * @param [in] Array holding the corresponding channel type indices for each
+ *channel.
+ * @returns Returns 1 on success, returns 0 on error.
+ **/
+static UINT validateIndices(UINT numChannels, UINT numChannelsPlaneAndGrp,
+                            AUDIO_CHANNEL_TYPE aChType,
+                            const AUDIO_CHANNEL_TYPE channelType[],
+                            const UCHAR channelIndices[]) {
+  for (UINT reqValue = 0; reqValue < numChannelsPlaneAndGrp; reqValue++) {
+    int found = FALSE;
+    for (UINT i = 0; i < numChannels; i++) {
+      if (channelType[i] == aChType) {
+        if (channelIndices[i] == reqValue) {
+          if (found == TRUE) {
+            return 0; /* Found channel index a second time */
+          } else {
+            found = TRUE; /* Found channel index */
+          }
+        }
+      }
+    }
+    if (found == FALSE) {
+      return 0; /* Did not find channel index */
+    }
   }
-  return result;
+  return 1; /* Successfully validated channel indices */
 }
 
 /** Evaluate a given channel configuration and extract a packed channel mode. In
@@ -523,7 +550,6 @@ static PCMDMX_ERROR getChannelMode(
     UCHAR offsetTable[(8)],                 /* out */
     PCM_DMX_CHANNEL_MODE *chMode            /* out */
 ) {
-  UINT idxSum[(3)][(4)];
   UCHAR numCh[(3)][(4)];
   UCHAR mapped[(8)];
   PCM_DMX_SPEAKER_POSITION spkrPos[(8)];
@@ -538,7 +564,6 @@ static PCMDMX_ERROR getChannelMode(
   FDK_ASSERT(chMode != NULL);
 
   /* For details see ISO/IEC 13818-7:2005(E), 8.5.3 Channel configuration */
-  FDKmemclear(idxSum, (3) * (4) * sizeof(UINT));
   FDKmemclear(numCh, (3) * (4) * sizeof(UCHAR));
   FDKmemclear(mapped, (8) * sizeof(UCHAR));
   FDKmemclear(spkrPos, (8) * sizeof(PCM_DMX_SPEAKER_POSITION));
@@ -552,19 +577,22 @@ static PCMDMX_ERROR getChannelMode(
         (channelType[ch] & 0x0F) - 1,
         0); /* Assign all undefined channels (ACT_NONE) to front channels. */
     numCh[channelType[ch] >> 4][chGrp] += 1;
-    idxSum[channelType[ch] >> 4][chGrp] += channelIndices[ch];
   }
-  if (numChannels > TWO_CHANNEL) {
+
+  {
     int chGrp;
     /* Sanity check on the indices */
     for (chGrp = 0; chGrp < (4); chGrp += 1) {
       int plane;
       for (plane = 0; plane < (3); plane += 1) {
-        if (idxSum[plane][chGrp] != getIdxSum(numCh[plane][chGrp])) {
+        if (numCh[plane][chGrp] == 0) continue;
+        AUDIO_CHANNEL_TYPE aChType =
+            (AUDIO_CHANNEL_TYPE)((plane << 4) | ((chGrp + 1) & 0xF));
+        if (!validateIndices(numChannels, numCh[plane][chGrp], aChType,
+                             channelType, channelIndices)) {
           unsigned idxCnt = 0;
           for (ch = 0; ch < numChannels; ch += 1) {
-            if (channelType[ch] ==
-                (AUDIO_CHANNEL_TYPE)((plane << 4) | ((chGrp + 1) & 0xF))) {
+            if (channelType[ch] == aChType) {
               channelIndices[ch] = idxCnt++;
             }
           }

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1400,42 +1400,27 @@ void QmfTransposerApply(HANDLE_HBE_TRANSPOSER hQmfTransposer,
 
   if (shift_ov != 0) {
     for (i = 0; i < HBE_MAX_OUT_SLOTS; i++) {
-      for (band = 0; band < QMF_SYNTH_CHANNELS; band++) {
-        if (shift_ov >= 0) {
-          hQmfTransposer->qmfHBEBufReal_F[i][band] <<= shift_ov;
-          hQmfTransposer->qmfHBEBufImag_F[i][band] <<= shift_ov;
-        } else {
-          hQmfTransposer->qmfHBEBufReal_F[i][band] >>= (-shift_ov);
-          hQmfTransposer->qmfHBEBufImag_F[i][band] >>= (-shift_ov);
-        }
-      }
-    }
-  }
-
-  if ((keepStatesSyncedMode == KEEP_STATES_SYNCED_OFF) && shift_ov != 0) {
-    for (i = timeStep * firstSlotOffsset; i < ov_len; i++) {
-      for (band = hQmfTransposer->startBand; band < hQmfTransposer->stopBand;
-           band++) {
-        if (shift_ov >= 0) {
-          ppQmfBufferOutReal_F[i][band] <<= shift_ov;
-          ppQmfBufferOutImag_F[i][band] <<= shift_ov;
-        } else {
-          ppQmfBufferOutReal_F[i][band] >>= (-shift_ov);
-          ppQmfBufferOutImag_F[i][band] >>= (-shift_ov);
-        }
-      }
+      scaleValuesSaturate(&hQmfTransposer->qmfHBEBufReal_F[i][0],
+                          QMF_SYNTH_CHANNELS, shift_ov);
+      scaleValuesSaturate(&hQmfTransposer->qmfHBEBufImag_F[i][0],
+                          QMF_SYNTH_CHANNELS, shift_ov);
     }
 
-    /* shift lpc filterstates */
-    for (i = 0; i < timeStep * firstSlotOffsset + LPC_ORDER; i++) {
-      for (band = 0; band < (64); band++) {
-        if (shift_ov >= 0) {
-          lpcFilterStatesReal[i][band] <<= shift_ov;
-          lpcFilterStatesImag[i][band] <<= shift_ov;
-        } else {
-          lpcFilterStatesReal[i][band] >>= (-shift_ov);
-          lpcFilterStatesImag[i][band] >>= (-shift_ov);
-        }
+    if (keepStatesSyncedMode == KEEP_STATES_SYNCED_OFF) {
+      int nBands =
+          fMax(0, hQmfTransposer->stopBand - hQmfTransposer->startBand);
+
+      for (i = timeStep * firstSlotOffsset; i < ov_len; i++) {
+        scaleValuesSaturate(&ppQmfBufferOutReal_F[i][hQmfTransposer->startBand],
+                            nBands, shift_ov);
+        scaleValuesSaturate(&ppQmfBufferOutImag_F[i][hQmfTransposer->startBand],
+                            nBands, shift_ov);
+      }
+
+      /* shift lpc filterstates */
+      for (i = 0; i < timeStep * firstSlotOffsset + LPC_ORDER; i++) {
+        scaleValuesSaturate(&lpcFilterStatesReal[i][0], (64), shift_ov);
+        scaleValuesSaturate(&lpcFilterStatesImag[i][0], (64), shift_ov);
       }
     }
   }

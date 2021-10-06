@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -494,6 +494,75 @@ static AAC_DECODER_ERROR CDataStreamElement_Read(HANDLE_AACDECODER self,
   return error;
 }
 
+static INT findElementInstanceTag(
+    INT elementTag, MP4_ELEMENT_ID elementId,
+    CAacDecoderChannelInfo **pAacDecoderChannelInfo, INT nChannels,
+    MP4_ELEMENT_ID *pElementIdTab, INT nElements) {
+  int el, chCnt = 0;
+
+  for (el = 0; el < nElements; el++) {
+    switch (pElementIdTab[el]) {
+      case ID_CPE:
+      case ID_SCE:
+      case ID_LFE:
+        if ((elementTag == pAacDecoderChannelInfo[chCnt]->ElementInstanceTag) &&
+            (elementId == pElementIdTab[el])) {
+          return 1; /* element instance tag found */
+        }
+        chCnt += (pElementIdTab[el] == ID_CPE) ? 2 : 1;
+        break;
+      default:
+        break;
+    }
+    if (chCnt >= nChannels) break;
+    if (pElementIdTab[el] == ID_END) break;
+  }
+
+  return 0; /* element instance tag not found */
+}
+
+static INT validateElementInstanceTags(
+    CProgramConfig *pce, CAacDecoderChannelInfo **pAacDecoderChannelInfo,
+    INT nChannels, MP4_ELEMENT_ID *pElementIdTab, INT nElements) {
+  if (nChannels >= pce->NumChannels) {
+    for (int el = 0; el < pce->NumFrontChannelElements; el++) {
+      if (!findElementInstanceTag(pce->FrontElementTagSelect[el],
+                                  pce->FrontElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumSideChannelElements; el++) {
+      if (!findElementInstanceTag(pce->SideElementTagSelect[el],
+                                  pce->SideElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumBackChannelElements; el++) {
+      if (!findElementInstanceTag(pce->BackElementTagSelect[el],
+                                  pce->BackElementIsCpe[el] ? ID_CPE : ID_SCE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+    for (int el = 0; el < pce->NumLfeChannelElements; el++) {
+      if (!findElementInstanceTag(pce->LfeElementTagSelect[el], ID_LFE,
+                                  pAacDecoderChannelInfo, nChannels,
+                                  pElementIdTab, nElements)) {
+        return 0; /* element instance tag not in raw_data_block() */
+      }
+    }
+  } else {
+    return 0; /* too less decoded audio channels */
+  }
+
+  return 1; /* all element instance tags found in raw_data_block() */
+}
+
 /*!
   \brief Read Program Config Element
 
@@ -568,7 +637,7 @@ static int CProgramConfigElement_Read(HANDLE_FDK_BITSTREAM bs,
   \return  Error code
 */
 LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
-    const INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    const PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved) {
   int i, ch, s1, s2;
   AAC_DECODER_ERROR ErrorStatus;
@@ -584,7 +653,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
   }
 
   for (ch = 0; ch < numChannels; ch++) {
-    const INT_PCM *pIn = &pTimeData[ch * s1];
+    const PCM_DEC *pIn = &pTimeData[ch * s1];
     for (i = 0; i < TIME_DATA_FLUSH_SIZE; i++) {
       pTimeDataFlush[ch][i] = *pIn;
       pIn += s2;
@@ -606,7 +675,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PrepareCrossFade(
   \return  Error code
 */
 LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_ApplyCrossFade(
-    INT_PCM *pTimeData, INT_PCM **pTimeDataFlush, const INT numChannels,
+    PCM_DEC *pTimeData, PCM_DEC **pTimeDataFlush, const INT numChannels,
     const INT frameSize, const INT interleaved) {
   int i, ch, s1, s2;
   AAC_DECODER_ERROR ErrorStatus;
@@ -622,15 +691,15 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_ApplyCrossFade(
   }
 
   for (ch = 0; ch < numChannels; ch++) {
-    INT_PCM *pIn = &pTimeData[ch * s1];
+    PCM_DEC *pIn = &pTimeData[ch * s1];
     for (i = 0; i < TIME_DATA_FLUSH_SIZE; i++) {
       FIXP_SGL alpha = (FIXP_SGL)i
                        << (FRACT_BITS - 1 - TIME_DATA_FLUSH_SIZE_SF);
-      FIXP_DBL time = FX_PCM2FX_DBL(*pIn);
-      FIXP_DBL timeFlush = FX_PCM2FX_DBL(pTimeDataFlush[ch][i]);
+      FIXP_DBL time = PCM_DEC2FIXP_DBL(*pIn);
+      FIXP_DBL timeFlush = PCM_DEC2FIXP_DBL(pTimeDataFlush[ch][i]);
 
-      *pIn = (INT_PCM)(FIXP_PCM)FX_DBL2FX_PCM(
-          timeFlush - fMult(timeFlush, alpha) + fMult(time, alpha));
+      *pIn = FIXP_DBL2PCM_DEC(timeFlush - fMult(timeFlush, alpha) +
+                              fMult(time, alpha));
       pIn += s2;
     }
   }
@@ -753,7 +822,12 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_PreRollExtensionPayloadParse(
     /* We are interested in preroll AUs if an explicit or an implicit config
      * change is signalized in other words if the build up status is set. */
     if (self->buildUpStatus == AACDEC_USAC_BUILD_UP_ON) {
-      self->applyCrossfade |= FDKreadBit(hBs);
+      UCHAR applyCrossfade = FDKreadBit(hBs);
+      if (applyCrossfade) {
+        self->applyCrossfade |= AACDEC_CROSSFADE_BITMASK_PREROLL;
+      } else {
+        self->applyCrossfade &= ~AACDEC_CROSSFADE_BITMASK_PREROLL;
+      }
       FDKreadBit(hBs); /* reserved */
       /* Read num preroll AU's */
       *numPrerollAU = escapedValue(hBs, 2, 4, 0);
@@ -1397,6 +1471,27 @@ static void CAacDecoder_DeInit(HANDLE_AACDECODER self,
 }
 
 /*!
+ * \brief CAacDecoder_AcceptFlags Accept flags and element flags
+ *
+ * \param self          [o]   handle to AACDECODER structure
+ * \param asc           [i]   handle to ASC structure
+ * \param flags         [i]   flags
+ * \param elFlags       [i]   pointer to element flags
+ * \param streamIndex   [i]   stream index
+ * \param elementOffset [i]   element offset
+ *
+ * \return void
+ */
+static void CAacDecoder_AcceptFlags(HANDLE_AACDECODER self,
+                                    const CSAudioSpecificConfig *asc,
+                                    UINT flags, UINT *elFlags, int streamIndex,
+                                    int elementOffset) {
+  FDKmemcpy(self->elFlags, elFlags, sizeof(self->elFlags));
+
+  self->flags[streamIndex] = flags;
+}
+
+/*!
  * \brief CAacDecoder_CtrlCFGChange Set config change parameters.
  *
  * \param self           [i]   handle to AACDECODER structure
@@ -1492,6 +1587,15 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   int elementOffset, aacChannelsOffset, aacChannelsOffsetIdx;
   const int streamIndex = 0;
   INT flushChannels = 0;
+
+  UINT flags;
+  /* elFlags[(3*MAX_CHANNELS + (MAX_CHANNELS)/2 + 4 * (MAX_TRACKS) + 1]
+     where MAX_CHANNELS is (8*2) and MAX_TRACKS is 1 */
+  UINT elFlags[(3 * ((8) * 2) + (((8) * 2)) / 2 + 4 * (1) + 1)];
+
+  UCHAR sbrEnabled = self->sbrEnabled;
+  UCHAR sbrEnabledPrev = self->sbrEnabledPrev;
+  UCHAR mpsEnableCurr = self->mpsEnableCurr;
 
   if (!self) return AAC_DEC_INVALID_HANDLE;
 
@@ -1649,8 +1753,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   }
 
   /* Set syntax flags */
-  self->flags[streamIndex] = 0;
-  { FDKmemclear(self->elFlags, sizeof(self->elFlags)); }
+  flags = 0;
+  { FDKmemclear(elFlags, sizeof(elFlags)); }
 
   if ((asc->m_channelConfiguration > 0) || IS_USAC(asc->m_aot)) {
     if (IS_USAC(asc->m_aot)) {
@@ -1676,7 +1780,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
             asc->m_sc.m_usacConfig.m_usacNumElements;
       }
 
-      self->mpsEnableCurr = 0;
+      mpsEnableCurr = 0;
       for (int _el = 0;
            _el < (int)self->pUsacConfig[streamIndex]->m_usacNumElements;
            _el++) {
@@ -1696,35 +1800,34 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           self->usacStereoConfigIndex[el] =
               asc->m_sc.m_usacConfig.element[_el].m_stereoConfigIndex;
           if (self->elements[el] == ID_USAC_CPE) {
-            self->mpsEnableCurr |= self->usacStereoConfigIndex[el] ? 1 : 0;
+            mpsEnableCurr |= self->usacStereoConfigIndex[el] ? 1 : 0;
           }
         }
 
-        self->elFlags[el] |=
-            (asc->m_sc.m_usacConfig.element[_el].m_noiseFilling)
-                ? AC_EL_USAC_NOISE
-                : 0;
-        self->elFlags[el] |=
+        elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_noiseFilling)
+                           ? AC_EL_USAC_NOISE
+                           : 0;
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].m_stereoConfigIndex > 0)
                 ? AC_EL_USAC_MPS212
                 : 0;
-        self->elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_interTes)
-                                 ? AC_EL_USAC_ITES
-                                 : 0;
-        self->elFlags[el] |=
+        elFlags[el] |= (asc->m_sc.m_usacConfig.element[_el].m_interTes)
+                           ? AC_EL_USAC_ITES
+                           : 0;
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].m_pvc) ? AC_EL_USAC_PVC : 0;
-        self->elFlags[el] |=
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].usacElementType == ID_USAC_LFE)
                 ? AC_EL_USAC_LFE
                 : 0;
-        self->elFlags[el] |=
+        elFlags[el] |=
             (asc->m_sc.m_usacConfig.element[_el].usacElementType == ID_USAC_LFE)
                 ? AC_EL_LFE
                 : 0;
         if ((asc->m_sc.m_usacConfig.element[_el].usacElementType ==
              ID_USAC_CPE) &&
             ((self->usacStereoConfigIndex[el] == 0))) {
-          self->elFlags[el] |= AC_EL_USAC_CP_POSSIBLE;
+          elFlags[el] |= AC_EL_USAC_CP_POSSIBLE;
         }
       }
 
@@ -1791,9 +1894,17 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       downscaleFactorInBS =
           asc->m_samplingFrequency /
           asc->m_sc.m_eldSpecificConfig.m_downscaledSamplingFrequency;
-      if (downscaleFactorInBS == 1 || downscaleFactorInBS == 2 ||
-          downscaleFactorInBS == 3 || downscaleFactorInBS == 4) {
+      if ((downscaleFactorInBS == 1 || downscaleFactorInBS == 2 ||
+           (downscaleFactorInBS == 3 &&
+            asc->m_sc.m_eldSpecificConfig.m_frameLengthFlag) ||
+           downscaleFactorInBS == 4) &&
+          ((asc->m_samplingFrequency %
+            asc->m_sc.m_eldSpecificConfig.m_downscaledSamplingFrequency) ==
+           0)) {
         downscaleFactor = downscaleFactorInBS;
+      } else {
+        downscaleFactorInBS = 1;
+        downscaleFactor = 1;
       }
     }
   } else {
@@ -1825,7 +1936,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       self->useLdQmfTimeAlign =
           asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
     }
-    if (self->sbrEnabled != asc->m_sbrPresentFlag) {
+    if (sbrEnabled != asc->m_sbrPresentFlag) {
       ascChanged = 1;
     }
   }
@@ -1838,16 +1949,16 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   if (configMode & AC_CM_ALLOC_MEM) {
     self->streamInfo.extSamplingRate = asc->m_extensionSamplingFrequency;
   }
-  self->flags[streamIndex] |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
-  self->flags[streamIndex] |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
+  flags |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
+  flags |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
   if (asc->m_sbrPresentFlag) {
-    self->sbrEnabled = 1;
-    self->sbrEnabledPrev = 1;
+    sbrEnabled = 1;
+    sbrEnabledPrev = 1;
   } else {
-    self->sbrEnabled = 0;
-    self->sbrEnabledPrev = 0;
+    sbrEnabled = 0;
+    sbrEnabledPrev = 0;
   }
-  if (self->sbrEnabled && asc->m_extensionSamplingFrequency) {
+  if (sbrEnabled && asc->m_extensionSamplingFrequency) {
     if (downscaleFactor != 1 && (downscaleFactor)&1) {
       return AAC_DEC_UNSUPPORTED_SAMPLINGRATE; /* SBR needs an even downscale
                                                   factor */
@@ -1865,51 +1976,47 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
   }
 
   /* --------- vcb11 ------------ */
-  self->flags[streamIndex] |= (asc->m_vcb11Flag) ? AC_ER_VCB11 : 0;
+  flags |= (asc->m_vcb11Flag) ? AC_ER_VCB11 : 0;
 
   /* ---------- rvlc ------------ */
-  self->flags[streamIndex] |= (asc->m_rvlcFlag) ? AC_ER_RVLC : 0;
+  flags |= (asc->m_rvlcFlag) ? AC_ER_RVLC : 0;
 
   /* ----------- hcr ------------ */
-  self->flags[streamIndex] |= (asc->m_hcrFlag) ? AC_ER_HCR : 0;
+  flags |= (asc->m_hcrFlag) ? AC_ER_HCR : 0;
 
   if (asc->m_aot == AOT_ER_AAC_ELD) {
-    self->mpsEnableCurr = 0;
-    self->flags[streamIndex] |= AC_ELD;
-    self->flags[streamIndex] |=
-        (asc->m_sbrPresentFlag)
-            ? AC_SBR_PRESENT
-            : 0; /* Need to set the SBR flag for backward-compatibility
-       reasons. Even if SBR is not supported. */
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_eldSpecificConfig.m_sbrCrcFlag) ? AC_SBRCRC : 0;
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign) ? AC_MPS_PRESENT
-                                                            : 0;
+    mpsEnableCurr = 0;
+    flags |= AC_ELD;
+    flags |= (asc->m_sbrPresentFlag)
+                 ? AC_SBR_PRESENT
+                 : 0; /* Need to set the SBR flag for backward-compatibility
+                               reasons. Even if SBR is not supported. */
+    flags |= (asc->m_sc.m_eldSpecificConfig.m_sbrCrcFlag) ? AC_SBRCRC : 0;
+    flags |= (asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign)
+                 ? AC_MPS_PRESENT
+                 : 0;
     if (self->mpsApplicable) {
-      self->mpsEnableCurr = asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
+      mpsEnableCurr = asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign;
     }
   }
-  self->flags[streamIndex] |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
-  self->flags[streamIndex] |= (asc->m_epConfig >= 0) ? AC_ER : 0;
+  flags |= (asc->m_aot == AOT_ER_AAC_LD) ? AC_LD : 0;
+  flags |= (asc->m_epConfig >= 0) ? AC_ER : 0;
 
   if (asc->m_aot == AOT_USAC) {
-    self->flags[streamIndex] |= AC_USAC;
-    self->flags[streamIndex] |=
-        (asc->m_sc.m_usacConfig.element[0].m_stereoConfigIndex > 0)
-            ? AC_MPS_PRESENT
-            : 0;
+    flags |= AC_USAC;
+    flags |= (asc->m_sc.m_usacConfig.element[0].m_stereoConfigIndex > 0)
+                 ? AC_MPS_PRESENT
+                 : 0;
   }
   if (asc->m_aot == AOT_DRM_AAC) {
-    self->flags[streamIndex] |= AC_DRM | AC_SBRCRC | AC_SCALABLE;
+    flags |= AC_DRM | AC_SBRCRC | AC_SCALABLE;
   }
   if (asc->m_aot == AOT_DRM_SURROUND) {
-    self->flags[streamIndex] |=
-        AC_DRM | AC_SBRCRC | AC_SCALABLE | AC_MPS_PRESENT;
+    flags |= AC_DRM | AC_SBRCRC | AC_SCALABLE | AC_MPS_PRESENT;
     FDK_ASSERT(!asc->m_psPresentFlag);
   }
   if ((asc->m_aot == AOT_AAC_SCAL) || (asc->m_aot == AOT_ER_AAC_SCAL)) {
-    self->flags[streamIndex] |= AC_SCALABLE;
+    flags |= AC_SCALABLE;
   }
 
   if ((asc->m_epConfig >= 0) && (asc->m_channelConfiguration <= 0)) {
@@ -1960,13 +2067,17 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     if (ascChanged != 0) {
       *configChanged = 1;
     }
+
+    CAacDecoder_AcceptFlags(self, asc, flags, elFlags, streamIndex,
+                            elementOffset);
+
     return err;
   }
 
   /* set AC_USAC_SCFGI3 globally if any usac element uses */
   switch (asc->m_aot) {
     case AOT_USAC:
-      if (self->sbrEnabled) {
+      if (sbrEnabled) {
         for (int _el = 0;
              _el < (int)self->pUsacConfig[streamIndex]->m_usacNumElements;
              _el++) {
@@ -1988,7 +2099,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
 
         if (usacStereoConfigIndex == 3) {
-          self->flags[streamIndex] |= AC_USAC_SCFGI3;
+          flags |= AC_USAC_SCFGI3;
         }
       }
       break;
@@ -2003,7 +2114,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     */
     switch (asc->m_aot) {
       case AOT_USAC:
-        if (self->sbrEnabled) {
+        if (sbrEnabled) {
           const UCHAR map_sbrRatio_2_nAnaBands[] = {16, 24, 32};
 
           FDK_ASSERT(asc->m_sc.m_usacConfig.m_sbrRatioIndex > 0);
@@ -2031,11 +2142,11 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
         break;
       case AOT_ER_AAC_ELD:
-        if (self->mpsEnableCurr &&
+        if (mpsEnableCurr &&
             asc->m_sc.m_eldSpecificConfig.m_useLdQmfTimeAlign) {
-          SAC_INPUT_CONFIG sac_interface =
-              (self->sbrEnabled && self->hSbrDecoder) ? SAC_INTERFACE_QMF
-                                                      : SAC_INTERFACE_TIME;
+          SAC_INPUT_CONFIG sac_interface = (sbrEnabled && self->hSbrDecoder)
+                                               ? SAC_INTERFACE_QMF
+                                               : SAC_INTERFACE_TIME;
           mpegSurroundDecoder_ConfigureQmfDomain(
               (CMpegSurroundDecoder *)self->pMpegSurroundDecoder, sac_interface,
               (UINT)self->streamInfo.aacSampleRate, asc->m_aot);
@@ -2069,14 +2180,14 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
       ch = aacChannelsOffset;
       int _numElements;
       _numElements = (((8)) + (8));
-      if (self->flags[streamIndex] & (AC_RSV603DA | AC_USAC)) {
+      if (flags & (AC_RSV603DA | AC_USAC)) {
         _numElements = (int)asc->m_sc.m_usacConfig.m_usacNumElements;
       }
       for (int _el = 0; _el < _numElements; _el++) {
         int el_channels = 0;
         int el = elementOffset + _el;
 
-        if (self->flags[streamIndex] &
+        if (flags &
             (AC_ER | AC_LD | AC_ELD | AC_RSV603DA | AC_USAC | AC_RSVD50)) {
           if (ch >= ascChannels) {
             break;
@@ -2176,15 +2287,14 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
           if (self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer == NULL) {
             goto bail;
           }
-          if (self->flags[streamIndex] &
-              (AC_USAC | AC_RSVD50 | AC_RSV603DA /*|AC_BSAC*/)) {
+          if (flags & (AC_USAC | AC_RSVD50 | AC_RSV603DA /*|AC_BSAC*/)) {
             self->pAacDecoderStaticChannelInfo[ch]->hArCo = CArco_Create();
             if (self->pAacDecoderStaticChannelInfo[ch]->hArCo == NULL) {
               goto bail;
             }
           }
 
-          if (!(self->flags[streamIndex] & (AC_USAC | AC_RSV603DA))) {
+          if (!(flags & (AC_USAC | AC_RSV603DA))) {
             CPns_UpdateNoiseState(
                 &self->pAacDecoderChannelInfo[ch]->data.aac.PnsData,
                 &self->pAacDecoderStaticChannelInfo[ch]->pnsCurrentSeed,
@@ -2195,7 +2305,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         chIdx++;
       }
 
-      if (self->flags[streamIndex] & AC_USAC) {
+      if (flags & AC_USAC) {
         for (int _ch = 0; _ch < flushChannels; _ch++) {
           ch = aacChannelsOffset + _ch;
           if (self->pTimeDataFlush[ch] == NULL) {
@@ -2207,7 +2317,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
         }
       }
 
-      if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      if (flags & (AC_USAC | AC_RSV603DA)) {
         int complexStereoPredPossible = 0;
         ch = aacChannelsOffset;
         chIdx = aacChannelsOffsetIdx;
@@ -2223,7 +2333,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
             elCh = 1;
           }
 
-          if (self->elFlags[el2] & AC_EL_USAC_CP_POSSIBLE) {
+          if (elFlags[el2] & AC_EL_USAC_CP_POSSIBLE) {
             complexStereoPredPossible = 1;
             if (self->cpeStaticData[el2] == NULL) {
               self->cpeStaticData[el2] = GetCpePersistentData();
@@ -2360,9 +2470,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     }
   }
 
-  /* Update externally visible copy of flags */
-  self->streamInfo.flags = self->flags[0];
-
   if (*configChanged) {
     int drcDecSampleRate, drcDecFrameSize;
 
@@ -2383,8 +2490,7 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
 
   if (*configChanged) {
     if (asc->m_aot == AOT_USAC) {
-      self->hDrcInfo->enable = 0;
-      self->hDrcInfo->progRefLevelPresent = 0;
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
   }
 
@@ -2392,6 +2498,15 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
     pcmLimiter_SetAttack(self->hLimiter, (5));
     pcmLimiter_SetThreshold(self->hLimiter, FL2FXCONST_DBL(0.89125094f));
   }
+
+  CAacDecoder_AcceptFlags(self, asc, flags, elFlags, streamIndex,
+                          elementOffset);
+  self->sbrEnabled = sbrEnabled;
+  self->sbrEnabledPrev = sbrEnabledPrev;
+  self->mpsEnableCurr = mpsEnableCurr;
+
+  /* Update externally visible copy of flags */
+  self->streamInfo.flags = self->flags[0];
 
   return err;
 
@@ -2927,6 +3042,24 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
 
   } /* while ( (type != ID_END) ... ) */
 
+  if (!(self->flags[streamIndex] &
+        (AC_USAC | AC_RSVD50 | AC_RSV603DA | AC_BSAC | AC_LD | AC_ELD | AC_ER |
+         AC_SCALABLE)) &&
+      (self->streamInfo.channelConfig == 0) && pce->isValid &&
+      (ErrorStatus == AAC_DEC_OK) && self->frameOK &&
+      !(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
+    /* Check whether all PCE listed element instance tags are present in
+     * raw_data_block() */
+    if (!validateElementInstanceTags(
+            &self->pce, self->pAacDecoderChannelInfo, aacChannels,
+            channel_elements,
+            fMin(channel_element_count, (int)(sizeof(channel_elements) /
+                                              sizeof(*channel_elements))))) {
+      ErrorStatus = AAC_DEC_DECODE_FRAME_ERROR;
+      self->frameOK = 0;
+    }
+  }
+
   if (!(flags & (AACDEC_CONCEAL | AACDEC_FLUSH))) {
     /* float decoder checks if bitsLeft is in range 0-7; only prerollAUs are
      * byteAligned with respect to the first bit */
@@ -3194,10 +3327,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
          * data in the bitstream. */
         self->flags[streamIndex] |= AC_DRC_PRESENT;
       } else {
-        self->hDrcInfo->enable = 0;
-        self->hDrcInfo->progRefLevelPresent = 0;
         ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
       }
+    }
+    if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
 
     /* Create a reverse mapping table */
@@ -3441,10 +3575,11 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
          * data in the bitstream. */
         self->flags[streamIndex] |= AC_DRC_PRESENT;
       } else {
-        self->hDrcInfo->enable = 0;
-        self->hDrcInfo->progRefLevelPresent = 0;
         ErrorStatus = AAC_DEC_UNSUPPORTED_FORMAT;
       }
+    }
+    if (self->flags[streamIndex] & (AC_USAC | AC_RSV603DA)) {
+      aacDecoder_drcDisable(self->hDrcInfo);
     }
   }
 

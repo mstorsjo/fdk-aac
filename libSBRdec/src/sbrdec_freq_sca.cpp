@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -765,9 +765,6 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
   sbrdecUpdateLoRes(hFreq->freqBandTable[0], &nBandsLo, hFreq->freqBandTable[1],
                     nBandsHi);
 
-  hFreq->nSfb[0] = nBandsLo;
-  hFreq->nSfb[1] = nBandsHi;
-
   /* Check index to freqBandTable[0] */
   if (!(nBandsLo > 0) ||
       (nBandsLo > (((hHeaderData->numberOfAnalysisBands == 16)
@@ -776,6 +773,9 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
                    1))) {
     return SBRDEC_UNSUPPORTED_CONFIG;
   }
+
+  hFreq->nSfb[0] = nBandsLo;
+  hFreq->nSfb[1] = nBandsHi;
 
   lsb = hFreq->freqBandTable[0][0];
   usb = hFreq->freqBandTable[0][nBandsLo];
@@ -814,14 +814,14 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
 
     if (intTemp == 0) intTemp = 1;
 
+    if (intTemp > MAX_NOISE_COEFFS) {
+      return SBRDEC_UNSUPPORTED_CONFIG;
+    }
+
     hFreq->nNfb = intTemp;
   }
 
   hFreq->nInvfBands = hFreq->nNfb;
-
-  if (hFreq->nNfb > MAX_NOISE_COEFFS) {
-    return SBRDEC_UNSUPPORTED_CONFIG;
-  }
 
   /* Get noise bands */
   sbrdecDownSampleLoRes(hFreq->freqBandTableNoise, hFreq->nNfb,

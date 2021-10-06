@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -719,7 +719,7 @@ static void ConcealPitchLag(CAcelpStaticMem *acelp_mem, const int PIT_MAX,
   UCHAR *pold_T0_frac = &acelp_mem->old_T0_frac;
 
   if ((int)*pold_T0 >= PIT_MAX) {
-    *pold_T0 = (UCHAR)(PIT_MAX - 5);
+    *pold_T0 = (USHORT)(PIT_MAX - 5);
   }
   *pT0 = (int)*pold_T0;
   *pT0_frac = (int)*pold_T0_frac;
