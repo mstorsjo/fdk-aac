@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1267,6 +1267,7 @@ void FDKsbrEnc_extractSbrEnvelope2(
     sbrExtrEnv->pre_transient_info[1] = ed->transient_info[1]; /* tran_flag */
     hEnvChan->encEnvData.noOfEnvelopes = ed->nEnvelopes =
         ed->frame_info->nEnvelopes; /* number of envelopes of current frame */
+    hEnvChan->encEnvData.currentAmpResFF = (AMP_RES)h_con->initAmpResFF;
 
     /*
       Check if the current frame is divided into one envelope only. If so, set
@@ -1274,8 +1275,9 @@ void FDKsbrEnc_extractSbrEnvelope2(
     */
     if ((hEnvChan->encEnvData.hSbrBSGrid->frameClass == FIXFIX) &&
         (ed->nEnvelopes == 1)) {
+      AMP_RES currentAmpResFF = SBR_AMP_RES_1_5;
       if (h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) {
-        /* Note: global_tonaliy_float_value ==
+        /* Note: global_tonality_float_value ==
            ((float)hEnvChan->encEnvData.global_tonality/((INT64)(1)<<(31-(19+2)))/0.524288*(2.0/3.0)));
                  threshold_float_value ==
            ((float)h_con->thresholdAmpResFF_m/((INT64)(1)<<(31-(h_con->thresholdAmpResFF_e)))/0.524288*(2.0/3.0)));
@@ -1289,14 +1291,13 @@ void FDKsbrEnc_extractSbrEnvelope2(
         } else {
           hEnvChan->encEnvData.currentAmpResFF = SBR_AMP_RES_3_0;
         }
-      } else
-        hEnvChan->encEnvData.currentAmpResFF = SBR_AMP_RES_1_5;
+        currentAmpResFF = hEnvChan->encEnvData.currentAmpResFF;
+      }
 
-      if (hEnvChan->encEnvData.currentAmpResFF !=
-          hEnvChan->encEnvData.init_sbr_amp_res) {
+      if (currentAmpResFF != hEnvChan->encEnvData.init_sbr_amp_res) {
         FDKsbrEnc_InitSbrHuffmanTables(
             &hEnvChan->encEnvData, &hEnvChan->sbrCodeEnvelope,
-            &hEnvChan->sbrCodeNoiseFloor, hEnvChan->encEnvData.currentAmpResFF);
+            &hEnvChan->sbrCodeNoiseFloor, currentAmpResFF);
       }
     } else {
       if (sbrHeaderData->sbr_amp_res != hEnvChan->encEnvData.init_sbr_amp_res) {
@@ -1353,6 +1354,13 @@ void FDKsbrEnc_extractSbrEnvelope2(
                ? h_con->nSfb[FREQ_RES_HIGH]
                : h_con->nSfb[FREQ_RES_LOW]);
     }
+  }
+
+  if (h_con->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY &&
+      stereoMode == SBR_SWITCH_LRC &&
+      h_envChan[0]->encEnvData.currentAmpResFF !=
+          h_envChan[1]->encEnvData.currentAmpResFF) {
+    stereoMode = SBR_LEFT_RIGHT;
   }
 
   /*

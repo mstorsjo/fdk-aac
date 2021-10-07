@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -173,7 +173,9 @@ void DecodeNonPCWs(HANDLE_FDK_BITSTREAM bs, H_HCR_INFO pHcr) {
     pHcr->segmentInfo.readDirection = FROM_RIGHT_TO_LEFT;
 
     /* Process sets subsequently */
+    numSet = fMin(numSet, (UCHAR)MAX_HCR_SETS);
     for (currentSet = 1; currentSet < numSet; currentSet++) {
+
       /* step 1 */
       numCodeword -=
           *pNumSegment; /* number of remaining non PCWs [for all sets] */

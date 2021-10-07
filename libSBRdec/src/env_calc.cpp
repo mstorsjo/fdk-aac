@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -664,7 +664,7 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
         gain_sf[i] = mult_sf - total_power_low_sf + sf2;
         gain[i] = sqrtFixp_lookup(gain[i], &gain_sf[i]);
         if (gain_sf[i] < 0) {
-          gain[i] >>= -gain_sf[i];
+          gain[i] >>= fMin(DFRACT_BITS - 1, -gain_sf[i]);
           gain_sf[i] = 0;
         }
       } else {
@@ -683,11 +683,6 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
 
     /* gain[i] = g_inter[i] */
     for (i = 0; i < nbSubsample; ++i) {
-      if (gain_sf[i] < 0) {
-        gain[i] >>= -gain_sf[i];
-        gain_sf[i] = 0;
-      }
-
       /* calculate: gain[i] = 1.0f + gamma * (gain[i] - 1.0f); */
       FIXP_DBL one = (FIXP_DBL)MAXVAL_DBL >>
                      gain_sf[i]; /* to substract this from gain[i] */
@@ -755,23 +750,15 @@ static void apply_inter_tes(FIXP_DBL **qmfReal, FIXP_DBL **qmfImag,
     int gain_adj_sf = gain_adj_2_sf;
 
     for (i = 0; i < nbSubsample; ++i) {
-      gain[i] = fMult(gain[i], gain_adj);
-      gain_sf[i] += gain_adj_sf;
-
-      /* limit gain */
-      if (gain_sf[i] > INTER_TES_SF_CHANGE) {
-        gain[i] = (FIXP_DBL)MAXVAL_DBL;
-        gain_sf[i] = INTER_TES_SF_CHANGE;
-      }
-    }
-
-    for (i = 0; i < nbSubsample; ++i) {
-      /* equalize gain[]'s scale factors */
-      gain[i] >>= INTER_TES_SF_CHANGE - gain_sf[i];
+      int gain_e = fMax(
+          fMin(gain_sf[i] + gain_adj_sf - INTER_TES_SF_CHANGE, DFRACT_BITS - 1),
+          -(DFRACT_BITS - 1));
+      FIXP_DBL gain_final = fMult(gain[i], gain_adj);
+      gain_final = scaleValueSaturate(gain_final, gain_e);
 
       for (j = lowSubband; j < highSubband; j++) {
-        qmfReal[startPos + i][j] = fMult(qmfReal[startPos + i][j], gain[i]);
-        qmfImag[startPos + i][j] = fMult(qmfImag[startPos + i][j], gain[i]);
+        qmfReal[startPos + i][j] = fMult(qmfReal[startPos + i][j], gain_final);
+        qmfImag[startPos + i][j] = fMult(qmfImag[startPos + i][j], gain_final);
       }
     }
   } else { /* gamma_idx == 0 */
@@ -1397,6 +1384,17 @@ void calculateSbrEnvelope(
                  the gain-values.
     */
     noise_e = (start_pos < no_cols) ? adj_e : final_e;
+
+    if (start_pos >= no_cols) {
+      int diff = h_sbr_cal_env->filtBufferNoise_e - noise_e;
+      if (diff > 0) {
+        int s = getScalefactor(h_sbr_cal_env->filtBufferNoise, noSubbands);
+        if (diff > s) {
+          final_e += diff - s;
+          noise_e = final_e;
+        }
+      }
+    }
 
     /*
       Convert energies to amplitude levels
@@ -2741,6 +2739,9 @@ static void adjustTimeSlotHQ_GainAndNoise(
             fMult(direct_ratio, noiseLevel[k]);
       }
 
+      smoothedNoise = fMax(fMin(smoothedNoise, (FIXP_DBL)(MAXVAL_DBL / 2)),
+                           (FIXP_DBL)(MINVAL_DBL / 2));
+
       /*
         The next 2 multiplications constitute the actual envelope adjustment
         of the signal and should be carried out with full accuracy
@@ -2929,6 +2930,9 @@ static void adjustTimeSlotHQ(
             (fMax(fMin(smoothedNoise, max_val_noise), min_val_noise) << shift) +
             fMult(direct_ratio, noiseLevel[k]);
       }
+
+      smoothedNoise = fMax(fMin(smoothedNoise, (FIXP_DBL)(MAXVAL_DBL / 2)),
+                           (FIXP_DBL)(MINVAL_DBL / 2));
 
       /*
         The next 2 multiplications constitute the actual envelope adjustment
