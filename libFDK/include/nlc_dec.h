@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -158,9 +158,6 @@ typedef enum {
 
 #ifndef HUFFDEC_PARAMS
 #define HUFFDEC_PARMS
-
-#define PAIR_SHIFT 4
-#define PAIR_MASK 0xf
 
 #define MAX_ENTRIES 168
 #define HANDLE_HUFF_NODE const SHORT(*)[MAX_ENTRIES][2]

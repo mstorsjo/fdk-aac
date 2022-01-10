@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -102,11 +102,6 @@ amm-info@iis.fraunhofer.de
 
 #include "autocorr2nd.h"
 
-/*  If the accumulator does not provide enough overflow bits,
-    products have to be shifted down in the autocorrelation below. */
-#define SHIFT_FACTOR (5)
-#define SHIFT >> (SHIFT_FACTOR)
-
 /*!
  *
  * \brief Calculate second order autocorrelation using 2 accumulators
@@ -126,45 +121,49 @@ INT autoCorr2nd_real(
 
   const FIXP_DBL *realBuf = reBuffer;
 
+  const int len_scale = fMax(DFRACT_BITS - fNormz((FIXP_DBL)(len / 2)), 1);
   /*
     r11r,r22r
     r01r,r12r
     r02r
   */
   pReBuf = realBuf - 2;
-  accu5 = ((fMultDiv2(pReBuf[0], pReBuf[2]) + fMultDiv2(pReBuf[1], pReBuf[3]))
-               SHIFT);
+  accu5 =
+      ((fMultDiv2(pReBuf[0], pReBuf[2]) + fMultDiv2(pReBuf[1], pReBuf[3])) >>
+       len_scale);
   pReBuf++;
 
   /* len must be even */
-  accu1 = fPow2Div2(pReBuf[0]) SHIFT;
-  accu3 = fMultDiv2(pReBuf[0], pReBuf[1]) SHIFT;
+  accu1 = fPow2Div2(pReBuf[0]) >> len_scale;
+  accu3 = fMultDiv2(pReBuf[0], pReBuf[1]) >> len_scale;
   pReBuf++;
 
   for (j = (len - 2) >> 1; j != 0; j--, pReBuf += 2) {
-    accu1 += ((fPow2Div2(pReBuf[0]) + fPow2Div2(pReBuf[1])) SHIFT);
+    accu1 += ((fPow2Div2(pReBuf[0]) + fPow2Div2(pReBuf[1])) >> len_scale);
 
-    accu3 += ((fMultDiv2(pReBuf[0], pReBuf[1]) +
-               fMultDiv2(pReBuf[1], pReBuf[2])) SHIFT);
+    accu3 +=
+        ((fMultDiv2(pReBuf[0], pReBuf[1]) + fMultDiv2(pReBuf[1], pReBuf[2])) >>
+         len_scale);
 
-    accu5 += ((fMultDiv2(pReBuf[0], pReBuf[2]) +
-               fMultDiv2(pReBuf[1], pReBuf[3])) SHIFT);
+    accu5 +=
+        ((fMultDiv2(pReBuf[0], pReBuf[2]) + fMultDiv2(pReBuf[1], pReBuf[3])) >>
+         len_scale);
   }
 
-  accu2 = (fPow2Div2(realBuf[-2]) SHIFT);
+  accu2 = (fPow2Div2(realBuf[-2]) >> len_scale);
   accu2 += accu1;
 
-  accu1 += (fPow2Div2(realBuf[len - 2]) SHIFT);
+  accu1 += (fPow2Div2(realBuf[len - 2]) >> len_scale);
 
-  accu4 = (fMultDiv2(realBuf[-1], realBuf[-2]) SHIFT);
+  accu4 = (fMultDiv2(realBuf[-1], realBuf[-2]) >> len_scale);
   accu4 += accu3;
 
-  accu3 += (fMultDiv2(realBuf[len - 1], realBuf[len - 2]) SHIFT);
+  accu3 += (fMultDiv2(realBuf[len - 1], realBuf[len - 2]) >> len_scale);
 
   mScale = CntLeadingZeros(
                (accu1 | accu2 | fAbs(accu3) | fAbs(accu4) | fAbs(accu5))) -
            1;
-  autoCorrScaling = mScale - 1 - SHIFT_FACTOR; /* -1 because of fMultDiv2*/
+  autoCorrScaling = mScale - 1 - len_scale; /* -1 because of fMultDiv2*/
 
   /* Scale to common scale factor */
   ac->r11r = accu1 << mScale;
@@ -190,7 +189,7 @@ INT autoCorr2nd_cplx(
     const FIXP_DBL *imBuffer, /*!< Pointer to imag part of input samples */
     const int len /*!< Number of input samples (should be smaller than 128) */
 ) {
-  int j, autoCorrScaling, mScale, len_scale;
+  int j, autoCorrScaling, mScale;
 
   FIXP_DBL accu0, accu1, accu2, accu3, accu4, accu5, accu6, accu7, accu8;
 
@@ -199,7 +198,7 @@ INT autoCorr2nd_cplx(
   const FIXP_DBL *realBuf = reBuffer;
   const FIXP_DBL *imagBuf = imBuffer;
 
-  (len > 64) ? (len_scale = 6) : (len_scale = 5);
+  const int len_scale = fMax(DFRACT_BITS - fNormz((FIXP_DBL)len), 1);
   /*
     r00r,
     r11r,r22r

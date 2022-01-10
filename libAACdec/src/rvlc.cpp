@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -628,7 +628,7 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
 
   SHORT *pScfBwd = pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfBwd;
   SHORT *pScfEsc = pAacDecoderChannelInfo->pComData->overlay.aac.aRvlcScfEsc;
-  UCHAR *pEscEscCnt = &(pRvlc->numDecodedEscapeWordsEsc);
+  UCHAR escEscCnt = pRvlc->numDecodedEscapeWordsEsc;
   UCHAR *pEscBwdCnt = &(pRvlc->numDecodedEscapeWordsBwd);
 
   pRvlc->pRvlBitCnt_RVL = &(pRvlc->length_of_rvlc_sf_bwd);
@@ -636,7 +636,7 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
 
   *pEscBwdCnt = 0;
   pRvlc->direction = BWD;
-  pScfEsc += *pEscEscCnt - 1; /* set pScfEsc to last entry */
+  pScfEsc += escEscCnt - 1; /* set pScfEsc to last entry */
   pRvlc->firstScf = 0;
   pRvlc->firstNrg = 0;
   pRvlc->firstIs = 0;
@@ -651,7 +651,7 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
     }
     dpcm -= TABLE_OFFSET;
     if ((dpcm == MIN_RVL) || (dpcm == MAX_RVL)) {
-      if (pRvlc->length_of_rvlc_escapes) {
+      if ((pRvlc->length_of_rvlc_escapes) || (*pEscBwdCnt >= escEscCnt)) {
         pRvlc->conceal_min = bnds;
         return;
       } else {
@@ -694,7 +694,7 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
           }
           dpcm -= TABLE_OFFSET;
           if ((dpcm == MIN_RVL) || (dpcm == MAX_RVL)) {
-            if (pRvlc->length_of_rvlc_escapes) {
+            if ((pRvlc->length_of_rvlc_escapes) || (*pEscBwdCnt >= escEscCnt)) {
               pScfBwd[bnds] = position;
               pRvlc->conceal_min = fMax(0, bnds - offset);
               return;
@@ -731,7 +731,8 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
             }
             dpcm -= TABLE_OFFSET;
             if ((dpcm == MIN_RVL) || (dpcm == MAX_RVL)) {
-              if (pRvlc->length_of_rvlc_escapes) {
+              if ((pRvlc->length_of_rvlc_escapes) ||
+                  (*pEscBwdCnt >= escEscCnt)) {
                 pScfBwd[bnds] = noisenrg;
                 pRvlc->conceal_min = fMax(0, bnds - offset);
                 return;
@@ -762,7 +763,7 @@ static void rvlcDecodeBackward(CErRvlcInfo *pRvlc,
           }
           dpcm -= TABLE_OFFSET;
           if ((dpcm == MIN_RVL) || (dpcm == MAX_RVL)) {
-            if (pRvlc->length_of_rvlc_escapes) {
+            if ((pRvlc->length_of_rvlc_escapes) || (*pEscBwdCnt >= escEscCnt)) {
               pScfBwd[bnds] = factor;
               pRvlc->conceal_min = fMax(0, bnds - offset);
               return;

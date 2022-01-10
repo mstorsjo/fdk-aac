@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -700,9 +700,10 @@ bail:
 SACDEC_ERROR mpegSurroundDecoder_Config(
     CMpegSurroundDecoder *pMpegSurroundDecoder, HANDLE_FDK_BITSTREAM hBs,
     AUDIO_OBJECT_TYPE coreCodec, INT samplingRate, INT frameSize,
-    INT stereoConfigIndex, INT coreSbrFrameLengthIndex, INT configBytes,
-    const UCHAR configMode, UCHAR *configChanged) {
+    INT numChannels, INT stereoConfigIndex, INT coreSbrFrameLengthIndex,
+    INT configBytes, const UCHAR configMode, UCHAR *configChanged) {
   SACDEC_ERROR err = MPS_OK;
+  INT nInputChannels;
   SPATIAL_SPECIFIC_CONFIG spatialSpecificConfig;
   SPATIAL_SPECIFIC_CONFIG *pSsc =
       &pMpegSurroundDecoder->spatialSpecificConfigBackup;
@@ -716,12 +717,18 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
         err = SpatialDecParseMps212Config(
             hBs, &spatialSpecificConfig, samplingRate, coreCodec,
             stereoConfigIndex, coreSbrFrameLengthIndex);
+        nInputChannels = spatialSpecificConfig.nInputChannels;
         pSsc = &spatialSpecificConfig;
       } else {
         err = SpatialDecParseMps212Config(
             hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup,
             samplingRate, coreCodec, stereoConfigIndex,
             coreSbrFrameLengthIndex);
+        nInputChannels =
+            pMpegSurroundDecoder->spatialSpecificConfigBackup.nInputChannels;
+      }
+      if ((err == MPS_OK) && (numChannels != nInputChannels)) {
+        err = MPS_PARSE_ERROR;
       }
       break;
     case AOT_ER_AAC_ELD:
@@ -731,11 +738,19 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
          * into temporarily allocated structure */
         err = SpatialDecParseSpecificConfig(hBs, &spatialSpecificConfig,
                                             configBytes, coreCodec);
+        nInputChannels = spatialSpecificConfig.nInputChannels;
         pSsc = &spatialSpecificConfig;
       } else {
         err = SpatialDecParseSpecificConfig(
             hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup,
             configBytes, coreCodec);
+        nInputChannels =
+            pMpegSurroundDecoder->spatialSpecificConfigBackup.nInputChannels;
+      }
+      /* check number of channels for channel_configuration > 0  */
+      if ((err == MPS_OK) && (numChannels > 0) &&
+          (numChannels != nInputChannels)) {
+        err = MPS_PARSE_ERROR;
       }
       break;
     default:

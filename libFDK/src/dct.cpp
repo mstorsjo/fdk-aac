@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -305,9 +305,8 @@ void dct_II(
 
   {
     for (i = 0; i < M; i++) {
-      tmp[i] = pDat[2 * i] >> 1; /* dit_fft expects 1 bit scaled input values */
-      tmp[L - 1 - i] =
-          pDat[2 * i + 1] >> 1; /* dit_fft expects 1 bit scaled input values */
+      tmp[i] = pDat[2 * i] >> 2;
+      tmp[L - 1 - i] = pDat[2 * i + 1] >> 2;
     }
   }
 
@@ -337,15 +336,14 @@ void dct_II(
     a1 = ((pTmp_0[0] >> 1) + (pTmp_1[0] >> 1));
     a2 = ((pTmp_0[1] >> 1) - (pTmp_1[1] >> 1));
 
-    cplxMultDiv2(&accu3, &accu4, (a1 + accu2), -(accu1 + a2),
-                 sin_twiddle[i * inc]);
-    pDat[L - i] = accu4;
-    pDat[i] = accu3;
+    cplxMult(&accu3, &accu4, (accu1 + a2), (a1 + accu2), sin_twiddle[i * inc]);
+    pDat[L - i] = -accu3;
+    pDat[i] = accu4;
 
-    cplxMultDiv2(&accu3, &accu4, (a1 - accu2), -(accu1 - a2),
-                 sin_twiddle[(M - i) * inc]);
-    pDat[M + i] = accu4;
-    pDat[M - i] = accu3;
+    cplxMult(&accu3, &accu4, (accu1 - a2), (a1 - accu2),
+             sin_twiddle[(M - i) * inc]);
+    pDat[M + i] = -accu3;
+    pDat[M - i] = accu4;
 
     /* Create index helper variables for (4*i)*inc indexed equivalent values of
      * short tables. */
@@ -356,12 +354,12 @@ void dct_II(
     }
   }
 
-  cplxMultDiv2(&accu1, &accu2, tmp[M], tmp[M + 1], sin_twiddle[(M / 2) * inc]);
+  cplxMult(&accu1, &accu2, tmp[M], tmp[M + 1], sin_twiddle[(M / 2) * inc]);
   pDat[L - (M / 2)] = accu2;
   pDat[M / 2] = accu1;
 
-  pDat[0] = (tmp[0] >> 1) + (tmp[1] >> 1);
-  pDat[M] = fMult(((tmp[0] >> 1) - (tmp[1] >> 1)),
+  pDat[0] = tmp[0] + tmp[1];
+  pDat[M] = fMult(tmp[0] - tmp[1],
                   sin_twiddle[M * inc].v.re); /* cos((PI/(2*L))*M); */
 
   *pDat_e += 2;
