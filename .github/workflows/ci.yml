@@ -35,7 +35,7 @@ jobs:
         run: |
           ./autogen.sh
           ./configure --enable-example
-          make -j$(nproc) CFLAGS="-g -O2 -Werror" CXXFLAGS="-g -O2 -Werror"
+          make -j$(sysctl -n hw.ncpu) CFLAGS="-g -O2 -Werror" CXXFLAGS="-g -O2 -Werror"
 
   macos-cmake:
     runs-on: macos-latest
