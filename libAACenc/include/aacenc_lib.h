@@ -1090,7 +1090,7 @@ typedef struct {
                       write edit lists for gapless playback. The decoder may not
                       know how much delay is introdcued by SBR, since it may not
                       know if SBR is active at all (implicit signaling),
-                      therefore the deocder must take into account any delay
+                      therefore the decoder must take into account any delay
                       caused by the SBR module. */
 
   UCHAR confBuf[64]; /*!< Configuration buffer in binary format as an
