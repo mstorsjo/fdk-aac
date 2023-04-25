@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2023 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -133,8 +133,7 @@ typedef enum {
   APPLY_HEAVY_COMPRESSION,
   DEFAULT_PRESENTATION_MODE,
   ENCODER_TARGET_LEVEL,
-  MAX_OUTPUT_CHANNELS,
-  UNIDRC_PRECEDENCE
+  MAX_OUTPUT_CHANNELS
 } AACDEC_DRC_PARAM;
 
 /**
