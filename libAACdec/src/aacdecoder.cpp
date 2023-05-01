@@ -3310,12 +3310,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
       FDKmemcpy(drcChMap, self->chMapping, (8) * sizeof(UCHAR));
     }
 
-    /* deactivate legacy DRC in case uniDrc is active, i.e. uniDrc payload is
-     * present and one of DRC or Loudness Normalization is switched on */
-    aacDecoder_drcSetParam(
-        self->hDrcInfo, UNIDRC_PRECEDENCE,
-        FDK_drcDec_GetParam(self->hUniDrcDecoder, DRC_DEC_IS_ACTIVE));
-
     /* Extract DRC control data and map it to channels (without bitstream delay)
      */
     mapped = aacDecoder_drcProlog(
