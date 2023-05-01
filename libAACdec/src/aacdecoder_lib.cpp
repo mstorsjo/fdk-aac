@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2023 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -1681,7 +1681,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
 
       {
         if ((FDK_drcDec_GetParam(self->hUniDrcDecoder, DRC_DEC_IS_ACTIVE)) &&
-            !(self->flags[0] & AC_RSV603DA)) {
+            (self->flags[0] & AC_USAC)) {
           /* Apply DRC gains*/
           int ch, drcDelay = 0;
           int needsDeinterleaving = 0;
