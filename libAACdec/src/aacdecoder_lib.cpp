@@ -1689,8 +1689,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
           FIXP_DBL channelGain[(8)];
           int reverseInChannelMap[(8)];
           int reverseOutChannelMap[(8)];
-          int numDrcOutChannels = FDK_drcDec_GetParam(
-              self->hUniDrcDecoder, DRC_DEC_TARGET_CHANNEL_COUNT_SELECTED);
           FDKmemclear(channelGain, sizeof(channelGain));
           for (ch = 0; ch < (8); ch++) {
             reverseInChannelMap[ch] = ch;
@@ -1712,17 +1710,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
           /* Take into account concealment delay */
           drcDelay += CConcealment_GetDelay(&self->concealCommonData) *
                       self->streamInfo.frameSize;
-
-          for (ch = 0; ch < self->streamInfo.numChannels; ch++) {
-            UCHAR mapValue = FDK_chMapDescr_getMapValue(
-                &self->mapDescr, (UCHAR)ch, self->chMapIndex);
-            if (mapValue < (8)) reverseInChannelMap[mapValue] = ch;
-          }
-          for (ch = 0; ch < (int)numDrcOutChannels; ch++) {
-            UCHAR mapValue = FDK_chMapDescr_getMapValue(
-                &self->mapDescr, (UCHAR)ch, numDrcOutChannels);
-            if (mapValue < (8)) reverseOutChannelMap[mapValue] = ch;
-          }
 
           /* The output of SBR and MPS is interleaved. Deinterleaving may be
            * necessary for FDK_drcDec_ProcessTime, which accepts deinterleaved
@@ -1758,11 +1745,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
           FDK_drcDec_Preprocess(self->hUniDrcDecoder);
 
           /* apply DRC1 gain sequence */
-          for (ch = 0; ch < self->streamInfo.numChannels; ch++) {
-            FDK_drcDec_ProcessTime(self->hUniDrcDecoder, drcDelay, DRC_DEC_DRC1,
-                                   ch, reverseInChannelMap[ch] - ch, 1,
-                                   drcWorkBuffer, self->streamInfo.frameSize);
-          }
+          FDK_drcDec_ProcessTime(self->hUniDrcDecoder, drcDelay, DRC_DEC_DRC1,
+                                 0, 0, self->streamInfo.numChannels,
+                                 drcWorkBuffer, self->streamInfo.frameSize);
           /* apply downmix */
           FDK_drcDec_ApplyDownmix(
               self->hUniDrcDecoder, reverseInChannelMap, reverseOutChannelMap,
@@ -1770,12 +1755,10 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_DecodeFrame(HANDLE_AACDECODER self,
               &self->streamInfo.numChannels); /* self->streamInfo.numChannels
                                                  may change here */
           /* apply DRC2/3 gain sequence */
-          for (ch = 0; ch < self->streamInfo.numChannels; ch++) {
-            FDK_drcDec_ProcessTime(self->hUniDrcDecoder, drcDelay,
-                                   DRC_DEC_DRC2_DRC3, ch,
-                                   reverseOutChannelMap[ch] - ch, 1,
-                                   drcWorkBuffer, self->streamInfo.frameSize);
-          }
+          FDK_drcDec_ProcessTime(self->hUniDrcDecoder, drcDelay,
+                                 DRC_DEC_DRC2_DRC3, 0, 0,
+                                 self->streamInfo.numChannels, drcWorkBuffer,
+                                 self->streamInfo.frameSize);
 
           if (needsDeinterleaving) {
             FDK_interleave(
