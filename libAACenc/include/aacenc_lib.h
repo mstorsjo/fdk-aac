@@ -1005,6 +1005,10 @@ internally.
 #include "machine_type.h"
 #include "FDK_audio.h"
 
+#define AACENCODER_LIB_VL0 4
+#define AACENCODER_LIB_VL1 0
+#define AACENCODER_LIB_VL2 1
+
 /**
  *  AAC encoder error codes.
  */
