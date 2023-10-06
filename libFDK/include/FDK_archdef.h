@@ -222,13 +222,15 @@ amm-info@iis.fraunhofer.de
 #define POW2COEFF_16BIT
 #define LDCOEFF_16BIT
 
-#elif defined(__powerpc__)
-#define ARCH_PREFER_MULT_32x32
+#elif defined(__riscv)
 #define ARCH_PREFER_MULT_32x16
 #define SINETABLE_16BIT
 #define POW2COEFF_16BIT
 #define LDCOEFF_16BIT
 #define WINDOWTABLE_16BIT
+
+#elif defined(__powerpc__)
+#define ARCH_PREFER_MULT_32x32
 
 #else
 #warning >>>> Please set architecture characterization defines for your platform (FDK_HIGH_PERFORMANCE)! <<<<

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2023 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -911,43 +911,6 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
         error = AAC_DEC_PARSE_ERROR;
       }
       *count -= readBits;
-    } break;
-    case EXT_UNI_DRC: {
-      DRC_DEC_ERROR drcErr = DRC_DEC_OK;
-      DRC_DEC_CODEC_MODE drcDecCodecMode = DRC_DEC_CODEC_MODE_UNDEFINED;
-      INT nBitsRemaining = FDKgetValidBits(hBs);
-      INT readBits;
-
-      switch (self->streamInfo.aot) {
-        case AOT_AAC_LC:
-        case AOT_SBR:
-        case AOT_PS:
-          drcDecCodecMode = DRC_DEC_MPEG_4_AAC;
-          break;
-        default:
-          error = AAC_DEC_PARSE_ERROR;
-          goto bail;
-      }
-
-      drcErr = FDK_drcDec_SetCodecMode(self->hUniDrcDecoder, drcDecCodecMode);
-      if (drcErr) {
-        error = AAC_DEC_PARSE_ERROR;
-        goto bail;
-      }
-
-      drcErr = FDK_drcDec_ReadUniDrc(self->hUniDrcDecoder, hBs);
-      if (drcErr) {
-        error = AAC_DEC_PARSE_ERROR;
-        goto bail;
-      }
-      readBits = (INT)nBitsRemaining - (INT)FDKgetValidBits(hBs);
-      if (readBits > *count) { /* Read too much. Something went wrong! */
-        error = AAC_DEC_PARSE_ERROR;
-      }
-      *count -= readBits;
-      /* Skip any trailing bits */
-      FDKpushFor(hBs, *count);
-      *count = 0;
     } break;
     case EXT_LDSAC_DATA:
     case EXT_SAC_DATA:
@@ -3309,12 +3272,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
     if (fCopyChMap != 0) {
       FDKmemcpy(drcChMap, self->chMapping, (8) * sizeof(UCHAR));
     }
-
-    /* deactivate legacy DRC in case uniDrc is active, i.e. uniDrc payload is
-     * present and one of DRC or Loudness Normalization is switched on */
-    aacDecoder_drcSetParam(
-        self->hDrcInfo, UNIDRC_PRECEDENCE,
-        FDK_drcDec_GetParam(self->hUniDrcDecoder, DRC_DEC_IS_ACTIVE));
 
     /* Extract DRC control data and map it to channels (without bitstream delay)
      */
