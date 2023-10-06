@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           ./autogen.sh
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES -DCMAKE_C_FLAGS="-Werror" -DCMAKE_CXX_FLAGS="-Werror"
@@ -30,7 +30,7 @@ jobs:
         run: |
           brew install automake
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           ./autogen.sh
@@ -41,7 +41,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_C_FLAGS="-Werror" -DCMAKE_CXX_FLAGS="-Werror"
@@ -54,7 +54,7 @@ jobs:
         run: |
           sudo apt-get install g++-mingw-w64-x86-64
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           ./autogen.sh
@@ -68,7 +68,7 @@ jobs:
         run: |
           sudo apt-get install g++-mingw-w64-x86-64
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_CROSSCOMPILING=TRUE -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_FLAGS="-Werror" -DCMAKE_CXX_FLAGS="-Werror"
@@ -90,7 +90,7 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES
@@ -100,7 +100,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -B build -DBUILD_PROGRAMS=YES
@@ -110,7 +110,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up the environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -124,7 +124,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build
         run: |
           cmake . -B build -DBUILD_PROGRAMS=YES -A ARM64
@@ -141,7 +141,7 @@ jobs:
           sudo mv llvm-mingw-* /opt/llvm-mingw
           echo /opt/llvm-mingw/bin >> $GITHUB_PATH
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build fdk-aac
         run: |
           ./autogen.sh
@@ -152,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build fdk-aac
         run: |
           ./autogen.sh
@@ -162,7 +162,7 @@ jobs:
           make -j$(nproc)
           make -j$(nproc) install
       - name: Checkout FFmpeg
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: ffmpeg/ffmpeg
           path: ffmpeg
