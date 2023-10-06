@@ -300,5 +300,6 @@ EXTRA_DIST = \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/PREUPLOAD.cfg \
     $(top_srcdir)/sha1.h \
+    $(top_srcdir)/test/* \
     $(top_srcdir)/win32/*.h
 
