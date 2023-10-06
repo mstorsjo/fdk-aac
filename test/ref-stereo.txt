@@ -1,0 +1,2 @@
+encode hash: 1179940ca3a5c62de45b6823efbdbe42fce11de2
+decode hash: 85f2a154b46cc6cfa2792ff95c67b4200ce4463b
