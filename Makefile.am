@@ -659,6 +659,7 @@ EXTRA_DIST = \
     $(top_srcdir)/rust/* \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/sha1.h \
+    $(top_srcdir)/test/* \
     $(top_srcdir)/tests/* \
     $(top_srcdir)/win32/*.h \
     $(top_srcdir)/xhe-aac/.clang-format \
