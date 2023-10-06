@@ -135,8 +135,8 @@ jobs:
     steps:
       - name: Install llvm-mingw
         run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20211002/llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64.tar.xz
-          tar -Jxvf llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64.tar.xz
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20231003/llvm-mingw-20231003-ucrt-ubuntu-20.04-x86_64.tar.xz
+          tar -Jxvf llvm-mingw-*-ucrt-ubuntu-*-x86_64.tar.xz
           rm llvm-mingw-*.tar.xz
           sudo mv llvm-mingw-* /opt/llvm-mingw
           echo /opt/llvm-mingw/bin >> $GITHUB_PATH
