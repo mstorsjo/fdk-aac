@@ -12,6 +12,10 @@ jobs:
           ./autogen.sh
           ./configure --enable-example
           make -j$(nproc) CFLAGS="-g -O2 -Werror" CXXFLAGS="-g -O2 -Werror"
+      - name: Run tests
+        run: |
+          sudo apt-get install --no-install-recommends ffmpeg
+          ./test/run-test.sh
 
   linux-cmake:
     runs-on: ubuntu-latest
@@ -22,6 +26,43 @@ jobs:
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES -DCMAKE_C_FLAGS="-Werror" -DCMAKE_CXX_FLAGS="-Werror -Wno-stringop-overflow"
           cmake --build build
+      - name: Run tests
+        run: |
+          sudo apt-get install --no-install-recommends ffmpeg
+          cd build
+          ../test/run-test.sh
+
+  linux-sanitizers-gcc-autotools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          ./autogen.sh
+          FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize=shift-base -DDEBUG -fno-sanitize-recover=all"
+          CC="gcc $FLAGS" CXX="g++ $FLAGS" ./configure --enable-example
+          make -j$(nproc)
+      - name: Run tests
+        run: |
+          sudo apt-get install --no-install-recommends ffmpeg
+          ./test/run-test.sh
+
+  linux-sanitizers-clang-cmake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize=shift-base -DDEBUG -fno-sanitize-recover=all -fno-sanitize=vptr -fno-sanitize=function"
+          cmake . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PROGRAMS=YES -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$FLAGS" -DCMAKE_CXX_FLAGS="$FLAGS"
+          cmake --build build
+      - name: Run tests
+        run: |
+          sudo apt-get install --no-install-recommends ffmpeg
+          cd build
+          ../test/run-test.sh
 
   macos-autotools:
     runs-on: macos-latest
