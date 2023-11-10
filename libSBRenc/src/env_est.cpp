@@ -637,8 +637,8 @@ static FIXP_DBL getEnvSfbEnergy(
     for (; l < stop_pos; l++) {
       nrg2 += YBuffer[l >> YBufferSzShift][k] >> sc1;
     }
-    accu1 += (nrg1 >> dynScale1);
-    accu2 += (nrg2 >> dynScale2);
+    accu1 = fAddSaturate(accu1, (nrg1 >> dynScale1));
+    accu2 = fAddSaturate(accu2, (nrg2 >> dynScale2));
   }
   /* This shift factor is always positive. See comment above. */
   nrgSum +=
