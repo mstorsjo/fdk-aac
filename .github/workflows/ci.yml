@@ -14,7 +14,7 @@ jobs:
           make -j$(nproc) CFLAGS="-g -O2 -Werror" CXXFLAGS="-g -O2 -Werror"
       - name: Run tests
         run: |
-          sudo apt-get install --no-install-recommends ffmpeg
+          sudo apt-get update && sudo apt-get install --no-install-recommends ffmpeg
           ./test/run-test.sh
 
   linux-cmake:
@@ -28,7 +28,7 @@ jobs:
           cmake --build build
       - name: Run tests
         run: |
-          sudo apt-get install --no-install-recommends ffmpeg
+          sudo apt-get update && sudo apt-get install --no-install-recommends ffmpeg
           cd build
           ../test/run-test.sh
 
@@ -45,7 +45,7 @@ jobs:
           make -j$(nproc)
       - name: Run tests
         run: |
-          sudo apt-get install --no-install-recommends ffmpeg
+          sudo apt-get update && sudo apt-get install --no-install-recommends ffmpeg
           ./test/run-test.sh
 
   linux-sanitizers-clang-cmake:
@@ -60,7 +60,7 @@ jobs:
           cmake --build build
       - name: Run tests
         run: |
-          sudo apt-get install --no-install-recommends ffmpeg
+          sudo apt-get update && sudo apt-get install --no-install-recommends ffmpeg
           cd build
           ../test/run-test.sh
 
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Install cross compiler
         run: |
-          sudo apt-get install g++-mingw-w64-x86-64
+          sudo apt-get update && sudo apt-get install g++-mingw-w64-x86-64
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Build
@@ -107,7 +107,7 @@ jobs:
     steps:
       - name: Install cross compiler
         run: |
-          sudo apt-get install g++-mingw-w64-x86-64
+          sudo apt-get update && sudo apt-get install g++-mingw-w64-x86-64
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Build
@@ -209,7 +209,7 @@ jobs:
           path: ffmpeg
       - name: Build FFmpeg
         run: |
-          sudo apt-get install -y nasm
+          sudo apt-get update && sudo apt-get install -y nasm
           cd ffmpeg
           PKG_CONFIG_PATH=$(pwd)/../prefix/lib/pkgconfig ./configure --enable-libfdk-aac --enable-nonfree
           make -j$(nproc)
