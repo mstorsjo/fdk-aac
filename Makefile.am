@@ -282,7 +282,6 @@ EXTRA_DIST = \
     $(top_srcdir)/libSBRenc/src/*.h \
     $(top_srcdir)/libSBRenc/include/*.h \
     $(top_srcdir)/libSBRdec/src/*.h \
-    $(top_srcdir)/libSBRdec/src/arm/*.cpp \
     $(top_srcdir)/libSBRdec/include/*.h \
     $(top_srcdir)/libSYS/include/*.h \
     $(top_srcdir)/libPCMutils/include/*.h \
@@ -300,5 +299,7 @@ EXTRA_DIST = \
     $(top_srcdir)/libFDK/src/mips/*.cpp \
     $(top_srcdir)/METADATA \
     $(top_srcdir)/PREUPLOAD.cfg \
+    $(top_srcdir)/sha1.h \
+    $(top_srcdir)/test/* \
     $(top_srcdir)/win32/*.h
 
