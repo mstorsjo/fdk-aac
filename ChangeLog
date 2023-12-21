@@ -1,3 +1,8 @@
+2.0.3
+ - Minor upstream updates
+ - Fixed one case of a failed assert in SBR encoding
+ - Added build support for s390x
+
 2.0.2
  - Minor upstream updates
  - Lots of upstream and local fuzzing fixes
