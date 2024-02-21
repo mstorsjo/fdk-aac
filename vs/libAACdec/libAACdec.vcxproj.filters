@@ -15,189 +15,63 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\libAACdec\src\aac_ram.h">
+    <ClInclude Include="..\..\libAACdec\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aac_rom.h">
+    <ClInclude Include="..\..\libAACdec\src\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_drc.h">
+    <ClInclude Include="..\..\libSYS\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_drc_types.h">
+    <ClInclude Include="..\..\libFDK\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_hcr.h">
+    <ClInclude Include="..\..\libArithCoding\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_hcr_bit.h">
+    <ClInclude Include="..\..\libMpegTPdec\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_hcr_types.h">
+    <ClInclude Include="..\..\libSBRdec\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_hcrs.h">
+    <ClInclude Include="..\..\libPCMutils\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_pns.h">
+    <ClInclude Include="..\..\libDRCdec\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdec_tns.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\aacdecoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\block.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\channel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\channelinfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\conceal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\conceal_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\FDK_delay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\ldfiltbank.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\overlapadd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\pulsedata.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\rvlc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\rvlc_info.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\rvlcbit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\rvlcconceal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\stereo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_ace_d4t64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_ace_ltp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_acelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_const.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_fac.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_lpc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_lpd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\libAACdec\src\usacdec_rom.h">
+    <ClInclude Include="..\..\libSACdec\include\*.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\libAACdec\src\aac_ram.cpp">
+    <ClCompile Include="..\..\libAACdec\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aac_rom.cpp">
+    <ClCompile Include="..\..\libFDK\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_drc.cpp">
+    <ClCompile Include="..\..\libSYS\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_hcr.cpp">
+    <ClCompile Include="..\..\libArithCoding\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_hcr_bit.cpp">
+    <ClCompile Include="..\..\libMpegTPdec\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_hcrs.cpp">
+    <ClCompile Include="..\..\libSBRdec\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_pns.cpp">
+    <ClCompile Include="..\..\libPCMutils\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdec_tns.cpp">
+    <ClCompile Include="..\..\libDRCdec\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdecoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\aacdecoder_lib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\block.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\channel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\channelinfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\conceal.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\FDK_delay.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\ldfiltbank.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\pulsedata.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\rvlc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\rvlcbit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\rvlcconceal.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\stereo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_ace_d4t64.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_ace_ltp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_acelp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_fac.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_lpc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_lpd.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\libAACdec\src\usacdec_rom.cpp">
+    <ClCompile Include="..\..\libSACdec\src\*.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
