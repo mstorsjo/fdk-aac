@@ -22,6 +22,18 @@
     <file src="Release\ARM64\libAACenc.dll" target="runtimes\win-arm64\native" />
     <file src="Release\ARM64\libAACenc.dll" target="runtimes\win-arm64\lib\uap10.0" />
 
+    <file src="Release\x64\libAACdec.dll" target="build\x64" />
+    <file src="Release\x64\libAACdec.dll" target="runtimes\win-x64\native" />
+    <file src="Release\x64\libAACdec.dll" target="runtimes\win-x64\lib\uap10.0" />
+    
+    <file src="Release\win32\libAACdec.dll" target="build\x86" />
+    <file src="Release\win32\libAACdec.dll" target="runtimes\win-x86\native" />
+    <file src="Release\win32\libAACdec.dll" target="runtimes\win-x86\lib\uap10.0" />
+
+    <file src="Release\ARM64\libAACdec.dll" target="build\arm64" />
+    <file src="Release\ARM64\libAACdec.dll" target="runtimes\win-arm64\native" />
+    <file src="Release\ARM64\libAACdec.dll" target="runtimes\win-arm64\lib\uap10.0" />
+
     <file src="..\NOTICE.txt" target="" />
     <file src="..\readme.md" target="" />
   </files>
