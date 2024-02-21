@@ -443,3 +443,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+*.exe

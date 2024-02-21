@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>fdk-aac</id>
+    <version>2.0.3</version>
+    <title>FDK AAC</title>
+    <description>A standalone library of the Fraunhofer FDK AAC code from Android.</description>
+    <authors>Martin Storsjö;Lukas Volf</authors>
+    <license type="file">NOTICE.txt</license>
+    <readme>readme.md</readme>
+  </metadata>
+  <files>
+    <file src="Release\x64\libAACenc.dll" target="build\x64" />
+    <file src="Release\x64\libAACenc.dll" target="runtimes\win-x64\native" />
+    <file src="Release\x64\libAACenc.dll" target="runtimes\win-x64\lib\uap10.0" />
+    
+    <file src="Release\win32\libAACenc.dll" target="build\x86" />
+    <file src="Release\win32\libAACenc.dll" target="runtimes\win-x86\native" />
+    <file src="Release\win32\libAACenc.dll" target="runtimes\win-x86\lib\uap10.0" />
+
+    <file src="Release\ARM64\libAACenc.dll" target="build\arm64" />
+    <file src="Release\ARM64\libAACenc.dll" target="runtimes\win-arm64\native" />
+    <file src="Release\ARM64\libAACenc.dll" target="runtimes\win-arm64\lib\uap10.0" />
+
+    <file src="..\NOTICE.txt" target="" />
+    <file src="..\readme.md" target="" />
+  </files>
+</package>
