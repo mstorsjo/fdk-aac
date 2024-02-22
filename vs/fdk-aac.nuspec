@@ -4,7 +4,8 @@
     <id>fdk-aac</id>
     <version>2.0.3</version>
     <title>FDK AAC</title>
-    <description>A standalone library of the Fraunhofer FDK AAC code from Android.</description>
+    <description>A standalone library of the Fraunhofer FDK AAC code from Android. Compiled in VS2022 for x86, x64 and ARM64.</description>
+    <projectUrl>https://github.com/jimm98y/fdk-aac</projectUrl>
     <authors>Martin Storsjö, Lukas Volf</authors>
     <license type="file">NOTICE.txt</license>
     <readme>readme.md</readme>
