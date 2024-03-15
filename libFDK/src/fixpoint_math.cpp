@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -649,6 +649,12 @@ FIXP_DBL fPow(FIXP_DBL base_m, INT base_e, FIXP_DBL exp_m, INT exp_e,
               INT *result_e) {
   INT ans_lg2_e, baselg2_e;
   FIXP_DBL base_lg2, ans_lg2, result;
+
+  if (base_m <= (FIXP_DBL)0) {
+    result = (FIXP_DBL)0;
+    *result_e = 0;
+    return result;
+  }
 
   /* Calc log2 of base */
   base_lg2 = fLog2(base_m, base_e, &baselg2_e);

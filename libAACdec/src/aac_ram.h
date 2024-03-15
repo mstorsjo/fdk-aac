@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -132,16 +132,11 @@ H_ALLOC_MEM(CplxPredictionData, CCplxPredictionData)
 H_ALLOC_MEM(SpectralCoeffs, FIXP_DBL)
 H_ALLOC_MEM(SpecScale, SHORT)
 
-H_ALLOC_MEM(TimeDataFlush, INT_PCM)
+H_ALLOC_MEM(TimeDataFlush, PCM_DEC)
 
 H_ALLOC_MEM_OVERLAY(WorkBufferCore1, CWorkBufferCore1)
 H_ALLOC_MEM_OVERLAY(WorkBufferCore2, FIXP_DBL)
-
-H_ALLOC_MEM_OVERLAY(WorkBufferCore3, FIXP_DBL)
-H_ALLOC_MEM(WorkBufferCore4, FIXP_DBL)
-
 H_ALLOC_MEM_OVERLAY(WorkBufferCore5, PCM_DEC)
-
 H_ALLOC_MEM_OVERLAY(WorkBufferCore6, SCHAR)
 
 #endif /* #ifndef AAC_RAM_H */

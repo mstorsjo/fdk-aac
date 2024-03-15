@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -259,17 +259,18 @@ static void copyHarmonicSpectrum(int *xOverQmf, FIXP_DBL **qmfReal,
 
 void sbr_dec(
     HANDLE_SBR_DEC hSbrDec,             /*!< handle to Decoder channel */
-    INT_PCM *timeIn,                    /*!< pointer to input time signal */
-    INT_PCM *timeOut,                   /*!< pointer to output time signal */
+    LONG *timeIn,                       /*!< pointer to input time signal */
+    LONG *timeOut,                      /*!< pointer to output time signal */
     HANDLE_SBR_DEC hSbrDecRight,        /*!< handle to Decoder channel right */
-    INT_PCM *timeOutRight,              /*!< pointer to output time signal */
+    LONG *timeOutRight,                 /*!< pointer to output time signal */
     const int strideOut,                /*!< Time data traversal strideOut */
     HANDLE_SBR_HEADER_DATA hHeaderData, /*!< Static control data */
     HANDLE_SBR_FRAME_DATA hFrameData,   /*!< Control data of current frame */
     HANDLE_SBR_PREV_FRAME_DATA
         hPrevFrameData,        /*!< Some control data of last frame */
     const int applyProcessing, /*!< Flag for SBR operation */
-    HANDLE_PS_DEC h_ps_d, const UINT flags, const int codecFrameSize) {
+    HANDLE_PS_DEC h_ps_d, const UINT flags, const int codecFrameSize,
+    const INT sbrInDataHeadroom) {
   int i, slot, reserve;
   int saveLbScale;
   int lastSlotOffs;
@@ -278,7 +279,7 @@ void sbr_dec(
   /* temporary pointer / variable for QMF;
      required as we want to use temporary buffer
      creating one frame delay for HBE in LP mode */
-  INT_PCM *pTimeInQmf = timeIn;
+  LONG *pTimeInQmf = timeIn;
 
   /* Number of QMF timeslots in the overlap buffer: */
   int ov_len = hSbrDec->LppTrans.pSettings->overlap;
@@ -341,8 +342,8 @@ void sbr_dec(
   } else {
     C_AALLOC_SCRATCH_START(qmfTemp, FIXP_DBL, 2 * (64));
     qmfAnalysisFiltering(&hSbrDec->qmfDomainInCh->fb, pReal, pImag,
-                         &hSbrDec->qmfDomainInCh->scaling, pTimeInQmf, 0, 1,
-                         qmfTemp);
+                         &hSbrDec->qmfDomainInCh->scaling, pTimeInQmf,
+                         0 + sbrInDataHeadroom, 1, qmfTemp);
 
     C_AALLOC_SCRATCH_END(qmfTemp, FIXP_DBL, 2 * (64));
   }
@@ -658,7 +659,7 @@ void sbr_dec(
 
   if (!(flags & SBRDEC_PS_DECODED)) {
     if (!(flags & SBRDEC_SKIP_QMF_SYN)) {
-      int outScalefactor = 0;
+      int outScalefactor = -(8);
 
       if (h_ps_d != NULL) {
         h_ps_d->procFrameBased = 1; /* we here do frame based processing */
@@ -712,7 +713,8 @@ void sbr_dec(
 
   } else { /* (flags & SBRDEC_PS_DECODED) */
     INT sdiff;
-    INT scaleFactorHighBand, scaleFactorLowBand_ov, scaleFactorLowBand_no_ov;
+    INT scaleFactorHighBand, scaleFactorLowBand_ov, scaleFactorLowBand_no_ov,
+        outScalefactor, outScalefactorR, outScalefactorL;
 
     HANDLE_QMF_FILTER_BANK synQmf = &hSbrDec->qmfDomainOutCh->fb;
     HANDLE_QMF_FILTER_BANK synQmfRight = &hSbrDecRight->qmfDomainOutCh->fb;
@@ -743,6 +745,7 @@ void sbr_dec(
       */
       FDK_ASSERT(hSbrDec->qmfDomainInCh->pGlobalConf->nBandsSynthesis <=
                  QMF_MAX_SYNTHESIS_BANDS);
+      synQmfRight->outScalefactor = synQmf->outScalefactor;
       FDKmemcpy(synQmfRight->FilterStates, synQmf->FilterStates,
                 9 * hSbrDec->qmfDomainInCh->pGlobalConf->nBandsSynthesis *
                     sizeof(FIXP_QSS));
@@ -786,9 +789,11 @@ void sbr_dec(
       FDKmemcpy(&hSbrDecRight->sbrDrcChannel, &hSbrDec->sbrDrcChannel,
                 sizeof(SBRDEC_DRC_CHANNEL));
 
-      for (i = 0; i < synQmf->no_col; i++) { /* ----- no_col loop ----- */
+      outScalefactor = maxShift - (8);
+      outScalefactorL = outScalefactorR =
+          sbrInDataHeadroom + 1; /* +1: psDiffScale! (MPEG-PS) */
 
-        INT outScalefactorR, outScalefactorL;
+      for (i = 0; i < synQmf->no_col; i++) { /* ----- no_col loop ----- */
 
         /* qmf timeslot of right channel */
         FIXP_DBL *rQmfReal = pWorkBuffer;
@@ -813,24 +818,21 @@ void sbr_dec(
                   ? scaleFactorLowBand_ov
                   : scaleFactorLowBand_no_ov,
               scaleFactorHighBand, synQmf->lsb, synQmf->usb);
-
-          outScalefactorL = outScalefactorR = 1; /* psDiffScale! (MPEG-PS) */
         }
 
         sbrDecoder_drcApplySlot(/* right channel */
                                 &hSbrDecRight->sbrDrcChannel, rQmfReal,
                                 rQmfImag, i, synQmfRight->no_col, maxShift);
 
-        outScalefactorR += maxShift;
-
         sbrDecoder_drcApplySlot(/* left channel */
                                 &hSbrDec->sbrDrcChannel, *(pLowBandReal + i),
                                 *(pLowBandImag + i), i, synQmf->no_col,
                                 maxShift);
 
-        outScalefactorL += maxShift;
-
         if (!(flags & SBRDEC_SKIP_QMF_SYN)) {
+          qmfChangeOutScalefactor(synQmf, outScalefactor);
+          qmfChangeOutScalefactor(synQmfRight, outScalefactor);
+
           qmfSynthesisFilteringSlot(
               synQmfRight, rQmfReal, /* QMF real buffer */
               rQmfImag,              /* QMF imag buffer */

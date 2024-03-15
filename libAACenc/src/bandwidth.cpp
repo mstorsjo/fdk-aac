@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -151,11 +151,11 @@ typedef struct {
 
 static const BANDWIDTH_TAB_VBR bandWidthTableVBR[] = {
     {AACENC_BR_MODE_CBR, 0, 0},
-    {AACENC_BR_MODE_VBR_1, 13050, 13050},
-    {AACENC_BR_MODE_VBR_2, 13050, 13050},
-    {AACENC_BR_MODE_VBR_3, 14260, 14260},
-    {AACENC_BR_MODE_VBR_4, 15500, 15500},
-    {AACENC_BR_MODE_VBR_5, 48000, 48000},
+    {AACENC_BR_MODE_VBR_1, 13000, 13000},
+    {AACENC_BR_MODE_VBR_2, 13000, 13000},
+    {AACENC_BR_MODE_VBR_3, 15750, 15750},
+    {AACENC_BR_MODE_VBR_4, 16500, 16500},
+    {AACENC_BR_MODE_VBR_5, 19293, 19293},
     {AACENC_BR_MODE_SFR, 0, 0},
     {AACENC_BR_MODE_FF, 0, 0}
 

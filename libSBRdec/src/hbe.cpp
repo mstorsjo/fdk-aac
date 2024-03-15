@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -957,7 +957,7 @@ QmfTransposerCreate(HANDLE_HBE_TRANSPOSER* hQmfTransposer, const int frameSize,
     hQmfTran->qmfOutBufSize = 2 * (hQmfTran->noCols / 2 + QMF_WIN_LEN - 1);
 
     hQmfTran->inBuf_F =
-        (INT_PCM*)FDKcalloc(QMF_SYNTH_CHANNELS + 20 + 1, sizeof(INT_PCM));
+        (LONG*)FDKcalloc(QMF_SYNTH_CHANNELS + 20 + 1, sizeof(LONG));
     /* buffered time signal needs to be delayed by synthesis_size; max
      * synthesis_size = 20; */
     if (hQmfTran->inBuf_F == NULL) {
@@ -1339,7 +1339,7 @@ static void addHighBandPart(FIXP_DBL g_r_m, FIXP_DBL g_i_m, INT g_e,
     g_r_m = fMultDiv2(tmp_r, factor_m) << shift;
     g_i_m = fMultDiv2(tmp_i, factor_m) << shift;
     g_e = scale_factor_hbe - (g_e + factor_e + gammaCenter_e + add);
-    fMax((INT)0, g_e);
+    g_e = fMax((INT)0, g_e);
     *qmfHBEBufReal_F += g_r_m >> g_e;
     *qmfHBEBufImag_F += g_i_m >> g_e;
   }
@@ -1400,42 +1400,27 @@ void QmfTransposerApply(HANDLE_HBE_TRANSPOSER hQmfTransposer,
 
   if (shift_ov != 0) {
     for (i = 0; i < HBE_MAX_OUT_SLOTS; i++) {
-      for (band = 0; band < QMF_SYNTH_CHANNELS; band++) {
-        if (shift_ov >= 0) {
-          hQmfTransposer->qmfHBEBufReal_F[i][band] <<= shift_ov;
-          hQmfTransposer->qmfHBEBufImag_F[i][band] <<= shift_ov;
-        } else {
-          hQmfTransposer->qmfHBEBufReal_F[i][band] >>= (-shift_ov);
-          hQmfTransposer->qmfHBEBufImag_F[i][band] >>= (-shift_ov);
-        }
-      }
-    }
-  }
-
-  if ((keepStatesSyncedMode == KEEP_STATES_SYNCED_OFF) && shift_ov != 0) {
-    for (i = timeStep * firstSlotOffsset; i < ov_len; i++) {
-      for (band = hQmfTransposer->startBand; band < hQmfTransposer->stopBand;
-           band++) {
-        if (shift_ov >= 0) {
-          ppQmfBufferOutReal_F[i][band] <<= shift_ov;
-          ppQmfBufferOutImag_F[i][band] <<= shift_ov;
-        } else {
-          ppQmfBufferOutReal_F[i][band] >>= (-shift_ov);
-          ppQmfBufferOutImag_F[i][band] >>= (-shift_ov);
-        }
-      }
+      scaleValuesSaturate(&hQmfTransposer->qmfHBEBufReal_F[i][0],
+                          QMF_SYNTH_CHANNELS, shift_ov);
+      scaleValuesSaturate(&hQmfTransposer->qmfHBEBufImag_F[i][0],
+                          QMF_SYNTH_CHANNELS, shift_ov);
     }
 
-    /* shift lpc filterstates */
-    for (i = 0; i < timeStep * firstSlotOffsset + LPC_ORDER; i++) {
-      for (band = 0; band < (64); band++) {
-        if (shift_ov >= 0) {
-          lpcFilterStatesReal[i][band] <<= shift_ov;
-          lpcFilterStatesImag[i][band] <<= shift_ov;
-        } else {
-          lpcFilterStatesReal[i][band] >>= (-shift_ov);
-          lpcFilterStatesImag[i][band] >>= (-shift_ov);
-        }
+    if (keepStatesSyncedMode == KEEP_STATES_SYNCED_OFF) {
+      int nBands =
+          fMax(0, hQmfTransposer->stopBand - hQmfTransposer->startBand);
+
+      for (i = timeStep * firstSlotOffsset; i < ov_len; i++) {
+        scaleValuesSaturate(&ppQmfBufferOutReal_F[i][hQmfTransposer->startBand],
+                            nBands, shift_ov);
+        scaleValuesSaturate(&ppQmfBufferOutImag_F[i][hQmfTransposer->startBand],
+                            nBands, shift_ov);
+      }
+
+      /* shift lpc filterstates */
+      for (i = 0; i < timeStep * firstSlotOffsset + LPC_ORDER; i++) {
+        scaleValuesSaturate(&lpcFilterStatesReal[i][0], (64), shift_ov);
+        scaleValuesSaturate(&lpcFilterStatesImag[i][0], (64), shift_ov);
       }
     }
   }

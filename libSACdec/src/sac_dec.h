@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -523,6 +523,9 @@ struct spatialDec_struct {
                              new frame after SSC change (aka
                              decodeAfterConfigHasChangedFlag). */
   SpatialDecConcealmentInfo concealInfo;
+
+  INT sacInDataHeadroom; /* Headroom of the SAC input time signal to prevent
+                            clipping */
 };
 
 #define SACDEC_SYNTAX_MPS 1

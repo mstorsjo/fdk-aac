@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -152,7 +152,7 @@ TDLimiterPtr pcmLimiter_Create(unsigned int maxAttackMs, unsigned int releaseMs,
   limiter->attack = attack;
   limiter->attackConst = attackConst;
   limiter->releaseConst = releaseConst;
-  limiter->threshold = threshold >> TDL_GAIN_SCALING;
+  limiter->threshold = threshold;
   limiter->channels = maxChannels;
   limiter->maxChannels = maxChannels;
   limiter->sampleRate = maxSampleRate;
@@ -165,18 +165,13 @@ TDLimiterPtr pcmLimiter_Create(unsigned int maxAttackMs, unsigned int releaseMs,
 
 /* apply limiter */
 TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
-                                 INT_PCM* samplesOut, FIXP_DBL* RESTRICT pGain,
-                                 const INT* RESTRICT gain_scale,
-                                 const UINT gain_size, const UINT gain_delay,
-                                 const UINT nSamples) {
+                                 INT_PCM* samplesOut, FIXP_DBL* pGainPerSample,
+                                 const INT scaling, const UINT nSamples) {
   unsigned int i, j;
-  FIXP_DBL tmp1;
   FIXP_DBL tmp2;
-  FIXP_DBL tmp, old, gain, additionalGain = 0, additionalGainUnfiltered;
+  FIXP_DBL tmp, old, gain, additionalGain = 0;
   FIXP_DBL minGain = FL2FXCONST_DBL(1.0f / (1 << 1));
-
-  FDK_ASSERT(gain_size == 1);
-  FDK_ASSERT(gain_delay <= nSamples);
+  UINT additionalGainAvailable = 1;
 
   if (limiter == NULL) return TDLIMIT_INVALID_HANDLE;
 
@@ -185,7 +180,7 @@ TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
     unsigned int attack = limiter->attack;
     FIXP_DBL attackConst = limiter->attackConst;
     FIXP_DBL releaseConst = limiter->releaseConst;
-    FIXP_DBL threshold = limiter->threshold;
+    FIXP_DBL threshold = limiter->threshold >> scaling;
 
     FIXP_DBL max = limiter->max;
     FIXP_DBL* maxBuf = limiter->maxBuf;
@@ -195,55 +190,34 @@ TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
     unsigned int delayBufIdx = limiter->delayBufIdx;
 
     FIXP_DBL smoothState0 = limiter->smoothState0;
-    FIXP_DBL additionalGainSmoothState = limiter->additionalGainFilterState;
-    FIXP_DBL additionalGainSmoothState1 = limiter->additionalGainFilterState1;
 
-    if (!gain_delay) {
-      additionalGain = pGain[0];
-      if (gain_scale[0] > 0) {
-        additionalGain <<= gain_scale[0];
-      } else {
-        additionalGain >>= -gain_scale[0];
-      }
+    if (limiter->scaling != scaling) {
+      scaleValuesSaturate(delayBuf, attack * channels,
+                          limiter->scaling - scaling);
+      scaleValuesSaturate(maxBuf, attack + 1, limiter->scaling - scaling);
+      max = scaleValueSaturate(max, limiter->scaling - scaling);
+      limiter->scaling = scaling;
+    }
+
+    if (pGainPerSample == NULL) {
+      additionalGainAvailable = 0;
     }
 
     for (i = 0; i < nSamples; i++) {
-      if (gain_delay) {
-        if (i < gain_delay) {
-          additionalGainUnfiltered = limiter->additionalGainPrev;
-        } else {
-          additionalGainUnfiltered = pGain[0];
-        }
-
-        /* Smooth additionalGain */
-        /* [b,a] = butter(1, 0.01) */
-        static const FIXP_SGL b[] = {FL2FXCONST_SGL(0.015466 * 2.0),
-                                     FL2FXCONST_SGL(0.015466 * 2.0)};
-        static const FIXP_SGL a[] = {(FIXP_SGL)MAXVAL_SGL,
-                                     FL2FXCONST_SGL(-0.96907)};
-        additionalGain = -fMult(additionalGainSmoothState, a[1]) +
-                         fMultDiv2(additionalGainUnfiltered, b[0]) +
-                         fMultDiv2(additionalGainSmoothState1, b[1]);
-        additionalGainSmoothState1 = additionalGainUnfiltered;
-        additionalGainSmoothState = additionalGain;
-
-        /* Apply the additional scaling that has no delay and no smoothing */
-        if (gain_scale[0] > 0) {
-          additionalGain <<= gain_scale[0];
-        } else {
-          additionalGain >>= -gain_scale[0];
-        }
-      }
       /* get maximum absolute sample value of all channels, including the
        * additional gain. */
-      tmp1 = (FIXP_DBL)0;
+      tmp = (FIXP_DBL)0;
       for (j = 0; j < channels; j++) {
         tmp2 = PCM_LIM2FIXP_DBL(samplesIn[j]);
-        tmp2 = fAbs(tmp2);
-        tmp2 = FIXP_DBL(INT(tmp2) ^ INT((tmp2 >> (SAMPLE_BITS_LIM - 1))));
-        tmp1 = fMax(tmp1, tmp2);
+        tmp2 =
+            (tmp2 == (FIXP_DBL)MINVAL_DBL) ? (FIXP_DBL)MAXVAL_DBL : fAbs(tmp2);
+        tmp = fMax(tmp, tmp2);
       }
-      tmp = fMult(tmp1, additionalGain);
+
+      if (additionalGainAvailable) {
+        additionalGain = pGainPerSample[i];
+        tmp = fMult(tmp, additionalGain);
+      }
 
       /* set threshold as lower border to save calculations in running maximum
        * algorithm */
@@ -314,22 +288,43 @@ TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
         /* lookahead delay, apply gain */
         for (j = 0; j < channels; j++) {
           tmp = p_delayBuf[j];
-          p_delayBuf[j] = fMult((FIXP_PCM_LIM)samplesIn[j], additionalGain);
+
+          if (additionalGainAvailable) {
+            p_delayBuf[j] = fMult((FIXP_PCM_LIM)samplesIn[j], additionalGain);
+          } else {
+            p_delayBuf[j] = PCM_LIM2FIXP_DBL(samplesIn[j]);
+          }
 
           /* Apply gain to delayed signal */
           tmp = fMultDiv2(tmp, gain);
-
+#if (SAMPLE_BITS == DFRACT_BITS)
+          samplesOut[j] = (INT_PCM)FX_DBL2FX_PCM(
+              (FIXP_DBL)SATURATE_LEFT_SHIFT(tmp, scaling + 1, DFRACT_BITS));
+#else
           samplesOut[j] = (INT_PCM)FX_DBL2FX_PCM((FIXP_DBL)SATURATE_LEFT_SHIFT(
-              tmp, TDL_GAIN_SCALING + 1, DFRACT_BITS));
+              tmp + ((FIXP_DBL)0x8000 >> (scaling + 1)), scaling + 1,
+              DFRACT_BITS));
+#endif
         }
         gain >>= 1;
       } else {
         /* lookahead delay, apply gain=1.0f */
         for (j = 0; j < channels; j++) {
           tmp = p_delayBuf[j];
-          p_delayBuf[j] = fMult((FIXP_PCM_LIM)samplesIn[j], additionalGain);
+          if (additionalGainAvailable) {
+            p_delayBuf[j] = fMult((FIXP_PCM_LIM)samplesIn[j], additionalGain);
+          } else {
+            p_delayBuf[j] = PCM_LIM2FIXP_DBL(samplesIn[j]);
+          }
+
+#if (SAMPLE_BITS == DFRACT_BITS)
+          samplesOut[j] = (INT_PCM)FX_DBL2FX_PCM(
+              (FIXP_DBL)SATURATE_LEFT_SHIFT(tmp, scaling, DFRACT_BITS));
+#else
           samplesOut[j] = (INT_PCM)FX_DBL2FX_PCM((FIXP_DBL)SATURATE_LEFT_SHIFT(
-              tmp, TDL_GAIN_SCALING, DFRACT_BITS));
+              (tmp >> 1) + ((FIXP_DBL)0x8000 >> (scaling + 1)), scaling + 1,
+              DFRACT_BITS));
+#endif
         }
       }
 
@@ -354,12 +349,8 @@ TDLIMITER_ERROR pcmLimiter_Apply(TDLimiterPtr limiter, PCM_LIM* samplesIn,
     limiter->delayBufIdx = delayBufIdx;
 
     limiter->smoothState0 = smoothState0;
-    limiter->additionalGainFilterState = additionalGainSmoothState;
-    limiter->additionalGainFilterState1 = additionalGainSmoothState1;
 
     limiter->minGain = minGain;
-
-    limiter->additionalGainPrev = pGain[0];
 
     return TDLIMIT_OK;
   }
@@ -370,7 +361,7 @@ TDLIMITER_ERROR pcmLimiter_SetThreshold(TDLimiterPtr limiter,
                                         FIXP_DBL threshold) {
   if (limiter == NULL) return TDLIMIT_INVALID_HANDLE;
 
-  limiter->threshold = threshold >> TDL_GAIN_SCALING;
+  limiter->threshold = threshold;
 
   return TDLIMIT_OK;
 }
@@ -384,13 +375,7 @@ TDLIMITER_ERROR pcmLimiter_Reset(TDLimiterPtr limiter) {
     limiter->cor = FL2FXCONST_DBL(1.0f / (1 << 1));
     limiter->smoothState0 = FL2FXCONST_DBL(1.0f / (1 << 1));
     limiter->minGain = FL2FXCONST_DBL(1.0f / (1 << 1));
-
-    limiter->additionalGainPrev =
-        FL2FXCONST_DBL(1.0f / (1 << TDL_GAIN_SCALING));
-    limiter->additionalGainFilterState =
-        FL2FXCONST_DBL(1.0f / (1 << TDL_GAIN_SCALING));
-    limiter->additionalGainFilterState1 =
-        FL2FXCONST_DBL(1.0f / (1 << TDL_GAIN_SCALING));
+    limiter->scaling = 0;
 
     FDKmemset(limiter->maxBuf, 0, (limiter->attack + 1) * sizeof(FIXP_DBL));
     FDKmemset(limiter->delayBuf, 0,

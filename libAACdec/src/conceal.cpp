@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -226,7 +226,7 @@ static void CConcealment_ApplyRandomSign(int iRandomPhase, FIXP_DBL *spec,
 
 /* TimeDomainFading */
 static void CConcealment_TDFadePcmAtt(int start, int len, FIXP_DBL fadeStart,
-                                      FIXP_DBL fadeStop, FIXP_PCM *pcmdata);
+                                      FIXP_DBL fadeStop, PCM_DEC *pcmdata);
 static void CConcealment_TDFadeFillFadingStations(FIXP_DBL *fadingStations,
                                                   int *fadingSteps,
                                                   FIXP_DBL fadeStop,
@@ -242,7 +242,9 @@ static int CConcealment_ApplyFadeOut(
 
 static int CConcealment_TDNoise_Random(ULONG *seed);
 static void CConcealment_TDNoise_Apply(CConcealmentInfo *const pConcealmentInfo,
-                                       const int len, FIXP_PCM *const pcmdata);
+                                       const int len,
+                                       const INT aacOutDataHeadroom,
+                                       PCM_DEC *const pcmdata);
 
 static BLOCK_TYPE CConcealment_GetWinSeq(int prevWinSeq) {
   BLOCK_TYPE newWinSeq = BLOCK_LONG;
@@ -1228,7 +1230,6 @@ static void CConcealment_InterpolateBuffer(FIXP_DBL *spectrum,
   int sfb, line = 0;
   int fac_shift;
   int fac_mod;
-  FIXP_DBL accu;
 
   for (sfb = 0; sfb < sfbCnt; sfb++) {
     fac_shift =
@@ -1236,15 +1237,11 @@ static void CConcealment_InterpolateBuffer(FIXP_DBL *spectrum,
     fac_mod = fac_shift & 3;
     fac_shift = (fac_shift >> 2) + 1;
     fac_shift += *pSpecScalePrv - fixMax(*pSpecScalePrv, *pSpecScaleAct);
+    fac_shift = fMax(fMin(fac_shift, DFRACT_BITS - 1), -(DFRACT_BITS - 1));
 
     for (; line < pSfbOffset[sfb + 1]; line++) {
-      accu = fMult(*(spectrum + line), facMod4Table[fac_mod]);
-      if (fac_shift < 0) {
-        accu >>= -fac_shift;
-      } else {
-        accu <<= fac_shift;
-      }
-      *(spectrum + line) = accu;
+      FIXP_DBL accu = fMult(*(spectrum + line), facMod4Table[fac_mod]);
+      *(spectrum + line) = scaleValue(accu, fac_shift);
     }
   }
   *pSpecScaleOut = fixMax(*pSpecScalePrv, *pSpecScaleAct);
@@ -1618,7 +1615,7 @@ static void CConcealment_ApplyRandomSign(int randomPhase, FIXP_DBL *spec,
     }
 
     if (packedSign & 0x1) {
-      spec[i] = -spec[i];
+      spec[i] = -fMax(spec[i], (FIXP_DBL)(MINVAL_DBL + 1));
     }
     packedSign >>= 1;
 
@@ -1849,7 +1846,7 @@ Target fading level is determined by fading index cntFadeFrames.
 
 INT CConcealment_TDFading(
     int len, CAacDecoderStaticChannelInfo **ppAacDecoderStaticChannelInfo,
-    FIXP_PCM *pcmdata, FIXP_PCM *pcmdata_1) {
+    const INT aacOutDataHeadroom, PCM_DEC *pcmdata, PCM_DEC *pcmdata_1) {
   /*
   Do the fading in Time domain based on concealment states and core mode
   */
@@ -1962,7 +1959,8 @@ INT CConcealment_TDFading(
       start += len;
     }
   }
-  CConcealment_TDNoise_Apply(pConcealmentInfo, len, pcmdata);
+  CConcealment_TDNoise_Apply(pConcealmentInfo, len, aacOutDataHeadroom,
+                             pcmdata);
 
   /* Save end-of-frame attenuation and fading type */
   pConcealmentInfo->lastFadingType = fadingType;
@@ -1974,12 +1972,11 @@ INT CConcealment_TDFading(
 
 /* attenuate pcmdata in Time Domain Fading process */
 static void CConcealment_TDFadePcmAtt(int start, int len, FIXP_DBL fadeStart,
-                                      FIXP_DBL fadeStop, FIXP_PCM *pcmdata) {
+                                      FIXP_DBL fadeStop, PCM_DEC *pcmdata) {
   int i;
   FIXP_DBL dStep;
   FIXP_DBL dGain;
   FIXP_DBL dGain_apply;
-  int bitshift = (DFRACT_BITS - SAMPLE_BITS);
 
   /* set start energy */
   dGain = fadeStart;
@@ -1992,7 +1989,7 @@ static void CConcealment_TDFadePcmAtt(int start, int len, FIXP_DBL fadeStart,
      */
     dGain_apply = fMax((FIXP_DBL)0, dGain);
     /* finally, attenuate samples */
-    pcmdata[i] = (FIXP_PCM)((fMult(pcmdata[i], (dGain_apply))) >> bitshift);
+    pcmdata[i] = FIXP_DBL2PCM_DEC(fMult(pcmdata[i], dGain_apply));
   }
 }
 
@@ -2055,9 +2052,11 @@ static int CConcealment_TDNoise_Random(ULONG *seed) {
 }
 
 static void CConcealment_TDNoise_Apply(CConcealmentInfo *const pConcealmentInfo,
-                                       const int len, FIXP_PCM *const pcmdata) {
-  FIXP_PCM *states = pConcealmentInfo->TDNoiseStates;
-  FIXP_PCM noiseVal;
+                                       const int len,
+                                       const INT aacOutDataHeadroom,
+                                       PCM_DEC *const pcmdata) {
+  PCM_DEC *states = pConcealmentInfo->TDNoiseStates;
+  PCM_DEC noiseVal;
   FIXP_DBL noiseValLong;
   FIXP_SGL *coef = pConcealmentInfo->TDNoiseCoef;
   FIXP_DBL TDNoiseAtt;
@@ -2075,18 +2074,20 @@ static void CConcealment_TDNoise_Apply(CConcealmentInfo *const pConcealmentInfo,
       /* create filtered noise */
       states[2] = states[1];
       states[1] = states[0];
-      states[0] = ((FIXP_PCM)CConcealment_TDNoise_Random(&seed));
+      states[0] =
+          FIXP_DBL2PCM_DEC((FIXP_DBL)CConcealment_TDNoise_Random(&seed));
       noiseValLong = fMult(states[0], coef[0]) + fMult(states[1], coef[1]) +
                      fMult(states[2], coef[2]);
-      noiseVal = FX_DBL2FX_PCM(fMult(noiseValLong, TDNoiseAtt));
+      noiseVal = FIXP_DBL2PCM_DEC(fMult(noiseValLong, TDNoiseAtt) >>
+                                  aacOutDataHeadroom);
 
       /* add filtered noise - check for clipping, before */
-      if (noiseVal > (FIXP_PCM)0 &&
-          pcmdata[ii] > (FIXP_PCM)MAXVAL_FIXP_PCM - noiseVal) {
-        noiseVal = noiseVal * (FIXP_PCM)-1;
-      } else if (noiseVal < (FIXP_PCM)0 &&
-                 pcmdata[ii] < (FIXP_PCM)MINVAL_FIXP_PCM - noiseVal) {
-        noiseVal = noiseVal * (FIXP_PCM)-1;
+      if (noiseVal > (PCM_DEC)0 &&
+          pcmdata[ii] > (PCM_DEC)MAXVAL_PCM_DEC - noiseVal) {
+        noiseVal = noiseVal * (PCM_DEC)-1;
+      } else if (noiseVal < (PCM_DEC)0 &&
+                 pcmdata[ii] < (PCM_DEC)MINVAL_PCM_DEC - noiseVal) {
+        noiseVal = noiseVal * (PCM_DEC)-1;
       }
 
       pcmdata[ii] += noiseVal;

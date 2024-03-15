@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -229,6 +229,8 @@ static UCHAR getStopBand(
         stopMin = (((2 * 10000 * num) / fs) + 1) >> 1;
       }
     }
+
+    stopMin = fMin(stopMin, 64);
 
     /*
       Choose a stop band between k1 and 64 depending on stopFreq (0..13),
@@ -523,7 +525,8 @@ static FIXP_SGL calcFactorPerBand(int k_start, int k_stop, int num_bands) {
       step = FL2FXCONST_DBL(0.0f);
     }
   }
-  return FX_DBL2FX_SGL(bandfactor << 1);
+  return (bandfactor >= FL2FXCONST_DBL(0.5)) ? (FIXP_SGL)MAXVAL_SGL
+                                             : FX_DBL2FX_SGL(bandfactor << 1);
 }
 
 /*!
@@ -762,9 +765,6 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
   sbrdecUpdateLoRes(hFreq->freqBandTable[0], &nBandsLo, hFreq->freqBandTable[1],
                     nBandsHi);
 
-  hFreq->nSfb[0] = nBandsLo;
-  hFreq->nSfb[1] = nBandsHi;
-
   /* Check index to freqBandTable[0] */
   if (!(nBandsLo > 0) ||
       (nBandsLo > (((hHeaderData->numberOfAnalysisBands == 16)
@@ -773,6 +773,9 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
                    1))) {
     return SBRDEC_UNSUPPORTED_CONFIG;
   }
+
+  hFreq->nSfb[0] = nBandsLo;
+  hFreq->nSfb[1] = nBandsHi;
 
   lsb = hFreq->freqBandTable[0][0];
   usb = hFreq->freqBandTable[0][nBandsLo];
@@ -811,14 +814,14 @@ resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags) {
 
     if (intTemp == 0) intTemp = 1;
 
+    if (intTemp > MAX_NOISE_COEFFS) {
+      return SBRDEC_UNSUPPORTED_CONFIG;
+    }
+
     hFreq->nNfb = intTemp;
   }
 
   hFreq->nInvfBands = hFreq->nNfb;
-
-  if (hFreq->nNfb > MAX_NOISE_COEFFS) {
-    return SBRDEC_UNSUPPORTED_CONFIG;
-  }
 
   /* Get noise bands */
   sbrdecDownSampleLoRes(hFreq->freqBandTableNoise, hFreq->nNfb,

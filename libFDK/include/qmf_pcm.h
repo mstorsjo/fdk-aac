@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -400,6 +400,222 @@ void qmfSynthesisFiltering(
     qmfSynthesisFilteringSlot(synQmf, QmfBufferReal[i], QmfBufferImagSlot,
                               scaleFactorLowBand, scaleFactorHighBand,
                               timeOut + (i * L * stride), stride, pWorkBuffer);
+  } /* no_col loop  i  */
+}
+
+/*!
+ *
+ * \brief Create QMF filter bank instance
+ *
+ *
+ * \return 0 if successful
+ *
+ */
+int qmfInitAnalysisFilterBank(
+    HANDLE_QMF_FILTER_BANK h_Qmf, /*!< Returns handle */
+    FIXP_QAS *pFilterStates,      /*!< Handle to filter states */
+    int noCols,                   /*!< Number of timeslots per frame */
+    int lsb,                      /*!< lower end of QMF */
+    int usb,                      /*!< upper end of QMF */
+    int no_channels,              /*!< Number of channels (bands) */
+    int flags)                    /*!< Low Power flag */
+{
+  int err = qmfInitFilterBank(h_Qmf, pFilterStates, noCols, lsb, usb,
+                              no_channels, flags, 0);
+  if (!(flags & QMF_FLAG_KEEP_STATES) && (h_Qmf->FilterStates != NULL)) {
+    FDKmemclear(h_Qmf->FilterStates,
+                (2 * QMF_NO_POLY - 1) * h_Qmf->no_channels * sizeof(FIXP_QAS));
+  }
+
+  FDK_ASSERT(h_Qmf->no_channels >= h_Qmf->lsb);
+
+  return err;
+}
+
+#ifndef FUNCTION_qmfAnaPrototypeFirSlot
+/*!
+  \brief Perform Analysis Prototype Filtering on a single slot of input data.
+*/
+static void qmfAnaPrototypeFirSlot(
+    FIXP_DBL *analysisBuffer,
+    INT no_channels, /*!< Number channels of analysis filter */
+    const FIXP_PFT *p_filter, INT p_stride, /*!< Stride of analysis filter    */
+    FIXP_QAS *RESTRICT pFilterStates) {
+  INT k;
+
+  FIXP_DBL accu;
+  const FIXP_PFT *RESTRICT p_flt = p_filter;
+  FIXP_DBL *RESTRICT pData_0 = analysisBuffer + 2 * no_channels - 1;
+  FIXP_DBL *RESTRICT pData_1 = analysisBuffer;
+
+  FIXP_QAS *RESTRICT sta_0 = (FIXP_QAS *)pFilterStates;
+  FIXP_QAS *RESTRICT sta_1 =
+      (FIXP_QAS *)pFilterStates + (2 * QMF_NO_POLY * no_channels) - 1;
+  INT pfltStep = QMF_NO_POLY * (p_stride);
+  INT staStep1 = no_channels << 1;
+  INT staStep2 = (no_channels << 3) - 1; /* Rewind one less */
+
+  /* FIR filters 127..64 0..63 */
+  for (k = 0; k < no_channels; k++) {
+    accu = fMultDiv2(p_flt[0], *sta_1);
+    sta_1 -= staStep1;
+    accu += fMultDiv2(p_flt[1], *sta_1);
+    sta_1 -= staStep1;
+    accu += fMultDiv2(p_flt[2], *sta_1);
+    sta_1 -= staStep1;
+    accu += fMultDiv2(p_flt[3], *sta_1);
+    sta_1 -= staStep1;
+    accu += fMultDiv2(p_flt[4], *sta_1);
+    *pData_1++ = (accu << 1);
+    sta_1 += staStep2;
+
+    p_flt += pfltStep;
+    accu = fMultDiv2(p_flt[0], *sta_0);
+    sta_0 += staStep1;
+    accu += fMultDiv2(p_flt[1], *sta_0);
+    sta_0 += staStep1;
+    accu += fMultDiv2(p_flt[2], *sta_0);
+    sta_0 += staStep1;
+    accu += fMultDiv2(p_flt[3], *sta_0);
+    sta_0 += staStep1;
+    accu += fMultDiv2(p_flt[4], *sta_0);
+    *pData_0-- = (accu << 1);
+    sta_0 -= staStep2;
+  }
+}
+#endif /* !defined(FUNCTION_qmfAnaPrototypeFirSlot) */
+
+#ifndef FUNCTION_qmfAnaPrototypeFirSlot_NonSymmetric
+/*!
+  \brief Perform Analysis Prototype Filtering on a single slot of input data.
+*/
+static void qmfAnaPrototypeFirSlot_NonSymmetric(
+    FIXP_DBL *analysisBuffer,
+    int no_channels, /*!< Number channels of analysis filter */
+    const FIXP_PFT *p_filter, int p_stride, /*!< Stride of analysis filter    */
+    FIXP_QAS *RESTRICT pFilterStates) {
+  const FIXP_PFT *RESTRICT p_flt = p_filter;
+  int p, k;
+
+  for (k = 0; k < 2 * no_channels; k++) {
+    FIXP_DBL accu = (FIXP_DBL)0;
+
+    p_flt += QMF_NO_POLY * (p_stride - 1);
+
+    /*
+      Perform FIR-Filter
+    */
+    for (p = 0; p < QMF_NO_POLY; p++) {
+      accu += fMultDiv2(*p_flt++, pFilterStates[2 * no_channels * p]);
+    }
+    analysisBuffer[2 * no_channels - 1 - k] = (accu << 1);
+    pFilterStates++;
+  }
+}
+#endif /* FUNCTION_qmfAnaPrototypeFirSlot_NonSymmetric */
+
+/*
+ * \brief Perform one QMF slot analysis of the time domain data of timeIn
+ *        with specified stride and stores the real part of the subband
+ *        samples in rSubband, and the imaginary part in iSubband
+ *
+ *        Note: anaQmf->lsb can be greater than anaQmf->no_channels in case
+ *        of implicit resampling (USAC with reduced 3/4 core frame length).
+ */
+void qmfAnalysisFilteringSlot(
+    HANDLE_QMF_FILTER_BANK anaQmf,        /*!< Handle of Qmf Synthesis Bank  */
+    FIXP_DBL *qmfReal,                    /*!< Low and High band, real */
+    FIXP_DBL *qmfImag,                    /*!< Low and High band, imag */
+    const INT_PCM_QMFIN *RESTRICT timeIn, /*!< Pointer to input */
+    const int stride,                     /*!< stride factor of input */
+    FIXP_DBL *pWorkBuffer /*!< pointer to temporal working buffer */
+) {
+  int offset = anaQmf->no_channels * (QMF_NO_POLY * 2 - 1);
+  /*
+    Feed time signal into oldest anaQmf->no_channels states
+  */
+  {
+    FIXP_QAS *FilterStatesAnaTmp = ((FIXP_QAS *)anaQmf->FilterStates) + offset;
+
+    /* Feed and scale actual time in slot */
+    for (int i = anaQmf->no_channels >> 1; i != 0; i--) {
+      /* Place INT_PCM value left aligned in scaledTimeIn */
+      *FilterStatesAnaTmp++ = (FIXP_QAS)*timeIn;
+      timeIn += stride;
+      *FilterStatesAnaTmp++ = (FIXP_QAS)*timeIn;
+      timeIn += stride;
+    }
+  }
+
+  if (anaQmf->flags & QMF_FLAG_NONSYMMETRIC) {
+    qmfAnaPrototypeFirSlot_NonSymmetric(pWorkBuffer, anaQmf->no_channels,
+                                        anaQmf->p_filter, anaQmf->p_stride,
+                                        (FIXP_QAS *)anaQmf->FilterStates);
+  } else {
+    qmfAnaPrototypeFirSlot(pWorkBuffer, anaQmf->no_channels, anaQmf->p_filter,
+                           anaQmf->p_stride, (FIXP_QAS *)anaQmf->FilterStates);
+  }
+
+  if (anaQmf->flags & QMF_FLAG_LP) {
+    if (anaQmf->flags & QMF_FLAG_CLDFB)
+      qmfForwardModulationLP_odd(anaQmf, pWorkBuffer, qmfReal);
+    else
+      qmfForwardModulationLP_even(anaQmf, pWorkBuffer, qmfReal);
+
+  } else {
+    qmfForwardModulationHQ(anaQmf, pWorkBuffer, qmfReal, qmfImag);
+  }
+  /*
+    Shift filter states
+
+    Should be realized with modulo addressing on a DSP instead of a true buffer
+    shift
+  */
+  FDKmemmove(anaQmf->FilterStates,
+             (FIXP_QAS *)anaQmf->FilterStates + anaQmf->no_channels,
+             offset * sizeof(FIXP_QAS));
+}
+
+/*!
+ *
+ * \brief Perform complex-valued subband filtering of the time domain
+ *        data of timeIn and stores the real part of the subband
+ *        samples in rAnalysis, and the imaginary part in iAnalysis
+ * The qmf coefficient table is symmetric. The symmetry is expoited by
+ * shrinking the coefficient table to half the size. The addressing mode
+ * takes care of the symmetries.
+ *
+ *
+ * \sa PolyphaseFiltering
+ */
+void qmfAnalysisFiltering(
+    HANDLE_QMF_FILTER_BANK anaQmf, /*!< Handle of Qmf Analysis Bank */
+    FIXP_DBL **qmfReal,            /*!< Pointer to real subband slots */
+    FIXP_DBL **qmfImag,            /*!< Pointer to imag subband slots */
+    QMF_SCALE_FACTOR *scaleFactor,
+    const INT_PCM_QMFIN *timeIn, /*!< Time signal */
+    const int timeIn_e, const int stride,
+    FIXP_DBL *pWorkBuffer /*!< pointer to temporal working buffer */
+) {
+  int i;
+  int no_channels = anaQmf->no_channels;
+
+  scaleFactor->lb_scale =
+      -ALGORITHMIC_SCALING_IN_ANALYSIS_FILTERBANK - timeIn_e;
+  scaleFactor->lb_scale -= anaQmf->filterScale;
+
+  for (i = 0; i < anaQmf->no_col; i++) {
+    FIXP_DBL *qmfImagSlot = NULL;
+
+    if (!(anaQmf->flags & QMF_FLAG_LP)) {
+      qmfImagSlot = qmfImag[i];
+    }
+
+    qmfAnalysisFilteringSlot(anaQmf, qmfReal[i], qmfImagSlot, timeIn, stride,
+                             pWorkBuffer);
+
+    timeIn += no_channels * stride;
+
   } /* no_col loop  i  */
 }
 #endif /* QMF_PCM_H */

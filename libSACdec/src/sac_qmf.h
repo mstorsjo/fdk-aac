@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -124,7 +124,7 @@ amm-info@iis.fraunhofer.de
  */
 SACDEC_ERROR CalculateSpaceSynthesisQmf(
     const HANDLE_FDK_QMF_DOMAIN_OUT hQmfDomainOutCh, const FIXP_DBL *Sr,
-    const FIXP_DBL *Si, const INT stride, INT_PCM *timeSig);
+    const FIXP_DBL *Si, const INT stride, PCM_MPS *timeSig);
 
 /**
  * \brief  Convert audio input data to qmf representation.

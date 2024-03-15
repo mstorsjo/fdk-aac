@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2021 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -367,10 +367,10 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadStreamMuxConfig(
           }
           if (pLatmDemux->m_AudioMuxVersion == 1) {
             FDK_BITSTREAM tmpBs;
-            UINT ascLen = 0;
+            INT ascLen = 0;
             ascLen = CLatmDemux_GetValue(bs);
             /* The ascLen could be wrong, so check if validBits<=bufBits*/
-            if (ascLen > FDKgetValidBits(bs)) {
+            if (ascLen < 0 || ascLen > (INT)FDKgetValidBits(bs)) {
               ErrorStatus = TRANSPORTDEC_PARSE_ERROR;
               goto bail;
             }
@@ -591,6 +591,18 @@ bail:
   return (ErrorStatus);
 }
 
+static int CLatmDemux_ReadAuChunkLengthInfo(HANDLE_FDK_BITSTREAM bs) {
+  int len = 0, tmp = 255;
+  int validBytes = (int)FDKgetValidBits(bs) >> 3;
+
+  while (tmp == 255 && validBytes-- > 0) {
+    tmp = (int)FDKreadBits(bs, 8);
+    len += tmp;
+  }
+
+  return ((tmp == 255) ? -1 : (len << 3));
+}
+
 TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs,
                                                     CLatmDemux *pLatmDemux) {
   TRANSPORTDEC_ERROR ErrorStatus = TRANSPORTDEC_OK;
@@ -602,11 +614,17 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs,
       FDK_ASSERT(pLatmDemux->m_numLayer[prog] <= LATM_MAX_LAYER);
       for (UINT lay = 0; lay < pLatmDemux->m_numLayer[prog]; lay++) {
         LATM_LAYER_INFO *p_linfo = &pLatmDemux->m_linfo[prog][lay];
+        int auChunkLengthInfo = 0;
 
         switch (p_linfo->m_frameLengthType) {
           case 0:
-            p_linfo->m_frameLengthInBits = CLatmDemux_ReadAuChunkLengthInfo(bs);
-            totalPayloadBits += p_linfo->m_frameLengthInBits;
+            auChunkLengthInfo = CLatmDemux_ReadAuChunkLengthInfo(bs);
+            if (auChunkLengthInfo >= 0) {
+              p_linfo->m_frameLengthInBits = (UINT)auChunkLengthInfo;
+              totalPayloadBits += p_linfo->m_frameLengthInBits;
+            } else {
+              return TRANSPORTDEC_PARSE_ERROR;
+            }
             break;
           case 3:
           case 5:
@@ -625,23 +643,6 @@ TRANSPORTDEC_ERROR CLatmDemux_ReadPayloadLengthInfo(HANDLE_FDK_BITSTREAM bs,
   }
 
   return (ErrorStatus);
-}
-
-int CLatmDemux_ReadAuChunkLengthInfo(HANDLE_FDK_BITSTREAM bs) {
-  UCHAR endFlag;
-  int len = 0;
-
-  do {
-    UCHAR tmp = (UCHAR)FDKreadBits(bs, 8);
-    endFlag = (tmp < 255);
-
-    len += tmp;
-
-  } while (endFlag == 0);
-
-  len <<= 3; /* convert from bytes to bits */
-
-  return len;
 }
 
 UINT CLatmDemux_GetFrameLengthInBits(CLatmDemux *pLatmDemux, const UINT prog,

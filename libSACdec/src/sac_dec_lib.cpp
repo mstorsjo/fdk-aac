@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -700,9 +700,10 @@ bail:
 SACDEC_ERROR mpegSurroundDecoder_Config(
     CMpegSurroundDecoder *pMpegSurroundDecoder, HANDLE_FDK_BITSTREAM hBs,
     AUDIO_OBJECT_TYPE coreCodec, INT samplingRate, INT frameSize,
-    INT stereoConfigIndex, INT coreSbrFrameLengthIndex, INT configBytes,
-    const UCHAR configMode, UCHAR *configChanged) {
+    INT numChannels, INT stereoConfigIndex, INT coreSbrFrameLengthIndex,
+    INT configBytes, const UCHAR configMode, UCHAR *configChanged) {
   SACDEC_ERROR err = MPS_OK;
+  INT nInputChannels;
   SPATIAL_SPECIFIC_CONFIG spatialSpecificConfig;
   SPATIAL_SPECIFIC_CONFIG *pSsc =
       &pMpegSurroundDecoder->spatialSpecificConfigBackup;
@@ -716,12 +717,18 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
         err = SpatialDecParseMps212Config(
             hBs, &spatialSpecificConfig, samplingRate, coreCodec,
             stereoConfigIndex, coreSbrFrameLengthIndex);
+        nInputChannels = spatialSpecificConfig.nInputChannels;
         pSsc = &spatialSpecificConfig;
       } else {
         err = SpatialDecParseMps212Config(
             hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup,
             samplingRate, coreCodec, stereoConfigIndex,
             coreSbrFrameLengthIndex);
+        nInputChannels =
+            pMpegSurroundDecoder->spatialSpecificConfigBackup.nInputChannels;
+      }
+      if ((err == MPS_OK) && (numChannels != nInputChannels)) {
+        err = MPS_PARSE_ERROR;
       }
       break;
     case AOT_ER_AAC_ELD:
@@ -731,11 +738,19 @@ SACDEC_ERROR mpegSurroundDecoder_Config(
          * into temporarily allocated structure */
         err = SpatialDecParseSpecificConfig(hBs, &spatialSpecificConfig,
                                             configBytes, coreCodec);
+        nInputChannels = spatialSpecificConfig.nInputChannels;
         pSsc = &spatialSpecificConfig;
       } else {
         err = SpatialDecParseSpecificConfig(
             hBs, &pMpegSurroundDecoder->spatialSpecificConfigBackup,
             configBytes, coreCodec);
+        nInputChannels =
+            pMpegSurroundDecoder->spatialSpecificConfigBackup.nInputChannels;
+      }
+      /* check number of channels for channel_configuration > 0  */
+      if ((err == MPS_OK) && (numChannels > 0) &&
+          (numChannels != nInputChannels)) {
+        err = MPS_PARSE_ERROR;
       }
       break;
     default:
@@ -1507,15 +1522,17 @@ bail:
 }
 
 int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
-                              INT_PCM *input, PCM_MPS *pTimeData,
+                              PCM_MPS *input, PCM_MPS *pTimeData,
                               const int timeDataSize, int timeDataFrameSize,
                               int *nChannels, int *frameSize, int sampleRate,
                               AUDIO_OBJECT_TYPE coreCodec,
                               AUDIO_CHANNEL_TYPE channelType[],
                               UCHAR channelIndices[],
-                              const FDK_channelMapDescr *const mapDescr) {
+                              const FDK_channelMapDescr *const mapDescr,
+                              const INT inDataHeadroom, INT *outDataHeadroom) {
   SACDEC_ERROR err = MPS_OK;
   PCM_MPS *pTimeOut = pTimeData;
+  PCM_MPS *TDinput = NULL;
   UINT initControlFlags = 0, controlFlags = 0;
   int timeDataRequiredSize = 0;
   int newData;
@@ -1533,6 +1550,9 @@ int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
   if ((*nChannels <= 0) || (*nChannels > 2)) {
     return MPS_NOTOK;
   }
+
+  pMpegSurroundDecoder->pSpatialDec->sacInDataHeadroom = inDataHeadroom;
+  *outDataHeadroom = (INT)(8);
 
   pMpegSurroundDecoder->pSpatialDec->pConfigCurrent =
       &pMpegSurroundDecoder
@@ -1682,8 +1702,7 @@ int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
         (timeDataFrameSize *
          pMpegSurroundDecoder->pQmfDomain->globalConf.nBandsSynthesis) /
         pMpegSurroundDecoder->pQmfDomain->globalConf.nBandsAnalysis;
-    pMpegSurroundDecoder->pQmfDomain->globalConf.TDinput =
-        pTimeData + timeDataFrameSizeOut - timeDataFrameSize;
+    TDinput = pTimeData + timeDataFrameSizeOut - timeDataFrameSize;
     for (int i = *nChannels - 1; i >= 0; i--) {
       FDKmemmove(pTimeData + (i + 1) * timeDataFrameSizeOut - timeDataFrameSize,
                  pTimeData + timeDataFrameSize * i,
@@ -1694,8 +1713,8 @@ int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
   } else {
     if (pMpegSurroundDecoder->mpegSurroundUseTimeInterface) {
       FDKmemcpy(input, pTimeData,
-                sizeof(INT_PCM) * (*nChannels) * (*frameSize));
-      pMpegSurroundDecoder->pQmfDomain->globalConf.TDinput = input;
+                sizeof(PCM_MPS) * (*nChannels) * (*frameSize));
+      TDinput = input;
     }
   }
 
@@ -1707,8 +1726,8 @@ int mpegSurroundDecoder_Apply(CMpegSurroundDecoder *pMpegSurroundDecoder,
       &pMpegSurroundDecoder->bsFrames[pMpegSurroundDecoder->bsFrameDecode],
       pMpegSurroundDecoder->mpegSurroundUseTimeInterface ? INPUTMODE_TIME
                                                          : INPUTMODE_QMF_SBR,
-      pMpegSurroundDecoder->pQmfDomain->globalConf.TDinput, NULL, NULL,
-      pTimeOut, *frameSize, &controlFlags, *nChannels, mapDescr);
+      TDinput, NULL, NULL, pTimeOut, *frameSize, &controlFlags, *nChannels,
+      mapDescr);
   *nChannels = pMpegSurroundDecoder->pSpatialDec->numOutputChannelsAT;
 
   if (err !=
@@ -1781,7 +1800,7 @@ void mpegSurroundDecoder_Close(CMpegSurroundDecoder *pMpegSurroundDecoder) {
 }
 
 #define SACDEC_VL0 2
-#define SACDEC_VL1 0
+#define SACDEC_VL1 1
 #define SACDEC_VL2 0
 
 int mpegSurroundDecoder_GetLibInfo(LIB_INFO *info) {
@@ -1800,7 +1819,7 @@ int mpegSurroundDecoder_GetLibInfo(LIB_INFO *info) {
   info += i;
 
   info->module_id = FDK_MPSDEC;
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
   info->build_date = "";
   info->build_time = "";
 #else

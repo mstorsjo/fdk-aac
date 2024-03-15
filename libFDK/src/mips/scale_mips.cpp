@@ -100,7 +100,7 @@ amm-info@iis.fraunhofer.de
 
 *******************************************************************************/
 
-#if defined(__mips_dsp)
+#if defined(__mips_dsp) && !defined(__mips16)
 
 #ifndef FUNCTION_getScalefactor_DBL
 #define FUNCTION_getScalefactor_DBL

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -265,7 +265,9 @@ void CChannelElement_Decode(
          stereo prediction since scaling has already been carried out. */
       int max_sfb_ste = (INT)(pAacDecoderChannelInfo[L]->icsInfo.max_sfb_ste);
 
-      if ((!CP_active) || (CP_active && (max_sfb_ste < noSfbs)) ||
+      if (!(CP_active && (max_sfb_ste == noSfbs)) ||
+          !(CP_active &&
+            !(pAacDecoderChannelInfo[ch]->pDynData->TnsData.Active)) ||
           ((flags & (AC_USAC | AC_RSVD50 | AC_RSV603DA)) &&
            (pAacDecoderChannelInfo[L]->pDynData->specificTo.usac.tns_on_lr ==
             0))) {

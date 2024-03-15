@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -106,18 +106,16 @@ amm-info@iis.fraunhofer.de
 #include "common_fix.h"
 
 #define MDCT_OUT_HEADROOM 2 /* Output additional headroom */
-#define PCM_OUT_BITS SAMPLE_BITS
+
+#define PCM_OUT_BITS DFRACT_BITS
 #define PCM_OUT_HEADROOM 8 /* Must have the same values as DMXH_HEADROOM */
 
-#define MDCT_OUTPUT_SCALE (-MDCT_OUT_HEADROOM + (DFRACT_BITS - SAMPLE_BITS))
+#define MDCT_OUTPUT_SCALE (-MDCT_OUT_HEADROOM + (DFRACT_BITS - PCM_OUT_BITS))
 /* Refer to "Output word length" in ISO/IEC 14496-3:2008(E) 23.2.3.6 */
 #define MDCT_OUTPUT_GAIN 16
 
-#if (MDCT_OUTPUT_SCALE >= 0)
-#define IMDCT_SCALE(x) SATURATE_RIGHT_SHIFT(x, MDCT_OUTPUT_SCALE, PCM_OUT_BITS)
-#else
-#define IMDCT_SCALE(x) SATURATE_LEFT_SHIFT(x, -MDCT_OUTPUT_SCALE, PCM_OUT_BITS)
-#endif
+#define IMDCT_SCALE(x, s) \
+  SATURATE_RIGHT_SHIFT((x), ((s) + MDCT_OUTPUT_SCALE), PCM_OUT_BITS)
 #define IMDCT_SCALE_DBL(x) (FIXP_DBL)(x)
 #define IMDCT_SCALE_DBL_LSH1(x) SATURATE_LEFT_SHIFT_ALT((x), 1, DFRACT_BITS)
 

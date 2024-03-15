@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -534,7 +534,8 @@ void pvcDecodeTimeSlot(PVC_STATIC_DATA *pPvcStaticData,
     for (ksg = ksg_start; ksg < PVC_NBLOW; ksg++) {
       for (band = sg_borders[ksg]; band < sg_borders[ksg + 1]; band++) {
         /* The division by 8 == (RATE*lbw) is required algorithmically */
-        E[ksg] += (fPow2Div2(qmfR[band]) + fPow2Div2(qmfI[band])) >> 2;
+        E[ksg] +=
+            ((fPow2Div2(qmfR[band]) >> 1) + (fPow2Div2(qmfI[band]) >> 1)) >> 3;
       }
     }
   }
@@ -542,7 +543,7 @@ void pvcDecodeTimeSlot(PVC_STATIC_DATA *pPvcStaticData,
     if (E[ksg] > (FIXP_DBL)0) {
       /* 10/log2(10) = 0.752574989159953 * 2^2 */
       int exp_log;
-      FIXP_DBL nrg = CalcLog2(E[ksg], 2 * qmfExponent, &exp_log);
+      FIXP_DBL nrg = CalcLog2(E[ksg], 2 * qmfExponent + 2, &exp_log);
       nrg = fMult(nrg, FL2FXCONST_SGL(LOG10FAC));
       nrg = scaleValue(nrg, exp_log - PVC_ESG_EXP + 2);
       pEsg[ksg] = fMax(nrg, FL2FXCONST_DBL(-10.0 / (1 << PVC_ESG_EXP)));
@@ -603,22 +604,22 @@ void pvcDecodeTimeSlot(PVC_STATIC_DATA *pPvcStaticData,
       E_high_exp[ksg] = 0;
 
       /* residual part */
-      accu = ((LONG)(SCHAR)*pTab2++) << (DFRACT_BITS - 8 - PVC_ESG_EXP +
+      accu = ((LONG)(SCHAR)*pTab2++) << (DFRACT_BITS - 8 - PVC_ESG_EXP - 2 +
                                          pPvcDynamicData->pScalingCoef[3]);
 
       /* linear combination of lower grouped energies part */
       for (kb = 0; kb < PVC_NBLOW; kb++) {
         predCoeff = (FIXP_SGL)(
             (SHORT)(SCHAR)pTab1[kb * pPvcDynamicData->nbHigh + ksg] << 8);
-        predCoeff_exp = pPvcDynamicData->pScalingCoef[kb] +
-                        1; /* +1 to compensate for Div2 */
-        accu += fMultDiv2(E[kb], predCoeff) << predCoeff_exp;
+        predCoeff_exp = -(pPvcDynamicData->pScalingCoef[kb] + 1 -
+                          2); /* +1 to compensate for Div2; -2 for accu */
+        accu += fMultDiv2(E[kb], predCoeff) >> predCoeff_exp;
       }
       /* convert back to linear domain */
       accu = fMult(accu, FL2FXCONST_SGL(LOG10FAC_INV));
-      accu = f2Pow(
-          accu, PVC_ESG_EXP - 1,
-          &predCoeff_exp); /* -1 compensates for exponent of LOG10FAC_INV */
+      accu = f2Pow(accu, PVC_ESG_EXP - 1 + 2,
+                   &predCoeff_exp); /* -1 compensates for exponent of
+                                       LOG10FAC_INV; +2 for accu */
       predictedEsgSlot[ksg] = accu;
       E_high_exp[ksg] = predCoeff_exp;
       if (predCoeff_exp > E_high_exp_max) {
@@ -628,8 +629,8 @@ void pvcDecodeTimeSlot(PVC_STATIC_DATA *pPvcStaticData,
 
     /* rescale output vector according to largest exponent */
     for (ksg = 0; ksg < pPvcDynamicData->nbHigh; ksg++) {
-      int scale = E_high_exp[ksg] - E_high_exp_max;
-      predictedEsgSlot[ksg] = scaleValue(predictedEsgSlot[ksg], scale);
+      int scale = fMin(E_high_exp_max - E_high_exp[ksg], DFRACT_BITS - 1);
+      predictedEsgSlot[ksg] = predictedEsgSlot[ksg] >> scale;
     }
     *predictedEsg_exp = E_high_exp_max;
   }

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -114,6 +114,8 @@ amm-info@iis.fraunhofer.de
 
 #include "genericStds.h"
 
+#define BITRES_MIN \
+  300 /* default threshold for using reduced/disabled bitres mode */
 #define BITRES_MAX_LD 4000
 #define BITRES_MIN_LD 500
 #define BITRATE_MAX_LD 70000 /* Max assumed bitrate for bitres calculation */
@@ -241,6 +243,46 @@ INT FDKaacEnc_GetVBRBitrate(AACENC_BITRATE_MODE bitrateMode,
   bitrate *= FDKaacEnc_GetChannelModeConfiguration(channelMode)->nChannelsEff;
 
   return bitrate;
+}
+
+/*-----------------------------------------------------------------------------
+
+    functionname: FDKaacEnc_AdjustVBRBitrateMode
+    description:  Adjust bitrate mode to given bitrate parameter
+    input params: int vbrQuality (VBR0, VBR1, VBR2)
+                  bitrate
+                  channelMode
+    returns:      vbr bitrate mode
+
+ ------------------------------------------------------------------------------*/
+AACENC_BITRATE_MODE FDKaacEnc_AdjustVBRBitrateMode(
+    AACENC_BITRATE_MODE bitrateMode, INT bitrate, CHANNEL_MODE channelMode) {
+  AACENC_BITRATE_MODE newBitrateMode = bitrateMode;
+
+  if (bitrate != -1) {
+    const INT monoStereoMode =
+        (FDKaacEnc_GetMonoStereoMode(channelMode) == EL_MODE_STEREO) ? 1 : 0;
+    const INT nChannelsEff =
+        FDKaacEnc_GetChannelModeConfiguration(channelMode)->nChannelsEff;
+    newBitrateMode = AACENC_BR_MODE_INVALID;
+
+    for (int idx = (int)(sizeof(configTabVBR) / sizeof(*configTabVBR)) - 1;
+         idx >= 0; idx--) {
+      if (bitrate >=
+          configTabVBR[idx].chanBitrate[monoStereoMode] * nChannelsEff) {
+        if (configTabVBR[idx].chanBitrate[monoStereoMode] * nChannelsEff <
+            FDKaacEnc_GetVBRBitrate(bitrateMode, channelMode)) {
+          newBitrateMode = configTabVBR[idx].bitrateMode;
+        } else {
+          newBitrateMode = bitrateMode;
+        }
+        break;
+      }
+    }
+  }
+
+  return AACENC_BR_MODE_IS_VBR(newBitrateMode) ? newBitrateMode
+                                               : AACENC_BR_MODE_INVALID;
 }
 
 /**
@@ -395,7 +437,6 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
   FIXP_DBL mbfac, bw_ratio;
   QC_INIT qcInit;
   INT averageBitsPerFrame = 0;
-  int bitresMin = 0; /* the bitreservoir is always big for AAC-LC */
   const CHANNEL_MODE prevChannelMode = hAacEnc->encoderMode;
 
   if (config == NULL) return AAC_ENC_INVALID_HANDLE;
@@ -550,7 +591,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
         (config->minBitsPerFrame != -1) ? config->minBitsPerFrame : 0;
     qcInit.minBits = fixMin(qcInit.minBits, averageBitsPerFrame & ~7);
   } else {
-    INT bitreservoir = -1; /* default bitrservoir size*/
+    INT bitreservoir = -1; /* default bitreservoir size*/
     if (isLowDelay(config->audioObjectType)) {
       INT brPerChannel = config->bitRate / config->nChannels;
       brPerChannel = fMin(BITRATE_MAX_LD, fMax(BITRATE_MIN_LD, brPerChannel));
@@ -564,7 +605,6 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
       bitreservoir = fMultI(slope, (INT)(BITRES_MAX_LD - BITRES_MIN_LD)) +
                      BITRES_MIN_LD;     /* interpolate */
       bitreservoir = bitreservoir & ~7; /* align to bytes */
-      bitresMin = BITRES_MIN_LD;
     }
 
     int maxBitres;
@@ -601,9 +641,10 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
   qcInit.nSubFrames = config->nSubFrames;
   qcInit.padding.paddingRest = config->sampleRate;
 
-  if (qcInit.bitRes >= bitresMin * config->nChannels) {
+  if (qcInit.maxBits - qcInit.averageBits >=
+      ((qcInit.isLowDelay) ? BITRES_MIN_LD : BITRES_MIN) * config->nChannels) {
     qcInit.bitResMode = AACENC_BR_MODE_FULL; /* full bitreservoir */
-  } else if (qcInit.bitRes > 0) {
+  } else if (qcInit.maxBits > qcInit.averageBits) {
     qcInit.bitResMode = AACENC_BR_MODE_REDUCED; /* reduced bitreservoir */
   } else {
     qcInit.bitResMode = AACENC_BR_MODE_DISABLED; /* disabled bitreservoir */

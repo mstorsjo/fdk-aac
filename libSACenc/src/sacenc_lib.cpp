@@ -130,7 +130,7 @@ Description of file contents
 #define SACENC_LIB_VL1 0
 #define SACENC_LIB_VL2 0
 #define SACENC_LIB_TITLE "MPEG Surround Encoder"
-#ifdef __ANDROID__
+#ifdef SUPPRESS_BUILD_DATE_INFO
 #define SACENC_LIB_BUILD_DATE ""
 #define SACENC_LIB_BUILD_TIME ""
 #else

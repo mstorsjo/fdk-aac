@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -285,6 +285,9 @@ static DRC_ERROR _compressorIO_sigmoid_common(
                   &e_tmp2);
   invExp = fDivNorm(FL2FXCONST_DBL(1.0f / (float)(1 << 1)), exp, &e_invExp);
   e_invExp += 1 - 5;
+  if (tmp2 < (FIXP_DBL)0) {
+    return DE_NOT_OK;
+  }
   denom = fPow(tmp2, e_tmp2, invExp, e_invExp, &e_denom);
   *out = fDivNormSigned(tmp, denom, &e_out);
   e_out += 7 - e_denom;

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -897,30 +897,31 @@ void sbrDecoder_calculateGainVec(FIXP_DBL **sourceBufferReal,
     for (i = startSample; i < stopSample; i++) {
       maxVal |=
           (FIXP_DBL)((LONG)(sourceBufferReal[i][loBand]) ^
-                     ((LONG)sourceBufferReal[i][loBand] >> (SAMPLE_BITS - 1)));
+                     ((LONG)sourceBufferReal[i][loBand] >> (DFRACT_BITS - 1)));
       maxVal |=
           (FIXP_DBL)((LONG)(sourceBufferImag[i][loBand]) ^
-                     ((LONG)sourceBufferImag[i][loBand] >> (SAMPLE_BITS - 1)));
+                     ((LONG)sourceBufferImag[i][loBand] >> (DFRACT_BITS - 1)));
     }
 
     if (maxVal != FL2FX_DBL(0.0f)) {
-      reserve = fixMax(0, CntLeadingZeros(maxVal) - 2);
+      reserve = CntLeadingZeros(maxVal) - 2;
     }
 
     nrg_ov = nrg = (FIXP_DBL)0;
     if (scale_nrg_ov > -31) {
       for (i = startSample; i < overlap; i++) {
-        nrg_ov += (fPow2Div2(sourceBufferReal[i][loBand] << reserve) +
-                   fPow2Div2(sourceBufferImag[i][loBand] << reserve)) >>
-                  sum_scale_ov;
+        nrg_ov +=
+            (fPow2Div2(scaleValue(sourceBufferReal[i][loBand], reserve)) +
+             fPow2Div2(scaleValue(sourceBufferImag[i][loBand], reserve))) >>
+            sum_scale_ov;
       }
     } else {
       scale_nrg_ov = 0;
     }
     if (scale_nrg > -31) {
       for (i = overlap; i < stopSample; i++) {
-        nrg += (fPow2Div2(sourceBufferReal[i][loBand] << reserve) +
-                fPow2Div2(sourceBufferImag[i][loBand] << reserve)) >>
+        nrg += (fPow2Div2(scaleValue(sourceBufferReal[i][loBand], reserve)) +
+                fPow2Div2(scaleValue(sourceBufferImag[i][loBand], reserve))) >>
                sum_scale;
       }
     } else {

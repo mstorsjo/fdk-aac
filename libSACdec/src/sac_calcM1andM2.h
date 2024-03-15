@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -117,6 +117,9 @@ amm-info@iis.fraunhofer.de
 /* Scaling of spectral data after applying M2 matrix, but only for binaural
    upmix type Scaling is compensated later in synthesis qmf filterbank */
 #define SCALE_DATA_APPLY_M2 (1)
+/* Applying M2 parameter in combination with phase coding needs 2 bits headroom
+ * because up to a maximum of 4 spectral values can be added for USAC */
+#define SCALE_DATA_APPLY_M2_PC (2)
 
 SACDEC_ERROR initM1andM2(spatialDec* self, int initStatesFlag,
                          int configChanged);

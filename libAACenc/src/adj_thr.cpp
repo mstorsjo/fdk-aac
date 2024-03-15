@@ -1302,14 +1302,6 @@ static void FDKaacEnc_reduceThresholdsVBR(
           if (sfbThrReducedLdData < FL2FXCONST_DBL(-0.5f))
             sfbThrReducedLdData = FL2FXCONST_DBL(-1.f);
 
-          /* minimum of 29 dB Ratio for Thresholds */
-          if ((sfbEnLdData + FL2FXCONST_DBL(1.0f)) >
-              FL2FXCONST_DBL(9.6336206 / LD_DATA_SCALING)) {
-            sfbThrReducedLdData = fixMax(
-                sfbThrReducedLdData,
-                sfbEnLdData - FL2FXCONST_DBL(9.6336206 / LD_DATA_SCALING));
-          }
-
           sfbThrReducedLdData = fixMax(MIN_LDTHRESH, sfbThrReducedLdData);
 
           qcOutChan->sfbThresholdLdData[sfbGrp + sfb] = sfbThrReducedLdData;

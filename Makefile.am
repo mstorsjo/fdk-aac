@@ -40,9 +40,13 @@ libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
 
 if EXAMPLE
 bin_PROGRAMS = aac-enc$(EXEEXT)
+noinst_PROGRAMS = test-encode-decode$(EXEEXT)
 
 aac_enc_LDADD = libfdk-aac.la
 aac_enc_SOURCES = aac-enc.c wavreader.c
+
+test_encode_decode_LDADD = libfdk-aac.la
+test_encode_decode_SOURCES = test-encode-decode.c wavreader.c sha1.c
 
 noinst_HEADERS = wavreader.h
 endif
@@ -210,7 +214,6 @@ SBRDEC_SRC = \
     libSBRdec/src/psdec_drm.cpp \
     libSBRdec/src/psdecrom_drm.cpp \
     libSBRdec/src/pvc_dec.cpp \
-    libSBRdec/src/sbr_crc.cpp \
     libSBRdec/src/sbr_deb.cpp \
     libSBRdec/src/sbr_dec.cpp \
     libSBRdec/src/sbr_ram.cpp \
@@ -254,15 +257,18 @@ libfdk_aac_la_SOURCES = \
     $(PCMUTILS_SRC) $(FDK_SRC) $(SYS_SRC)
 
 EXTRA_DIST = \
+    $(top_srcdir)/CMakeLists.txt \
     $(top_srcdir)/.clang-format \
     $(top_srcdir)/autogen.sh \
     $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
     $(top_srcdir)/NOTICE \
     $(top_srcdir)/OWNERS \
     $(top_srcdir)/Android.bp \
+    $(top_srcdir)/fdk-aac.def \
     $(top_srcdir)/fdk-aac.sym \
-    $(top_srcdir)/Makefile.vc \
+    $(top_srcdir)/fdk-aac-config.cmake.in \
     $(top_srcdir)/documentation/*.pdf \
+    $(top_srcdir)/fuzzer/* \
     $(top_srcdir)/libAACdec/src/*.h \
     $(top_srcdir)/libAACdec/src/arm/*.cpp \
     $(top_srcdir)/libAACenc/src/*.h \
@@ -276,7 +282,6 @@ EXTRA_DIST = \
     $(top_srcdir)/libSBRenc/src/*.h \
     $(top_srcdir)/libSBRenc/include/*.h \
     $(top_srcdir)/libSBRdec/src/*.h \
-    $(top_srcdir)/libSBRdec/src/arm/*.cpp \
     $(top_srcdir)/libSBRdec/include/*.h \
     $(top_srcdir)/libSYS/include/*.h \
     $(top_srcdir)/libPCMutils/include/*.h \
@@ -292,5 +297,9 @@ EXTRA_DIST = \
     $(top_srcdir)/libFDK/include/x86/*.h \
     $(top_srcdir)/libFDK/src/arm/*.cpp \
     $(top_srcdir)/libFDK/src/mips/*.cpp \
+    $(top_srcdir)/METADATA \
+    $(top_srcdir)/PREUPLOAD.cfg \
+    $(top_srcdir)/sha1.h \
+    $(top_srcdir)/test/* \
     $(top_srcdir)/win32/*.h
 

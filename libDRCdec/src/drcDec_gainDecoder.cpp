@@ -297,9 +297,11 @@ drcDec_GainDecoder_Conceal(HANDLE_DRC_GAIN_DECODER hGainDec,
   int seq, gainSequenceCount;
   DRC_COEFFICIENTS_UNI_DRC* pCoef =
       selectDrcCoefficients(hUniDrcConfig, LOCATION_SELECTED);
-  if (pCoef == NULL) return DE_OK;
-
-  gainSequenceCount = fMin(pCoef->gainSequenceCount, (UCHAR)12);
+  if (pCoef && pCoef->gainSequenceCount) {
+    gainSequenceCount = fMin(pCoef->gainSequenceCount, (UCHAR)12);
+  } else {
+    gainSequenceCount = 1;
+  }
 
   for (seq = 0; seq < gainSequenceCount; seq++) {
     int lastNodeIndex = 0;

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -108,9 +108,6 @@ amm-info@iis.fraunhofer.de
 */
 
 #include "sbr_ram.h"
-
-#define WORKBUFFER1_TAG 2
-#define WORKBUFFER2_TAG 3
 
 /*!
   \name StaticSbrData

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -176,17 +176,18 @@ typedef SBR_CHANNEL *HANDLE_SBR_CHANNEL;
 
 void sbr_dec(
     HANDLE_SBR_DEC hSbrDec,             /*!< handle to Decoder channel */
-    INT_PCM *timeIn,                    /*!< pointer to input time signal */
-    INT_PCM *timeOut,                   /*!< pointer to output time signal */
+    LONG *timeIn,                       /*!< pointer to input time signal */
+    LONG *timeOut,                      /*!< pointer to output time signal */
     HANDLE_SBR_DEC hSbrDecRight,        /*!< handle to Decoder channel right */
-    INT_PCM *timeOutRight,              /*!< pointer to output time signal */
+    LONG *timeOutRight,                 /*!< pointer to output time signal */
     INT strideOut,                      /*!< Time data traversal strideOut */
     HANDLE_SBR_HEADER_DATA hHeaderData, /*!< Static control data */
     HANDLE_SBR_FRAME_DATA hFrameData,   /*!< Control data of current frame */
     HANDLE_SBR_PREV_FRAME_DATA
         hPrevFrameData,        /*!< Some control data of last frame */
     const int applyProcessing, /*!< Flag for SBR operation */
-    HANDLE_PS_DEC h_ps_d, const UINT flags, const int codecFrameSize);
+    HANDLE_PS_DEC h_ps_d, const UINT flags, const int codecFrameSize,
+    const INT sbrInDataHeadroom);
 
 SBR_ERROR
 createSbrDec(SBR_CHANNEL *hSbrChannel, HANDLE_SBR_HEADER_DATA hHeaderData,

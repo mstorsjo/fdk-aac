@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -121,20 +121,15 @@ typedef struct {
 
 static const TAB_VBR_QUAL_FACTOR tableVbrQualFactor[] = {
     {QCDATA_BR_MODE_VBR_1,
-     FL2FXCONST_DBL(0.160f)}, /* Approx. 32 -  48 (AC-LC),  32 -  56
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.150f)}, /* Approx.  32 kbps mono   AAC-LC + SBR + PS */
     {QCDATA_BR_MODE_VBR_2,
-     FL2FXCONST_DBL(0.148f)}, /* Approx. 40 -  56 (AC-LC),  40 -  64
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.162f)}, /* Approx.  64 kbps stereo AAC-LC + SBR      */
     {QCDATA_BR_MODE_VBR_3,
-     FL2FXCONST_DBL(0.135f)}, /* Approx. 48 -  64 (AC-LC),  48 -  72
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.176f)}, /* Approx.  96 kbps stereo AAC-LC            */
     {QCDATA_BR_MODE_VBR_4,
-     FL2FXCONST_DBL(0.111f)}, /* Approx. 64 -  80 (AC-LC),  64 -  88
-                                 (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.120f)}, /* Approx. 128 kbps stereo AAC-LC            */
     {QCDATA_BR_MODE_VBR_5,
-     FL2FXCONST_DBL(0.070f)} /* Approx. 96 - 120 (AC-LC), 112 - 144
-                                (AAC-LD/ELD) kbps/channel */
+     FL2FXCONST_DBL(0.070f)} /* Approx. 192 kbps stereo AAC-LC            */
 };
 
 static INT isConstantBitrateMode(const QCDATA_BR_MODE bitrateMode) {
@@ -378,13 +373,8 @@ AAC_ENCODER_ERROR FDKaacEnc_QCInit(QC_STATE* hQC, struct QC_INIT* init,
   hQC->invQuant = init->invQuant;
   hQC->maxIterations = init->maxIterations;
 
-  if (isConstantBitrateMode(hQC->bitrateMode)) {
-    /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir
-     */
-    hQC->bitResMode = init->bitResMode;
-  } else {
-    hQC->bitResMode = AACENC_BR_MODE_FULL; /* full bitreservoir */
-  }
+  /* 0: full bitreservoir, 1: reduced bitreservoir, 2: disabled bitreservoir */
+  hQC->bitResMode = init->bitResMode;
 
   hQC->padding.paddingRest = init->padding.paddingRest;
 
@@ -805,10 +795,15 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT hQC, PSY_OUT** psyOut,
   INT avgTotalDynBits = 0; /* maximal allowed dynamic bits for all frames */
   INT totalAvailableBits = 0;
   INT nSubFrames = 1;
+  const INT isCBRAdjustment = (isConstantBitrateMode(hQC->bitrateMode) ||
+                               (hQC->bitResMode != AACENC_BR_MODE_FULL))
+                                  ? 1
+                                  : 0;
 
   /*-------------------------------------------- */
   /* redistribute total bitreservoir to elements */
-  ErrorStatus = FDKaacEnc_BitResRedistribution(hQC, cm, avgTotalBits);
+  ErrorStatus = FDKaacEnc_BitResRedistribution(
+      hQC, cm, (isCBRAdjustment == 0) ? hQC->maxBitsPerFrame : avgTotalBits);
   if (ErrorStatus != AAC_ENC_OK) {
     return ErrorStatus;
   }
@@ -836,33 +831,22 @@ AAC_ENCODER_ERROR FDKaacEnc_QCMain(QC_STATE* RESTRICT hQC, PSY_OUT** psyOut,
 
   /*-------------------------------------------- */
   /*-------------------------------------------- */
-  if (isConstantBitrateMode(hQC->bitrateMode)) {
-    /* calc granted dynamic bits for sub frame and
-       distribute it to each element */
-    ErrorStatus = FDKaacEnc_prepareBitDistribution(
-        hQC, psyOut, qcOut, cm, qcElement, avgTotalBits, &totalAvailableBits,
-        &avgTotalDynBits);
+  /* calc granted dynamic bits for sub frame and
+     distribute it to each element */
+  ErrorStatus = FDKaacEnc_prepareBitDistribution(
+      hQC, psyOut, qcOut, cm, qcElement,
+      (isCBRAdjustment == 0) ? hQC->maxBitsPerFrame : avgTotalBits,
+      &totalAvailableBits, &avgTotalDynBits);
 
-    if (ErrorStatus != AAC_ENC_OK) {
-      return ErrorStatus;
-    }
-  } else {
-    qcOut[0]->grantedDynBits =
-        ((hQC->maxBitsPerFrame - (hQC->globHdrBits)) & ~7) -
-        (qcOut[0]->globalExtBits + qcOut[0]->staticBits +
-         qcOut[0]->elementExtBits);
-    qcOut[0]->maxDynBits = qcOut[0]->grantedDynBits;
-
-    totalAvailableBits = hQC->maxBitsPerFrame;
-    avgTotalDynBits = 0;
+  if (ErrorStatus != AAC_ENC_OK) {
+    return ErrorStatus;
   }
 
   /* for ( all sub frames ) ... */
   for (c = 0; c < nSubFrames; c++) {
     /* for CBR and VBR mode */
     FDKaacEnc_AdjustThresholds(hQC->hAdjThr, qcElement[c], qcOut[c],
-                               psyOut[c]->psyOutElement,
-                               isConstantBitrateMode(hQC->bitrateMode), cm);
+                               psyOut[c]->psyOutElement, isCBRAdjustment, cm);
 
   } /* -end- sub frame counter */
 

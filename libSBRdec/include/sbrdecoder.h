@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -361,15 +361,20 @@ SBR_ERROR sbrDecoder_Parse(HANDLE_SBRDECODER self, HANDLE_FDK_BITSTREAM hBs,
  * error (0: core decoder found errors, 1: no errors).
  * \param psDecoded       Pointer to a buffer holding a flag. Input: PS is
  * possible, Output: PS has been rendered.
+ * \param inDataHeadroom  Headroom of the SBR input time signal to prevent
+ * clipping.
+ * \param outDataHeadroom Pointer to headroom of the SBR output time signal to
+ * prevent clipping.
  *
  * \return  Error code.
  */
-SBR_ERROR sbrDecoder_Apply(HANDLE_SBRDECODER self, INT_PCM *input,
-                           INT_PCM *timeData, const int timeDataSize,
-                           int *numChannels, int *sampleRate,
+SBR_ERROR sbrDecoder_Apply(HANDLE_SBRDECODER self, LONG *input, LONG *timeData,
+                           const int timeDataSize, int *numChannels,
+                           int *sampleRate,
                            const FDK_channelMapDescr *const mapDescr,
                            const int mapIdx, const int coreDecodedOk,
-                           UCHAR *psDecoded);
+                           UCHAR *psDecoded, const INT inDataHeadroom,
+                           INT *outDataHeadroom);
 
 /**
  * \brief       Close SBR decoder instance and free memory.

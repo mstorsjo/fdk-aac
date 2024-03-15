@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -137,7 +137,7 @@ static void DeriveNumberOfExtendedSortedSectionsInSets(
 static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
                                 INT quantSpecCoef, INT *pLeftStartOfSegment,
                                 SCHAR *pRemainingBitsInSegment,
-                                int *pNumDecodedBits);
+                                int *pNumDecodedBits, UINT *errorWord);
 
 static int DecodePCW_Sign(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
                           UINT codebookDim, const SCHAR *pQuantVal,
@@ -1179,8 +1179,8 @@ static void DecodePCWs(HANDLE_FDK_BITSTREAM bs, H_HCR_INFO pHcr) {
                   bs, pHcr->decInOut.bitstreamAnchor,
                   pQuantizedSpectralCoefficients
                       [quantizedSpectralCoefficientsIdx],
-                  pLeftStartOfSegment, pRemainingBitsInSegment,
-                  &numDecodedBits);
+                  pLeftStartOfSegment, pRemainingBitsInSegment, &numDecodedBits,
+                  &pHcr->decInOut.errorLog);
         }
         quantizedSpectralCoefficientsIdx++;
         if (quantizedSpectralCoefficientsIdx >= 1024) {
@@ -1195,8 +1195,8 @@ static void DecodePCWs(HANDLE_FDK_BITSTREAM bs, H_HCR_INFO pHcr) {
                   bs, pHcr->decInOut.bitstreamAnchor,
                   pQuantizedSpectralCoefficients
                       [quantizedSpectralCoefficientsIdx],
-                  pLeftStartOfSegment, pRemainingBitsInSegment,
-                  &numDecodedBits);
+                  pLeftStartOfSegment, pRemainingBitsInSegment, &numDecodedBits,
+                  &pHcr->decInOut.errorLog);
         }
         quantizedSpectralCoefficientsIdx++;
         if (quantizedSpectralCoefficientsIdx >= 1024) {
@@ -1386,7 +1386,7 @@ value == 16, a escapeSequence is decoded in two steps:
 static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
                                 INT quantSpecCoef, INT *pLeftStartOfSegment,
                                 SCHAR *pRemainingBitsInSegment,
-                                int *pNumDecodedBits) {
+                                int *pNumDecodedBits, UINT *errorWord) {
   UINT i;
   INT sign;
   UINT escapeOnesCounter = 0;
@@ -1400,6 +1400,9 @@ static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
                                        FROM_LEFT_TO_RIGHT);
     *pRemainingBitsInSegment -= 1;
     *pNumDecodedBits += 1;
+    if (*pRemainingBitsInSegment < 0) {
+      return Q_VALUE_INVALID;
+    }
 
     if (carryBit != 0) {
       escapeOnesCounter += 1;
@@ -1416,6 +1419,9 @@ static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
                                        FROM_LEFT_TO_RIGHT);
     *pRemainingBitsInSegment -= 1;
     *pNumDecodedBits += 1;
+    if (*pRemainingBitsInSegment < 0) {
+      return Q_VALUE_INVALID;
+    }
 
     escape_word <<= 1;
     escape_word = escape_word | carryBit;
@@ -1423,8 +1429,12 @@ static INT DecodeEscapeSequence(HANDLE_FDK_BITSTREAM bs, const INT bsAnchor,
 
   sign = (quantSpecCoef >= 0) ? 1 : -1;
 
-  quantSpecCoef = sign * (((INT)1 << escapeOnesCounter) + escape_word);
-
+  if (escapeOnesCounter < 13) {
+    quantSpecCoef = sign * (((INT)1 << escapeOnesCounter) + escape_word);
+  } else {
+    *errorWord |= TOO_MANY_PCW_BODY_SIGN_ESC_BITS_DECODED;
+    quantSpecCoef = Q_VALUE_INVALID;
+  }
   return quantSpecCoef;
 }
 

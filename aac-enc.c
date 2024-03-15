@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (aacEncoder_SetParam(handle, AACENC_SAMPLERATE, sample_rate) != AACENC_OK) {
-		fprintf(stderr, "Unable to set the AOT\n");
+		fprintf(stderr, "Unable to set the sample rate\n");
 		return 1;
 	}
 	if (aacEncoder_SetParam(handle, AACENC_CHANNELMODE, mode) != AACENC_OK) {

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -171,6 +171,19 @@ extern const FIXP_DBL invSqrtTab[SQRT_VALUES];
  * \return non-zero if (a_m*2^a_e) < (b_m*2^b_e), 0 otherwise
  */
 FDK_INLINE INT fIsLessThan(FIXP_DBL a_m, INT a_e, FIXP_DBL b_m, INT b_e) {
+  INT n;
+
+  n = fixnorm_D(a_m);
+  a_m <<= n;
+  a_e -= n;
+
+  n = fixnorm_D(b_m);
+  b_m <<= n;
+  b_e -= n;
+
+  if (a_m == (FIXP_DBL)0) a_e = b_e;
+  if (b_m == (FIXP_DBL)0) b_e = a_e;
+
   if (a_e > b_e) {
     return ((b_m >> fMin(a_e - b_e, DFRACT_BITS - 1)) > a_m);
   } else {
@@ -179,6 +192,19 @@ FDK_INLINE INT fIsLessThan(FIXP_DBL a_m, INT a_e, FIXP_DBL b_m, INT b_e) {
 }
 
 FDK_INLINE INT fIsLessThan(FIXP_SGL a_m, INT a_e, FIXP_SGL b_m, INT b_e) {
+  INT n;
+
+  n = fixnorm_S(a_m);
+  a_m <<= n;
+  a_e -= n;
+
+  n = fixnorm_S(b_m);
+  b_m <<= n;
+  b_e -= n;
+
+  if (a_m == (FIXP_SGL)0) a_e = b_e;
+  if (b_m == (FIXP_SGL)0) b_e = a_e;
+
   if (a_e > b_e) {
     return ((b_m >> fMin(a_e - b_e, FRACT_BITS - 1)) > a_m);
   } else {
@@ -545,15 +571,20 @@ inline INT fMultIceil(FIXP_DBL a, INT b) {
   m = fMultNorm(a, (FIXP_DBL)b, &m_e);
 
   if (m_e < (INT)0) {
-    if (m_e > (INT)-DFRACT_BITS) {
+    if (m_e > (INT) - (DFRACT_BITS - 1)) {
       mi = (m >> (-m_e));
       if ((LONG)m & ((1 << (-m_e)) - 1)) {
         mi = mi + (FIXP_DBL)1;
       }
     } else {
-      mi = (FIXP_DBL)1;
-      if (m < (FIXP_DBL)0) {
-        mi = (FIXP_DBL)0;
+      if (m > (FIXP_DBL)0) {
+        mi = (FIXP_DBL)1;
+      } else {
+        if ((m_e == -(DFRACT_BITS - 1)) && (m == (FIXP_DBL)MINVAL_DBL)) {
+          mi = (FIXP_DBL)-1;
+        } else {
+          mi = (FIXP_DBL)0;
+        }
       }
     }
   } else {
@@ -744,7 +775,7 @@ FIXP_DBL fPow(FIXP_DBL base_m, INT base_e, FIXP_DBL exp_m, INT exp_e,
 
 /**
  * \brief return (base_m * 2^base_e) ^ N
- * \param base_m mantissa of the base
+ * \param base_m mantissa of the base. Must not be negative.
  * \param base_e exponent of the base
  * \param N power to be calculated of the base
  * \param result_e pointer to a INT where the exponent of the result will be

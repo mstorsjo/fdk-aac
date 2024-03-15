@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2023 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -207,7 +207,7 @@ typedef struct {
                                             inverse filtering levels */
 
   PATCH_PARAM
-  patchParam[MAX_NUM_PATCHES]; /*!< new parameter set for patching */
+  patchParam[MAX_NUM_PATCHES + 1]; /*!< new parameter set for patching */
   WHITENING_FACTORS
   whFactors;     /*!< the pole moving factors for certain
                     whitening levels as indicated     in the bitstream

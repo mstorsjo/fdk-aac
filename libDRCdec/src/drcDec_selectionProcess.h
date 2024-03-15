@@ -111,6 +111,8 @@ amm-info@iis.fraunhofer.de
 
 typedef struct s_drcdec_selection_process* HANDLE_DRC_SELECTION_PROCESS;
 
+#define UNDEFINED_LOUDNESS_VALUE (FIXP_DBL)(MAXVAL_DBL - 1)
+
 typedef enum {
   DRCDEC_SELECTION_PROCESS_NO_ERROR = 0,
 

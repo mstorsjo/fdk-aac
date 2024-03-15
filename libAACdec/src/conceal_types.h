@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -194,7 +194,7 @@ typedef struct {
   FIXP_DBL last_tcx_gain;
   INT last_tcx_gain_e;
   ULONG TDNoiseSeed;
-  FIXP_PCM TDNoiseStates[3];
+  PCM_DEC TDNoiseStates[3];
   FIXP_SGL TDNoiseCoef[3];
   FIXP_SGL TDNoiseAtt;
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2018 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -204,5 +204,5 @@ QC_OUT_CHANNEL *GetRam_aacEnc_QCchannel(int n, UCHAR *dynamic_RAM) {
    * (dynamic_RAM + P_BUF_0 + n*sizeof(QC_OUT_CHANNEL)) is sufficiently aligned,
    * so the cast is safe */
   return reinterpret_cast<QC_OUT_CHANNEL *>(reinterpret_cast<void *>(
-      dynamic_RAM + P_BUF_0 + n * sizeof(QC_OUT_CHANNEL)));
+      dynamic_RAM + P_BUF_0 + n * ALIGN_SIZE(sizeof(QC_OUT_CHANNEL))));
 }

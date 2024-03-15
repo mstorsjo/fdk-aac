@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2019 Fraunhofer-Gesellschaft zur Förderung der angewandten
+© Copyright  1995 - 2020 Fraunhofer-Gesellschaft zur Förderung der angewandten
 Forschung e.V. All rights reserved.
 
  1.    INTRODUCTION
@@ -766,7 +766,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
 
     /* output scaling */
     for (nCh = 0; nCh < self->numOutputChannelsAT; nCh++) {
-      int outputScale = 0, outputGain_e = 0, scale = 0;
+      int outputScale = 0, outputGain_e = 0, scale = -(8) + (1);
       FIXP_DBL outputGain_m = getChGain(self, nCh, &outputGain_e);
 
       if (!isTwoChMode(self->upmixType) && !bypassMode) {
@@ -775,7 +775,7 @@ SACDEC_ERROR FDK_SpatialDecInit(spatialDec *self, SPATIAL_BS_FRAME *frame,
                                              synthesis qmf */
       }
 
-      scale = outputScale;
+      scale += outputScale;
 
       qmfChangeOutScalefactor(&self->pQmfDomain->QmfDomainOut[nCh].fb, scale);
       qmfChangeOutGain(&self->pQmfDomain->QmfDomainOut[nCh].fb, outputGain_m,
@@ -1098,6 +1098,28 @@ static void SpatialDecApplyBypass(spatialDec *self, FIXP_DBL **hybInputReal,
   }
 }
 
+/**
+ * \brief Set internal error and reset error status
+ *
+ * \param self         spatialDec handle.
+ * \param bypassMode   pointer to bypassMode.
+ * \param err          error status.
+ *
+ * \return  error status.
+ */
+static SACDEC_ERROR SpatialDecSetInternalError(spatialDec *self,
+                                               int *bypassMode,
+                                               SACDEC_ERROR err) {
+  *bypassMode = 1;
+
+  if (self->errInt == MPS_OK) {
+    /* store internal error before it gets overwritten */
+    self->errInt = err;
+  }
+
+  return MPS_OK;
+}
+
 /*******************************************************************************
  Functionname: SpatialDecApplyParameterSets
  *******************************************************************************
@@ -1118,7 +1140,7 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
     const FDK_channelMapDescr *const mapDescr) {
   SACDEC_ERROR err = MPS_OK;
 
-  FIXP_SGL alpha;
+  FIXP_SGL alpha = FL2FXCONST_SGL(0.0);
 
   int ts;
   int ch;
@@ -1141,20 +1163,22 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
        ts++, ts_io++) {
     int currSlot = frame->paramSlot[ps];
 
+    err = (currSlot < ts) ? MPS_WRONG_PARAMETERSETS : MPS_OK;
+    if (err != MPS_OK) {
+      err = SpatialDecSetInternalError(self, &bypassMode, err);
+    }
+
     /*
      * Get new parameter set
      */
     if (ts == prevSlot + 1) {
-      err = SpatialDecCalculateM1andM2(self, ps,
-                                       frame); /* input: ottCLD, ottICC, ... */
-      /* output: M1param(Real/Imag), M2(Real/Imag) */
-      if (err != MPS_OK) {
-        bypassMode = 1;
-        if (self->errInt == MPS_OK) {
-          /* store internal error befor it gets overwritten */
-          self->errInt = err;
+      if (bypassMode == 0) {
+        err = SpatialDecCalculateM1andM2(
+            self, ps, frame); /* input: ottCLD, ottICC, ... */
+                              /* output: M1param(Real/Imag), M2(Real/Imag) */
+        if (err != MPS_OK) {
+          err = SpatialDecSetInternalError(self, &bypassMode, err);
         }
-        err = MPS_OK;
       }
 
       if ((ps == 0) && (self->bOverwriteM1M2prev != 0)) {
@@ -1168,13 +1192,16 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
         self->bOverwriteM1M2prev = 0;
       }
 
-      SpatialDecSmoothM1andM2(
-          self, frame,
-          ps); /* input: M1param(Real/Imag)(Prev), M2(Real/Imag)(Prev) */
-               /* output: M1param(Real/Imag), M2(Real/Imag) */
+      if (bypassMode == 0) {
+        SpatialDecSmoothM1andM2(
+            self, frame,
+            ps); /* input: M1param(Real/Imag)(Prev), M2(Real/Imag)(Prev) */
+      }          /* output: M1param(Real/Imag), M2(Real/Imag) */
     }
 
-    alpha = FX_DBL2FX_SGL(fDivNorm(ts - prevSlot, currSlot - prevSlot));
+    if (bypassMode == 0) {
+      alpha = FX_DBL2FX_SGL(fDivNorm(ts - prevSlot, currSlot - prevSlot));
+    }
 
     switch (mode) {
       case INPUTMODE_QMF_SBR:
@@ -1182,15 +1209,17 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
           self->bShareDelayWithSBR = 0; /* We got no hybrid delay */
         else
           self->bShareDelayWithSBR = 1;
-        SpatialDecFeedQMF(self, qmfInDataReal, qmfInDataImag, ts_io, bypassMode,
-                          self->qmfInputReal__FDK, self->qmfInputImag__FDK,
-                          self->numInputChannels);
+        SpatialDecFeedQMF(
+            self, qmfInDataReal, qmfInDataImag, ts_io, bypassMode,
+            self->qmfInputReal__FDK, self->qmfInputImag__FDK,
+            (bypassMode) ? numInputChannels : self->numInputChannels);
         break;
       case INPUTMODE_TIME:
         self->bShareDelayWithSBR = 0;
-        SpatialDecQMFAnalysis(self, inData, ts_io, bypassMode,
-                              self->qmfInputReal__FDK, self->qmfInputImag__FDK,
-                              self->numInputChannels);
+        SpatialDecQMFAnalysis(
+            self, inData, ts_io, bypassMode, self->qmfInputReal__FDK,
+            self->qmfInputImag__FDK,
+            (bypassMode) ? numInputChannels : self->numInputChannels);
         break;
       default:
         break;
@@ -1223,18 +1252,24 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
               !(self->stereoConfigIndex == 3)) {
             for (i = 0; i < self->qmfBands; i++) {
               self_qmfResidualReal__FDK_0_0[i] =
-                  fMult(self_qmfResidualReal__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
               self_qmfResidualImag__FDK_0_0[i] =
-                  fMult(self_qmfResidualImag__FDK_0_0[i] << 1,
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           1 + self->sacInDataHeadroom - (1)),
                         self->clipProtectGain__FDK);
             }
           } else {
             for (i = 0; i < self->qmfBands; i++) {
-              self_qmfResidualReal__FDK_0_0[i] = fMult(
-                  self_qmfResidualReal__FDK_0_0[i], self->clipProtectGain__FDK);
-              self_qmfResidualImag__FDK_0_0[i] = fMult(
-                  self_qmfResidualImag__FDK_0_0[i], self->clipProtectGain__FDK);
+              self_qmfResidualReal__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualReal__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
+              self_qmfResidualImag__FDK_0_0[i] =
+                  fMult(scaleValueSaturate(self_qmfResidualImag__FDK_0_0[i],
+                                           self->sacInDataHeadroom - (1)),
+                        self->clipProtectGain__FDK);
             }
           }
         }
@@ -1317,10 +1352,12 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
       if ((self->tempShapeConfig == 1) && (!isTwoChMode(self->upmixType))) {
         for (ch = 0; ch < self->numOutputChannels; ch++) {
           for (hyb = 0; hyb < self->tp_hybBandBorder; hyb++) {
-            self->hybOutputRealDry__FDK[ch][hyb] +=
-                self->hybOutputRealWet__FDK[ch][hyb];
-            self->hybOutputImagDry__FDK[ch][hyb] +=
-                self->hybOutputImagWet__FDK[ch][hyb];
+            self->hybOutputRealDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputRealDry__FDK[ch][hyb],
+                             self->hybOutputRealWet__FDK[ch][hyb]);
+            self->hybOutputImagDry__FDK[ch][hyb] =
+                fAddSaturate(self->hybOutputImagDry__FDK[ch][hyb],
+                             self->hybOutputImagWet__FDK[ch][hyb]);
           } /* loop hyb */
         }   /* loop ch */
         err = subbandTPApply(
@@ -1341,18 +1378,18 @@ static SACDEC_ERROR SpatialDecApplyParameterSets(
             FIXP_DBL *RESTRICT pRealWet = self->hybOutputRealWet__FDK[ch];
             FIXP_DBL *RESTRICT pImagWet = self->hybOutputImagWet__FDK[ch];
             for (hyb = 0; hyb < nHybBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
-              pImagDry[hyb] += pImagWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
+              pImagDry[hyb] = fAddSaturate(pImagDry[hyb], pImagWet[hyb]);
             } /* loop hyb */
             for (; hyb < self->hybridBands; hyb++) {
-              pRealDry[hyb] += pRealWet[hyb];
+              pRealDry[hyb] = fAddSaturate(pRealDry[hyb], pRealWet[hyb]);
             } /* loop hyb */
           }   /* loop ch */
         } /* ( self->tempShapeConfig == 1 ) || ( self->tempShapeConfig == 2 ) */
       }   /* !self->tempShapeConfig == 1 */
     }     /*  !bypassMode */
 
-    if (self->phaseCoding == 1) {
+    if ((self->phaseCoding == 1) && (bypassMode == 0)) {
       /* only if bsPhaseCoding == 1 and bsResidualCoding == 0 */
 
       SpatialDecApplyPhase(
@@ -1414,6 +1451,7 @@ SACDEC_ERROR SpatialDecApplyFrame(
   FDK_ASSERT(self != NULL);
   FDK_ASSERT(pControlFlags != NULL);
   FDK_ASSERT(pcmOutBuf != NULL);
+  FDK_ASSERT(self->sacInDataHeadroom >= (1));
 
   self->errInt = err; /* Init internal error */
 
