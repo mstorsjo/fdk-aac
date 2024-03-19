@@ -117,8 +117,13 @@ typedef unsigned long long uint64_t;
 
 /* Library calling convention spec. __cdecl and friends might be added here as
  * required. */
+#ifndef LINKSPEC_H
 #define LINKSPEC_H
+#endif  // !LINKSPEC_H
+#ifndef LINKSPEC_CPP
 #define LINKSPEC_CPP
+#endif  // !LINKSPEC_CPP
+
 
 /* for doxygen the following docu parts must be separated */
 /** \var  SCHAR

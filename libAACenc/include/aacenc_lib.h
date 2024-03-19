@@ -1561,7 +1561,8 @@ extern "C" {
  *          - AACENC_INVALID_HANDLE, AACENC_MEMORY_ERROR, AACENC_INVALID_CONFIG,
  * on failure.
  */
-AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
+LINKSPEC_H AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder,
+                                  const UINT encModules,
                         const UINT maxChannels);
 
 /**
@@ -1575,7 +1576,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
  *          - AACENC_OK, on success.
  *          - AACENC_INVALID_HANDLE, on failure.
  */
-AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder);
+LINKSPEC_H AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder);
 
 /**
  * \brief Encode audio data.
@@ -1626,7 +1627,7 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder);
  * descriptor initialization.
  *          - AACENC_ENCODE_EOF, when flushing fully concluded.
  */
-AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
+LINKSPEC_H AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
                           const AACENC_BufDesc *inBufDesc,
                           const AACENC_BufDesc *outBufDesc,
                           const AACENC_InArgs *inargs, AACENC_OutArgs *outargs);
@@ -1649,7 +1650,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
  *          - AACENC_OK, on succes.
  *          - AACENC_INVALID_HANDLE, AACENC_INIT_ERROR, on failure.
  */
-AACENC_ERROR aacEncInfo(const HANDLE_AACENCODER hAacEncoder,
+LINKSPEC_H AACENC_ERROR aacEncInfo(const HANDLE_AACENCODER hAacEncoder,
                         AACENC_InfoStruct *pInfo);
 
 /**
@@ -1671,7 +1672,7 @@ AACENC_ERROR aacEncInfo(const HANDLE_AACENCODER hAacEncoder,
  *          - AACENC_INVALID_HANDLE, AACENC_UNSUPPORTED_PARAMETER,
  * AACENC_INVALID_CONFIG, on failure.
  */
-AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
+LINKSPEC_H AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
                                  const AACENC_PARAM param, const UINT value);
 
 /**
@@ -1686,7 +1687,7 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
  *
  * \return  Internal configuration value of specifed parameter ::AACENC_PARAM.
  */
-UINT aacEncoder_GetParam(const HANDLE_AACENCODER hAacEncoder,
+LINKSPEC_H UINT aacEncoder_GetParam(const HANDLE_AACENCODER hAacEncoder,
                          const AACENC_PARAM param);
 
 /**
@@ -1700,7 +1701,7 @@ UINT aacEncoder_GetParam(const HANDLE_AACENCODER hAacEncoder,
  *          - AACENC_OK, on success.
  *          - AACENC_INVALID_HANDLE, AACENC_INIT_ERROR, on failure.
  */
-AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info);
+LINKSPEC_H AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info);
 
 #ifdef __cplusplus
 }
