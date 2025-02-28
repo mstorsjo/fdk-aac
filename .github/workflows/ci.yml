@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Install autotools
         run: |
-          brew install automake
+          brew install autoconf automake libtool
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Build
@@ -155,6 +155,7 @@ jobs:
       - name: Set up the environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
+          sdk: 10.0.22621.0 # This is the last one that has ARM
           arch: amd64_arm
       - name: Build
         run: |
