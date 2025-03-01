@@ -1,0 +1,2 @@
+option('build-programs', type : 'feature', value : 'auto')
+option('remove-date', type : 'boolean', value : false)
