@@ -452,11 +452,326 @@ set(libfdk_aac_SOURCES
     ${SBRDEC_SRC} ${SBRENC_SRC}
     ${PCMUTILS_SRC} ${FDK_SRC} ${SYS_SRC})
 
+
+set(AACFASTENC_SRC
+  aacfastenc/src/aacenc.c
+  aacfastenc/src/adj_thr.c
+  aacfastenc/src/band_nrg.c
+  aacfastenc/src/bandwidth.c
+  aacfastenc/src/bit_cnt.c
+  aacfastenc/src/block_switch.c
+  aacfastenc/src/cplxpred_stereo.c
+  aacfastenc/src/dyn_bits.c
+  aacfastenc/src/grp_data.c
+  aacfastenc/src/imdct.c
+  aacfastenc/src/int_dec.c
+  aacfastenc/src/interface.c
+  aacfastenc/src/line_pe.c
+  aacfastenc/src/lpd_wrapper.c
+  aacfastenc/src/ms_stereo.c
+  aacfastenc/src/pre_echo_control.c
+  aacfastenc/src/psy_configuration.c
+  aacfastenc/src/psy_main.c
+  aacfastenc/src/qc_main.c
+  aacfastenc/src/quantize.c
+  aacfastenc/src/realpred_stereo.c
+  aacfastenc/src/sf_estim.c
+  aacfastenc/src/spreading.c
+  aacfastenc/src/stack_alignment.c
+  aacfastenc/src/tns.c
+  aacfastenc/src/transform.c
+  aacfastenc/src/unified_stereo_psych.c)
+
+set(APPLAUSE_DETECTION_SRC
+  applauseDetectionlib/src/ApplDet_C_ifc.c
+  applauseDetectionlib/src/cFeatMFCC.c
+  applauseDetectionlib/src/cFeatNormalize.c
+  applauseDetectionlib/src/cFeatSFM2.c
+  applauseDetectionlib/src/cFeatSpecCentroid.c
+  applauseDetectionlib/src/cFeatSpecFlux.c
+  applauseDetectionlib/src/cFeatSpecSpread.c
+  applauseDetectionlib/src/cFEX.c
+  applauseDetectionlib/src/cSdNeuralNet.c
+  applauseDetectionlib/src/cSpDtct.c
+  applauseDetectionlib/src/paramdata.c)
+
+set(IIS_ARITH_ENC_SRC
+  iisArithEncLib/src/iisArithEncoder.c)
+
+set(IIS_AUDIO_PREROLL_SRC
+  iisAudioPrerollLib/src/iisAudioPrerollLib.c)
+
+set(IIS_BIT_FRAME_SRC
+  iisBitFrame/src/iisBitFrame.c)
+
+set(IIS_DRC_GAIN_ENC_SRC
+  iisDRCGainEncLib/src/iisDRCGainEnc_bitstreamWriter.c
+  iisDRCGainEncLib/src/iisDRCGainEnc_nodeSetting.c
+  iisDRCGainEncLib/src/iisDRCGainEnc_process.c
+  iisDRCGainGenLib/src/iisDRCCompressor.c
+  iisDRCGainGenLib/src/iisDRCGainGenerator.c
+  iisDRCGainGenLib/src/iisDRCGainGeneratorProcess.c
+  iisDRCGainGenLib/src/iisDRCLevelComputationBS1770.c
+  iisDRCGainGenLib/src/iisDRCOfflineGain.c
+  iisDRCGainGenLib/src/iisDRCRealtimeLRAControl.c)
+
+set(IIS_ENCODER_CONFIG_SRC
+  iisEncoderConfig/src/iisEncoderConfig.c)
+
+set(IIS_ENCODER_CONFIG_CT_TABLE_SRC
+  iisEncoderConfigCTable/src/iisEncoderConfigCTable.c
+  iisEncoderConfigCTable/src/main_aot_42_dash_oss.c
+  iisEncoderConfigCTable/src/tab_coremode.c
+  iisEncoderConfigCTable/src/tab_hbe.c
+  iisEncoderConfigCTable/src/tab_insamplerate.c
+  iisEncoderConfigCTable/src/tab_outsamplerate_oss.c
+  iisEncoderConfigCTable/src/tab_quality.c
+  iisEncoderConfigCTable/src/tab_sbrpvc.c
+  iisEncoderConfigCTable/src/tab_sbrratio.c
+  iisEncoderConfigCTable/src/tab_sbrsignaling.c
+  iisEncoderConfigCTable/src/tab_stereoconfigidx.c
+  iisEncoderConfigCTable/src/tab_tsd.c)
+
+set(IIS_LEVELER_SRC
+  iisLevelerLib/src/iisLevelerLib.c)
+
+set(IIS_LINKED_LIST_SRC
+  iisLinkedList/src/iisLinkedList.c)
+
+set(IIS_LOUDNESS_SRC
+  iisLoudnessLib/src/loudnessLib.c)
+
+set(IIS_LPD_COM_SRC
+  iisLPDComLib/src/iisLPDComLib_acelp_Util.c
+  iisLPDComLib/src/iisLPDComLib_lpc.c
+  iisLPDComLib/src/iisLPDComLib_tcx_Tools.c
+  iisLPDComLib/src/iisLPDComLib_tcx_Transform.c
+  iisLPDComLib/src/iisLPDComLib_tools.c
+  iisLPDComLib/src/iisLPDComLib_vq_RE8.c)
+
+set(IIS_LPD_ENC_SRC
+  iisLPDEncLib/src/iisLPDEncLib_acelp_AdaptiveCB.c
+  iisLPDEncLib/src/iisLPDEncLib_acelp_ImprovedInnovativeCB.c
+  iisLPDEncLib/src/iisLPDEncLib_acelp_InnovativeCB.c
+  iisLPDEncLib/src/iisLPDEncLib_acelp_Main.c
+  iisLPDEncLib/src/iisLPDEncLib_arithEncWrapper.c
+  iisLPDEncLib/src/iisLPDEncLib_bpf.c
+  iisLPDEncLib/src/iisLPDEncLib_bs.c
+  iisLPDEncLib/src/iisLPDEncLib_closedLoop.c
+  iisLPDEncLib/src/iisLPDEncLib_cmConfig.c
+  iisLPDEncLib/src/iisLPDEncLib_lpc_LPCAnalysis.c
+  iisLPDEncLib/src/iisLPDEncLib_lpc_Quantize.c
+  iisLPDEncLib/src/iisLPDEncLib_main.c
+  iisLPDEncLib/src/iisLPDEncLib_tcx_Main.c
+  iisLPDEncLib/src/iisLPDEncLib_tcx_Tools.c
+  iisLPDEncLib/src/iisLPDEncLib_transitions.c
+  iisLPDEncLib/src/iisLPDEncLib_vq_Main.c
+  iisLPDEncLib/src/iisLPDEncLib_vq_RE8.c
+  iisLPDEncLib/src/iisLPDEncLib.c)
+
+set(IIS_PARAM_LIST_SRC
+  iisParamList/src/iisParam.c
+  iisParamList/src/iisParamList.c)
+
+set(IIS_SIG_MAP_SRC
+  iisSigMap/src/iisSigMap.c
+  iisSigMap/src/iisSigMapCommon.c
+  iisSigMap/src/iisSigMapConfig.c
+  iisSigMap/src/iisSigMapUsac.c)
+
+set(IIS_SWITCHING_DECISION_SRC
+  iisSwitchingDecision/src/iisSwitchingDecision.c)
+
+set(IIS_XHEAAC_ENC_SRC
+  iisxHEAACEncLib/src/iisxHEAACEncLib_aac_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_asc_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_audioPreRoll.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_bitDistribution.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_common.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_delayAndBuffer.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_drc_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_drc_loudness_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_encodeFrame_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_encoderStateMachine.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_extentsionData.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_live_loudness_leveler_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_loaswrapper.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_loudness_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_lraControl.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_bitrate_cfg.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_cfg_expert.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_rapOnDemand.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_resampler_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_sbr_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_SigMap_ifc.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_submitDrcMetadata.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_syncframe.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_updateParamList.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib_warnings.c
+  iisxHEAACEncLib/src/iisxHEAACEncLib.c
+  iisxHEAACEncLib/src/iisxHEAACEncLibConfig.c)
+
+set(LIMITER_SRC
+  limiterlib/src/limiter.c)
+
+set(MATH_SRC
+  mathlib/src/aux_func.c
+  mathlib/src/cfft.c
+  mathlib/src/cpuinfo.c
+  mathlib/src/fpucontrol.c
+  mathlib/src/iis_dxt.c
+  mathlib/src/iis_fft.c
+  mathlib/src/iis_mdxt.c
+  mathlib/src/iisfft.c
+  mathlib/src/math_inf.c
+  mathlib/src/mathlib.c)
+
+set(MP4_ASC_SRC
+  mp4ASC/IIS_MP4ASC_Interface/IIS_MP4ASC_Interface.c
+  mp4ASC/src/audiospecificconfig.c
+  mp4ASC/src/usacconfig.c)
+
+set(MP4_BITBUF_SRC
+  mp4bitbuf/src/bit_buf.c)
+
+set(MP4_BITMUX_SRC
+  mp4bitmux/src/aac/bit_aac.c
+  mp4bitmux/src/aac/bit_enc.c
+  mp4bitmux/src/aac/codebook.c
+  mp4bitmux/src/aac/extpayload.c)
+
+set(MP4_LOAS_WRITE_SRC
+  mp4loaswrite/src/IIS_LATM_Interface.c
+  mp4loaswrite/src/latm_interface.c)
+
+set(MP4_TIMEBUF_SRC
+  mp4timebuf/src/time_buffer.c)
+
+set(QMF_SRC
+  qmflib/src/qmflib_lowfreqfilter.c
+  qmflib/src/qmflib_tables.c
+  qmflib/src/qmflib.c)
+
+set(READONLY_BITBUF_SRC
+  readonlybitbuf/src/readonlybitbuf.c)
+
+set(RESAMPLE_SRC
+  resamplelib/src/polyphase/convolve.c
+  resamplelib/src/polyphase/filtgen.c
+  resamplelib/src/polyphase/helpfunc.c
+  resamplelib/src/polyphase/kernfunc.c
+  resamplelib/src/polyphase/polyfilt.c
+  resamplelib/src/polyphase/polyphase.c
+  resamplelib/src/polyphase/resample.c
+  resamplelib/src/resamplelib.c
+  resamplelib/src/smpl_resampler.c)
+
+set(SBR_ENC_SRC
+  sbrEnclib/src/bit_codec.c
+  sbrEnclib/src/bit_sbr.c
+  sbrEnclib/src/cmondata.c
+  sbrEnclib/src/code_env.c
+  sbrEnclib/src/env_est.c
+  sbrEnclib/src/fram_gen.c
+  sbrEnclib/src/freq_sca.c
+  sbrEnclib/src/invf_est.c
+  sbrEnclib/src/ivaltime.c
+  sbrEnclib/src/mh_det.c
+  sbrEnclib/src/nf_est.c
+  sbrEnclib/src/sbr_main.c
+  sbrEnclib/src/sbr_misc.c
+  sbrEnclib/src/sib_det.c
+  sbrEnclib/src/ton_corr.c
+  sbrEnclib/src/tran_det.c)
+
+set(SPACE_ENC_SRC
+  spaceEnclib/src/sac_huff_cld.c
+  spaceEnclib/src/sac_huff_icc.c
+  spaceEnclib/src/sac_huff_ipd.c
+  spaceEnclib/src/sac_huff_pt0.c
+  spaceEnclib/src/sac_huff_reshape.c
+  spaceEnclib/src/sac_nlc_enc.c
+  spaceEnclib/src/sac_tonality.c
+  spaceEnclib/src/sac_tsd.c
+  spaceEnclib/src/space_bitstream.c
+  spaceEnclib/src/space_delay.c
+  spaceEnclib/src/space_filter.c
+  spaceEnclib/src/space_framewindowing.c
+  spaceEnclib/src/space_hybrid.c
+  spaceEnclib/src/space_onsetdetect.c
+  spaceEnclib/src/space_paramextract.c
+  spaceEnclib/src/space_staticgain.c
+  spaceEnclib/src/space_tree.c
+  spaceEnclib/src/spaceEnclib.c)
+
+set(STAT_CLASS_SRC
+  statClassLib_C/src/statClass_decision.c
+  statClassLib_C/src/statClass_deltaCep.c
+  statClassLib_C/src/statClass_deltaLsf.c
+  statClassLib_C/src/statClass_features.c
+  statClassLib_C/src/statClass_gmm_14_7k.c
+  statClassLib_C/src/statClass_gmm_16k.c
+  statClassLib_C/src/statClass_gmm.c
+  statClassLib_C/src/statClass_lpc.c
+  statClassLib_C/src/statClass_ltpDelayVar.c
+  statClassLib_C/src/statClass_mel2plp.c
+  statClassLib_C/src/statClass_pauseDetection.c
+  statClassLib_C/src/statClass_peakednessFreqVsTime.c
+  statClassLib_C/src/statClass_pitch_ol.c
+  statClassLib_C/src/statClass_preemph.c
+  statClassLib_C/src/statClass_signal2mel.c
+  statClassLib_C/src/statClass_speechClassification.c
+  statClassLib_C/src/statClass_timeTransient.c
+  statClassLib_C/src/statClass_utils.c
+  statClassLib_C/src/statClasslib.c)
+
+set(UTIL_SRC
+  utillib/src/errorhnd.c
+  utillib/src/matrixCalloc.c
+  utillib/src/ngsalloc.c)
+
+set(WRITEONLY_BITBUF_SRC
+  writeonlybitbuf/src/writeonlybitbuf.c)
+
+set(XHEAAC_ENC_SRC
+  xHEAACEnc/src/xHEAACEnc.c
+  xHEAACEnc/src/xHEAACEncCommon.c
+  xHEAACEnc/src/xHEAACEncConfig.c
+  xHEAACEnc/src/xHEAACEncExportImport.c
+  xHEAACEnc/src/xHEAACEncLoudness.c
+  xHEAACEnc/src/xHEAACEncMapParameters.c
+  xHEAACEnc/src/xHEAACEncParameter.c
+  xHEAACEnc/src/xHEAACEncWarningHandling.c)
+
+set(fdk_xhe_aacinclude_HEADERS
+  xHEAACEnc/include/xHEAACEnc.h)
+
+set(libfdk_xhe_aac_SOURCES
+    ${AACFASTENC_SRC} ${APPLAUSE_DETECTION_SRC}
+    ${IIS_ARITH_ENC_SRC} ${IIS_AUDIO_PREROLL_SRC} ${IIS_BIT_FRAME_SRC}
+    ${IIS_DRC_GAIN_ENC_SRC} ${IIS_ENCODER_CONFIG_SRC}
+    ${IIS_ENCODER_CONFIG_CT_TABLE_SRC} ${IIS_LEVELER_SRC}
+    ${IIS_LINKED_LIST_SRC} ${IIS_LOUDNESS_SRC} ${IIS_LPD_COM_SRC}
+    ${IIS_LPD_ENC_SRC} ${IIS_PARAM_LIST_SRC} ${IIS_SIG_MAP_SRC}
+    ${IIS_SWITCHING_DECISION_SRC} ${IIS_XHEAAC_ENC_SRC}
+    ${LIMITER_SRC} ${MATH_SRC}
+    ${MP4_ASC_SRC} ${MP4_BITBUF_SRC} ${MP4_BITMUX_SRC} ${MP4_LOAS_WRITE_SRC}
+    ${MP4_TIMEBUF_SRC}
+    ${QMF_SRC} ${READONLY_BITBUF_SRC} ${RESAMPLE_SRC} ${SBR_ENC_SRC}
+    ${SPACE_ENC_SRC} ${STAT_CLASS_SRC} ${UTIL_SRC} ${WRITEONLY_BITBUF_SRC}
+    ${XHEAAC_ENC_SRC})
+
+
 list(TRANSFORM libfdk_aac_SOURCES PREPEND cpp/)
 list(TRANSFORM fdk_aacinclude_HEADERS PREPEND cpp/)
 
+list(TRANSFORM libfdk_xhe_aac_SOURCES PREPEND xhe-aac/)
+list(TRANSFORM fdk_xhe_aacinclude_HEADERS PREPEND xhe-aac/)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   set(libfdk_aac_SOURCES ${libfdk_aac_SOURCES} fdk-aac.def)
+  set(libfdk_xhe_aac_SOURCES ${libfdk_xhe_aac_SOURCES} fdk-xhe-aac.def)
 endif()
 
 ## Create Library target. Actually fdk-aac is enough, but we also create
@@ -464,6 +779,9 @@ endif()
 
 add_library(fdk-aac ${libfdk_aac_SOURCES})
 add_library(FDK-AAC::fdk-aac ALIAS fdk-aac)
+
+add_library(fdk-xhe-aac ${libfdk_xhe_aac_SOURCES})
+add_library(FDK-XHE-AAC::fdk-xhe-aac ALIAS fdk-xhe-aac)
 
 ## Library target configuration
 
@@ -486,8 +804,52 @@ target_include_directories(fdk-aac
     cpp/libFDK/include
     cpp/libPCMutils/include)
 
+target_include_directories(fdk-xhe-aac
+  PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/xhe-aac/xHEAACEnc/include>
+  PRIVATE
+    xhe-aac/aacfastenc/include
+    xhe-aac/applauseDetectionlib/include
+    xhe-aac/iisArithEncLib/include
+    xhe-aac/iisAudioPrerollLib/include
+    xhe-aac/iisBitFrame/include
+    xhe-aac/iisDRCGainEncLib/include
+    xhe-aac/iisDRCGainGenLib/include
+    xhe-aac/iisEncoderConfig/include
+    xhe-aac/iisEncoderConfigCTable/include
+    xhe-aac/iisLevelerLib/include
+    xhe-aac/iisLinkedList/include
+    xhe-aac/iisLoudnessLib/include
+    xhe-aac/iisLPDComLib/include
+    xhe-aac/iisLPDEncLib/include
+    xhe-aac/iisParamList/include
+    xhe-aac/iisSigMap/include
+    xhe-aac/iisSwitchingDecision/include
+    xhe-aac/iisxHEAACEncLib/include
+    xhe-aac/limiterlib/include
+    xhe-aac/mathlib/include
+    xhe-aac/mp4ASC/IIS_MP4ASC_Interface
+    xhe-aac/mp4ASC/include
+    xhe-aac/mp4General
+    xhe-aac/mp4bitbuf/include
+    xhe-aac/mp4bitmux/src/aac
+    xhe-aac/mp4loaswrite/include
+    xhe-aac/mp4timebuf/include
+    xhe-aac/qmflib/include
+    xhe-aac/readonlybitbuf/include
+    xhe-aac/resamplelib/include
+    xhe-aac/sbrEnclib/include
+    xhe-aac/spaceEnclib/include
+    xhe-aac/statClassLib_C/include
+    xhe-aac/utillib/include
+    xhe-aac/utillib/include/IISutillib
+    xhe-aac/writeonlybitbuf/include
+    xhe-aac/xHEAACEnc/include)
+
 ### Link math library if required
 target_link_libraries(fdk-aac PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>)
+target_link_libraries(fdk-xhe-aac PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>)
 
 ### Set public headers and shared library version. Version info is critical for Unix-like OSes.
 set_target_properties(fdk-aac PROPERTIES
@@ -497,6 +859,12 @@ set_target_properties(fdk-aac PROPERTIES
   MACHO_COMPATIBILITY_VERSION 3.0.0
   MACHO_CURRENT_VERSION 3.3.0
   LINKER_LANGUAGE C)
+set_target_properties(fdk-xhe-aac PROPERTIES
+  PUBLIC_HEADER "${fdk_xhe_aacinclude_HEADERS}"
+  VERSION 0.0.0
+  SOVERSION 0
+  MACHO_COMPATIBILITY_VERSION 0.0.0
+  MACHO_CURRENT_VERSION 0.0.0)
 
 ### Some compiler options from Makefile.am
 if(MSVC)
@@ -509,6 +877,7 @@ endif()
 
 if((MINGW OR CYGWIN) AND BUILD_SHARED_LIBS)
   set_property(TARGET fdk-aac PROPERTY RUNTIME_OUTPUT_NAME fdk-aac-2)
+  set_property(TARGET fdk-xhe-aac PROPERTY RUNTIME_OUTPUT_NAME fdk-xhe-aac-0)
 endif()
 
 ## Library installation
@@ -519,6 +888,12 @@ install(TARGETS fdk-aac EXPORT fdk-aac-targets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT DEV
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT DEV
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fdk-aac COMPONENT DEV)
+
+install(TARGETS fdk-xhe-aac EXPORT fdk-xhe-aac-targets
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT BIN
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT DEV
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT DEV
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fdk-xhe-aac COMPONENT DEV)
 
 ### Configure and install pkg-config module.
 if(FDK_AAC_INSTALL_PKGCONFIG_MODULE)
@@ -535,34 +910,49 @@ if(FDK_AAC_INSTALL_PKGCONFIG_MODULE)
     endif()
   endif()
   configure_file(fdk-aac.pc.in fdk-aac.pc @ONLY)
+  configure_file(fdk-xhe-aac.pc.in fdk-xhe-aac.pc @ONLY)
   install(
     FILES
       ${CMAKE_CURRENT_BINARY_DIR}/fdk-aac.pc
+      ${CMAKE_CURRENT_BINARY_DIR}/fdk-xhe-aac.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 ### Configure and install config-file package. Something like pkg-config module, but for Windows.
 if(FDK_AAC_INSTALL_CMAKE_CONFIG_MODULE)
 
-  set(CMAKE_INSTALL_PACKAGEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/fdk-aac)
+  set(FDK_AAC_INSTALL_PACKAGEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/fdk-aac)
+  set(FDK_XHE_AAC_INSTALL_PACKAGEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/fdk-xhe-aac)
 
   configure_package_config_file(fdk-aac-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/fdk-aac-config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_PACKAGEDIR})
+    INSTALL_DESTINATION ${FDK_AAC_INSTALL_PACKAGEDIR})
+  configure_package_config_file(fdk-xhe-aac-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/fdk-xhe-aac-config.cmake
+    INSTALL_DESTINATION ${FDK_XHE_AAC_INSTALL_PACKAGEDIR})
 
   if(CMAKE_VERSION VERSION_LESS 3.11)
     write_basic_package_version_file(fdk-aac-config-version.cmake COMPATIBILITY SameMajorVersion)
+    write_basic_package_version_file(fdk-xhe-aac-config-version.cmake COMPATIBILITY SameMajorVersion)
   else()
     write_basic_package_version_file(fdk-aac-config-version.cmake COMPATIBILITY SameMinorVersion)
+    write_basic_package_version_file(fdk-xhe-aac-config-version.cmake COMPATIBILITY SameMinorVersion)
   endif()
 
   install(EXPORT fdk-aac-targets
     NAMESPACE FDK-AAC::
-    DESTINATION ${CMAKE_INSTALL_PACKAGEDIR})
+    DESTINATION ${FDK_AAC_INSTALL_PACKAGEDIR})
+  install(EXPORT fdk-xhe-aac-targets
+    NAMESPACE FDK-XHE-AAC::
+    DESTINATION ${FDK_XHE_AAC_INSTALL_PACKAGEDIR})
   install(
     FILES
       ${CMAKE_CURRENT_BINARY_DIR}/fdk-aac-config.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/fdk-aac-config-version.cmake
-    DESTINATION ${CMAKE_INSTALL_PACKAGEDIR})
+    DESTINATION ${FDK_AAC_INSTALL_PACKAGEDIR})
+  install(
+    FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/fdk-xhe-aac-config.cmake
+      ${CMAKE_CURRENT_BINARY_DIR}/fdk-xhe-aac-config-version.cmake
+    DESTINATION ${FDK_XHE_AAC_INSTALL_PACKAGEDIR})
 
 endif()
 
