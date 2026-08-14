@@ -648,5 +648,15 @@ EXTRA_DIST = \
     $(top_srcdir)/rust/.cargo \
     $(top_srcdir)/rust/* \
     $(top_srcdir)/METADATA \
-    $(top_srcdir)/tests/*
+    $(top_srcdir)/tests/* \
+    $(top_srcdir)/xhe-aac/.clang-format \
+    $(top_srcdir)/xhe-aac/Android.bp \
+    $(top_srcdir)/xhe-aac/NOTICE \
+    $(top_srcdir)/xhe-aac/README.md \
+    $(top_srcdir)/xhe-aac/*/*.h \
+    $(top_srcdir)/xhe-aac/*/*/*.c \
+    $(top_srcdir)/xhe-aac/*/*/*.h \
+    $(top_srcdir)/xhe-aac/*/src/*/*.c \
+    $(top_srcdir)/xhe-aac/*/src/*/*.h \
+    $(top_srcdir)/xhe-aac/*/include/*/*.h
 
