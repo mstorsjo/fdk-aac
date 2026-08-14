@@ -452,6 +452,9 @@ set(libfdk_aac_SOURCES
     ${SBRDEC_SRC} ${SBRENC_SRC}
     ${PCMUTILS_SRC} ${FDK_SRC} ${SYS_SRC})
 
+list(TRANSFORM libfdk_aac_SOURCES PREPEND cpp/)
+list(TRANSFORM fdk_aacinclude_HEADERS PREPEND cpp/)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   set(libfdk_aac_SOURCES ${libfdk_aac_SOURCES} fdk-aac.def)
 endif()
@@ -468,20 +471,20 @@ add_library(FDK-AAC::fdk-aac ALIAS fdk-aac)
 target_include_directories(fdk-aac
   PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libAACdec/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libAACenc/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libSYS/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpp/libAACdec/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpp/libAACenc/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpp/libSYS/include>
   PRIVATE
-    libArithCoding/include
-    libDRCdec/include
-    libSACdec/include
-    libSACenc/include
-    libSBRdec/include
-    libSBRenc/include
-    libMpegTPDec/include
-    libMpegTPEnc/include
-    libFDK/include
-    libPCMutils/include)
+    cpp/libArithCoding/include
+    cpp/libDRCdec/include
+    cpp/libSACdec/include
+    cpp/libSACenc/include
+    cpp/libSBRdec/include
+    cpp/libSBRenc/include
+    cpp/libMpegTPDec/include
+    cpp/libMpegTPEnc/include
+    cpp/libFDK/include
+    cpp/libPCMutils/include)
 
 ### Link math library if required
 target_link_libraries(fdk-aac PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>)
@@ -580,6 +583,7 @@ if(BUILD_PROGRAMS)
   ## Program target configuration
   target_link_libraries(aac-enc PRIVATE fdk-aac)
   target_compile_definitions(aac-enc PRIVATE $<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>)
+  target_include_directories(aac-enc PRIVATE cpp)
   if(WIN32)
     target_sources(aac-enc PRIVATE win32/getopt.h)
     target_include_directories(aac-enc PRIVATE win32)
