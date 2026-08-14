@@ -305,5 +305,15 @@ EXTRA_DIST = \
     $(top_srcdir)/sha1.h \
     $(top_srcdir)/test/* \
     $(top_srcdir)/tests/* \
-    $(top_srcdir)/win32/*.h
+    $(top_srcdir)/win32/*.h \
+    $(top_srcdir)/xhe-aac/.clang-format \
+    $(top_srcdir)/xhe-aac/Android.bp \
+    $(top_srcdir)/xhe-aac/NOTICE \
+    $(top_srcdir)/xhe-aac/README.md \
+    $(top_srcdir)/xhe-aac/*/*.h \
+    $(top_srcdir)/xhe-aac/*/*/*.c \
+    $(top_srcdir)/xhe-aac/*/*/*.h \
+    $(top_srcdir)/xhe-aac/*/src/*/*.c \
+    $(top_srcdir)/xhe-aac/*/src/*/*.h \
+    $(top_srcdir)/xhe-aac/*/include/*/*.h
 
