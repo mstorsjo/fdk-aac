@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = \
+libfdk_aac_la_CPPFLAGS = \
     -I$(top_srcdir)/cpp/libAACdec/include \
     -I$(top_srcdir)/cpp/libAACenc/include \
     -I$(top_srcdir)/cpp/libArithCoding/include \
@@ -15,6 +15,45 @@ AM_CPPFLAGS = \
     -I$(top_srcdir)/cpp/libSYS/include \
     -I$(top_srcdir)/cpp/libFDK/include \
     -I$(top_srcdir)/cpp/libPCMutils/include
+
+libfdk_xhe_aac_la_CPPFLAGS = \
+    -I$(top_srcdir)/xhe-aac/aacfastenc/include \
+    -I$(top_srcdir)/xhe-aac/applauseDetectionlib/include \
+    -I$(top_srcdir)/xhe-aac/iisArithEncLib/include \
+    -I$(top_srcdir)/xhe-aac/iisAudioPrerollLib/include \
+    -I$(top_srcdir)/xhe-aac/iisBitFrame/include \
+    -I$(top_srcdir)/xhe-aac/iisDRCGainEncLib/include \
+    -I$(top_srcdir)/xhe-aac/iisDRCGainGenLib/include \
+    -I$(top_srcdir)/xhe-aac/iisEncoderConfig/include \
+    -I$(top_srcdir)/xhe-aac/iisEncoderConfigCTable/include \
+    -I$(top_srcdir)/xhe-aac/iisLevelerLib/include \
+    -I$(top_srcdir)/xhe-aac/iisLinkedList/include \
+    -I$(top_srcdir)/xhe-aac/iisLoudnessLib/include \
+    -I$(top_srcdir)/xhe-aac/iisLPDComLib/include \
+    -I$(top_srcdir)/xhe-aac/iisLPDEncLib/include \
+    -I$(top_srcdir)/xhe-aac/iisParamList/include \
+    -I$(top_srcdir)/xhe-aac/iisSigMap/include \
+    -I$(top_srcdir)/xhe-aac/iisSwitchingDecision/include \
+    -I$(top_srcdir)/xhe-aac/iisxHEAACEncLib/include \
+    -I$(top_srcdir)/xhe-aac/limiterlib/include \
+    -I$(top_srcdir)/xhe-aac/mathlib/include \
+    -I$(top_srcdir)/xhe-aac/mp4ASC/IIS_MP4ASC_Interface \
+    -I$(top_srcdir)/xhe-aac/mp4ASC/include \
+    -I$(top_srcdir)/xhe-aac/mp4General \
+    -I$(top_srcdir)/xhe-aac/mp4bitbuf/include \
+    -I$(top_srcdir)/xhe-aac/mp4bitmux/src/aac \
+    -I$(top_srcdir)/xhe-aac/mp4loaswrite/include \
+    -I$(top_srcdir)/xhe-aac/mp4timebuf/include \
+    -I$(top_srcdir)/xhe-aac/qmflib/include \
+    -I$(top_srcdir)/xhe-aac/readonlybitbuf/include \
+    -I$(top_srcdir)/xhe-aac/resamplelib/include \
+    -I$(top_srcdir)/xhe-aac/sbrEnclib/include \
+    -I$(top_srcdir)/xhe-aac/spaceEnclib/include \
+    -I$(top_srcdir)/xhe-aac/statClassLib_C/include \
+    -I$(top_srcdir)/xhe-aac/utillib/include \
+    -I$(top_srcdir)/xhe-aac/utillib/include/IISutillib \
+    -I$(top_srcdir)/xhe-aac/writeonlybitbuf/include \
+    -I$(top_srcdir)/xhe-aac/xHEAACEnc/include
 
 AM_CXXFLAGS = -fno-exceptions -fno-rtti
 libfdk_aac_la_LINK = $(LINK) $(libfdk_aac_la_LDFLAGS)
@@ -30,27 +69,35 @@ fdk_aacinclude_HEADERS = \
     $(top_srcdir)/cpp/libAACenc/include/aacenc_lib.h \
     $(top_srcdir)/cpp/libAACdec/include/aacdecoder_lib.h
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = fdk-aac.pc
+fdk_xhe_aacincludedir = $(includedir)/fdk-xhe-aac
+fdk_xhe_aacinclude_HEADERS = \
+    $(top_srcdir)/xhe-aac/xHEAACEnc/include/xHEAACEnc.h
 
-lib_LTLIBRARIES = libfdk-aac.la
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = fdk-aac.pc fdk-xhe-aac.pc
+
+lib_LTLIBRARIES = libfdk-aac.la libfdk-xhe-aac.la
 
 libfdk_aac_la_LDFLAGS = -version-info @FDK_AAC_VERSION@ -no-undefined \
     -export-symbols $(top_srcdir)/fdk-aac.sym
+
+libfdk_xhe_aac_la_LDFLAGS = -version-info @FDK_XHE_AAC_VERSION@ -no-undefined \
+    -export-symbols $(top_srcdir)/fdk-xhe-aac.sym
 
 if EXAMPLE
 bin_PROGRAMS = aac-enc$(EXEEXT) aac-dec$(EXEEXT)
 noinst_PROGRAMS = test-encode-decode$(EXEEXT)
 
 aac_enc_LDADD = libfdk-aac.la
-aac_enc_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/cpp
+aac_enc_CPPFLAGS = $(libfdk_aac_la_CPPFLAGS) -I$(top_srcdir)/cpp
 aac_enc_SOURCES = aac-enc.c wavreader.c
 
 aac_dec_LDADD = libfdk-aac.la
-aac_dec_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/cpp
+aac_dec_CPPFLAGS = $(libfdk_aac_la_CPPFLAGS) -I$(top_srcdir)/cpp
 aac_dec_SOURCES = aac-dec.c wavwriter.c
 
 test_encode_decode_LDADD = libfdk-aac.la
+test_encode_decode_CPPFLAGS = $(libfdk_aac_la_CPPFLAGS)
 test_encode_decode_SOURCES = test-encode-decode.c wavreader.c sha1.c
 
 noinst_HEADERS = wavreader.h wavwriter.h
@@ -261,6 +308,312 @@ libfdk_aac_la_SOURCES = \
     $(SBRDEC_SRC) $(SBRENC_SRC) \
     $(PCMUTILS_SRC) $(FDK_SRC) $(SYS_SRC)
 
+AACFASTENC_SRC = \
+    xhe-aac/aacfastenc/src/aacenc.c \
+    xhe-aac/aacfastenc/src/adj_thr.c \
+    xhe-aac/aacfastenc/src/band_nrg.c \
+    xhe-aac/aacfastenc/src/bandwidth.c \
+    xhe-aac/aacfastenc/src/bit_cnt.c \
+    xhe-aac/aacfastenc/src/block_switch.c \
+    xhe-aac/aacfastenc/src/cplxpred_stereo.c \
+    xhe-aac/aacfastenc/src/dyn_bits.c \
+    xhe-aac/aacfastenc/src/grp_data.c \
+    xhe-aac/aacfastenc/src/imdct.c \
+    xhe-aac/aacfastenc/src/int_dec.c \
+    xhe-aac/aacfastenc/src/interface.c \
+    xhe-aac/aacfastenc/src/line_pe.c \
+    xhe-aac/aacfastenc/src/lpd_wrapper.c \
+    xhe-aac/aacfastenc/src/ms_stereo.c \
+    xhe-aac/aacfastenc/src/pre_echo_control.c \
+    xhe-aac/aacfastenc/src/psy_configuration.c \
+    xhe-aac/aacfastenc/src/psy_main.c \
+    xhe-aac/aacfastenc/src/qc_main.c \
+    xhe-aac/aacfastenc/src/quantize.c \
+    xhe-aac/aacfastenc/src/realpred_stereo.c \
+    xhe-aac/aacfastenc/src/sf_estim.c \
+    xhe-aac/aacfastenc/src/spreading.c \
+    xhe-aac/aacfastenc/src/stack_alignment.c \
+    xhe-aac/aacfastenc/src/tns.c \
+    xhe-aac/aacfastenc/src/transform.c \
+    xhe-aac/aacfastenc/src/unified_stereo_psych.c
+
+APPLAUSE_DETECTION_SRC = \
+    xhe-aac/applauseDetectionlib/src/ApplDet_C_ifc.c \
+    xhe-aac/applauseDetectionlib/src/cFeatMFCC.c \
+    xhe-aac/applauseDetectionlib/src/cFeatNormalize.c \
+    xhe-aac/applauseDetectionlib/src/cFeatSFM2.c \
+    xhe-aac/applauseDetectionlib/src/cFeatSpecCentroid.c \
+    xhe-aac/applauseDetectionlib/src/cFeatSpecFlux.c \
+    xhe-aac/applauseDetectionlib/src/cFeatSpecSpread.c \
+    xhe-aac/applauseDetectionlib/src/cFEX.c \
+    xhe-aac/applauseDetectionlib/src/cSdNeuralNet.c \
+    xhe-aac/applauseDetectionlib/src/cSpDtct.c \
+    xhe-aac/applauseDetectionlib/src/paramdata.c
+
+IIS_ARITH_ENC_SRC = \
+    xhe-aac/iisArithEncLib/src/iisArithEncoder.c
+
+IIS_AUDIO_PREROLL_SRC = \
+    xhe-aac/iisAudioPrerollLib/src/iisAudioPrerollLib.c
+
+IIS_BIT_FRAME_SRC = \
+    xhe-aac/iisBitFrame/src/iisBitFrame.c
+
+IIS_DRC_GAIN_ENC_SRC = \
+    xhe-aac/iisDRCGainEncLib/src/iisDRCGainEnc_bitstreamWriter.c \
+    xhe-aac/iisDRCGainEncLib/src/iisDRCGainEnc_nodeSetting.c \
+    xhe-aac/iisDRCGainEncLib/src/iisDRCGainEnc_process.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCCompressor.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCGainGenerator.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCGainGeneratorProcess.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCLevelComputationBS1770.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCOfflineGain.c \
+    xhe-aac/iisDRCGainGenLib/src/iisDRCRealtimeLRAControl.c
+
+IIS_ENCODER_CONFIG_SRC = \
+    xhe-aac/iisEncoderConfig/src/iisEncoderConfig.c
+
+IIS_ENCODER_CONFIG_CT_TABLE_SRC = \
+    xhe-aac/iisEncoderConfigCTable/src/iisEncoderConfigCTable.c \
+    xhe-aac/iisEncoderConfigCTable/src/main_aot_42_dash_oss.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_coremode.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_hbe.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_insamplerate.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_outsamplerate_oss.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_quality.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_sbrpvc.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_sbrratio.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_sbrsignaling.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_stereoconfigidx.c \
+    xhe-aac/iisEncoderConfigCTable/src/tab_tsd.c
+
+IIS_LEVELER_SRC = \
+    xhe-aac/iisLevelerLib/src/iisLevelerLib.c
+
+IIS_LINKED_LIST_SRC = \
+    xhe-aac/iisLinkedList/src/iisLinkedList.c
+
+IIS_LOUDNESS_SRC = \
+    xhe-aac/iisLoudnessLib/src/loudnessLib.c
+
+IIS_LPD_COM_SRC = \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_acelp_Util.c \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_lpc.c \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_tcx_Tools.c \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_tcx_Transform.c \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_tools.c \
+    xhe-aac/iisLPDComLib/src/iisLPDComLib_vq_RE8.c
+
+IIS_LPD_ENC_SRC = \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_acelp_AdaptiveCB.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_acelp_ImprovedInnovativeCB.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_acelp_InnovativeCB.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_acelp_Main.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_arithEncWrapper.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_bpf.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_bs.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_closedLoop.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_cmConfig.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_lpc_LPCAnalysis.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_lpc_Quantize.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_main.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_tcx_Main.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_tcx_Tools.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_transitions.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_vq_Main.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib_vq_RE8.c \
+    xhe-aac/iisLPDEncLib/src/iisLPDEncLib.c
+
+IIS_PARAM_LIST_SRC = \
+    xhe-aac/iisParamList/src/iisParam.c \
+    xhe-aac/iisParamList/src/iisParamList.c
+
+IIS_SIG_MAP_SRC = \
+    xhe-aac/iisSigMap/src/iisSigMap.c \
+    xhe-aac/iisSigMap/src/iisSigMapCommon.c \
+    xhe-aac/iisSigMap/src/iisSigMapConfig.c \
+    xhe-aac/iisSigMap/src/iisSigMapUsac.c
+
+IIS_SWITCHING_DECISION_SRC = \
+    xhe-aac/iisSwitchingDecision/src/iisSwitchingDecision.c
+
+IIS_XHEAAC_ENC_SRC = \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_aac_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_asc_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_audioPreRoll.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_bitDistribution.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_common.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_delayAndBuffer.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_drc_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_drc_loudness_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_encodeFrame_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_encoderStateMachine.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_extentsionData.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_live_loudness_leveler_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_loaswrapper.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_loudness_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_lraControl.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_bitrate_cfg.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_cfg_expert.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_mpegs_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_rapOnDemand.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_resampler_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_sbr_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_SigMap_ifc.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_submitDrcMetadata.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_syncframe.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_updateParamList.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib_warnings.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLib.c \
+    xhe-aac/iisxHEAACEncLib/src/iisxHEAACEncLibConfig.c
+
+LIMITER_SRC = \
+    xhe-aac/limiterlib/src/limiter.c
+
+MATH_SRC = \
+    xhe-aac/mathlib/src/aux_func.c \
+    xhe-aac/mathlib/src/cfft.c \
+    xhe-aac/mathlib/src/cpuinfo.c \
+    xhe-aac/mathlib/src/fpucontrol.c \
+    xhe-aac/mathlib/src/iis_dxt.c \
+    xhe-aac/mathlib/src/iis_fft.c \
+    xhe-aac/mathlib/src/iis_mdxt.c \
+    xhe-aac/mathlib/src/iisfft.c \
+    xhe-aac/mathlib/src/math_inf.c \
+    xhe-aac/mathlib/src/mathlib.c
+
+MP4_ASC_SRC = \
+    xhe-aac/mp4ASC/IIS_MP4ASC_Interface/IIS_MP4ASC_Interface.c \
+    xhe-aac/mp4ASC/src/audiospecificconfig.c \
+    xhe-aac/mp4ASC/src/usacconfig.c
+
+MP4_BITBUF_SRC = \
+    xhe-aac/mp4bitbuf/src/bit_buf.c
+
+MP4_BITMUX_SRC = \
+    xhe-aac/mp4bitmux/src/aac/bit_aac.c \
+    xhe-aac/mp4bitmux/src/aac/bit_enc.c \
+    xhe-aac/mp4bitmux/src/aac/codebook.c \
+    xhe-aac/mp4bitmux/src/aac/extpayload.c
+
+MP4_LOAS_WRITE_SRC = \
+    xhe-aac/mp4loaswrite/src/IIS_LATM_Interface.c \
+    xhe-aac/mp4loaswrite/src/latm_interface.c
+
+MP4_TIMEBUF_SRC = \
+    xhe-aac/mp4timebuf/src/time_buffer.c
+
+QMF_SRC = \
+    xhe-aac/qmflib/src/qmflib_lowfreqfilter.c \
+    xhe-aac/qmflib/src/qmflib_tables.c \
+    xhe-aac/qmflib/src/qmflib.c
+
+READONLY_BITBUF_SRC = \
+    xhe-aac/readonlybitbuf/src/readonlybitbuf.c
+
+RESAMPLE_SRC = \
+    xhe-aac/resamplelib/src/polyphase/convolve.c \
+    xhe-aac/resamplelib/src/polyphase/filtgen.c \
+    xhe-aac/resamplelib/src/polyphase/helpfunc.c \
+    xhe-aac/resamplelib/src/polyphase/kernfunc.c \
+    xhe-aac/resamplelib/src/polyphase/polyfilt.c \
+    xhe-aac/resamplelib/src/polyphase/polyphase.c \
+    xhe-aac/resamplelib/src/polyphase/resample.c \
+    xhe-aac/resamplelib/src/resamplelib.c \
+    xhe-aac/resamplelib/src/smpl_resampler.c
+
+SBR_ENC_SRC = \
+    xhe-aac/sbrEnclib/src/bit_codec.c \
+    xhe-aac/sbrEnclib/src/bit_sbr.c \
+    xhe-aac/sbrEnclib/src/cmondata.c \
+    xhe-aac/sbrEnclib/src/code_env.c \
+    xhe-aac/sbrEnclib/src/env_est.c \
+    xhe-aac/sbrEnclib/src/fram_gen.c \
+    xhe-aac/sbrEnclib/src/freq_sca.c \
+    xhe-aac/sbrEnclib/src/invf_est.c \
+    xhe-aac/sbrEnclib/src/ivaltime.c \
+    xhe-aac/sbrEnclib/src/mh_det.c \
+    xhe-aac/sbrEnclib/src/nf_est.c \
+    xhe-aac/sbrEnclib/src/sbr_main.c \
+    xhe-aac/sbrEnclib/src/sbr_misc.c \
+    xhe-aac/sbrEnclib/src/sib_det.c \
+    xhe-aac/sbrEnclib/src/ton_corr.c \
+    xhe-aac/sbrEnclib/src/tran_det.c
+
+SPACE_ENC_SRC = \
+    xhe-aac/spaceEnclib/src/sac_huff_cld.c \
+    xhe-aac/spaceEnclib/src/sac_huff_icc.c \
+    xhe-aac/spaceEnclib/src/sac_huff_ipd.c \
+    xhe-aac/spaceEnclib/src/sac_huff_pt0.c \
+    xhe-aac/spaceEnclib/src/sac_huff_reshape.c \
+    xhe-aac/spaceEnclib/src/sac_nlc_enc.c \
+    xhe-aac/spaceEnclib/src/sac_tonality.c \
+    xhe-aac/spaceEnclib/src/sac_tsd.c \
+    xhe-aac/spaceEnclib/src/space_bitstream.c \
+    xhe-aac/spaceEnclib/src/space_delay.c \
+    xhe-aac/spaceEnclib/src/space_filter.c \
+    xhe-aac/spaceEnclib/src/space_framewindowing.c \
+    xhe-aac/spaceEnclib/src/space_hybrid.c \
+    xhe-aac/spaceEnclib/src/space_onsetdetect.c \
+    xhe-aac/spaceEnclib/src/space_paramextract.c \
+    xhe-aac/spaceEnclib/src/space_staticgain.c \
+    xhe-aac/spaceEnclib/src/space_tree.c \
+    xhe-aac/spaceEnclib/src/spaceEnclib.c
+
+STAT_CLASS_SRC = \
+    xhe-aac/statClassLib_C/src/statClass_decision.c \
+    xhe-aac/statClassLib_C/src/statClass_deltaCep.c \
+    xhe-aac/statClassLib_C/src/statClass_deltaLsf.c \
+    xhe-aac/statClassLib_C/src/statClass_features.c \
+    xhe-aac/statClassLib_C/src/statClass_gmm_14_7k.c \
+    xhe-aac/statClassLib_C/src/statClass_gmm_16k.c \
+    xhe-aac/statClassLib_C/src/statClass_gmm.c \
+    xhe-aac/statClassLib_C/src/statClass_lpc.c \
+    xhe-aac/statClassLib_C/src/statClass_ltpDelayVar.c \
+    xhe-aac/statClassLib_C/src/statClass_mel2plp.c \
+    xhe-aac/statClassLib_C/src/statClass_pauseDetection.c \
+    xhe-aac/statClassLib_C/src/statClass_peakednessFreqVsTime.c \
+    xhe-aac/statClassLib_C/src/statClass_pitch_ol.c \
+    xhe-aac/statClassLib_C/src/statClass_preemph.c \
+    xhe-aac/statClassLib_C/src/statClass_signal2mel.c \
+    xhe-aac/statClassLib_C/src/statClass_speechClassification.c \
+    xhe-aac/statClassLib_C/src/statClass_timeTransient.c \
+    xhe-aac/statClassLib_C/src/statClass_utils.c \
+    xhe-aac/statClassLib_C/src/statClasslib.c
+
+UTIL_SRC = \
+    xhe-aac/utillib/src/errorhnd.c \
+    xhe-aac/utillib/src/matrixCalloc.c \
+    xhe-aac/utillib/src/ngsalloc.c
+
+WRITEONLY_BITBUF_SRC = \
+    xhe-aac/writeonlybitbuf/src/writeonlybitbuf.c
+
+XHEAAC_ENC_SRC = \
+    xhe-aac/xHEAACEnc/src/xHEAACEnc.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncCommon.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncConfig.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncExportImport.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncLoudness.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncMapParameters.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncParameter.c \
+    xhe-aac/xHEAACEnc/src/xHEAACEncWarningHandling.c
+
+libfdk_xhe_aac_la_SOURCES = \
+    $(AACFASTENC_SRC) $(APPLAUSE_DETECTION_SRC) \
+    $(IIS_ARITH_ENC_SRC) $(IIS_AUDIO_PREROLL_SRC) $(IIS_BIT_FRAME_SRC) \
+    $(IIS_DRC_GAIN_ENC_SRC) $(IIS_ENCODER_CONFIG_SRC) \
+    $(IIS_ENCODER_CONFIG_CT_TABLE_SRC) $(IIS_LEVELER_SRC) \
+    $(IIS_LINKED_LIST_SRC) $(IIS_LOUDNESS_SRC) $(IIS_LPD_COM_SRC) \
+    $(IIS_LPD_ENC_SRC) $(IIS_PARAM_LIST_SRC) $(IIS_SIG_MAP_SRC) \
+    $(IIS_SWITCHING_DECISION_SRC) $(IIS_XHEAAC_ENC_SRC) \
+    $(LIMITER_SRC) $(MATH_SRC) \
+    $(MP4_ASC_SRC) $(MP4_BITBUF_SRC) $(MP4_BITMUX_SRC) $(MP4_LOAS_WRITE_SRC) \
+    $(MP4_TIMEBUF_SRC) \
+    $(QMF_SRC) $(READONLY_BITBUF_SRC) $(RESAMPLE_SRC) $(SBR_ENC_SRC) \
+    $(SPACE_ENC_SRC) $(STAT_CLASS_SRC) $(UTIL_SRC) $(WRITEONLY_BITBUF_SRC) \
+    $(XHEAAC_ENC_SRC)
+
 EXTRA_DIST = \
     $(top_srcdir)/CMakeLists.txt \
     $(top_srcdir)/.clang-format \
@@ -272,6 +625,9 @@ EXTRA_DIST = \
     $(top_srcdir)/fdk-aac.def \
     $(top_srcdir)/fdk-aac.sym \
     $(top_srcdir)/fdk-aac-config.cmake.in \
+    $(top_srcdir)/fdk-xhe-aac.def \
+    $(top_srcdir)/fdk-xhe-aac.sym \
+    $(top_srcdir)/fdk-xhe-aac-config.cmake.in \
     $(top_srcdir)/cpp/Android.bp \
     $(top_srcdir)/cpp/documentation/*.pdf \
     $(top_srcdir)/cpp/fuzzer/* \
