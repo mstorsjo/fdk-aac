@@ -31,6 +31,7 @@ cd $(dirname $0)
 
 ./autogen.sh
 
+[ -z "$CLEAN" ] || rm -rf build-check-autotools$SUFFIX
 mkdir -p build-check-autotools$SUFFIX
 cd build-check-autotools$SUFFIX
 
@@ -40,6 +41,7 @@ rm -rf ../install-autotools$SUFFIX
 make -j$CORES install
 
 cd ..
+[ -z "$CLEAN" ] || rm -rf build-check-cmake$SUFFIX
 mkdir -p build-check-cmake$SUFFIX
 cd build-check-cmake$SUFFIX
 

@@ -6,6 +6,7 @@ cd $(dirname $0)
 
 ./autogen.sh
 
+[ -z "$CLEAN" ] || rm -rf build-archive
 mkdir -p build-archive
 cd build-archive
 
