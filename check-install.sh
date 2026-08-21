@@ -81,28 +81,34 @@ fi
 
 diff -u listing-autotools.txt listing-cmake.txt
 
-# Check the soname, or equivalent.
-if [ -n "$MINGW" ]; then
-    get_dllname() {
-        $TRIPLE-dlltool --identify $1
-    }
-    SONAME_AUTOTOOLS=$(get_dllname install-autotools-mingw/lib/libfdk-aac.dll.a)
-    SONAME_CMAKE=$(get_dllname install-cmake-mingw/lib/libfdk-aac.dll.a)
-elif [ "$(uname)" = "Darwin" ]; then
-    get_soname() {
-        basename $(otool -D $1 | tail -1)
-    }
-    SONAME_AUTOTOOLS=$(get_soname install-autotools/lib/libfdk-aac.dylib)
-    SONAME_CMAKE=$(get_soname install-cmake/lib/libfdk-aac.dylib)
-else
-    get_soname() {
-        readelf -d $1 | grep SONAME | sed -e 's/.*soname: //' -e 's/^\[//' -e 's/\]$//'
-    }
-    SONAME_AUTOTOOLS=$(get_soname install-autotools/lib/libfdk-aac.so)
-    SONAME_CMAKE=$(get_soname install-cmake/lib/libfdk-aac.so)
-fi
+compare_library() {
+    lib=$1
+    # Check the soname, or equivalent.
+    if [ -n "$MINGW" ]; then
+        get_dllname() {
+            $TRIPLE-dlltool --identify $1
+        }
+        SONAME_AUTOTOOLS=$(get_dllname install-autotools-mingw/lib/$lib.dll.a)
+        SONAME_CMAKE=$(get_dllname install-cmake-mingw/lib/$lib.dll.a)
+    elif [ "$(uname)" = "Darwin" ]; then
+        get_soname() {
+            basename $(otool -D $1 | tail -1)
+        }
+        SONAME_AUTOTOOLS=$(get_soname install-autotools/lib/$lib.dylib)
+        SONAME_CMAKE=$(get_soname install-cmake/lib/$lib.dylib)
+    else
+        get_soname() {
+            readelf -d $1 | grep SONAME | sed -e 's/.*soname: //' -e 's/^\[//' -e 's/\]$//'
+        }
+        SONAME_AUTOTOOLS=$(get_soname install-autotools/lib/$lib.so)
+        SONAME_CMAKE=$(get_soname install-cmake/lib/$lib.so)
+    fi
 
-if [ "$SONAME_AUTOTOOLS" != "$SONAME_CMAKE" ]; then
-    echo Autotools SONAME $SONAME_AUTOTOOLS differs from CMake $SONAME_CMAKE
-    exit 1
-fi
+    if [ "$SONAME_AUTOTOOLS" != "$SONAME_CMAKE" ]; then
+        echo For $lib, autotools SONAME $SONAME_AUTOTOOLS differs from CMake $SONAME_CMAKE
+        exit 1
+    fi
+}
+
+compare_library libfdk-aac
+compare_library libfdk-xhe-aac
