@@ -75,7 +75,7 @@ if [ "$(uname)" = "Darwin" ] && [ -z "$MINGW" ]; then
     # On macOS, cmake installs both libfdk-aac.dylib, libfdk-aac.2.dylib and
     # libfdk-aac.2.0.3.dylib (with the first two being symlinks to the latter),
     # while autotools only installs libfdk-aac.dylib and libfdk-aac.2.dylib.
-    cat listing-cmake.txt | grep -v 'libfdk-aac\.\d\.\d\.\d\.dylib' > tmp
+    cat listing-cmake.txt | grep -v 'lib.*\.\d\.\d\.\d\.dylib' > tmp
     mv tmp listing-cmake.txt
 fi
 
