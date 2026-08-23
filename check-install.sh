@@ -19,7 +19,7 @@ fi
 
 if [ "$1" = "mingw" ]; then
     SUFFIX=-mingw
-    TRIPLE=x86_64-w64-mingw32
+    : ${TRIPLE:=x86_64-w64-mingw32}
     CONFIG_FLAGS="--host=$TRIPLE"
     CMAKE_FLAGS="-DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_COMPILER=$TRIPLE-gcc -DCMAKE_CXX_COMPILER=$TRIPLE-g++"
     MINGW=1
