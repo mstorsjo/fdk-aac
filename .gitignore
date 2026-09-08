@@ -28,6 +28,7 @@ missing
 stamp-h1
 aac-enc
 aac-dec
+xhe-aac-enc
 test-encode-decode
 compile
 
