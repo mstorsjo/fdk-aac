@@ -85,7 +85,7 @@ libfdk_xhe_aac_la_LDFLAGS = -version-info @FDK_XHE_AAC_VERSION@ -no-undefined \
     -export-symbols $(top_srcdir)/fdk-xhe-aac.sym
 
 if EXAMPLE
-bin_PROGRAMS = aac-enc$(EXEEXT) aac-dec$(EXEEXT)
+bin_PROGRAMS = aac-enc$(EXEEXT) aac-dec$(EXEEXT) xhe-aac-enc$(EXEEXT)
 noinst_PROGRAMS = test-encode-decode$(EXEEXT)
 
 aac_enc_LDADD = libfdk-aac.la
@@ -95,6 +95,10 @@ aac_enc_SOURCES = aac-enc.c wavreader.c
 aac_dec_LDADD = libfdk-aac.la
 aac_dec_CPPFLAGS = $(libfdk_aac_la_CPPFLAGS) -I$(top_srcdir)/cpp
 aac_dec_SOURCES = aac-dec.c wavwriter.c
+
+xhe_aac_enc_LDADD = libfdk-xhe-aac.la
+xhe_aac_enc_CPPFLAGS = $(libfdk_xhe_aac_la_CPPFLAGS) -I$(top_srcdir)/xhe-aac
+xhe_aac_enc_SOURCES = xhe-aac-enc.c wavreader.c
 
 test_encode_decode_LDADD = libfdk-aac.la
 test_encode_decode_CPPFLAGS = $(libfdk_aac_la_CPPFLAGS)
