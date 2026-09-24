@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libAACdec/include/aacdecoder_lib.h"
 #include "wavwriter.h"
 
@@ -31,6 +32,7 @@ int main(int argc, char *argv[]) {
 	int16_t *decode_buf;
 	HANDLE_AACDECODER handle;
 	int frame_size = 0;
+	int loas = 0;
 	if (argc < 3) {
 		fprintf(stderr, "%s in.aac out.wav\n", argv[0]);
 		return 1;
@@ -38,7 +40,10 @@ int main(int argc, char *argv[]) {
 	infile = argv[1];
 	outfile = argv[2];
 
-	handle = aacDecoder_Open(TT_MP4_ADTS, 1);
+	if (strstr(infile, ".loas")) {
+		loas = 1;
+	}
+	handle = aacDecoder_Open(loas ? TT_MP4_LOAS : TT_MP4_ADTS, 1);
 	in = fopen(infile, "rb");
 	if (!in) {
 		perror(infile);
@@ -54,18 +59,32 @@ int main(int argc, char *argv[]) {
 		int n, i;
 		UINT valid, packet_size;
 		AAC_DECODER_ERROR err;
-		n = fread(packet, 1, 7, in);
-		if (n != 7)
-			break;
-		if (packet[0] != 0xff || (packet[1] & 0xf0) != 0xf0) {
-			fprintf(stderr, "Not an ADTS packet\n");
-			break;
-		}
-		packet_size = ((packet[3] & 0x03) << 11) | (packet[4] << 3) | (packet[5] >> 5);
-		n = fread(packet + 7, 1, packet_size - 7, in);
-		if (n != packet_size - 7) {
-			fprintf(stderr, "Partial packet\n");
-			break;
+
+		if (!loas) {
+			// ADTS, parse the headers and feed them in neatly
+			// one at a time. (The decoder can handle passing in
+			// arbitrary chunks as well.)
+			n = fread(packet, 1, 7, in);
+			if (n != 7)
+				break;
+			if (packet[0] != 0xff || (packet[1] & 0xf0) != 0xf0) {
+				fprintf(stderr, "Not an ADTS packet\n");
+				break;
+			}
+			packet_size = ((packet[3] & 0x03) << 11) | (packet[4] << 3) | (packet[5] >> 5);
+			n = fread(packet + 7, 1, packet_size - 7, in);
+			if (n != packet_size - 7) {
+				fprintf(stderr, "Partial packet\n");
+				break;
+			}
+		} else {
+			// LOAS - don't try to parse anything, just feed
+			// large buffers to the decoder, which gets to demux
+			// it.
+			n = fread(packet, 1, sizeof(packet), in);
+			if (n <= 0)
+				break;
+			packet_size = n;
 		}
 		valid = packet_size;
 		err = aacDecoder_Fill(handle, &ptr, &packet_size, &valid);
@@ -73,33 +92,35 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Fill failed: %x\n", err);
 			break;
 		}
-		err = aacDecoder_DecodeFrame(handle, decode_buf, output_size / sizeof(INT_PCM), 0);
-		if (err == AAC_DEC_NOT_ENOUGH_BITS)
-			continue;
-		if (err != AAC_DEC_OK) {
-			fprintf(stderr, "Decode failed: %x\n", err);
-			continue;
-		}
-		if (!wav) {
-			CStreamInfo *info = aacDecoder_GetStreamInfo(handle);
-			if (!info || info->sampleRate <= 0) {
-				fprintf(stderr, "No stream info\n");
+		while (1) {
+			err = aacDecoder_DecodeFrame(handle, decode_buf, output_size / sizeof(INT_PCM), 0);
+			if (err == AAC_DEC_NOT_ENOUGH_BITS)
+				break;
+			if (err != AAC_DEC_OK) {
+				fprintf(stderr, "Decode failed: %x\n", err);
 				break;
 			}
-			frame_size = info->frameSize * info->numChannels;
-			// Note, this probably doesn't return channels > 2 in the right order for wav
-			wav = wav_write_open(outfile, info->sampleRate, 16, info->numChannels);
 			if (!wav) {
-				perror(outfile);
-				break;
+				CStreamInfo *info = aacDecoder_GetStreamInfo(handle);
+				if (!info || info->sampleRate <= 0) {
+					fprintf(stderr, "No stream info\n");
+					return 1;
+				}
+				frame_size = info->frameSize * info->numChannels;
+				// Note, this probably doesn't return channels > 2 in the right order for wav
+				wav = wav_write_open(outfile, info->sampleRate, 16, info->numChannels);
+				if (!wav) {
+					perror(outfile);
+					return 1;
+				}
 			}
+			for (i = 0; i < frame_size; i++) {
+				uint8_t* out = &output_buf[2*i];
+				out[0] = decode_buf[i] & 0xff;
+				out[1] = decode_buf[i] >> 8;
+			}
+			wav_write_data(wav, output_buf, 2*frame_size);
 		}
-		for (i = 0; i < frame_size; i++) {
-			uint8_t* out = &output_buf[2*i];
-			out[0] = decode_buf[i] & 0xff;
-			out[1] = decode_buf[i] >> 8;
-		}
-		wav_write_data(wav, output_buf, 2*frame_size);
 	}
 	free(output_buf);
 	free(decode_buf);
