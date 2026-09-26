@@ -1,0 +1,59 @@
+rust_ffi_static {
+    name: "libaac",
+    crate_name: "aac",
+
+    vendor_available: true,
+    clippy_lints: "android",
+    host_supported: true,
+    srcs: ["src/lib.rs"],
+
+    features: [
+        "aac_dec",
+    ],
+
+    rustlibs: [
+        "libitertools",
+        "libnum_complex",
+        "libarrayvec",
+        "libbitflags",
+        "libzerocopy",
+    ],
+
+    proc_macros: [
+        "libpaste",
+    ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.btservices",
+        "com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
+    export_include_dirs: [
+        "ffi/include/",
+    ],
+}
+
+rust_ffi_static {
+    name: "libaac_ffi",
+    crate_name: "aac_ffi",
+
+    vendor_available: true,
+    clippy_lints: "android",
+    host_supported: true,
+    srcs: ["ffi/src/lib.rs"],
+
+    features: [
+        "aac_dec",
+    ],
+    rustlibs: [
+        "libaac",
+    ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.btservices",
+        "com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
+}

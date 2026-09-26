@@ -1,0 +1,17 @@
+# rustfmt configuration file
+
+edition = "2021"
+newline_style = "Unix"
+max_width = 100
+# Unstable features
+#
+# These are commented out because they should only be applied manually from time to time.
+#
+# unstable_features = true
+# comment_width = 100
+# wrap_comments = true
+# normalize_comments = true
+# error_on_line_overflow = true
+# error_on_unformatted = true
+# format_code_in_doc_comments = true
+# doc_comment_code_block_width = 100

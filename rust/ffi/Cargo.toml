@@ -1,0 +1,21 @@
+[package]
+name = "aac_ffi"
+version = "0.1.0"
+edition = "2021"
+# MSRV
+rust-version = "1.81.0"
+license = "FDK-AAC"
+description = "Fraunhofer FDK AAC Codec Library in Rust - FFI"
+keywords = ["aac", "audio", "codec", "decoder", "fdk"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+itertools = "0.10.5"
+num-complex = "0.4.6"
+aac = {path = ".."}
+
+[features]
+default = ["aac_dec"]
+aac_dec = []
