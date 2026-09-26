@@ -1,0 +1,142 @@
+// *** THIS PACKAGE HAS SPECIAL LICENSING CONDITIONS.  PLEASE
+//     CONSULT THE OWNERS AND opensource-licensing@google.com BEFORE
+//     DEPENDING ON IT IN YOUR PROJECT. ***
+package {
+    default_applicable_licenses: ["external_xheaac_license"],
+}
+
+// Added automatically by a large-scale-change that took the approach of
+// 'apply every license found to every target'. While this makes sure we respect
+// every license restriction, it may not be entirely correct.
+//
+// e.g. GPL in an MIT project might only apply to the contrib/ directory.
+//
+// Please consider splitting the single license below into multiple licenses,
+// taking care not to lose any license_kind information, and overriding the
+// default license using the 'licenses: [...]' property on targets as needed.
+//
+// For unused files, consider creating a 'fileGroup' with "//visibility:private"
+// to attach the license to, and including a comment whether the files may be
+// used in the current project.
+// See: http://go/android-license-faq
+license {
+    name: "external_xheaac_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+        "legacy_by_exception_only", // by exception only
+    ],
+    license_text: [
+        "NOTICE",
+    ],
+}
+
+cc_library_static {
+    name: "libFraunhoferXHEAACEnc",
+    vendor_available: true,
+    host_supported: true,
+    srcs: [
+        "aacfastenc/src/*.c",
+        "applauseDetectionlib/src/*.c",
+        "iisArithEncLib/src/*.c",
+        "iisAudioPrerollLib/src/*.c",
+        "iisBitFrame/src/*.c",
+        "iisDRCGainEncLib/src/*.c",
+        "iisDRCGainGenLib/src/*.c",
+        "iisEncoderConfig/src/*.c",
+        "iisEncoderConfigCTable/src/*.c",
+        "iisLevelerLib/src/*.c",
+        "iisLinkedList/src/*.c",
+        "iisLoudnessLib/src/*.c",
+        "iisLPDComLib/src/*.c",
+        "iisLPDEncLib/src/*.c",
+        "iisParamList/src/*.c",
+        "iisSigMap/src/*.c",
+        "iisSwitchingDecision/src/*.c",
+        "iisxHEAACEncLib/src/*.c",
+        "limiterlib/src/*.c",
+        "mathlib/src/*.c",
+        "mp4ASC/IIS_MP4ASC_Interface/*.c",
+        "mp4ASC/src/*.c",
+        "mp4bitbuf/src/*.c",
+        "mp4bitmux/src/aac/*.c",
+        "mp4loaswrite/src/*.c",
+        "mp4timebuf/src/*.c",
+        "qmflib/src/*.c",
+        "readonlybitbuf/src/*.c",
+        "resamplelib/src/*.c",
+        "resamplelib/src/polyphase/*.c",
+        "sbrEnclib/src/*.c",
+        "spaceEnclib/src/*.c",
+        "statClassLib_C/src/*.c",
+        "utillib/src/*.c",
+        "writeonlybitbuf/src/*.c",
+        "xHEAACEnc/src/*.c",
+    ],
+    cflags: [
+        "-Werror",
+        "-Wuninitialized",
+    ],
+    sanitize: {
+        misc_undefined: [
+            "unsigned-integer-overflow",
+            "signed-integer-overflow",
+            "bounds",
+        ],
+        cfi: true,
+    },
+    export_include_dirs: [
+        "xHEAACEnc/include",
+    ],
+    local_include_dirs: [
+        "aacfastenc/include",
+        "applauseDetectionlib/include",
+        "iisArithEncLib/include",
+        "iisAudioPrerollLib/include",
+        "iisBitFrame/include",
+        "iisDRCGainEncLib/include",
+        "iisDRCGainGenLib/include",
+        "iisEncoderConfig/include",
+        "iisEncoderConfigCTable/include",
+        "iisLevelerLib/include",
+        "iisLinkedList/include",
+        "iisLoudnessLib/include",
+        "iisLPDComLib/include",
+        "iisLPDEncLib/include",
+        "iisParamList/include",
+        "iisSigMap/include",
+        "iisSwitchingDecision/include",
+        "iisxHEAACEncLib/include",
+        "limiterlib/include",
+        "mathlib/include",
+        "mp4ASC/IIS_MP4ASC_Interface",
+        "mp4ASC/include",
+        "mp4General",
+        "mp4bitbuf/include",
+        "mp4bitmux/src/aac",
+        "mp4loaswrite/include",
+        "mp4timebuf/include",
+        "qmflib/include",
+        "readonlybitbuf/include",
+        "resamplelib/include",
+        "sbrEnclib/include",
+        "spaceEnclib/include",
+        "statClassLib_C/include",
+        "utillib/include",
+        "utillib/include/IISutillib",
+        "writeonlybitbuf/include",
+    ],
+
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.bt",
+        "com.android.media.swcodec",
+    ],
+    min_sdk_version: "29",
+}

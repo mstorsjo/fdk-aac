@@ -1348,12 +1348,6 @@ impl ProgramConfig {
             self.is_valid = false; // Invalid
         }
 
-        // Check order of elements according to ISO / IEC 13818 - 7:2003(E),
-        // chapter 8.5.1.
-        if !self.check() {
-            self.is_valid = false;
-        }
-
         // Only support AAC LC object type
         if self.profile != 1 {
             self.is_valid = false;

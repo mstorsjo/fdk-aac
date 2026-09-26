@@ -25,7 +25,7 @@ rust_ffi_static {
 
     apex_available: [
         "//apex_available:platform",
-        "com.android.btservices",
+        "com.android.bt",
         "com.android.media.swcodec",
     ],
     min_sdk_version: "29",
@@ -52,7 +52,7 @@ rust_ffi_static {
 
     apex_available: [
         "//apex_available:platform",
-        "com.android.btservices",
+        "com.android.bt",
         "com.android.media.swcodec",
     ],
     min_sdk_version: "29",
