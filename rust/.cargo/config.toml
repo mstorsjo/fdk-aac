@@ -1,0 +1,17 @@
+[alias]
+# Build all default binaries
+build_bins = "build --package aac_framework --bins"
+# Build decoder
+build_dec = "build --package aac_framework --no-default-features --features aac_dec --bin aac_decoder"
+
+# Shorts for shorts
+bb = "build_bins"
+bd = "build_dec"
+
+# Check all default binaries
+check_bins = "check --package aac_framework --bins"
+# Check decoder
+check_dec = "check --package aac_framework --no-default-features --features aac_dec --bin aac_decoder"
+
+# Run decoder
+run_dec = "run --package aac_framework --no-default-features --features aac_dec --bin aac_decoder"

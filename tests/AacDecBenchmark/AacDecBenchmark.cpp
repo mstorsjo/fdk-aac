@@ -37,7 +37,11 @@ class AACDecoder {
     AACDecoder() : mAACDecoder(nullptr), mStreamInfo(nullptr) {}
 
     bool initialize() {
+#ifdef RUST_BENCHMARK
+        mAACDecoder = aacDecoder_Open(TT_MP4_RAW);
+#else
         mAACDecoder = aacDecoder_Open(TT_MP4_RAW, 1);
+#endif
         if (!mAACDecoder) {
             ALOGE("Failed to initialize AAC decoder");
             return false;
@@ -83,7 +87,11 @@ class AACDecoder {
         UCHAR* configData = const_cast<UCHAR*>(configBuffer.data());
         UCHAR* configArray[1] = {configData};
 
+#ifdef RUST_BENCHMARK
+        AAC_DECODER_ERROR err = aacDecoder_ConfigRaw(mAACDecoder, configArray[0], bytesRead);
+#else
         AAC_DECODER_ERROR err = aacDecoder_ConfigRaw(mAACDecoder, configArray, &bytesRead);
+#endif
         if (err != AAC_DEC_OK) {
             ALOGE("Failed to configure decoder: error %d", err);
             return false;
@@ -98,14 +106,24 @@ class AACDecoder {
         UCHAR* inputPtr = const_cast<UCHAR*>(inputBuffer.data());
         UCHAR* bufferArray[1] = {inputPtr};
 
+#ifdef RUST_BENCHMARK
+        AAC_DECODER_ERROR err = aacDecoder_Fill(mAACDecoder, bufferArray[0],
+                                                bytesRead, &validBytes);
+#else
         AAC_DECODER_ERROR err = aacDecoder_Fill(mAACDecoder, bufferArray, &bytesRead, &validBytes);
+#endif
         if (err != AAC_DEC_OK) {
             ALOGE("Failed to fill decoder buffer: error %d", err);
             return false;
         }
 
+#ifdef RUST_BENCHMARK
+        std::vector<FLOAT> floatBuffer(kOutputBufferSize);
+        err = aacDecoder_DecodeFrame(mAACDecoder, floatBuffer.data(), floatBuffer.size(), 0);
+#else
         outputBuffer.resize(kOutputBufferSize);  // Ensure buffer is large enough
         err = aacDecoder_DecodeFrame(mAACDecoder, outputBuffer.data(), outputBuffer.size(), 0);
+#endif
         if (err != AAC_DEC_OK) {
             ALOGE("Failed to decode frame: error %d", err);
             return false;
