@@ -47,8 +47,7 @@ project(fdk-aac VERSION 2.0.3)
 
 # Includes
 
-include(CheckFunctionExists)
-include(CheckLibraryExists)
+include(CheckSymbolExists)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
@@ -69,9 +68,12 @@ option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 # Checks
 
 ## Check if math functions are in separate library (Most of Linux distros, maybe some other OSes)
-check_function_exists(sin HAVE_DEFAULT_MATH)
+check_symbol_exists(sin "math.h" HAVE_DEFAULT_MATH)
 if(NOT HAVE_DEFAULT_MATH)
-  check_library_exists(m sin "" HAVE_LIBM)
+  set(orig_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "m")
+  check_symbol_exists(sin "math.h" HAVE_LIBM)
+  set(CMAKE_REQUIRED_LIBRARIES ${orig_CMAKE_REQUIRED_LIBRARIES})
 endif()
 
 # Library
