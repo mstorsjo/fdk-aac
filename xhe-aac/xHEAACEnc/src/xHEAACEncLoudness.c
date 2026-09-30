@@ -586,6 +586,9 @@ IIS_XHEAACENC_RETURN_CODE IIS_XHEAACAPI IIS_xHEAACEnc_Loudness_Delete(
       iisFree(hLoudness->filter_taps);
       hLoudness->filter_taps = NULL;
     }
+    if (hLoudness->buffer != NULL) {
+      retValue = deleteDataBuffer(&hLoudness->buffer);
+    }
 
     iisFree(hLoudness);
     hLoudness = NULL;
