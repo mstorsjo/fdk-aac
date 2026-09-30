@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
 	int16_t *decode_buf;
 	HANDLE_AACDECODER handle;
 	int frame_size = 0;
+	int skip_samples = 0;
 	int loas = 0;
 	if (argc < 3) {
 		fprintf(stderr, "%s in.aac out.wav\n", argv[0]);
@@ -113,13 +114,19 @@ int main(int argc, char *argv[]) {
 					perror(outfile);
 					return 1;
 				}
+				skip_samples = info->outputDelay * info->numChannels;
+			}
+			if (skip_samples >= frame_size) {
+				skip_samples -= frame_size;
+				continue;
 			}
 			for (i = 0; i < frame_size; i++) {
 				uint8_t* out = &output_buf[2*i];
 				out[0] = decode_buf[i] & 0xff;
 				out[1] = decode_buf[i] >> 8;
 			}
-			wav_write_data(wav, output_buf, 2*frame_size);
+			wav_write_data(wav, output_buf + 2*skip_samples, 2*(frame_size - skip_samples));
+			skip_samples = 0;
 		}
 	}
 	free(output_buf);
