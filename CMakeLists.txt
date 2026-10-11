@@ -863,8 +863,8 @@ set_target_properties(fdk-xhe-aac PROPERTIES
   PUBLIC_HEADER "${fdk_xhe_aacinclude_HEADERS}"
   VERSION 0.0.0
   SOVERSION 0
-  MACHO_COMPATIBILITY_VERSION 0.0.0
-  MACHO_CURRENT_VERSION 0.0.0)
+  MACHO_COMPATIBILITY_VERSION 1.0.0
+  MACHO_CURRENT_VERSION 1.0.0)
 
 ### Some compiler options from Makefile.am
 if(MSVC)
