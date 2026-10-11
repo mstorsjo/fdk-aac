@@ -93,6 +93,8 @@ compare_library() {
     elif [ "$(uname)" = "Darwin" ]; then
         get_soname() {
             basename $(otool -D $1 | tail -1)
+            # Extract the compatibility version and current version
+            otool -L $1 | head -2 | tail -1 | sed 's/.*(\(.*\)).*/\1/'
         }
         SONAME_AUTOTOOLS=$(get_soname install-autotools/lib/$lib.dylib)
         SONAME_CMAKE=$(get_soname install-cmake/lib/$lib.dylib)
