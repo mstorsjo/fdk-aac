@@ -43,7 +43,7 @@ if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW)
 endif()
 
-project(fdk-aac VERSION 2.0.3)
+project(fdk-aac VERSION 3.0.0)
 
 # Includes
 
@@ -854,10 +854,10 @@ target_link_libraries(fdk-xhe-aac PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>)
 ### Set public headers and shared library version. Version info is critical for Unix-like OSes.
 set_target_properties(fdk-aac PROPERTIES
   PUBLIC_HEADER "${fdk_aacinclude_HEADERS}"
-  VERSION 2.0.3
+  VERSION 2.0.4
   SOVERSION 2
   MACHO_COMPATIBILITY_VERSION 3.0.0
-  MACHO_CURRENT_VERSION 3.3.0
+  MACHO_CURRENT_VERSION 3.4.0
   LINKER_LANGUAGE C)
 set_target_properties(fdk-xhe-aac PROPERTIES
   PUBLIC_HEADER "${fdk_xhe_aacinclude_HEADERS}"
