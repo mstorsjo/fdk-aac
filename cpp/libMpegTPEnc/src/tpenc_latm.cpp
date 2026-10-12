@@ -387,7 +387,7 @@ CreateStreamMuxConfig(HANDLE_LATM_STREAM hAss, HANDLE_FDK_BITSTREAM hBs,
               FDKwriteBits(hBs, bufferFullness, 8); /* bufferFullness */
               hAss->streamMuxConfigBits += 11;
 
-              if (!hAss->allStreamsSameTimeFraming) {
+              if (!hAss->allStreamsSameTimeFraming && layer > 0) {
                 CODER_CONFIG *p_lci_prev = hAss->config[prog][layer - 1];
                 if (((p_lci->aot == AOT_AAC_SCAL) ||
                      (p_lci->aot == AOT_ER_AAC_SCAL)) &&

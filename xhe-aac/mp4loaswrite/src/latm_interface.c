@@ -357,7 +357,7 @@ static HANDLE_ERROR_INFO CreateStreamMuxConfig(HANDLE_LATM_STREAM_INFO hAss,
               WriteBits(hAss->hSetupData, 0xff, 8);
 
               hAss->streamMuxConfigBits += 11;
-              if (!hAss->allStreamsSameTimeFraming) {
+              if (!hAss->allStreamsSameTimeFraming && layer > 0) {
                 CODER_CONFIG_INFO *p_lci_prev = layerConfig[prog][layer - 1];
                 if (((p_lci->asc.aot == AOT_AAC_SCAL) || (p_lci->asc.aot == AOT_ER_AAC_SCAL)) &&
                     ((p_lci_prev->asc.aot == AOT_CELP) || (p_lci_prev->asc.aot == AOT_ER_CELP))) {
