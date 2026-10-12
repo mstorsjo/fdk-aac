@@ -127,10 +127,11 @@ static const short lavMapIPD[4] = {7, 1, 3, 5};
 
 static void split_lsb(short* in_data,
                       short offset,
-                      short num_val,
+                      int num_val,
                       short* out_data_lsb,
                       short* out_data_msb) {
-  short i = 0, val = 0, lsb = 0, msb = 0;
+  int i = 0;
+  short val = 0, lsb = 0, msb = 0;
 
   for (i = 0; i < num_val; i++) {
     val = in_data[i] + offset;
@@ -156,8 +157,10 @@ static void apply_lsb_coding(HANDLE_BIT_BUF strm,
 
 static void calc_diff_freq(short* in_data,
                            short* out_data,
-                           short num_val) {
-  short i = 0;
+                           int num_val) {
+  int i = 0;
+
+  if (num_val <= 0) return;
 
   out_data[0] = in_data[0];
 
@@ -169,8 +172,10 @@ static void calc_diff_freq(short* in_data,
 static void calc_diff_time(short* in_data,
                            short* prev_data,
                            short* out_data,
-                           short num_val) {
-  short i = 0;
+                           int num_val) {
+  int i = 0;
+
+  if (num_val <= 0) return;
 
   out_data[0] = in_data[0];
   out_data[1] = prev_data[0];
