@@ -178,6 +178,7 @@ static void apply_lsb_coding(HANDLE_FDK_BITSTREAM strm,
 static void calc_diff_freq(const SHORT *const in_data, SHORT *const out_data,
                            const INT num_val) {
   int i;
+  if (num_val <= 0) return;
   out_data[0] = in_data[0];
 
   for (i = 1; i < num_val; i++) {
@@ -189,6 +190,7 @@ static void calc_diff_time(const SHORT *const in_data,
                            const SHORT *const prev_data, SHORT *const out_data,
                            const INT num_val) {
   int i;
+  if (num_val <= 0) return;
   out_data[0] = in_data[0];
   out_data[1] = prev_data[0];
 
