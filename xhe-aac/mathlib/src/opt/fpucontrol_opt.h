@@ -105,10 +105,16 @@ amm-info@iis.fraunhofer.de
 #include <x86intrin.h>
 #endif
 
+#ifdef __GNUC__
+__attribute__((__target__("sse")))
+#endif
 static unsigned int fpuctrl_getSSE_mxcsr(void) {
   return _mm_getcsr();
 }
 
+#ifdef __GNUC__
+__attribute__((__target__("sse")))
+#endif
 static unsigned int fpuctrl_setSSE_mxcsr(unsigned int ctrlWord) {
   _mm_setcsr(ctrlWord);
   return _mm_getcsr();
