@@ -156,14 +156,6 @@ typedef enum {
 
 } PAIRING;
 
-#ifndef HUFFDEC_PARAMS
-#define HUFFDEC_PARMS
-
-#define MAX_ENTRIES 168
-#define HANDLE_HUFF_NODE const SHORT(*)[MAX_ENTRIES][2]
-
-#endif /* HUFFDECPARAMS */
-
 #define HUFFDEC_OK 0
 #define HUFFDEC_NOTOK (-1)
 

@@ -227,7 +227,7 @@ static ERROR_t pcm_decode(HANDLE_FDK_BITSTREAM strm, SCHAR* out_data_1,
 }
 
 static ERROR_t huff_read(HANDLE_FDK_BITSTREAM strm,
-                         const SHORT (*nodeTab)[MAX_ENTRIES][2],
+                         const SHORT (*nodeTab)[2],
                          int* out_data) {
   int node = 0;
   int len = 0;
@@ -236,7 +236,7 @@ static ERROR_t huff_read(HANDLE_FDK_BITSTREAM strm,
     ULONG next_bit;
     next_bit = FDKreadBits(strm, 1);
     len++;
-    node = (*nodeTab)[node][next_bit];
+    node = nodeTab[node][next_bit];
   } while (node > 0);
 
   *out_data = node;
@@ -245,7 +245,7 @@ static ERROR_t huff_read(HANDLE_FDK_BITSTREAM strm,
 }
 
 static ERROR_t huff_read_2D(HANDLE_FDK_BITSTREAM strm,
-                            const SHORT (*nodeTab)[MAX_ENTRIES][2],
+                            const SHORT (*nodeTab)[2],
                             SCHAR out_data[2], int* escape) {
   ERROR_t err = HUFFDEC_OK;
 
@@ -316,25 +316,25 @@ static ERROR_t huff_dec_1D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
   ULONG data = 0;
   int bitsAvail = 0;
 
-  const SHORT(*partTab)[MAX_ENTRIES][2] = NULL;
-  const SHORT(*nodeTab)[MAX_ENTRIES][2] = NULL;
+  const SHORT(*partTab)[2] = NULL;
+  const SHORT(*nodeTab)[2] = NULL;
 
   switch (data_type) {
     case t_CLD:
-      partTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.cld[0][0];
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffCLDNodes.h1D[dim1]->nodeTab[0][0];
+      partTab = FDK_huffPart0Nodes.cld;
+      nodeTab = FDK_huffCLDNodes.h1D[dim1]->nodeTab;
       break;
     case t_ICC:
-      partTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.icc[0][0];
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffICCNodes.h1D[dim1]->nodeTab[0][0];
+      partTab = FDK_huffPart0Nodes.icc;
+      nodeTab = FDK_huffICCNodes.h1D[dim1]->nodeTab;
       break;
     case t_OLD:
-      partTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.old[0][0];
-      nodeTab = (HANDLE_HUFF_NODE)&huffOLDNodes.h1D[dim1]->nodeTab[0][0];
+      partTab = FDK_huffPart0Nodes.old;
+      nodeTab = huffOLDNodes.h1D[dim1]->nodeTab;
       break;
     case t_IPD:
-      partTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.ipd[0][0];
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffIPDNodes.h1D[dim1].nodeTab[0][0];
+      partTab = FDK_huffPart0Nodes.ipd;
+      nodeTab = FDK_huffIPDNodes.h1D[dim1].nodeTab;
       break;
     default:
       FDK_ASSERT(0);
@@ -396,12 +396,11 @@ static ERROR_t huff_dec_2D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
 
   SCHAR esc_data[2][28] = {{0}};
   int escIdx[28] = {0};
-  const SHORT(*nodeTab)[MAX_ENTRIES][2] = NULL;
+  const SHORT(*nodeTab)[2] = NULL;
 
   /* LAV */
-  if ((err =
-           huff_read(strm, (HANDLE_HUFF_NODE)&FDK_huffLavIdxNodes.nodeTab[0][0],
-                     &node)) != HUFFDEC_OK) {
+  if ((err = huff_read(strm, FDK_huffLavIdxNodes.nodeTab, &node)) !=
+      HUFFDEC_OK) {
     goto bail;
   }
   data = -(node + 1);
@@ -409,15 +408,15 @@ static ERROR_t huff_dec_2D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
   switch (data_type) {
     case t_CLD:
       lav = 2 * data + 3; /* 3, 5, 7, 9 */
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.cld[0][0];
+      nodeTab = FDK_huffPart0Nodes.cld;
       break;
     case t_ICC:
       lav = 2 * data + 1; /* 1, 3, 5, 7 */
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.icc[0][0];
+      nodeTab = FDK_huffPart0Nodes.icc;
       break;
     case t_OLD:
       lav = 3 * data + 3;
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.old[0][0];
+      nodeTab = FDK_huffPart0Nodes.old;
       break;
     case t_IPD:
       if (data == 0)
@@ -425,7 +424,7 @@ static ERROR_t huff_dec_2D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
       else
         data--;
       lav = 2 * data + 1; /* 1, 3, 5, 7 */
-      nodeTab = (HANDLE_HUFF_NODE)&FDK_huffPart0Nodes.ipd[0][0];
+      nodeTab = FDK_huffPart0Nodes.ipd;
       break;
     default:
       FDK_ASSERT(0);
@@ -451,77 +450,64 @@ static ERROR_t huff_dec_2D(HANDLE_FDK_BITSTREAM strm, const DATA_TYPE data_type,
     case t_CLD:
       switch (lav) {
         case 3:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffCLDNodes.h2D[dim1][dim2]->lav3[0][0];
+          nodeTab = FDK_huffCLDNodes.h2D[dim1][dim2]->lav3;
           break;
         case 5:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffCLDNodes.h2D[dim1][dim2]->lav5[0][0];
+          nodeTab = FDK_huffCLDNodes.h2D[dim1][dim2]->lav5;
           break;
         case 7:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffCLDNodes.h2D[dim1][dim2]->lav7[0][0];
+          nodeTab = FDK_huffCLDNodes.h2D[dim1][dim2]->lav7;
           break;
         case 9:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffCLDNodes.h2D[dim1][dim2]->lav9[0][0];
+          nodeTab = FDK_huffCLDNodes.h2D[dim1][dim2]->lav9;
           break;
       }
       break;
     case t_ICC:
       switch (lav) {
         case 1:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffICCNodes.h2D[dim1][dim2]->lav1[0][0];
+          nodeTab = FDK_huffICCNodes.h2D[dim1][dim2]->lav1;
           break;
         case 3:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffICCNodes.h2D[dim1][dim2]->lav3[0][0];
+          nodeTab = FDK_huffICCNodes.h2D[dim1][dim2]->lav3;
           break;
         case 5:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffICCNodes.h2D[dim1][dim2]->lav5[0][0];
+          nodeTab = FDK_huffICCNodes.h2D[dim1][dim2]->lav5;
           break;
         case 7:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffICCNodes.h2D[dim1][dim2]->lav7[0][0];
+          nodeTab = FDK_huffICCNodes.h2D[dim1][dim2]->lav7;
           break;
       }
       break;
     case t_OLD:
       switch (lav) {
         case 3:
-          nodeTab = (HANDLE_HUFF_NODE)&huffOLDNodes.h2D[dim1][dim2]->lav3[0][0];
+          nodeTab = huffOLDNodes.h2D[dim1][dim2]->lav3;
           break;
         case 6:
-          nodeTab = (HANDLE_HUFF_NODE)&huffOLDNodes.h2D[dim1][dim2]->lav6[0][0];
+          nodeTab = huffOLDNodes.h2D[dim1][dim2]->lav6;
           break;
         case 9:
-          nodeTab = (HANDLE_HUFF_NODE)&huffOLDNodes.h2D[dim1][dim2]->lav9[0][0];
+          nodeTab = huffOLDNodes.h2D[dim1][dim2]->lav9;
           break;
         case 12:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&huffOLDNodes.h2D[dim1][dim2]->lav12[0][0];
+          nodeTab = huffOLDNodes.h2D[dim1][dim2]->lav12;
           break;
       }
       break;
     case t_IPD:
       switch (lav) {
         case 1:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffIPDNodes.h2D[dim1][dim2].lav1[0][0];
+          nodeTab = FDK_huffIPDNodes.h2D[dim1][dim2].lav1;
           break;
         case 3:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffIPDNodes.h2D[dim1][dim2].lav3[0][0];
+          nodeTab = FDK_huffIPDNodes.h2D[dim1][dim2].lav3;
           break;
         case 5:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffIPDNodes.h2D[dim1][dim2].lav5[0][0];
+          nodeTab = FDK_huffIPDNodes.h2D[dim1][dim2].lav5;
           break;
         case 7:
-          nodeTab =
-              (HANDLE_HUFF_NODE)&FDK_huffIPDNodes.h2D[dim1][dim2].lav7[0][0];
+          nodeTab = FDK_huffIPDNodes.h2D[dim1][dim2].lav7;
           break;
       }
       break;
@@ -1049,9 +1035,7 @@ ERROR_t huff_dec_reshape(HANDLE_FDK_BITSTREAM strm, int* out_data,
   SCHAR rl_data[2] = {0};
 
   while (val_rcvd < num_val) {
-    err = huff_read_2D(strm,
-                       (HANDLE_HUFF_NODE)&FDK_huffReshapeNodes.nodeTab[0][0],
-                       rl_data, &dummy);
+    err = huff_read_2D(strm, FDK_huffReshapeNodes.nodeTab, rl_data, &dummy);
     if (err != HUFFDEC_OK) goto bail;
     val = rl_data[0];
     len = rl_data[1] + 1;
