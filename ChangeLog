@@ -1,3 +1,8 @@
+3.0.0
+ - Including a separate new library, fdk-xhe-aac, for xHE-AAC encoding
+ - Upstream fixes for building with the Android NDK
+ - Added build support for sparc
+
 2.0.3
  - Minor upstream updates
  - Fixed one case of a failed assert in SBR encoding

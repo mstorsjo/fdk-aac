@@ -24,5 +24,12 @@ fi
 ./test-encode-decode Sample01_4.wav | tee log-stereo.txt
 ./test-encode-decode Sample01_4-mono.wav | tee log-mono.txt
 
-diff -u log-stereo.txt $(dirname $0)/ref-stereo.txt
-diff -u log-mono.txt $(dirname $0)/ref-mono.txt
+ref_suffix=""
+case $(uname -m) in
+aarch64|arm64)
+    ref_suffix="-aarch64"
+    ;;
+esac
+
+diff -u log-stereo.txt $(dirname $0)/ref-stereo${ref_suffix}.txt
+diff -u log-mono.txt $(dirname $0)/ref-mono${ref_suffix}.txt

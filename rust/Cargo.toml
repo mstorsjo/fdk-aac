@@ -1,0 +1,43 @@
+[package]
+name = "aac"
+version = "0.1.0"
+edition = "2021"
+# MSRV
+rust-version = "1.81.0"
+license = "FDK-AAC"
+description = "Fraunhofer FDK AAC Codec Library in Rust"
+readme = "README.md"
+keywords = ["aac", "audio", "codec", "decoder", "fdk"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+arrayvec = "0.7.6"
+bitflags = "2.5.0"
+itertools = "0.10.5"
+num-complex = "0.4.6"
+paste = "1.0.15"
+zerocopy = "0.8.20"
+
+[build-dependencies]
+rustversion = "1.0.20"
+
+[features]
+default = ["aac_dec"]
+aac_dec = []
+obsolete_bindings_enabled = []
+
+# Cargo build profiles
+## Build profile to be used by developers when testing their code.
+[profile.dev-release]
+inherits = "release"
+debug-assertions = true
+overflow-checks = true
+
+
+[workspace]
+members = [
+    "framework",
+    "ffi",
+]

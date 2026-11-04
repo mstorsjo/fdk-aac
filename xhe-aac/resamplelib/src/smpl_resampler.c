@@ -1,0 +1,332 @@
+
+/* -----------------------------------------------------------------------------
+Software Copyright License for The Fraunhofer FDK Extended High Efficiency AAC
+Encoder Software for Android
+
+© Copyright 1995 - 2025 Fraunhofer-Gesellschaft zur Förderung der angewandten
+Forschung e.V. and Contributors
+All rights reserved.
+
+1.    INTRODUCTION
+
+The Fraunhofer FDK Extended High Efficiency AAC Encoder Software for Android
+("FDK Extended High Efficiency AAC Encoder") is software that implements the
+encoding of digital audio according to the MPEG-D Unified Speech and Audio
+Coding (USAC) standard and MPEG-D Dynamic Range Control (DRC) standard. This FDK
+Extended High Efficiency AAC Encoder Software is intended to be used on a wide
+variety of Android devices. It is technically not suited to encode content for
+digital radio broadcasting services, including DRM and similar standards.
+
+Patent licenses for necessary patent claims for the FDK Extended High Efficiency
+AAC Encoder Software (including those of Fraunhofer), for the use in commercial
+products and services, may be obtained from the respective patent owners
+individually and/or from Via Licensing Alliance (www.via-la.com).
+
+Fraunhofer supports the development of Extended High Efficiency AAC products and
+services by offering additional software, documentation, and technical advice.
+In addition, it operates the xHE-AAC Trademark Program to ease interoperability
+testing of end products. Please visit http://www.xhe-aac.com for more
+information.
+
+2.    COPYRIGHT LICENSE
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted without payment of copyright license fees, provided that you
+satisfy the following conditions:
+
+You must retain the complete text of this software license in redistributions of
+the FDK Extended High Efficiency AAC Encoder Software or your modifications
+thereto in source code form.
+
+You must retain the complete text of this software license in the documentation
+and/or other materials provided with redistributions of the FDK Extended High
+Efficiency AAC Encoder Software or your modifications thereto in binary form.
+You must make available free of charge copies of the complete source code of the
+FDK Extended High Efficiency AAC Encoder Software and your modifications thereto
+to recipients of copies in binary form.
+
+The name of Fraunhofer may not be used to endorse or promote products derived
+from this software without prior written permission.
+
+You may not charge copyright license fees for anyone to use, copy or distribute
+the FDK Extended High Efficiency AAC Encoder Software or your modifications
+thereto.
+
+Your modified versions of the FDK Extended High Efficiency AAC Encoder Software
+must carry prominent notices stating that you changed the software and the date
+of any change. For modified versions of the FDK Extended High Efficiency AAC
+Encoder Software, the term "Fraunhofer FDK Extended High Efficiency AAC Encoder
+Software for Android" must be replaced by the term "Third-Party Modified Version
+of the Fraunhofer FDK Extended High Efficiency AAC Encoder Software for
+Android."
+
+3.    NO PATENT LICENSE
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without
+limitation the patents of Fraunhofer, ARE GRANTED BY THIS SOFTWARE LICENSE.
+Fraunhofer provides no warranty for patent non-infringement with respect to this
+software. You may use this FDK Extended High Efficiency AAC Encoder Software or
+modifications thereto only for purposes that are authorized by appropriate
+patent licenses.
+
+4.    DISCLAIMER
+
+This FDK Extended High Efficiency AAC Encoder Software is provided by Fraunhofer
+on behalf of the copyright holders and contributors "AS IS" and WITHOUT ANY
+EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied
+warranties of merchantability and fitness for a particular purpose. IN NO EVENT
+SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE for any direct, indirect,
+incidental, special, exemplary, or consequential damages, including but not
+limited to procurement of substitute goods or services; loss of use, data, or
+profits, or business interruption, however caused and on any theory of
+liability, whether in contract, strict liability, or tort (including
+negligence), arising in any way out of the use of this software, even if advised
+of the possibility of such damage.
+
+5.    CONTACT INFORMATION
+
+Fraunhofer Institute for Integrated Circuits IIS
+Attention: Division Audio and Media Technologies - FDK Extended High Efficiency
+AAC Encoder
+Am Wolfsmantel 33
+91058 Erlangen, Germany
+
+www.iis.fraunhofer.de/amm
+amm-info@iis.fraunhofer.de
+----------------------------------------------------------------------------- */
+
+#include <stdlib.h>
+#include "resamplelib.h"
+#include "smpl_resampler.h"
+
+int smpl_resampler_fo_construct(HANDLE_RESAMPLELIB* phRes,
+                                const smpl_filterParams* hFiltParam,
+                                const unsigned int srIn,
+                                const unsigned int srOut,
+                                const unsigned int nChannels,
+                                const unsigned int nSamplesOut,
+                                float** const ppSamplesIn,
+                                unsigned int* const pnSamplesNext) {
+  int error = 0;
+  int maxSamplesIn = 0;
+  SRTYPE type;
+  GeneralType FilterParameters = {{0, 0, 0}};
+  GeneralType* generalData = &FilterParameters;
+  PolyphaseFilterParameters* polyphase = &generalData->polyphaseFilterVariables;
+
+  type = POLYPHASETECHNIQUE;
+
+  if (!error) {
+    maxSamplesIn = (int)(((float)srIn / (float)srOut) * ((float)nSamplesOut / (float)nChannels) + 0.5f) * nChannels;
+
+    if (hFiltParam != NULL) {
+      switch (type) {
+        case POLYPHASETECHNIQUE:
+        case POLYPHASETECHNIQUE_BYPASS:
+        case POLYPHASETECHNIQUE_FAST:
+        case POLYPHASETECHNIQUE_ZERO:
+        case POLYPHASETECHNIQUE_FAST_ZERO:
+        case POLYPHASETECHNIQUE_FIRST:
+        case POLYPHASETECHNIQUE_FAST_FIRST:
+        case POLYPHASETECHNIQUE_ZERO_FIRST:
+        case POLYPHASETECHNIQUE_FAST_ZERO_FIRST:
+          polyphase->attenuation = hFiltParam->stopBandAttenuation;
+          polyphase->lowpassFrequency = hFiltParam->lowpassFrequency;
+          polyphase->bandwidth = hFiltParam->transitionBandwidth;
+          polyphase->gain = 1.0f;
+          polyphase->sampleRateInterm = 0;
+          break;
+        default:
+          error = -1;
+          break;
+      }
+    } else {
+      generalData = NULL;
+
+      if (srIn == srOut) {
+        type = BYPASSDATA;
+      }
+    }
+  }
+
+  if (!error) {
+    error = ResamplerConstruct(phRes,
+                               srIn,
+                               srOut,
+                               nChannels,
+                               maxSamplesIn,
+                               nSamplesOut,
+                               type,
+                               FIXEDOUTPUTBLOCKSIZE,
+                               generalData);
+  }
+
+  if (!error) {
+    unsigned int nSamplesResampOut = nSamplesOut;
+    float* pSamplesResampOut = 0;
+    error = ResamplerPreMain(*phRes,
+                             0,
+                             0,
+                             0,
+                             pnSamplesNext,
+                             &nSamplesResampOut,
+                             ppSamplesIn,
+                             &pSamplesResampOut);
+  }
+
+  if (error) {
+    if (pnSamplesNext != NULL) {
+      *pnSamplesNext = 0;
+    }
+    if (ppSamplesIn != NULL) {
+      *ppSamplesIn = 0;
+    }
+  }
+  return error;
+}
+
+int smpl_resampler_fi_construct(HANDLE_RESAMPLELIB* phRes,
+                                const smpl_filterParams* hFiltParam,
+                                const unsigned int srIn,
+                                const unsigned int srOut,
+                                const unsigned int nChannels,
+                                const unsigned int nSamplesIn,
+                                float** const ppSamplesIn,
+                                unsigned int* const pnSamplesNext) {
+  int error = 0;
+  GeneralType FilterParameters = {{0, 0, 0}};
+  GeneralType* generalData = &FilterParameters;
+
+  PolyphaseFilterParameters* polyphase = &generalData->polyphaseFilterVariables;
+
+  if (!error) {
+    int maxSamplesOut = (int)(((float)srOut / (float)srIn) * ((float)nSamplesIn / (float)nChannels) + 0.5f) * nChannels;
+
+    SRTYPE type = POLYPHASETECHNIQUE;
+
+    if (hFiltParam != NULL) {
+      polyphase->attenuation = hFiltParam->stopBandAttenuation;
+      polyphase->lowpassFrequency = hFiltParam->lowpassFrequency;
+      polyphase->bandwidth = hFiltParam->transitionBandwidth;
+      polyphase->gain = 1.0f;
+      polyphase->sampleRateInterm = 0;
+    } else {
+      generalData = NULL;
+
+      if (srIn == srOut)
+        type = BYPASSDATA;
+    }
+
+    error = ResamplerConstruct(phRes,
+                               srIn,
+                               srOut,
+                               nChannels,
+                               nSamplesIn,
+                               maxSamplesOut,
+                               type,
+                               FIXEDINPUTBLOCKSIZE,
+                               generalData);
+  }
+  if (!error) {
+    unsigned int nSamplesResampOut = 0;
+    float* pSamplesResampOut = 0;
+    error = ResamplerPreMain(*phRes,
+                             0,
+                             0,
+                             0,
+                             pnSamplesNext,
+                             &nSamplesResampOut,
+                             ppSamplesIn,
+                             &pSamplesResampOut);
+  }
+  if (error) {
+    if (pnSamplesNext != NULL) {
+      *pnSamplesNext = 0;
+    }
+    if (ppSamplesIn != NULL) {
+      *ppSamplesIn = 0;
+    }
+  }
+  return error;
+}
+
+int smpl_resampler_advance(HANDLE_RESAMPLELIB hRes,
+                           float* const pSamplesIn,
+                           const unsigned int nSamplesIn,
+                           float** const ppSamplesOut,
+                           unsigned int* const pnSamplesOut,
+                           float** const ppSamplesNext,
+                           unsigned int* const pnSamplesNext) {
+  int error = 0;
+
+  unsigned int nSamplesInAux = nSamplesIn;
+  float* pSamplesInAux = pSamplesIn;
+
+  if (0 == hRes) error = 1;
+
+  if (!error) {
+    error = ResamplerMain(hRes,
+                          0,
+                          0,
+                          0,
+                          &nSamplesInAux,
+                          pnSamplesOut,
+                          &pSamplesInAux,
+                          ppSamplesOut);
+  }
+
+  if (!error) {
+    unsigned int nSamplesResampOut = *pnSamplesOut;
+    float* pSamplesResampOut = 0;
+    error = ResamplerPreMain(hRes,
+                             0,
+                             0,
+                             0,
+                             pnSamplesNext,
+                             &nSamplesResampOut,
+                             ppSamplesNext,
+                             &pSamplesResampOut);
+  }
+
+  if (error) {
+    if (ppSamplesOut != NULL) {
+      *ppSamplesOut = 0;
+    }
+    if (pnSamplesOut != NULL) {
+      *pnSamplesOut = 0;
+    }
+    if (ppSamplesNext != NULL) {
+      *ppSamplesNext = 0;
+    }
+    if (pnSamplesNext != NULL) {
+      *pnSamplesNext = 0;
+    }
+  }
+
+  return error;
+}
+
+int smpl_resampler_destruct(HANDLE_RESAMPLELIB* phRes) {
+  int error = 0;
+  if (*phRes) {
+    error = ResamplerDestruct(*phRes);
+  }
+  *phRes = NULL;
+
+  return error;
+}
+
+int smpl_resampler_get_delay(struct tag_resamplelib* hResampler) {
+  return ResamplerGetDelay(hResampler);
+}
+
+float smpl_resampler_get_delay_fract(struct tag_resamplelib* hResampler) {
+  return ResamplerGetDelayFract(hResampler);
+}
+
+int smpl_resampler_copy_buffers(struct tag_resamplelib* hSrcResampler,
+                                struct tag_resamplelib** phDstResampler,
+                                float* srcInBuf,
+                                float** dstInBuf) {
+  return ResamplerCopyBuffers(hSrcResampler, phDstResampler, srcInBuf, dstInBuf);
+}
