@@ -495,6 +495,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
   /* check frame length */
   switch (config->framelength) {
     case 1024:
+    case 960:
       if (isLowDelay(config->audioObjectType)) {
         return AAC_ENC_INVALID_FRAME_LENGTH;
       }

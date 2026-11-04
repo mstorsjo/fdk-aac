@@ -196,6 +196,22 @@ static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab1024[] = {
     {44100, {42, 14}}, {32000, {51, 14}}, {24000, {46, 14}}, {22050, {46, 14}},
     {16000, {42, 14}}, {12000, {42, 14}}, {11025, {42, 14}}, {8000, {39, 14}}};
 
+static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab960[] =
+{
+  { 96000, { 31,  9}},
+  { 88200, { 31,  9}},
+  { 64000, { 34, 10}},
+  { 48000, { 49, 14}},
+  { 44100, { 49, 14}},
+  { 32000, { 49, 14}},
+  { 24000, { 46, 15}},
+  { 22050, { 46, 14}},
+  { 16000, { 46, 15}},
+  { 12000, { 42, 15}},
+  { 11025, { 42, 15}},
+  { 8000,  { 40, 15}}
+};
+
 static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab120[] = {
     {48000, {12, -1}}, /* 48000 */
     {44100, {12, -1}}, /* 44100 */
@@ -278,6 +294,9 @@ static INT getTnsMaxBands(const INT sampleRate, const INT granuleLength,
 
   switch (granuleLength) {
     case 960:
+      pMaxBandsTab = tnsMaxBandsTab960;
+      maxBandsTabSize = sizeof(tnsMaxBandsTab960) / sizeof(TNS_MAX_TAB_ENTRY);
+      break;
     case 1024:
       pMaxBandsTab = tnsMaxBandsTab1024;
       maxBandsTabSize = sizeof(tnsMaxBandsTab1024) / sizeof(TNS_MAX_TAB_ENTRY);

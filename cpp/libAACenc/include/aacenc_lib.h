@@ -1318,6 +1318,8 @@ typedef enum {
   AACENC_GRANULE_LENGTH =
       0x0105, /*!< Core encoder (AAC) audio frame length in samples:
                    - 1024: Default configuration.
+                   - 960: Length for DRM (and DAB+) with the AAC-LC, HE-AAC and
+                 HE-AAC v2 object types.
                    - 512: Default length in LD/ELD configuration.
                    - 480: Length in LD/ELD configuration.
                    - 256: Length for ELD reduced delay mode (x2).

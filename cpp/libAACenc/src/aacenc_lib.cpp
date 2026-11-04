@@ -2102,7 +2102,7 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info) {
   LIB_VERSION_STRING(&info[i]);
 
   /* Capability flags */
-  info[i].flags = 0 | CAPF_AAC_1024 | CAPF_AAC_LC | CAPF_AAC_512 |
+  info[i].flags = 0 | CAPF_AAC_1024 | CAPF_AAC_LC | CAPF_AAC_960 | CAPF_AAC_512 |
                   CAPF_AAC_480 | CAPF_AAC_DRC | CAPF_AAC_ELD_DOWNSCALE;
   /* End of flags */
 
@@ -2258,6 +2258,7 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
       if (settings->userFramelength != value) {
         switch (value) {
           case 1024:
+          case 960:
           case 512:
           case 480:
           case 256:
