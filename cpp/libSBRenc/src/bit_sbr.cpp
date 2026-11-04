@@ -417,7 +417,7 @@ static INT encodeSbrSingleChannelElement(
     }
   } else {
     if (sbrSyntaxFlags & SBR_SYNTAX_SCALABLE) {
-      payloadBits += FDKwriteBits(hBitStream, 1, SI_SBR_COUPLING_BITS);
+      payloadBits += FDKwriteBits(hBitStream, 0, SI_SBR_COUPLING_BITS);
     }
     payloadBits += encodeSbrGrid(sbrEnvData, hBitStream);
   }

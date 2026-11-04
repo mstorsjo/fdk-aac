@@ -886,7 +886,14 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     hAacConfig->useIS = config->userIntensity;
   }
 
-  hAacConfig->audioObjectType = config->userAOT;
+  /* DRM AOTs run on the logic of the plain AOTs (see the switch below) */
+  hAacConfig->audioObjectType =
+      (config->userAOT == AOT_DRM_AAC)
+          ? AOT_AAC_LC
+          : ((config->userAOT == AOT_DRM_SBR)
+                 ? AOT_SBR
+                 : ((config->userAOT == AOT_DRM_MPEG_PS) ? AOT_PS
+                                                         : config->userAOT));
   hAacConfig->channelMode =
       GetCoreChannelMode(config->userChannelMode, hAacConfig->audioObjectType);
   hAacConfig->nChannels =
@@ -922,6 +929,28 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
 
   /* Adapt internal AOT when necessary. */
   switch (config->userAOT) {
+    case AOT_DRM_AAC:
+    case AOT_DRM_SBR:
+    case AOT_DRM_MPEG_PS:
+      /* DRM AAC (ETSI ES 201 980 5.4): ER AAC scalable syntax with HCR and
+         VCB11, 960 transform, raw frames. The SBR / PS logic of the plain
+         AOTs is reused, so the internal AOT is the plain one. */
+      hAacConfig->audioObjectType =
+          (config->userAOT == AOT_DRM_AAC)
+              ? AOT_AAC_LC
+              : ((config->userAOT == AOT_DRM_SBR) ? AOT_SBR : AOT_PS);
+      hAacConfig->usePns = 0;
+      hAacConfig->epConfig = 1;
+      hAacConfig->syntaxFlags |=
+          AC_DRM | AC_ER | AC_SCALABLE | AC_ER_VCB11 | AC_ER_HCR;
+      config->userTpType = TT_MP4_RAW;
+      hAacConfig->framelength = (config->userFramelength != (UINT)-1)
+                                    ? config->userFramelength
+                                    : 960;
+      if (hAacConfig->framelength != 960) {
+        return AACENC_INVALID_CONFIG;
+      }
+      break;
     case AOT_MP2_AAC_LC:
     case AOT_MP2_SBR:
       hAacConfig->usePns = 0;
@@ -2126,6 +2155,24 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
       if (settings->userAOT != (AUDIO_OBJECT_TYPE)value) {
         /* check if AOT matches the allocated modules */
         switch (value) {
+          case AOT_DRM_MPEG_PS:
+            if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_PS))) {
+              err = AACENC_INVALID_CONFIG;
+              goto bail;
+            }
+            FDK_FALLTHROUGH;
+          case AOT_DRM_SBR:
+            if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_SBR))) {
+              err = AACENC_INVALID_CONFIG;
+              goto bail;
+            }
+            FDK_FALLTHROUGH;
+          case AOT_DRM_AAC:
+            if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_AAC))) {
+              err = AACENC_INVALID_CONFIG;
+              goto bail;
+            }
+            break;
           case AOT_PS:
             if (!(hAacEncoder->encoder_modis & (ENC_MODE_FLAG_PS))) {
               err = AACENC_INVALID_CONFIG;

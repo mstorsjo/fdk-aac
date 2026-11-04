@@ -1272,6 +1272,14 @@ typedef enum {
                    - 129: MPEG-2 AAC Low Complexity.
                    - 132: MPEG-2 AAC Low Complexity with Spectral Band
                  Replication (HE-AAC).
+                   - 143, 144, 145: Virtual AOTs for DRM (ETSI ES 201 980 clause
+                 5.4): AAC, AAC with SBR and AAC with SBR and Parametric Stereo
+                 (::AOT_DRM_AAC, ::AOT_DRM_SBR, ::AOT_DRM_MPEG_PS). Error robust
+                 AAC scalable syntax with HCR and VCB11, the 960 transform (long
+                 blocks only), raw frames (::TT_MP4_RAW) of one CRC byte followed
+                 by the frame, the SBR data at the end of the frame in reverse bit
+                 order. The input rate is the AAC rate (12 or 24 kHz), twice that
+                 with SBR; stereo and parametric stereo need 24 kHz.
 
                    Please note that the virtual MPEG-2 AOT's basically disables
                  non-existing Perceptual Noise Substitution tool in AAC encoder

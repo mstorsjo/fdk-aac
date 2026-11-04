@@ -485,10 +485,11 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
     return AAC_ENC_UNSUPPORTED_BITRATE;
   }
 
-  if (config->syntaxFlags & AC_ER_VCB11) {
+  /* VCB11 (section data syntax) and HCR (aacenc_hcr.cpp) are supported for DRM only */
+  if ((config->syntaxFlags & AC_ER_VCB11) && !(config->syntaxFlags & AC_DRM)) {
     return AAC_ENC_UNSUPPORTED_ER_FORMAT;
   }
-  if (config->syntaxFlags & AC_ER_HCR) {
+  if ((config->syntaxFlags & AC_ER_HCR) && !(config->syntaxFlags & AC_DRM)) {
     return AAC_ENC_UNSUPPORTED_ER_FORMAT;
   }
 
@@ -563,12 +564,17 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(
      * full reset requested. */
     ErrorStatus = FDKaacEnc_psyInit(hAacEnc->psyKernel, hAacEnc->psyOut,
                                     hAacEnc->maxFrames, hAacEnc->maxChannels,
-                                    config->audioObjectType, cm);
+                                    (config->syntaxFlags & AC_DRM)
+                                        ? AOT_DRM_AAC
+                                        : config->audioObjectType,
+                                    cm);
     if (ErrorStatus != AAC_ENC_OK) goto bail;
   }
 
   ErrorStatus = FDKaacEnc_psyMainInit(
-      hAacEnc->psyKernel, config->audioObjectType, cm, config->sampleRate,
+      hAacEnc->psyKernel,
+      (config->syntaxFlags & AC_DRM) ? AOT_DRM_AAC : config->audioObjectType,
+      cm, config->sampleRate,
       config->framelength, psyBitrate, tnsMask, hAacEnc->bandwidth90dB,
       config->usePns, config->useIS, config->useMS, config->syntaxFlags,
       initFlags);
