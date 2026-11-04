@@ -547,7 +547,7 @@ const sbrTuningTable_t sbrTuningTable[] = {
     {CODEC_AAC, 48000, 64001, 11025, 1, 15, 11, 15, 10, 2, 0, 3, SBR_MONO, 1},
 
     /* 12/24 kHz dual rate */
-    {CODEC_AAC, 8000, 10000, 12000, 1, 4, 3, 6, 6, 1, 0, 6, SBR_MONO, 3},
+    {CODEC_AAC, 4000, 10000, 12000, 1, 4, 3, 6, 6, 1, 0, 6, SBR_MONO, 3},
     {CODEC_AAC, 10000, 12000, 12000, 1, 7, 4, 11, 8, 1, 0, 6, SBR_MONO, 3},
     {CODEC_AAC, 12000, 16000, 12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3},
     {CODEC_AAC, 16000, 20000, 12000, 1, 11, 7, 12, 8, 1, 0, 6, SBR_MONO, 3},
