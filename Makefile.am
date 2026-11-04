@@ -141,6 +141,7 @@ AACENC_SRC = \
     cpp/libAACenc/src/aacEnc_ram.cpp \
     cpp/libAACenc/src/aacEnc_rom.cpp \
     cpp/libAACenc/src/aacenc.cpp \
+    cpp/libAACenc/src/aacenc_hcr.cpp \
     cpp/libAACenc/src/aacenc_lib.cpp \
     cpp/libAACenc/src/aacenc_pns.cpp \
     cpp/libAACenc/src/aacenc_tns.cpp \
