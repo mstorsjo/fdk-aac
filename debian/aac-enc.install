@@ -1,1 +1,3 @@
-debian/tmp/usr/bin/aac-enc
+usr/bin/aac-enc
+usr/bin/aac-dec
+usr/bin/xhe-aac-enc

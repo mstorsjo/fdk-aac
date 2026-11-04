@@ -1,0 +1,4 @@
+usr/include/fdk-xhe-aac
+usr/lib/*/libfdk-xhe-aac.so
+usr/lib/*/pkgconfig/fdk-xhe-aac.pc
+usr/lib/*/cmake/fdk-xhe-aac

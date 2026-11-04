@@ -1,3 +1,4 @@
-debian/tmp/usr/include
-debian/tmp/usr/lib/*/libfdk-aac.so
-debian/tmp/usr/lib/*/pkgconfig
+usr/include/fdk-aac
+usr/lib/*/libfdk-aac.so
+usr/lib/*/pkgconfig/fdk-aac.pc
+usr/lib/*/cmake/fdk-aac

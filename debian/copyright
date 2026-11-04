@@ -7,7 +7,19 @@ Copyright:
   1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e. V.
 License: Fraunhofer-FDK-AAC-for-Android 
 
-Files: aac-enc.* wavreader.*
+Files: xhe-aac/*
+Copyright:
+  1995 - 2025 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e. V. and Contributors
+License: Fraunhofer-FDK-xHE-AAC-for-Android
+ See xhe-aac/NOTICE for the full licence text (similar to the Fraunhofer FDK AAC Codec
+ licence below: source and binary redistribution with conditions, no patent licence).
+
+Files: xhe-aac-enc.c
+Copyright:
+  2026 Martin Storsjo
+License: Apache-2.0
+
+Files: aac-enc.* aac-dec.* wavreader.* wavwriter.*
 Copyright:
   2009, 2011 Martin Storsjo
 License: Apache-2.0

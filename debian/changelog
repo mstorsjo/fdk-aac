@@ -1,3 +1,13 @@
+fdk-aac (3.0.0+xhe-1) unstable; urgency=medium
+
+  * New upstream version 3.0.0, with the xHE-AAC encoder.
+  * Build with CMake, ship libfdk-xhe-aac0 and libfdk-xhe-aac-dev, aac-dec and
+    xhe-aac-enc in aac-enc.
+  * Lower the minimum xHE-AAC bit rate (mono 6 kbit/s, stereo 12 kbit/s).
+  * Use debhelper-compat 13, drop debian/compat.
+
+ -- Rafael Diniz <rafael@riseup.net>  Wed, 04 Nov 2026 12:00:00 -0300
+
 fdk-aac (2.0.1-1) unstable; urgency=medium
 
   * Rafael Diniz's upload.
