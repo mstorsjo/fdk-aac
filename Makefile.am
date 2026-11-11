@@ -625,6 +625,7 @@ EXTRA_DIST = \
     $(top_srcdir)/autogen.sh \
     $(top_srcdir)/MODULE_LICENSE_FRAUNHOFER \
     $(top_srcdir)/NOTICE \
+    $(top_srcdir)/README.DRM.md \
     $(top_srcdir)/OWNERS \
     $(top_srcdir)/Android.bp \
     $(top_srcdir)/fdk-aac.def \
