@@ -174,6 +174,7 @@ typedef struct sbrConfiguration {
   INT SendHeaderDataTime; /*!< SBR header send update frequency in ms. */
   INT useWaveCoding;      /*!< Flag: usage of wavecoding tool. */
   INT crcSbr;             /*!< Flag: usage of SBR-CRC. */
+  INT drmSyntax;          /*!< Flag: DRM SBR syntax (8 bit CRC). */
   INT dynBwSupported;     /*!< Flag: support for dynamic bandwidth in this
                              combination. */
   INT parametricCoding;   /*!< Flag: usage of parametric coding tool. */

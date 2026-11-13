@@ -108,6 +108,7 @@ amm-info@iis.fraunhofer.de
 
 #define TRANS_FAC 8 /* encoder short long ratio */
 
+#define FRAME_LEN_LONG_960    (960)
 #define FRAME_MAXLEN_SHORT ((1024) / TRANS_FAC)
 #define FRAME_LEN_SHORT_128 ((1024) / TRANS_FAC)
 #define FRAME_LEN_SHORT_120 (FRAME_LEN_LONG_960 / TRANS_FAC)

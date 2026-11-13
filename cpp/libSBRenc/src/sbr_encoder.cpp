@@ -646,6 +646,7 @@ static UINT FDKsbrEnc_InitializeSbrDefaults(sbrConfigurationPtr config,
   config->SendHeaderDataTime = 1000;
   config->useWaveCoding = 0;
   config->crcSbr = 0;
+  config->drmSyntax = 0;
   config->dynBwSupported = 1;
   if (isLowDelay)
     config->tran_thr = 6000;
@@ -1681,6 +1682,10 @@ static INT FDKsbrEnc_EnvInit(HANDLE_SBR_ELEMENT hSbrElement,
   if (params->crcSbr) {
     hSbrElement->sbrConfigData.sbrSyntaxFlags |= SBR_SYNTAX_CRC;
   }
+  if (params->drmSyntax) {
+    hSbrElement->sbrConfigData.sbrSyntaxFlags |=
+        SBR_SYNTAX_CRC | SBR_SYNTAX_DRM_CRC | SBR_SYNTAX_SCALABLE;
+  }
 
   hSbrElement->sbrConfigData.noQmfBands = 64 >> (2 - params->downSampleFactor);
   switch (hSbrElement->sbrConfigData.noQmfBands) {
@@ -2192,6 +2197,10 @@ INT sbrEncoder_Init(HANDLE_SBR_ENCODER hSbrEncoder,
                                            coreFrameLength, IS_LOWDELAY(aot))) {
         error = 1;
         goto bail;
+      }
+      if (syntaxFlags & AC_DRM) {
+        sbrConfig[el].crcSbr = 1;
+        sbrConfig[el].drmSyntax = 1;
       }
 
       /*

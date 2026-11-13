@@ -114,9 +114,13 @@ static INT FDKaacEnc_getSideInfoBits(const SECTION_INFO* const huffsection,
                                      const INT useHCR) {
   INT sideInfoBits;
 
-  if (useHCR &&
-      ((huffsection->codeBook == 11) || (huffsection->codeBook >= 16))) {
-    sideInfoBits = 5;
+  if (useHCR) {
+    /* VCB11: 5 bit codebook, escape codebook sections are one sfb each */
+    if ((huffsection->codeBook == 11) || (huffsection->codeBook >= 16)) {
+      sideInfoBits = 5 * huffsection->sfbCnt;
+    } else {
+      sideInfoBits = sideInfoTab[huffsection->sfbCnt] + 1;
+    }
   } else {
     sideInfoBits = sideInfoTab[huffsection->sfbCnt];
   }
@@ -411,11 +415,12 @@ static void FDKaacEnc_noiselessCounter(
         /* the sections in the sectionData are now marked with the optimal code
          * book */
 
-        FDKaacEnc_findBestBook(bitLookUp[i], &(huffsection[i].codeBook),
-                               useVCB11);
+        INT huffBits = FDKaacEnc_findBestBook(
+            bitLookUp[i], &(huffsection[i].codeBook), useVCB11);
 
-        sectionData->huffmanBits +=
-            huffsection[i].sectionBits -
+        sectionData->huffmanBits += huffBits;
+        huffsection[i].sectionBits =
+            huffBits +
             FDKaacEnc_getSideInfoBits(&huffsection[i], sideInfoTab, useVCB11);
       }
 

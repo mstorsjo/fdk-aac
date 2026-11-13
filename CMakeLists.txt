@@ -147,6 +147,7 @@ set(AACENC_SRC
   libAACenc/src/aacEnc_ram.cpp
   libAACenc/src/aacEnc_rom.cpp
   libAACenc/src/aacenc.cpp
+  libAACenc/src/aacenc_hcr.cpp
   libAACenc/src/aacenc_lib.cpp
   libAACenc/src/aacenc_pns.cpp
   libAACenc/src/aacenc_tns.cpp

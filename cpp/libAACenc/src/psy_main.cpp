@@ -239,6 +239,12 @@ AAC_ENCODER_ERROR FDKaacEnc_psyInitStates(PSY_INTERNAL *hPsy,
   FDKaacEnc_InitBlockSwitching(&psyStatic->blockSwitchingControl,
                                isLowDelay(audioObjectType));
 
+  if (audioObjectType == AOT_DRM_AAC) {
+    /* DRM: the HCR encoder only handles long blocks */
+    psyStatic->blockSwitchingControl.allowShortFrames = 0;
+    psyStatic->blockSwitchingControl.allowLookAhead = 0;
+  }
+
   return AAC_ENC_OK;
 }
 
